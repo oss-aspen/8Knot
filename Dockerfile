@@ -1,4 +1,4 @@
-FROM python: 3.8.12-bullseye
+FROM python:3.8.12-bullseye
 # If you are deploying this container yourself,
 # include your own label. Example below.
 #LABEL James Kunstle <jkunstle@redhat.com>
