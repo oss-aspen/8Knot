@@ -6,4 +6,4 @@ EXPOSE 8050
 WORKDIR /explorer
 COPY ./requirements.txt /explorer
 RUN pip3 install -r /explorer/requirements.txt
-CMD python3 app.py
+CMD python3 index.py
