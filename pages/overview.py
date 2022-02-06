@@ -2,17 +2,16 @@ from dash import html
 from dash.dependencies import Input, Output
 
 from app import app
-import time
 
-overview_layout = html.Div(children=[
+layout = html.Div(children=[
     html.H1(children="Overview Page!"),
-    html.Div(id='test-callback')
+    html.Button("Press for Text!", id='this-button', n_clicks=0),
+    html.Div(id='test-callback', children=[])
 ])
 
 @app.callback(
-    Output('test-response', 'children'),
-    Input('test-callback', 'value')
+    Output('test-callback', 'children'),
+    Input('this-button', 'n_clicks')
 )
-def respond(val):
-    print("in respond funcion")
-    return f"Good response!"
+def respond(n_clicks):
+    return f"Good response, n_clicks: {n_clicks}"
