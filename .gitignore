@@ -130,3 +130,5 @@ dmypy.json
 
 comm_cage.json
 config_temp.json
+copy_cage.json
+config.json
