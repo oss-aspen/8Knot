@@ -5,9 +5,19 @@ from dash.dependencies import Input, Output
 from app import app
 from .visualizations import commits_activity as ca
 
+"""
+    TODO: How can we pass the repo-list to the layout
+            and still have callbacks for graph updates?
+
+            Call-backs fire when the UI element that they're 
+            bound to changes state so we might not need to worry about that.
+"""
+
+
+
 layout = html.Div(children=[
     html.H1(children="Overview Page!"),
-    dcc.Graph(id='commits-over-time')
+    #dcc.Graph(id='commits-over-time')
 ])
 
 @app.callback(

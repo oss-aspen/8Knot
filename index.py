@@ -38,7 +38,6 @@ entries = np.concatenate(( df_search_bar.rg_name.unique() , df_search_bar.repo_g
 entries = entries.tolist()
 
 
-
 app.layout = dbc.Container([
 
     dbc.Row([
@@ -48,9 +47,19 @@ app.layout = dbc.Container([
             ]
         ),
         
-        ], align="center", justify="center"
-        
-    ),
+        ], align="center", justify="center"),
+
+    dbc.Row([
+        dbc.Col([
+            html.Div(
+                [
+                    dbc.Button("Start page", id = "start-page", outline= True, color = 'secondary', n_clicks=0),
+                    dbc.Button("Overview Page", id = "overview-page", outline= True, color = 'primary', n_clicks=0),
+                    dbc.Button("CI/CD Page", id = "cicd-page", outline= True, color = 'success', n_clicks=0)
+
+                ])
+        ])
+    ]),
 
     dbc.Row([
 
@@ -60,7 +69,7 @@ app.layout = dbc.Container([
             ],width=12)
     ]),
 
-    dbc.Row([
+        dbc.Row([
 
         dbc.Col([
             dcc.Dropdown(id='projects', multi=True, value=['agroal'],
@@ -75,19 +84,10 @@ app.layout = dbc.Container([
 
     ], align="center", justify="center"),
 
+    # the displayed data should be below the search bar and the buttons.
     dbc.Row([
-        html.Div(
-            [
-                dbc.Button("Start page", id = "start-page", outline= True, color = 'secondary', n_clicks=0),
-                dbc.Button("Overview Page", id = "overview-page", outline= True, color = 'primary', n_clicks=0),
-                dbc.Button("CI/CD Page", id = "cicd-page", outline= True, color = 'success', n_clicks=0)
-
-            ]
-        ),
         html.Div(id='display-page')
-
-        ]
-    ),
+    ]),
 
     dbc.Row([
             html.Footer("Report issues to jkunstle@redhat.com, topic: Explorer Issue",
@@ -99,18 +99,6 @@ app.layout = dbc.Container([
 ])
 
 
-
-
-"""html.Div(children=[
-    html.H1(children="Sandiego Explorer Demo Multipage"),
-    html.H3(children="Report issues to jkunstle@redhat.com, topic: Explorer Issue"),
-    html.Div(children=[
-        html.Button("Start Page", id="start-page", n_clicks=0),
-        html.Button("Overview Page", id="overview-page", n_clicks=0),
-        html.Button("CI/CD Page", id="cicd-page", n_clicks=0)
-    ]),
-    html.Div(id='display-page')
-])"""
 
 """
     Page Callbacks

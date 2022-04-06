@@ -11,7 +11,7 @@ class AugurInterface:
         self.config = config
         self.engine = None
 
-    def get_engine(self) -> salc.Engine:
+    def get_engine(self):
         """
             Connects to Augur instance using supplied config 
             credentials and returns the database engine.

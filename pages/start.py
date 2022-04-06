@@ -19,7 +19,7 @@ layout = dbc.Container([
     dbc.Row([
 
         dbc.Col([
-            html.P("Start page text holder",
+            html.P("Start page text holder.",
                         className='text-center font-weight-bold mb-4')
             ],width=12)
     ]),
