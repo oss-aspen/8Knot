@@ -4,4 +4,6 @@ pandas
 numpy
 sqlalchemy
 psycopg2
-
+dash-bootstrap-components
+plotly
+plotly-express
