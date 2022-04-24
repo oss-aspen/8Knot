@@ -7,8 +7,8 @@
 """
     Imports
 """
-from .db_interface.AugurInterface import AugurInterface
 import pandas as pd
+from app import augur_db
 
 def process_data(df_commits):
     """
@@ -68,10 +68,6 @@ def ret_df(repos: str, config: str):
     if len(repos) == 0:
         return None
 
-    # connect to the DB interface w/ the Augur object.
-    aug = AugurInterface(config)
-    aug.get_engine()
-
     # build the mutually inclusive string of repos that we want to execute our 
     # query on
     repo_string = _build_where_statement(repos, "c.repo_id = ")
@@ -93,7 +89,7 @@ def ret_df(repos: str, config: str):
                     """
 
     # get the raw dataframe from our query output
-    query_df = aug.run_query(query_string)
+    query_df = augur_db.run_query(query_string)
 
     # process the raw dataframe and output the processed data.
     return process_data(query_df)

@@ -79,6 +79,7 @@ class AugurInterface:
 
         self.engine = engine
 
+        print("Engine returned")
         return engine
 
     def repo_name_to_id(self, repo_name: str) -> int:

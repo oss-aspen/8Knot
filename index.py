@@ -8,33 +8,11 @@ import numpy as np
 import dash_bootstrap_components as dbc
 import pandas as pd
 import sqlalchemy as salc
-from app import app
-from app import server
+from app import app, server, engine, augur_db
 import os
 
 # import page files from project.
 from pages import start, overview, cicd
-from pages.visualizations.db_interface.AugurInterface import AugurInterface
-
-
-"""
-    Connect to the Augur instance.
-
-    Get all of the unique repo names and group names.
-
-    Use those to populate the available options in the search bar.
-"""
-
-
-try:
-    # check if we're running on production hardware. The 'running_on' variable will be set.
-    os.environ['running_on'] == 'prod'
-    db = AugurInterface()
-except KeyError:
-    # otherwise, try to load the config from our local directory -- suggests we are running in local environment.
-    db = AugurInterface("./config.json")
-
-engine = db.get_engine()
 
 pr_query = f"""
                 SELECT DISTINCT
@@ -47,7 +25,7 @@ pr_query = f"""
                 ORDER BY rg.rg_name
                 """
 
-df_search_bar = db.run_query(pr_query)
+df_search_bar = augur_db.run_query(pr_query)
 
 entries = np.concatenate(( df_search_bar.rg_name.unique() , df_search_bar.repo_git.unique() ), axis=None)
 entries = entries.tolist()
