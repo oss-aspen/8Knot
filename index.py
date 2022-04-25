@@ -1,4 +1,4 @@
-from dash import html, callback_context
+from dash import html, callback_context, callback
 from dash.dependencies import Input, Output, State
 import dash
 from dash import dcc
@@ -31,7 +31,12 @@ entries = np.concatenate(( df_search_bar.rg_name.unique() , df_search_bar.repo_g
 entries = entries.tolist()
 
 
-app.layout = dbc.Container([
+index_layout = dbc.Container([
+    # we need to pass our repository choices to our graphs after they are chosen
+    # in our search bar. This is how we can store our choices, and this is updated
+    # when we change our search parameters with the search bar.
+    dcc.Store(id= "repo_choices", storage_type="session", data=[]),
+    dcc.Store(id='commits-data', data=[], storage_type='session'),
 
     dbc.Row([
         dbc.Col([
@@ -44,13 +49,15 @@ app.layout = dbc.Container([
 
     dbc.Row([
         dbc.Col([
+            dcc.Location(id = "url"),
             html.Div(
                 [
-                    dbc.Button("Start page", id = "start-page", outline= True, color = 'secondary', n_clicks=0),
-                    dbc.Button("Overview Page", id = "overview-page", outline= True, color = 'primary', n_clicks=0),
-                    dbc.Button("CI/CD Page", id = "cicd-page", outline= True, color = 'success', n_clicks=0)
+                    dbc.Button("Start page", id = "start-page", outline= True, color = 'secondary', n_clicks=0, href='/start'),
+                    dbc.Button("Overview Page", id = "overview-page", outline= True, color = 'primary', n_clicks=0, href= '/overview'),
+                    dbc.Button("CI/CD Page", id = "cicd-page", outline= True, color = 'success', n_clicks=0, href= '/cicd')
 
-                ])
+                ]),
+            html.Div(id='page-content')
         ])
     ]),
 
@@ -91,54 +98,39 @@ app.layout = dbc.Container([
 
         ], align='end' ),
     
-    # we need to pass our repository choices to our graphs after they are chosen
-    # in our search bar. This is how we can store our choices, and this is updated
-    # when we change our search parameters with the search bar.
-    dcc.Store(id="repo_choices", storage_type="session", data=[]),
-    dcc.Store(id="prev_page", storage_type="session", data="start")
 
 
 ])
 
+app.layout = index_layout
+
+### Assemble all layouts ###
+app.validation_layout = html.Div(
+    children = [
+        index_layout,
+        start.layout,
+        overview.layout,
+        cicd.layout
+    ]
+)
+
 """
     Page Callbacks
 """
-@app.callback(
-    [Output('display-page', 'children'),
-     Output('prev_page', 'data')],
-    [Input('start-page', 'n_clicks'),
-     Input('overview-page', 'n_clicks'),
-     Input('cicd-page', 'n_clicks'),
-     Input('repo_choices', 'data')],
-     State('prev_page', "data")
+@callback(
+    Output('display-page', 'children'),
+    Input('url', 'pathname')
 )
 
-def return_template(_start, _overview, _cicd, repo_choices, prev_page):
-    ctx = callback_context
-    caller = ctx.triggered[0]["prop_id"]
-
-    # default caller on first execution.
-    if caller == ".":
-        return start.layout, "start"
-    else:
-        # which of the buttons is triggering this callback?
-        call_name = caller.split(".")[0]
-
-        if(call_name == "overview-page"):
-            return overview.get_layout(repo_choices), "overview"
-        elif(call_name == "start-page"):
-            return start.layout, "start"
-        elif(call_name == "cicd-page"):
-            return cicd.layout, "cicd"
-        else:
-            if(prev_page == "overview"):
-                return overview.get_layout(repo_choices), dash.no_update
-            elif(prev_page == "start"):
-                return start.layout, dash.no_update
-            elif(prev_page == "cicd"):
-                return cicd.layout, dash.no_update
-            else:
-                return start.layout, dash.no_update
+def display_page(pathname):
+    if pathname == '/start':
+        return start.layout
+    elif pathname == '/overview':
+        return overview.layout
+    elif pathname == '/cicd':
+        return cicd.layout
+    else: 
+        return '404'
  
 def _parse_repo_choices( repo_git_set ):
 
@@ -146,13 +138,8 @@ def _parse_repo_choices( repo_git_set ):
     repo_names = []
 
     if len(repo_git_set) > 0:
-        url_query = 'r.repo_git = '
-        for repo_git in repo_git_set:
-            url_query+= '\''
-            url_query+=repo_git
-            url_query+='\' OR\n\t\tr.repo_git = '
-            
-        url_query = url_query[:-18]
+        url_query = str(repo_git_set)
+        url_query = url_query[1:-1]
 
         repo_query = salc.sql.text(f"""
         SET SCHEMA 'augur_data';
@@ -161,9 +148,10 @@ def _parse_repo_choices( repo_git_set ):
             r.repo_name
         FROM
             repo r
-        JOIN repo_groups rg ON r.repo_group_id = rg.repo_group_id
+        JOIN repo_groups rg 
+        ON r.repo_group_id = rg.repo_group_id
         WHERE
-            {url_query}
+            r.repo_git in({url_query})
         """)
 
         t = engine.execute(repo_query)
@@ -178,13 +166,8 @@ def _parse_org_choices( org_name_set ):
     org_repo_names = []
 
     if len(org_name_set) > 0:
-        name_query = "rg.rg_name = "
-        for name in org_name_set:
-            name_query+= '\''
-            name_query+=name
-            name_query+='\' OR\n\t\trg.rg_name = '
-
-        name_query = name_query[:-18]
+        name_query = str(org_name_set)
+        name_query = name_query[1:-1]
 
         org_query = salc.sql.text(f"""
         SET SCHEMA 'augur_data';
@@ -193,9 +176,10 @@ def _parse_org_choices( org_name_set ):
             r.repo_name
         FROM
             repo r
-        JOIN repo_groups rg ON r.repo_group_id = rg.repo_group_id
+        JOIN repo_groups rg 
+        ON r.repo_group_id = rg.repo_group_id
         WHERE
-            {name_query}
+            rg.rg_name in({name_query})
         """)
 
 
@@ -216,32 +200,65 @@ def _parse_org_choices( org_name_set ):
 def update_output(n_clicks, value):
 
     """
-        Section handles parsing the input repos / orgs
+        Section handles parsing the input repos / orgs when there is selected values
     """
+    if len(value) > 0:
+        repo_git_set = []
+        org_name_set = []
 
-    repo_git_set = []
-    org_name_set = []
-    
-    # split our processing of repos / orgs into two streams
-    for r in value: 
-        if r.startswith('http'):
-            repo_git_set.append(r)
-        else: 
-            org_name_set.append(r)
 
-    # get the repo_ids and the repo_names from our repo set of urls'
-    repo_ids, repo_names = _parse_repo_choices(repo_git_set=repo_git_set)
+        # split our processing of repos / orgs into two streams
+        for r in value: 
+            if r.startswith('http'):
+                repo_git_set.append(r)
+            else: 
+                org_name_set.append(r)
 
-    # get the repo_ids and the repo_names from our org set of names
-    org_repo_ids, org_repo_names = _parse_org_choices(org_name_set=org_name_set)
+        # get the repo_ids and the repo_names from our repo set of urls'
+        repo_ids, repo_names = _parse_repo_choices(repo_git_set=repo_git_set)
 
-    # collect all of the id's and names together
-    total_ids = set(repo_ids + org_repo_ids)
-    total_names = set(repo_names + org_repo_names) 
+        # get the repo_ids and the repo_names from our org set of names
+        org_repo_ids, org_repo_names = _parse_org_choices(org_name_set=org_name_set)
 
-    # return the string that we want and return the list of the id's that we need for the other callback.
-    return f'You have selected {value}, repo ids {total_ids}, with repo names {total_names}', list(total_ids)
+        # collect all of the id's and names together
+        total_ids = set(repo_ids + org_repo_ids)
+        total_names = set(repo_names + org_repo_names) 
 
+        # return the string that we want and return the list of the id's that we need for the other callback.
+        return f'You have selected {value}, repo ids {total_ids}, with repo names {total_names}', list(total_ids)
+    elif len(value) == 0:
+        raise dash.exceptions.PreventUpdate
+
+@callback(
+    Output('commits-data','data'),
+    Input('repo_choices', 'data')
+)
+def generate_commit_data(repo_ids):
+    print("commits query start")
+    repo_statement = str(repo_ids)
+    repo_statement = repo_statement[1:-1]
+
+    commits_query = salc.sql.text(f"""
+                    SELECT
+                        r.repo_name,
+                        c.cmt_commit_hash AS commits,
+                        c.cmt_id AS file, 
+                        c.cmt_added AS lines_added,
+                        c.cmt_removed AS lines_removed,
+                        c.cmt_author_date AS date
+                    FROM
+                        repo r
+                    JOIN commits c 
+                    ON r.repo_id = c.repo_id
+                    WHERE
+                        c.repo_id in({repo_statement})
+                    """)
+    df_commits = pd.read_sql(commits_query, con=engine)
+
+    df_commits = df_commits.reset_index()
+    df_commits.drop("index", axis=1, inplace=True)
+    print("commits query complete")
+    return df_commits.to_dict('records')
 
 
 if __name__ == "__main__":
