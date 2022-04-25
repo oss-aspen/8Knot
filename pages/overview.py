@@ -1,10 +1,11 @@
 from turtle import title
-from dash import html, dcc
+from dash import html, callback_context, callback, dcc
 import plotly.express as px
 from dash.dependencies import Input, Output
 import plotly.express as px
-
+import dash_bootstrap_components as dbc
 from app import app
+import pandas as pd
 from .visualizations import commits_activity as ca
 
 """
@@ -15,44 +16,37 @@ from .visualizations import commits_activity as ca
             bound to changes state so we might not need to worry about that.
 """
 
-def get_layout(repos: list):
+layout = dbc.Container([
+    dbc.Row([
+        dbc.Col([
+            html.H1(children="Overview Page - live update!")
+            ]
+        )
+        ]
+    ),
+    dbc.Row([
+        dbc.Col([
+            html.Div(id='commits-over-time', children=[])
+            ]
+        )
+        ]
+    ),
 
-    print("on overview page, passed repos: " + str(repos))
+])
 
-    commits_over_time_fig = _graph_commits_over_time(repos)
-
-    layout = html.Div(children=[
-        html.H1(children="Overview Page - live update!"),
-        html.H3(children=f"Selected Repo_ID's: {str(repos)}"),
-        dcc.Graph(figure=commits_over_time_fig)
-    ])
-
-    return layout
-
-
-def _graph_commits_over_time(repos: list):
-
-    # TODO (james) come back and fix
-    commits_df = 1
-
-    # get dataframe
-    # commits_df = ca.ret_df(repos, "copy_cage.json")
-
-    # # overwrite the index name
-    # commits_df.index.name = "count"
-
-    # # reset index to be ready for plotly
-    # commits_df = commits_df.reset_index()
-
-    # # respecify the names of the columns so that we can use plotly
-    # commits_df = commits_df.rename(columns={"count": "time", "date_time": "count"})
     
-    if(commits_df is not None):
-        #fig = px.bar(commits_df, x="time", y="count")
+@callback(
+    Output('commits-over-time', 'children'),
+    Input('commits-data', 'data')
+)
+def create_graph(data):
+    df_commits = pd.DataFrame(data)
 
-        # dummy graph that we return
-        fig = px.scatter(x=[0, 1, 2, 3, 4], y=[0, 1, 4, 9, 16])
-        #fig = px.scatter(commits_df, x="time", y="count")
-        return fig
+    # reset index to be ready for plotly
+    df_commits = df_commits.reset_index()
+    if(df_commits is not None):
+        fig = px.bar(df_commits, x="date", y="index")
+        return dcc.Graph(figure=fig)
     else:
         return None
+    
