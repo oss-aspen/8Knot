@@ -26,7 +26,7 @@ layout = dbc.Container([
     ),
     dbc.Row([
         dbc.Col([
-            html.Div(id='commits-over-time', children=[])
+            dcc.Graph(id='commits-over-time')
             ]
         )
         ]
@@ -36,7 +36,7 @@ layout = dbc.Container([
 
     
 @callback(
-    Output('commits-over-time', 'children'),
+    Output('commits-over-time', 'figure'),
     Input('commits-data', 'data')
 )
 def create_graph(data):
@@ -46,7 +46,7 @@ def create_graph(data):
     df_commits = df_commits.reset_index()
     if(df_commits is not None):
         fig = px.bar(df_commits, x="date", y="index")
-        return dcc.Graph(figure=fig)
+        return fig
     else:
         return None
     
