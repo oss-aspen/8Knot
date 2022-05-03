@@ -14,16 +14,7 @@ import os
 # import page files from project.
 from pages import start, overview, cicd
 
-pr_query = f"""
-                SELECT DISTINCT
-                    r.repo_git,
-                    rg.rg_name 
-                FROM
-                    repo r
-                JOIN repo_groups rg
-                ON rg.repo_group_id = r.repo_group_id
-                ORDER BY rg.rg_name
-                """
+pr_query = f"""SELECT * FROM augur_data.explorer_entry_list"""
 
 df_search_bar = augur_db.run_query(pr_query)
 
