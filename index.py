@@ -43,7 +43,7 @@ index_layout = dbc.Container([
             dcc.Location(id = "url"),
             html.Div(
                 [
-                    dbc.Button("Start page", id = "start-page", outline= True, color = 'secondary', n_clicks=0, href='/start'),
+                    dbc.Button("Start page", id = "start-page", outline= True, color = 'secondary', n_clicks=0, href='/'),
                     dbc.Button("Overview Page", id = "overview-page", outline= True, color = 'primary', n_clicks=0, href= '/overview'),
                     dbc.Button("CI/CD Page", id = "cicd-page", outline= True, color = 'success', n_clicks=0, href= '/cicd')
 
@@ -114,12 +114,12 @@ app.validation_layout = html.Div(
 )
 
 def display_page(pathname):
-    if pathname == '/start':
-        return start.layout
-    elif pathname == '/overview':
+    if pathname == '/overview':
         return overview.layout
     elif pathname == '/cicd':
         return cicd.layout
+    elif pathname == '/':
+        return start.layout
     else: 
         return '404'
  
