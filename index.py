@@ -1,5 +1,3 @@
-from cProfile import label
-from cgitb import small
 from dash import html, callback_context, callback
 from dash.dependencies import Input, Output, State
 import dash
