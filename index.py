@@ -22,82 +22,77 @@ entries = np.concatenate(( df_search_bar.rg_name.unique() , df_search_bar.repo_g
 entries = entries.tolist()
 
 
+sidebar = html.Div(
+    [
+        html.H2("Pages", className="display-10"),
+        html.Hr(),
+        dbc.Nav(
+            [
+                dbc.NavLink("Home", href="/", active="exact"),
+                dbc.NavLink("Overview Page", href='/overview', active="exact"),
+                dbc.NavLink("CI/CD Page", href='/cicd', active="exact"),
+            ],
+        vertical=True,
+        pills=True,
+        ),
+    ]
+)
+
+
 index_layout = dbc.Container([
     # we need to pass our repository choices to our graphs after they are chosen
     # in our search bar. This is how we can store our choices, and this is updated
     # when we change our search parameters with the search bar.
     dcc.Store(id= "repo_choices", storage_type="session", data=[]),
     dcc.Store(id='commits-data', data=[], storage_type='session'),
+    dcc.Location(id="url"), 
 
-    dbc.Row([
-        dbc.Col([
-            html.H1("Sandiego Explorer Demo Multipage",
-                        className='text-center font-weight-bold mb-4')
-            ]
-        ),
-        
-        ], align="center", justify="center"),
-
-    dbc.Row([
-        dbc.Col([
-            dcc.Location(id = "url"),
-            html.Div(
-                [
-                    dbc.Button("Start page", id = "start-page", outline= True, color = 'secondary', n_clicks=0, href='/'),
-                    dbc.Button("Overview Page", id = "overview-page", outline= True, color = 'primary', n_clicks=0, href= '/overview'),
-                    dbc.Button("CI/CD Page", id = "cicd-page", outline= True, color = 'success', n_clicks=0, href= '/cicd')
-
-                ]),
-            html.Div(id='page-content')
-        ])
-    ]),
-
-    dbc.Row([
-
-        dbc.Col([
-            html.H1("Select Github repos or orgs:",
-                        className='text-center font-weight-bold mb-4')
-            ],width=12)
-    ]),
-
-    dbc.Row([
-
-        dbc.Col([
-            dcc.Dropdown(id='projects', multi=True, value=['agroal'],
-                         options=[{'label':x, 'value':x}
-                                  for x in sorted(entries)],
-                          className= 'mb-4'),
-            #dcc.Graph(id='line-fig2', figure={})
-            html.Div(id='results-output-container',className= 'mb-4')
-            ], width={'size':8},
-           #xs=12, sm=12, md=12, lg=5, xl=5
-        ),
-        dbc.Col([
-            dbc.Button("Search", id="search", n_clicks=0)
-        ])
-
-    ], align="center", justify="center"),
-
-    # the displayed data should be below the search bar and the buttons.
-    dbc.Row([
-        html.Div(id='display-page', children=[])
-    ]),
-
-    dbc.Row([
-            html.Footer("Report issues to jkunstle@redhat.com, topic: Explorer Issue",
-                   style={"textDecoration": "underline"})
-
-        ], align='end' ),
     
+    dbc.Row([
 
+        dbc.Col(sidebar, width= 2),
+        
+        dbc.Col([
+            html.H1("Sandiego Explorer Demo Multipage",className='text-center'),
+            html.Label("Select Github repos or orgs:"),
+            html.Div([
+                html.Div(
+                    [dcc.Dropdown(id='projects', multi=True, value=['agroal'],
+                         options=[{'label':x, 'value':x}
+                                  for x in sorted(entries)])
+                    ],style={"width": "50%",'display':'table-cell','verticalAlign': 'middle',"padding-right": "10px"} 
+                ),
+                dbc.Button("Search", id="search", n_clicks=0, class_name = 'btn btn-primary',
+                            style={'verticalAlign': 'top','display':'table-cell'})
+                ],style={'display':'table', 'width':'75%', "padding": "10px"}
+            ),
+            html.Div(id='display-page', children=[]),
+        
+        ],width={"size": 8, "offset": 1}
 
-])
+        ),
+
+    ],justify="start"),
+
+    dbc.Row([dbc.Col([
+        html.Footer("Report issues to jkunstle@redhat.com, topic: Explorer Issue",
+                   style={"textDecoration": "underline"})],width={"offset":8})
+    ],)
+
+],fluid= True,style = {"padding-top": "1em"}, 
+)
 
 app.layout = index_layout
 
+    # html.Div([
+    # sidebar,
+    # index_layout])
+
 ### Assemble all layouts ###
 app.validation_layout = html.Div(
-    children = [
+    children = 
+    [
+        #sidebar,
         index_layout,
         start.layout,
         overview.layout,
@@ -183,8 +178,7 @@ def _parse_org_choices( org_name_set ):
 
 
 @app.callback(
-    [Output('results-output-container', 'children'),
-     Output('repo_choices', 'data')],
+    Output('repo_choices', 'data'),
     Input('search', 'n_clicks'),
     State('projects', 'value')
 )
@@ -193,6 +187,7 @@ def update_output(n_clicks, value):
     """
         Section handles parsing the input repos / orgs when there is selected values
     """
+    print("testing")
     if len(value) > 0:
         repo_git_set = []
         org_name_set = []
@@ -214,9 +209,10 @@ def update_output(n_clicks, value):
         # collect all of the id's and names together
         total_ids = set(repo_ids + org_repo_ids)
         total_names = set(repo_names + org_repo_names) 
+        total_ids = list(total_ids)
 
         # return the string that we want and return the list of the id's that we need for the other callback.
-        return f'You have selected {value}, repo ids {total_ids}, with repo names {total_names}', list(total_ids)
+        return total_ids
     elif len(value) == 0:
         raise dash.exceptions.PreventUpdate
 
