@@ -27,6 +27,8 @@ https://docs.docker.com/get-docker/
 
 If you have any issues with this process, please create a new issue and we'll address it!
 
+The config.json file should be at the same level as index.
+
 Please use the build/run scripts in the /scripts folder to handle the 
 construction of the Docker image and running the Docker container.
 
@@ -41,3 +43,4 @@ and then:
 ```bash
 bash scripts/run_docker_container.sh
 ```
+NOTE: When developing locally, each time you save reopen the chrome tab to confirm correct functionality
