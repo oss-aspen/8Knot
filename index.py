@@ -12,8 +12,10 @@ from app import app, server, engine, augur_db
 import os
 
 # import page files from project.
-from pages import start, overview, cicd
+from pages import start, overview, cicd, chaoss
 
+
+# generate entries for search bar 
 pr_query = f"""SELECT * FROM augur_data.explorer_entry_list"""
 
 df_search_bar = augur_db.run_query(pr_query)
@@ -21,7 +23,7 @@ df_search_bar = augur_db.run_query(pr_query)
 entries = np.concatenate(( df_search_bar.rg_name.unique() , df_search_bar.repo_git.unique() ), axis=None)
 entries = entries.tolist()
 
-
+# side bar code for page navigation
 sidebar = html.Div(
     [
         html.H2("Pages", className="display-10"),
@@ -31,6 +33,7 @@ sidebar = html.Div(
                 dbc.NavLink("Home", href="/", active="exact"),
                 dbc.NavLink("Overview Page", href='/overview', active="exact"),
                 dbc.NavLink("CI/CD Page", href='/cicd', active="exact"),
+                dbc.NavLink("Chaoss Page", href='/chaoss', active="exact"),
             ],
         vertical=True,
         pills=True,
@@ -40,69 +43,71 @@ sidebar = html.Div(
 
 
 index_layout = dbc.Container([
-    # we need to pass our repository choices to our graphs after they are chosen
-    # in our search bar. This is how we can store our choices, and this is updated
-    # when we change our search parameters with the search bar.
+    # componets to store data from queries
     dcc.Store(id= "repo_choices", storage_type="session", data=[]),
-    dcc.Store(id='commits-data', data=[], storage_type='session'),
+    dcc.Store(id='commits-data', data=[], storage_type='memory'),
+    dcc.Store(id= 'contributions', data=[], storage_type='memory'),
+    dcc.Store(id='issues-data', data=[], storage_type='memory'),
     dcc.Location(id="url"), 
 
-    
     dbc.Row([
 
-        dbc.Col(sidebar, width= 2),
+        dbc.Col(sidebar, width= 1),
         
         dbc.Col([
+
             html.H1("Sandiego Explorer Demo Multipage",className='text-center'),
-            html.Label("Select Github repos or orgs:"),
+
+            #search bar with buttons 
+            html.Label(["Select Github repos or orgs:"], style={'font-weight': 'bold'}),
             html.Div([
                 html.Div(
                     [dcc.Dropdown(id='projects', multi=True, value=['agroal'],
                          options=[{'label':x, 'value':x}
                                   for x in sorted(entries)])
                     ],style={"width": "50%",'display':'table-cell','verticalAlign': 'middle',"padding-right": "10px"} 
-                ),
+                    ),
                 dbc.Button("Search", id="search", n_clicks=0, class_name = 'btn btn-primary',
                             style={'verticalAlign': 'top','display':'table-cell'})
-                ],style={'display':'table', 'width':'75%', "padding": "10px"}
+                
+                ],style={'align': 'right','display':'table', 'width':'60%'}, 
             ),
+            
+            html.Div(id='results-output-container',className= 'mb-4'),
             html.Div(id='display-page', children=[]),
         
-        ],width={"size": 8, "offset": 1}
-
+            ],width={"size": 11, "offset": 0}
         ),
-
     ],justify="start"),
 
     dbc.Row([dbc.Col([
         html.Footer("Report issues to jkunstle@redhat.com, topic: Explorer Issue",
-                   style={"textDecoration": "underline"})],width={"offset":8})
-    ],)
+                   style={"textDecoration": "underline"})],width={"offset":9})
+        ],
+    )
 
-],fluid= True,style = {"padding-top": "1em"}, 
+    ],fluid= True,style = {"padding-top": "1em"}, 
 )
 
 app.layout = index_layout
-
-    # html.Div([
-    # sidebar,
-    # index_layout])
 
 ### Assemble all layouts ###
 app.validation_layout = html.Div(
     children = 
     [
-        #sidebar,
         index_layout,
         start.layout,
         overview.layout,
-        cicd.layout
+        cicd.layout,
+        chaoss.layout
     ]
 )
 
 """
     Page Callbacks
 """
+
+#page selection call back
 @callback(
     Output('display-page', 'children'),
     Input('url', 'pathname')
@@ -113,11 +118,14 @@ def display_page(pathname):
         return overview.layout
     elif pathname == '/cicd':
         return cicd.layout
+    elif pathname == '/chaoss':
+        return chaoss.layout
     elif pathname == '/':
         return start.layout
     else: 
         return '404'
- 
+
+#helper function for repos to get repo_ids 
 def _parse_repo_choices( repo_git_set ):
 
     repo_ids= []
@@ -146,7 +154,8 @@ def _parse_repo_choices( repo_git_set ):
         repo_names = [ row[1] for row in results]
 
     return repo_ids, repo_names
-    
+
+#helper function for orgs to get repo_ids    
 def _parse_org_choices( org_name_set ):
     org_repo_ids= []
     org_repo_names = []
@@ -176,9 +185,10 @@ def _parse_org_choices( org_name_set ):
 
     return org_repo_ids, org_repo_names
 
-
+#call back for repo selctions to feed into visualization call backs 
 @app.callback(
-    Output('repo_choices', 'data'),
+    [Output('results-output-container', 'children'),
+     Output('repo_choices', 'data')],
     Input('search', 'n_clicks'),
     State('projects', 'value')
 )
@@ -187,7 +197,7 @@ def update_output(n_clicks, value):
     """
         Section handles parsing the input repos / orgs when there is selected values
     """
-    print("testing")
+    print("search bar query start")
     if len(value) > 0:
         repo_git_set = []
         org_name_set = []
@@ -211,17 +221,23 @@ def update_output(n_clicks, value):
         total_names = set(repo_names + org_repo_names) 
         total_ids = list(total_ids)
 
+        selections = str(value)
+        print("search bar query finish")
+
         # return the string that we want and return the list of the id's that we need for the other callback.
-        return total_ids
+        return f'Your current selections is: {selections[1:-1]}', list(total_ids)
     elif len(value) == 0:
         raise dash.exceptions.PreventUpdate
 
+#call back for commits query
 @callback(
     Output('commits-data','data'),
     Input('repo_choices', 'data')
 )
 def generate_commit_data(repo_ids):
+
     print("commits query start")
+    #query input format update
     repo_statement = str(repo_ids)
     repo_statement = repo_statement[1:-1]
 
@@ -247,6 +263,314 @@ def generate_commit_data(repo_ids):
     print("commits query complete")
     return df_commits.to_dict('records')
 
+#call back for contributions query
+@callback(
+    Output('contributions','data'),
+    Input('repo_choices', 'data')
+)
+def generate_contributions_data(repo_ids):
+    print("contributions query start")
+    repo_statement = str(repo_ids)
+    repo_statement = repo_statement[1:-1]
+
+    contributions_query = salc.sql.text(f"""
+                    SELECT * FROM (
+                SELECT ID AS
+                    cntrb_id,
+                    A.created_at AS created_at,
+                    date_part('month', A.created_at::DATE) AS month,
+                    date_part('year', A.created_at::DATE) AS year,
+                    A.repo_id,
+                    repo_name,
+                    full_name,
+                    login,
+                ACTION,
+                rank() OVER (
+                        PARTITION BY id
+                        ORDER BY A.created_at ASC
+                    )
+                FROM
+                    (
+                        (
+                        SELECT
+                            canonical_id AS ID,
+                            created_at AS created_at,
+                            repo_id,
+                            'issue_opened' AS ACTION,
+                            contributors.cntrb_full_name AS full_name,
+                            contributors.cntrb_login AS login 
+                        FROM
+                            augur_data.issues
+                            LEFT OUTER JOIN augur_data.contributors ON contributors.cntrb_id = issues.reporter_id
+                            LEFT OUTER JOIN ( 
+                                SELECT DISTINCT ON ( cntrb_canonical ) cntrb_full_name, 
+                                cntrb_canonical AS canonical_email, 
+                                data_collection_date, 
+                                cntrb_id AS canonical_id 
+                                FROM augur_data.contributors 
+                                WHERE cntrb_canonical = cntrb_email ORDER BY cntrb_canonical 
+                            ) canonical_full_names ON canonical_full_names.canonical_email =contributors.cntrb_canonical 
+                        WHERE
+                            repo_id in ({repo_statement})
+                            AND pull_request IS NULL 
+                        GROUP BY
+                            canonical_id,
+                            repo_id,
+                            issues.created_at,
+                            contributors.cntrb_full_name,
+                            contributors.cntrb_login 
+                        ) UNION ALL
+                        (
+                        SELECT
+                            canonical_id AS ID,
+                            TO_TIMESTAMP( cmt_author_date, 'YYYY-MM-DD' ) AS created_at,
+                            repo_id,
+                            'commit' AS ACTION,
+                            contributors.cntrb_full_name AS full_name,
+                            contributors.cntrb_login AS login 
+                        FROM
+                            augur_data.commits
+                            LEFT OUTER JOIN augur_data.contributors ON cntrb_email = cmt_author_email
+                            LEFT OUTER JOIN ( 
+                                SELECT DISTINCT ON ( cntrb_canonical ) cntrb_full_name, 
+                                cntrb_canonical AS canonical_email, 
+                                data_collection_date, cntrb_id AS canonical_id 
+                                FROM augur_data.contributors 
+                                WHERE cntrb_canonical = cntrb_email ORDER BY cntrb_canonical 
+                            ) canonical_full_names ON canonical_full_names.canonical_email =contributors.cntrb_canonical 
+                        WHERE
+                            repo_id in ({repo_statement}) 
+                        GROUP BY
+                            repo_id,
+                            canonical_email,
+                            canonical_id,
+                            commits.cmt_author_date,
+                            contributors.cntrb_full_name,
+                            contributors.cntrb_login 
+                        ) UNION ALL
+                        (
+                        SELECT
+                            message.cntrb_id AS ID,
+                            created_at AS created_at,
+                            commits.repo_id,
+                            'commit_comment' AS ACTION,
+                            contributors.cntrb_full_name AS full_name,
+                            contributors.cntrb_login AS login
+              
+                        FROM
+                            augur_data.commit_comment_ref,
+                            augur_data.commits,
+                            augur_data.message
+                            LEFT OUTER JOIN augur_data.contributors ON contributors.cntrb_id = message.cntrb_id
+                            LEFT OUTER JOIN ( 
+                                SELECT DISTINCT ON ( cntrb_canonical ) cntrb_full_name, 
+                                cntrb_canonical AS canonical_email, 
+                                data_collection_date, cntrb_id AS canonical_id 
+                                FROM augur_data.contributors 
+                                WHERE cntrb_canonical = cntrb_email ORDER BY cntrb_canonical 
+                            ) canonical_full_names ON canonical_full_names.canonical_email =contributors.cntrb_canonical 
+                        WHERE
+                            commits.cmt_id = commit_comment_ref.cmt_id 
+                            AND commits.repo_id in ({repo_statement}) 
+                            AND commit_comment_ref.msg_id = message.msg_id
+         
+                        GROUP BY
+                            ID,
+                            commits.repo_id,
+                            commit_comment_ref.created_at,
+                            contributors.cntrb_full_name,
+                            contributors.cntrb_login
+                        ) UNION ALL
+                        (
+                        SELECT
+                            issue_events.cntrb_id AS ID,
+                            issue_events.created_at AS created_at,
+                            issues.repo_id,
+                            'issue_closed' AS ACTION,
+                            contributors.cntrb_full_name AS full_name,
+                            contributors.cntrb_login AS login 
+                        FROM
+                            augur_data.issues,
+                            augur_data.issue_events
+                            LEFT OUTER JOIN augur_data.contributors ON contributors.cntrb_id = issue_events.cntrb_id
+                            LEFT OUTER JOIN ( 
+                            SELECT DISTINCT ON ( cntrb_canonical ) cntrb_full_name, 
+                            cntrb_canonical AS canonical_email, 
+                            data_collection_date, 
+                            cntrb_id AS canonical_id 
+                            FROM augur_data.contributors 
+                            WHERE cntrb_canonical = cntrb_email ORDER BY cntrb_canonical 
+                            ) canonical_full_names ON canonical_full_names.canonical_email =contributors.cntrb_canonical 
+                        WHERE
+                            issues.repo_id in ({repo_statement}) 
+                            AND issues.issue_id = issue_events.issue_id 
+                            AND issues.pull_request IS NULL 
+                            AND issue_events.cntrb_id IS NOT NULL 
+                            AND ACTION = 'closed' 
+                        GROUP BY
+                            issue_events.cntrb_id,
+                            issues.repo_id,
+                            issue_events.created_at,
+                            contributors.cntrb_full_name,
+                            contributors.cntrb_login 
+                        ) UNION ALL
+                        (
+                        SELECT
+                            pr_augur_contributor_id AS ID,
+                            pr_created_at AS created_at,
+                            pull_requests.repo_id,
+                            'open_pull_request' AS ACTION,
+                            contributors.cntrb_full_name AS full_name,
+                            contributors.cntrb_login AS login 
+                        FROM
+                            augur_data.pull_requests
+                            LEFT OUTER JOIN augur_data.contributors ON pull_requests.pr_augur_contributor_id = contributors.cntrb_id
+                            LEFT OUTER JOIN ( 
+                                SELECT DISTINCT ON ( cntrb_canonical ) cntrb_full_name, 
+                                cntrb_canonical AS canonical_email, 
+                                data_collection_date, 
+                                cntrb_id AS canonical_id 
+                                FROM augur_data.contributors 
+                                WHERE cntrb_canonical = cntrb_email ORDER BY cntrb_canonical 
+                            ) canonical_full_names ON canonical_full_names.canonical_email =contributors.cntrb_canonical 
+                        WHERE
+                            pull_requests.repo_id in ({repo_statement}) 
+                        GROUP BY
+                            pull_requests.pr_augur_contributor_id,
+                            pull_requests.repo_id,
+                            pull_requests.pr_created_at,
+                            contributors.cntrb_full_name,
+                            contributors.cntrb_login 
+                        ) UNION ALL
+                        (
+                        SELECT
+                            message.cntrb_id AS ID,
+                            msg_timestamp AS created_at,
+                            pull_requests.repo_id as repo_id,
+                            'pull_request_comment' AS ACTION,
+                            contributors.cntrb_full_name AS full_name,
+                            contributors.cntrb_login AS login 
+                        FROM
+                            augur_data.pull_requests,
+                            augur_data.pull_request_message_ref,
+                            augur_data.message
+                            LEFT OUTER JOIN augur_data.contributors ON contributors.cntrb_id = message.cntrb_id
+                            LEFT OUTER JOIN ( 
+                                SELECT DISTINCT ON ( cntrb_canonical ) cntrb_full_name, 
+                                cntrb_canonical AS canonical_email, 
+                                data_collection_date, 
+                                cntrb_id AS canonical_id 
+                                FROM augur_data.contributors 
+                                WHERE cntrb_canonical = cntrb_email ORDER BY cntrb_canonical 
+                            ) canonical_full_names ON canonical_full_names.canonical_email =contributors.cntrb_canonical 
+                        WHERE
+                            pull_requests.repo_id in ({repo_statement})
+                            AND pull_request_message_ref.pull_request_id = pull_requests.pull_request_id 
+                            AND pull_request_message_ref.msg_id = message.msg_id 
+                        GROUP BY
+                            message.cntrb_id,
+                            pull_requests.repo_id,
+                            message.msg_timestamp,
+                            contributors.cntrb_full_name,
+                            contributors.cntrb_login 
+                        ) UNION ALL
+                        (
+                        SELECT
+                            issues.reporter_id AS ID,
+                            msg_timestamp AS created_at,
+                            issues.repo_id as repo_id,
+                            'issue_comment' AS ACTION,
+                            contributors.cntrb_full_name AS full_name,
+                            contributors.cntrb_login AS login 
+                        FROM
+                            issues,
+                            issue_message_ref,
+                            message
+                            LEFT OUTER JOIN augur_data.contributors ON contributors.cntrb_id = message.cntrb_id
+                            LEFT OUTER JOIN ( 
+                                SELECT DISTINCT ON ( cntrb_canonical ) cntrb_full_name, 
+                                cntrb_canonical AS canonical_email, 
+                                data_collection_date, 
+                                cntrb_id AS canonical_id 
+                                FROM augur_data.contributors 
+                                WHERE cntrb_canonical = cntrb_email ORDER BY cntrb_canonical 
+                            ) canonical_full_names ON canonical_full_names.canonical_email =contributors.cntrb_canonical 
+                        WHERE
+                            issues.repo_id in ({repo_statement})
+                            AND issue_message_ref.msg_id = message.msg_id 
+                            AND issues.issue_id = issue_message_ref.issue_id
+                            AND issues.pull_request_id = NULL
+                        GROUP BY
+                            issues.reporter_id,
+                            issues.repo_id,
+                            message.msg_timestamp,
+                            contributors.cntrb_full_name,
+                            contributors.cntrb_login 
+                        ) 
+                    ) A,
+                    repo 
+                WHERE
+                ID IS NOT NULL 
+                    AND A.repo_id = repo.repo_id 
+                GROUP BY
+                    A.ID,
+                    A.repo_id,
+                    A.ACTION,
+                    A.created_at,
+                    repo.repo_name,
+                    A.full_name,
+                    A.login
+                ORDER BY 
+                    cntrb_id
+                ) b
+                WHERE RANK IN (1,2,3,4,5,6,7)
+                    """)
+    df_cont = pd.read_sql(contributions_query, con=engine)
+
+    df_cont = df_cont.reset_index()
+    df_cont.drop("index", axis=1, inplace=True)
+    print("contributions query complete")
+    return df_cont.to_dict('records')
+
+#call back for issue query
+@callback(
+    Output('issues-data', 'data'),
+    Input('repo_choices', 'data')
+)
+def generate_issues_data(repo_ids):
+
+    print("issues query start")
+
+    repo_statement = str(repo_ids)
+    repo_statement = repo_statement[1:-1]
+
+    issues_query = salc.sql.text(f"""
+                SELECT
+                    r.repo_name,
+					i.issue_id AS issue, 
+					i.gh_issue_number AS issue_number,
+					i.gh_issue_id AS gh_issue,
+					i.created_at AS created, 
+					i.closed_at AS closed,
+                    i.pull_request_id
+                FROM
+                	repo r,
+                    issues i
+                WHERE
+                	r.repo_id = i.repo_id AND
+                    i.repo_id in({repo_statement}) 
+        """)
+    df_issues = pd.read_sql(issues_query, con=engine)
+    df_issues = df_issues[df_issues['pull_request_id'].isnull()]
+    df_issues = df_issues.drop(columns = 'pull_request_id' )
+    df_issues = df_issues.sort_values(by= "created")
+
+    df_issues = df_issues.reset_index()
+    df_issues.drop("index", axis=1, inplace=True)
+
+    print("issues query complete")
+
+    return df_issues.to_dict('records')
 
 if __name__ == "__main__":
     app.run_server(host="0.0.0.0", port=8050, debug=True)
