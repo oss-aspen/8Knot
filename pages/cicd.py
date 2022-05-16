@@ -16,12 +16,12 @@ import numpy as np
 layout = dbc.Container([
 
     dbc.Row([
-
         dbc.Col([
-            html.P("CI/CD.",
-                        className='text-center font-weight-bold mb-4')
-            ])
-    ]),
+            html.H1(children="CI/CD")
+            ]
+        )
+        ]
+    ),
 
     
 

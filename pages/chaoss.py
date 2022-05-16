@@ -13,7 +13,7 @@ layout = dbc.Container([
     
     dbc.Row([
         dbc.Col([
-            html.H1(children="Overview Page - live update!")
+            html.H1(children="Chaoss WIP Page - live update")
             ]
         )
         ]
