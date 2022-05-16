@@ -112,7 +112,7 @@ def create_graph(data):
 
     #Graph generation
     if(df_cont is not None):
-        fig = px.histogram(df_cont, x="created_at", color="action")
+        fig = px.histogram(df_cont, x="created_at", color="Action")
         fig.update_traces(xbins_size='M3', hovertemplate= "Date: %{x}" +
                                                             "<br>Amount: %{y}<br><extra></extra>")
         fig.update_xaxes(showgrid=True, ticklabelmode="period", dtick='M3')

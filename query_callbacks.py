@@ -412,6 +412,15 @@ def generate_contributions_data(repo_ids):
                 WHERE RANK IN (1,2,3,4,5,6,7)
                     """)
     df_cont = pd.read_sql(contributions_query, con=engine)
+    
+    #update column values
+    df_cont.loc[df_cont['action']=='open_pull_request','action']= 'Open PR'
+    df_cont.loc[df_cont['action']=='pull_request_comment','action']= 'PR Comment'
+    df_cont.loc[df_cont['action']=='issue_opened','action']= 'Issue Opened'
+    df_cont.loc[df_cont['action']=='issue_closed','action']= 'Issue Closed'
+    df_cont.loc[df_cont['action']=='commit','action']= 'Commit'
+    df_cont.rename(columns = {'action':'Action'}, inplace = True)
+
 
     df_cont = df_cont.reset_index()
     df_cont.drop("index", axis=1, inplace=True)
