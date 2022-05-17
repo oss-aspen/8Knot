@@ -28,6 +28,7 @@ index_layout = dbc.Container([
     # when we change our search parameters with the search bar.
     dcc.Store(id= "repo_choices", storage_type="session", data=[]),
     dcc.Store(id='commits-data', data=[], storage_type='session'),
+    dcc.Store(id='issues-data', data=[], storage_type='session'),
 
     dbc.Row([
         dbc.Col([
@@ -225,7 +226,9 @@ def update_output(n_clicks, value):
     Input('repo_choices', 'data')
 )
 def generate_commit_data(repo_ids):
+
     print("commits query start")
+
     repo_statement = str(repo_ids)
     repo_statement = repo_statement[1:-1]
 
@@ -248,9 +251,46 @@ def generate_commit_data(repo_ids):
 
     df_commits = df_commits.reset_index()
     df_commits.drop("index", axis=1, inplace=True)
+
     print("commits query complete")
+
     return df_commits.to_dict('records')
 
+@callback(
+    Output('issues-data', 'data'),
+    Input('repo_choices', 'data')
+)
+def generate_issues_data(repo_ids):
+
+    print("issues query start")
+
+    repo_statement = str(repo_ids)
+    repo_statement = repo_statement[1:-1]
+
+    issues_query = salc.sql.text(f"""
+                SELECT
+                    r.repo_name,
+					i.issue_id AS issue, 
+					i.gh_issue_number AS issue_number,
+					i.gh_issue_id AS gh_issue,
+					i.created_at AS created, 
+					i.closed_at AS closed,
+                    i.pull_request_id
+                FROM
+                	repo r,
+                    issues i
+                WHERE
+                	r.repo_id = i.repo_id AND
+                    i.repo_id in({repo_statement}) 
+        """)
+    df_issues = pd.read_sql(issues_query, con=engine)
+
+    df_issues = df_issues.reset_index()
+    df_issues.drop("index", axis=1, inplace=True)
+
+    print("issues query complete")
+
+    return df_issues.to_dict('records')
 
 if __name__ == "__main__":
     app.run_server(host="0.0.0.0", port=8050, debug=True)

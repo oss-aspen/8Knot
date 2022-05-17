@@ -94,7 +94,7 @@ class AugurInterface:
 
         repo_query = salc.sql.text(f"""
                     SET SCHEMA 'augur_data';
-                    SELECT 
+                SELECT 
                     b.repo_id
                 FROM
                     repo_groups a,
