@@ -47,6 +47,13 @@ layout = dbc.Container([
         ),
         ]
     ),
+    dbc.Row([
+        dbc.Col([
+            dcc.Graph(id='issues-over-time')
+            ]
+        )
+        ]
+    ),
 
 ], fluid= True)
 
@@ -57,6 +64,7 @@ layout = dbc.Container([
     Input('time-interval','value')]
 )
 def create_graph(data,interval):
+
     df_commits = pd.DataFrame(data)
 
     # reset index to be ready for plotly
