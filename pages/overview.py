@@ -47,20 +47,6 @@ layout = dbc.Container([
         ),
         ]
     ),
-    dbc.Row([
-        dbc.Col([
-            dcc.Graph(id='issues-over-time')
-            ]
-        )
-        ]
-    ),
-    dbc.Row([
-        dbc.Col([
-            dcc.Graph(id='issues-over-time')
-            ]
-        )
-        ]
-    ),
 
 ], fluid= True)
 
