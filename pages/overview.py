@@ -54,6 +54,13 @@ layout = dbc.Container([
         )
         ]
     ),
+    dbc.Row([
+        dbc.Col([
+            dcc.Graph(id='issues-over-time')
+            ]
+        )
+        ]
+    ),
 
 ], fluid= True)
 
@@ -64,7 +71,6 @@ layout = dbc.Container([
     Input('time-interval','value')]
 )
 def create_graph(data,interval):
-
     df_commits = pd.DataFrame(data)
 
     # reset index to be ready for plotly
@@ -177,6 +183,7 @@ def make_open_df(df_issues):
     df_closed['open'] = -1
 
     # sum created and closed value to get actively open issues dataframe 
+
     df_open = pd.concat([df_created, df_closed])
     df_open = df_open.sort_values("issue")
     df_open = df_open.reset_index(drop=True)
@@ -186,3 +193,4 @@ def make_open_df(df_issues):
     df_open = df_open.drop_duplicates(subset='issue', keep='last')
     df_open = df_open.drop(columns= 'open')
     return df_open
+
