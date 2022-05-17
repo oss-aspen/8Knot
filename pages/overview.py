@@ -30,8 +30,8 @@ layout = dbc.Container([
             dcc.RadioItems(
                 id='time-interval',
                 options=[
-                         {'label': 'Day', 'value': 86400000},
-                         {'label': 'Week', 'value': 604800000},
+                         {'label': 'Day', 'value': 86400000}, #days in milliseconds for ploty use  
+                         {'label': 'Week', 'value': 604800000}, #weeks in milliseconds for ploty use
                          {'label': 'Month', 'value': 'M1'},
                          {'label': 'Year', 'value': 'M12'}
                 ],
@@ -69,15 +69,15 @@ def create_graph(data,interval):
     hover = "Year: %{x|%Y}"
 
     #graph input values based on date interval selection
-    if interval == 86400000:
+    if interval == 86400000: #if statement for days
         x_r = [str(today-dt.timedelta(weeks=4)),str(today)]
         x_name = "Day"
         hover = "Day: %{x|%b %d, %Y}"
-    elif interval == 604800000:
+    elif interval == 604800000: #if statmement for weeks 
         x_r = [str(today-dt.timedelta(weeks=30)),str(today)]
         x_name = "Week"
         hover = "Week: %{x|%b %d, %Y}"
-    elif interval =='M1':
+    elif interval =='M1': #if statement for months
         x_r = [str(today-dt.timedelta(weeks=104)),str(today)]
         x_name = "Month"
         hover = "Month: %{x|%b %Y}"
