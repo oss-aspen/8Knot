@@ -21,12 +21,12 @@ layout = dbc.Container([
         dbc.Col([
             html.P("Start page text holder.",
                         className='text-center font-weight-bold mb-4')
-            ],width=12)
+            ])
     ]),
 
     
 
-], fluid=False)
+], fluid=True)
 
 
 
