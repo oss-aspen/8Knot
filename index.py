@@ -8,7 +8,7 @@ import numpy as np
 import dash_bootstrap_components as dbc
 import pandas as pd
 import sqlalchemy as salc
-from app import app, server, engine, augur_db
+from app import app, augur_db
 import os
 
 # import page files from project.

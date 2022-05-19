@@ -34,7 +34,9 @@ def _parse_repo_choices( repo_git_set ):
             r.repo_git in({url_query})
         """)
 
-        t = engine.execute(repo_query)
+        with engine.connect() as conn:
+            t = conn.execute(repo_query)
+
         results = t.all()
         repo_ids = [ row[0] for row in results]
         repo_names = [ row[1] for row in results]
@@ -64,7 +66,9 @@ def _parse_org_choices( org_name_set ):
         """)
 
 
-        t = engine.execute(org_query)
+        with engine.connect() as conn:
+            t = conn.execute(org_query)
+
         results = t.all()
         org_repo_ids = [ row[0] for row in results]
         org_repo_names = [ row[1] for row in results]
@@ -142,10 +146,9 @@ def generate_commit_data(repo_ids):
                     WHERE
                         c.repo_id in({repo_statement})
                     """)
-    df_commits = pd.read_sql(commits_query, con=engine)
 
-    df_commits = df_commits.reset_index()
-    df_commits.drop("index", axis=1, inplace=True)
+    df_commits = augur_db.run_query(commits_query) 
+
     print("commits query complete")
     return df_commits.to_dict('records')
 
@@ -411,7 +414,9 @@ def generate_contributions_data(repo_ids):
                 ) b
                 WHERE RANK IN (1,2,3,4,5,6,7)
                     """)
-    df_cont = pd.read_sql(contributions_query, con=engine)
+
+    with engine.connect() as conn:
+        df_cont = pd.read_sql(contributions_query, con=conn)
     
     #update column values
     df_cont.loc[df_cont['action']=='open_pull_request','action']= 'Open PR'
@@ -455,7 +460,10 @@ def generate_issues_data(repo_ids):
                 	r.repo_id = i.repo_id AND
                     i.repo_id in({repo_statement}) 
         """)
-    df_issues = pd.read_sql(issues_query, con=engine)
+
+    with engine.connect() as conn:
+        df_issues = pd.read_sql(issues_query, con=conn)
+
     df_issues = df_issues[df_issues['pull_request_id'].isnull()]
     df_issues = df_issues.drop(columns = 'pull_request_id' )
     df_issues = df_issues.sort_values(by= "created")
