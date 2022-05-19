@@ -11,6 +11,7 @@ import numpy as np
 import warnings
 warnings.filterwarnings("ignore")
 
+
 layout = dbc.Container([
     
     dbc.Row([
@@ -108,6 +109,7 @@ def create_graph(data,contribs,view):
     contributors = df_cont['cntrb_id'][df_cont['rank']== contribs].to_list()
     df_cont_subset = pd.DataFrame(data)
 
+
     #Inputs for Title of graph
     title= ''
     if view == 'drive':
@@ -134,29 +136,27 @@ def create_graph(data,contribs,view):
         yaxis_title="Contributions")
         return fig
     else:
-        return None  
+        return None
 
 
-@callback(
-    Output('first-time-contributors', 'figure'),
-    Input('contributions', 'data')
-)
+@callback(Output("first-time-contributors", "figure"), Input("contributions", "data"))
 def create_graph(data):
     df_cont = pd.DataFrame(data)
-    
-    #selection for 1st contribution only
-    df_cont = df_cont[df_cont['rank']== 1]
-    
+
+    # selection for 1st contribution only
+    df_cont = df_cont[df_cont["rank"] == 1]
 
     # reset index to be ready for plotly
     df_cont = df_cont.reset_index()
 
-    #Graph generation
-    if(df_cont is not None):
+    # Graph generation
+    if df_cont is not None:
         fig = px.histogram(df_cont, x="created_at", color="Action")
-        fig.update_traces(xbins_size='M3', hovertemplate= "Date: %{x}" +
-                                                            "<br>Amount: %{y}<br><extra></extra>")
-        fig.update_xaxes(showgrid=True, ticklabelmode="period", dtick='M3')
+        fig.update_traces(
+            xbins_size="M3",
+            hovertemplate="Date: %{x}" + "<br>Amount: %{y}<br><extra></extra>",
+        )
+        fig.update_xaxes(showgrid=True, ticklabelmode="period", dtick="M3")
         fig.update_layout(
             title={'text':"First Time Contributions Per Quarter",
                       'font':{'size':28},'x':0.5,'xanchor':'center'},
@@ -235,3 +235,4 @@ def get_graph_time_values(interval):
         hover = "Month: %{x|%b %Y}"
         period = "M"
     return x_r, x_name, hover, period
+

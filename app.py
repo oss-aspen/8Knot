@@ -1,7 +1,7 @@
 import dash
 import dash_bootstrap_components as dbc
 
-from pages.visualizations.db_interface.AugurInterface import AugurInterface
+from db_interface.AugurInterface import AugurInterface
 import os
 
 """

@@ -1,6 +1,7 @@
 """
     Imports
 """
+from re import I
 import pandas as pd 
 import sqlalchemy as salc
 import json
@@ -24,6 +25,8 @@ class AugurInterface:
             Connects to Augur instance using supplied config 
             credentials and returns the database engine.
         """
+        if self.engine is not None:
+            return self.engine
 
         """
             If we have been passed a config file, try to read it.
@@ -75,7 +78,8 @@ class AugurInterface:
         dbschema=self.schema
         engine = salc.create_engine(
             database_connection_string,
-            connect_args={'options': '-csearch_path={}'.format(dbschema)})
+            connect_args={'options': '-csearch_path={}'.format(dbschema)},
+            pool_pre_ping=True)
 
         self.engine = engine
 
@@ -94,7 +98,7 @@ class AugurInterface:
 
         repo_query = salc.sql.text(f"""
                     SET SCHEMA 'augur_data';
-                    SELECT 
+                SELECT 
                     b.repo_id
                 FROM
                     repo_groups a,
@@ -117,7 +121,8 @@ class AugurInterface:
 
         pr_query = salc.sql.text(query_string)
 
-        this_df = pd.read_sql(pr_query, con=self.engine)
+        with self.engine.connect() as conn:
+            this_df = pd.read_sql(pr_query, con=conn)
 
         this_df = this_df.reset_index()
         this_df.drop("index", axis=1, inplace=True)
