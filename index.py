@@ -77,7 +77,7 @@ index_layout = dbc.Container([
             html.Div(id='results-output-container',className= 'mb-4'),
             html.Div(id='display-page', children=[]),
         
-            ],width={"size": 11, "offset": 0}
+            ],width={"size": 11}
         ),
     ],justify="start"),
 
