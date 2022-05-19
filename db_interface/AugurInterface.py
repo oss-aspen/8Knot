@@ -78,7 +78,8 @@ class AugurInterface:
         dbschema=self.schema
         engine = salc.create_engine(
             database_connection_string,
-            connect_args={'options': '-csearch_path={}'.format(dbschema)})
+            connect_args={'options': '-csearch_path={}'.format(dbschema)},
+            pool_pre_ping=True)
 
         self.engine = engine
 
