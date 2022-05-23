@@ -13,20 +13,20 @@ import json
 import numpy as np
 
 
-
-layout = dbc.Container([
-
-    dbc.Row([
-
-        dbc.Col([
-            html.P("Start page text holder.",
-                        className='text-center font-weight-bold mb-4')
-            ])
-    ]),
-
-    
-
-], fluid=True)
-
-
-
+layout = dbc.Container(
+    [
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        html.P(
+                            "Start page text holder.",
+                            className="text-center font-weight-bold mb-4",
+                        )
+                    ]
+                )
+            ]
+        ),
+    ],
+    fluid=True,
+)

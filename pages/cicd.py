@@ -13,16 +13,9 @@ import json
 import numpy as np
 
 
-layout = dbc.Container([
-
-    dbc.Row([
-        dbc.Col([
-            html.H1(children="CI/CD")
-            ]
-        )
-        ]
-    ),
-
-    
-
-], fluid=True)
+layout = dbc.Container(
+    [
+        dbc.Row([dbc.Col([html.H1(children="CI/CD")])]),
+    ],
+    fluid=True,
+)
