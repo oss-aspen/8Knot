@@ -1,5 +1,4 @@
-from dash import html, callback
-from dash.dependencies import Input, Output
+from dash import html
 from dash import dcc
 import dash
 import dash_labs as dl
@@ -8,8 +7,21 @@ from app import app, entries
 
 # import page files from project.
 from pages import start, overview, cicd, chaoss
-import query_callbacks
 
+"""
+    README -- Organization of Callback Functions 
+
+    In an effort to compartmentalize our development where possible, all callbacks directly relating
+    to pages in our application are in their own files. 
+
+    For instance, this file contains the layout logic for the index page of our app-
+    this page serves all other paths by providing the searchbar, page routing faculties,
+    and data storage objects that the other pages in our app use. 
+
+    Having laid out the HTML-like organization of this page, we write the callbacks for this page in
+    the neighbor 'index_callbacks.py' file.
+"""
+import index_callbacks 
 
 # side bar code for page navigation
 sidebar = html.Div(
@@ -28,6 +40,7 @@ sidebar = html.Div(
     ]
 )
 
+# summary layout of the page
 index_layout = dbc.Container(
     [
         # componets to store data from queries
@@ -35,20 +48,26 @@ index_layout = dbc.Container(
         dcc.Store(id="commits-data", data=[], storage_type="memory"),
         dcc.Store(id="contributions", data=[], storage_type="memory"),
         dcc.Store(id="issues-data", data=[], storage_type="memory"),
+
         dcc.Location(id="url"),
+
         dbc.Row(
             [
+                # from above definition
                 dbc.Col(sidebar, width=1),
+
                 dbc.Col(
                     [
                         html.H1(
                             "Sandiego Explorer Demo Multipage", className="text-center"
                         ),
+
                         # search bar with buttons
                         html.Label(
                             ["Select Github repos or orgs:"],
                             style={"font-weight": "bold"},
                         ),
+
                         html.Div(
                             [
                                 html.Div(

@@ -40,6 +40,8 @@ app = dash.Dash(
     at the global level.
 """
 print("AUGUR_ENTRY_LIST - START")
+
+# from our list of all org/repos
 pr_query = f"""SELECT * FROM augur_data.explorer_entry_list"""
 
 df_search_bar = augur_db.run_query(pr_query)
