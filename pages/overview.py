@@ -56,6 +56,7 @@ layout = dbc.Container(
     [Input("commits-data", "data"), Input("time-interval", "value")],
 )
 def create_graph(data, interval):
+    print("COMMITS_OVER_TIME_VIZ - START")
     df_commits = pd.DataFrame(data)
 
     # reset index to be ready for plotly
@@ -105,6 +106,7 @@ def create_graph(data, interval):
             xaxis_title=x_name,
             yaxis_title="Number of Commits",
         )
+        print("COMMITS_OVER_TIME_VIZ - END")
         return fig
     else:
         return None
@@ -116,6 +118,7 @@ def create_graph(data, interval):
     [Input("issues-data", "data"), Input("time-interval", "value")],
 )
 def create_graph(data, interval):
+    print("ISSUES_OVER_TIME_VIZ - START")
     df_issues = pd.DataFrame(data)
 
     # df for line chart
@@ -172,12 +175,14 @@ def create_graph(data, interval):
                 hovertemplate="Issues Open: %{y}" + "<extra></extra>",
             )
         )
+        print("ISSUES_OVER_TIME_VIZ - END")
         return fig
     else:
         return None
 
 
 def make_open_df(df_issues):
+    print("OPEN_PR_PROCESSING - START")
     # created dataframe
     df_created = pd.DataFrame(df_issues["created"])
     df_created.rename(columns={"created": "issue"}, inplace=True)
@@ -198,9 +203,11 @@ def make_open_df(df_issues):
     df_open['issue'] = df_open['issue'].dt.floor("D")
     df_open = df_open.drop_duplicates(subset='issue', keep='last')
     df_open = df_open.drop(columns= 'open')
+    print("OPEN_PR_PROCESSING - END")
     return df_open
 
 def get_graph_time_values(interval):
+    print("GRAPH_TIME_VALUES_PROCESSING - START")
     #helper values for building graph 
     today = dt.date.today()
     x_r = []
@@ -221,5 +228,6 @@ def get_graph_time_values(interval):
         x_r = [str(today-dt.timedelta(weeks=104)),str(today)]
         x_name = "Month"
         hover = "Month: %{x|%b %Y}"
+    print("GRAPH_TIME_VALUES_PROCESSING - END")
     return x_r, x_name, hover
 

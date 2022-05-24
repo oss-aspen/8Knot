@@ -4,6 +4,7 @@ import dash_bootstrap_components as dbc
 from db_interface.AugurInterface import AugurInterface
 import os
 
+
 """
     Connect to the Augur instance.
 
@@ -25,11 +26,11 @@ except KeyError:
 engine = augur_db.get_engine()
 
 app = dash.Dash(__name__,external_stylesheets=[dbc.themes.SANDSTONE])
+server = app.server
 
 # app = dash.Dash(__name__, suppress_callback_exceptions=True, external_stylesheets=[dbc.themes.SLATE],
 #                 meta_tags=[{'name': 'viewport',
 #                             'content': 'width=device-width, initial-scale=1.0'}]
 #                 )
 
-server = app.server
 

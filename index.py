@@ -17,6 +17,7 @@ import query_callbacks
 
 
 # generate entries for search bar
+print("AUGUR_ENTRY_LIST - START")
 pr_query = f"""SELECT * FROM augur_data.explorer_entry_list"""
 
 df_search_bar = augur_db.run_query(pr_query)
@@ -25,6 +26,7 @@ entries = np.concatenate(
     (df_search_bar.rg_name.unique(), df_search_bar.repo_git.unique()), axis=None
 )
 entries = entries.tolist()
+print("AUGUR_ENTRY_LIST - END")
 
 # side bar code for page navigation
 sidebar = html.Div(
@@ -130,12 +132,14 @@ index_layout = dbc.Container(
     style={"padding-top": "1em"},
 )
 
+print("VALIDATE_LAYOUT - START")
 app.layout = index_layout
 
 ### Assemble all layouts ###
 app.validation_layout = html.Div(
     children=[index_layout, start.layout, overview.layout, cicd.layout, chaoss.layout]
 )
+print("VALIDATE_LAYOUT - END")
 
 """
     Page Callbacks- all query callbacks are in query_callbacks.py
@@ -144,13 +148,18 @@ app.validation_layout = html.Div(
 # page selection call back
 @callback(Output("display-page", "children"), Input("url", "pathname"))
 def display_page(pathname):
+    print("GET_PATHNAME - START")
     if pathname == "/overview":
+        print("GET_PATHNAME - END")
         return overview.layout
     elif pathname == "/cicd":
+        print("GET_PATHNAME - END")
         return cicd.layout
     elif pathname == "/chaoss":
+        print("GET_PATHNAME - END")
         return chaoss.layout
     elif pathname == "/":
+        print("GET_PATHNAME - END")
         return start.layout
     else:
         return "404"
