@@ -1,9 +1,20 @@
+"""
+    Profiling stuff
+"""
+import pstats
+from pstats import SortKey
+import cProfile
+
+"""
+    App imports
+"""
 from dash import html
 from dash import dcc
 import dash
 import dash_labs as dl
 import dash_bootstrap_components as dbc
 from app import app, entries
+import os
 
 # import page files from project.
 from pages import start, overview, cicd, chaoss
@@ -143,5 +154,27 @@ app.validation_layout = html.Div(
 print("VALIDATE_LAYOUT - END")
 
 
-if __name__ == "__main__":
+def main():
     app.run_server(host="0.0.0.0", port=8050, debug=True)
+
+if __name__ == "__main__":
+    if(os.environ["profiling"] == "True"):
+        """
+            Ref for how to do this:
+            https://www.youtube.com/watch?v=dmnA3axZ3FY
+
+            Credit to IDG TECHTALK
+        """
+        print("Profiling")
+
+        cProfile.run("main()", "output.dat")
+
+        with open("output_time.txt", "w") as f:
+            p = pstats.Stats("output.dat", stream=f)
+            p.sort_stats("time").print_stats()
+
+        with open("output_calls.txt", "w") as f:
+            p = pstats.Stats("output.dat", stream=f)
+            p.sort_stats("calls").print_stats()
+    else:
+        main()
