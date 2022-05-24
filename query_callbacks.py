@@ -1,21 +1,15 @@
-from dash import html, callback_context, callback
+from dash import callback
 from dash.dependencies import Input, Output, State
 import dash
-from dash import dcc
-import plotly.express as px
-from json import dumps
-import numpy as np
-import dash_bootstrap_components as dbc
 import pandas as pd
 import sqlalchemy as salc
-from app import app, server, engine, augur_db
-import os
+from app import app, engine, augur_db
 
 # helper function for repos to get repo_ids
 def _parse_repo_choices(repo_git_set):
 
     print("_PARSE_REPO_CHOICES - start")
-    
+
     repo_ids = []
     repo_names = []
 

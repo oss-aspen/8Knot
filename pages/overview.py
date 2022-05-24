@@ -1,15 +1,14 @@
-from turtle import title
-from dash import html, callback_context, callback, dcc
+from dash import html, callback, dcc
+import dash
 import plotly.express as px
 from dash.dependencies import Input, Output
-import plotly
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
-from app import app
 import pandas as pd
 import datetime as dt
-from .visualizations import commits_activity as ca
 
+# register the page
+dash.register_page(__name__)
 
 layout = dbc.Container(
     [
@@ -127,11 +126,11 @@ def create_graph(data, interval):
     # reset index to be ready for plotly
     df_issues = df_issues.reset_index()
 
-    #time values for graph
+    # time values for graph
     x_r, x_name, hover = get_graph_time_values(interval)
-    
-    #graph geration
-    if(df_issues is not None):
+
+    # graph geration
+    if df_issues is not None:
         fig = go.Figure()
         fig.add_histogram(
             x=df_issues["closed"].dropna(),
@@ -199,35 +198,34 @@ def make_open_df(df_issues):
     df_open = df_open.sort_values("issue")
     df_open = df_open.reset_index(drop=True)
     df_open["total"] = df_open["open"].cumsum()
-    df_open["issue"] = pd.to_datetime(df_open['issue'])
-    df_open['issue'] = df_open['issue'].dt.floor("D")
-    df_open = df_open.drop_duplicates(subset='issue', keep='last')
-    df_open = df_open.drop(columns= 'open')
+    df_open["issue"] = pd.to_datetime(df_open["issue"])
+    df_open["issue"] = df_open["issue"].dt.floor("D")
+    df_open = df_open.drop_duplicates(subset="issue", keep="last")
+    df_open = df_open.drop(columns="open")
     print("OPEN_PR_PROCESSING - END")
     return df_open
 
+
 def get_graph_time_values(interval):
     print("GRAPH_TIME_VALUES_PROCESSING - START")
-    #helper values for building graph 
+    # helper values for building graph
     today = dt.date.today()
     x_r = []
     x_name = "Year"
     hover = "Year: %{x|%Y}"
 
-    
-    #graph input values based on date interval selection
-    if interval == 86400000: #if statement for days
-        x_r = [str(today-dt.timedelta(weeks=4)),str(today)]
+    # graph input values based on date interval selection
+    if interval == 86400000:  # if statement for days
+        x_r = [str(today - dt.timedelta(weeks=4)), str(today)]
         x_name = "Day"
         hover = "Day: %{x|%b %d, %Y}"
-    elif interval == 604800000: #if statmement for weeks 
-        x_r = [str(today-dt.timedelta(weeks=30)),str(today)]
+    elif interval == 604800000:  # if statmement for weeks
+        x_r = [str(today - dt.timedelta(weeks=30)), str(today)]
         x_name = "Week"
         hover = "Week: %{x|%b %d, %Y}"
-    elif interval =='M1': #if statement for months
-        x_r = [str(today-dt.timedelta(weeks=104)),str(today)]
+    elif interval == "M1":  # if statement for months
+        x_r = [str(today - dt.timedelta(weeks=104)), str(today)]
         x_name = "Month"
         hover = "Month: %{x|%b %Y}"
     print("GRAPH_TIME_VALUES_PROCESSING - END")
     return x_r, x_name, hover
-

@@ -1,32 +1,15 @@
-from dash import html, callback_context, callback
-from dash.dependencies import Input, Output, State
-import dash
+from dash import html, callback
+from dash.dependencies import Input, Output
 from dash import dcc
-import plotly.express as px
-from json import dumps
-import numpy as np
+import dash
+import dash_labs as dl
 import dash_bootstrap_components as dbc
-import pandas as pd
-import sqlalchemy as salc
-from app import app, augur_db
-import os
+from app import app, entries
 
 # import page files from project.
 from pages import start, overview, cicd, chaoss
 import query_callbacks
 
-
-# generate entries for search bar
-print("AUGUR_ENTRY_LIST - START")
-pr_query = f"""SELECT * FROM augur_data.explorer_entry_list"""
-
-df_search_bar = augur_db.run_query(pr_query)
-
-entries = np.concatenate(
-    (df_search_bar.rg_name.unique(), df_search_bar.repo_git.unique()), axis=None
-)
-entries = entries.tolist()
-print("AUGUR_ENTRY_LIST - END")
 
 # side bar code for page navigation
 sidebar = html.Div(
@@ -35,10 +18,9 @@ sidebar = html.Div(
         html.Hr(),
         dbc.Nav(
             [
-                dbc.NavLink("Home", href="/", active="exact"),
-                dbc.NavLink("Overview Page", href="/overview", active="exact"),
-                dbc.NavLink("CI/CD Page", href="/cicd", active="exact"),
-                dbc.NavLink("Chaoss Page", href="/chaoss", active="exact"),
+                dbc.NavLink(page["name"], href=page["path"], active="exact")
+                for page in dash.page_registry.values()
+                if page["module"] != "pages.not_found_404"
             ],
             vertical=True,
             pills=True,
@@ -77,7 +59,7 @@ index_layout = dbc.Container(
                                             value=["agroal"],
                                             options=[
                                                 {"label": x, "value": x}
-                                                for x in sorted(entries)
+                                                for x in entries
                                             ],
                                         )
                                     ],
@@ -106,13 +88,13 @@ index_layout = dbc.Container(
                             },
                         ),
                         html.Div(id="results-output-container", className="mb-4"),
-                        html.Div(id="display-page", children=[]),
+                        # where our page will be rendered
+                        dl.plugins.page_container,
                     ],
                     width={"size": 11},
                 ),
             ],
             justify="start",
-
         ),
         dbc.Row(
             [
@@ -140,29 +122,6 @@ app.validation_layout = html.Div(
     children=[index_layout, start.layout, overview.layout, cicd.layout, chaoss.layout]
 )
 print("VALIDATE_LAYOUT - END")
-
-"""
-    Page Callbacks- all query callbacks are in query_callbacks.py
-"""
-
-# page selection call back
-@callback(Output("display-page", "children"), Input("url", "pathname"))
-def display_page(pathname):
-    print("GET_PATHNAME - START")
-    if pathname == "/overview":
-        print("GET_PATHNAME - END")
-        return overview.layout
-    elif pathname == "/cicd":
-        print("GET_PATHNAME - END")
-        return cicd.layout
-    elif pathname == "/chaoss":
-        print("GET_PATHNAME - END")
-        return chaoss.layout
-    elif pathname == "/":
-        print("GET_PATHNAME - END")
-        return start.layout
-    else:
-        return "404"
 
 
 if __name__ == "__main__":

@@ -1,17 +1,9 @@
 from dash import html
-from app import app
 import dash
-from dash import dcc
-from dash.dependencies import Output, Input
-import plotly
-import plotly.express as px
 import dash_bootstrap_components as dbc
-import pandas as pd
-import sqlalchemy as salc
-import psycopg2
-import json
-import numpy as np
 
+# register the page
+dash.register_page(__name__)
 
 layout = dbc.Container(
     [
