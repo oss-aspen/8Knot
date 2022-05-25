@@ -203,7 +203,7 @@ def make_open_df(df_issues):
 def get_graph_time_values(interval):
     #helper values for building graph 
     today = dt.date.today()
-    x_r = []
+    x_r = None
     x_name = "Year"
     hover = "Year: %{x|%Y}"
 

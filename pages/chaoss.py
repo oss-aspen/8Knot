@@ -212,7 +212,7 @@ def create_graph(data,contribs,interval):
 def get_graph_time_values(interval):
     #helper values for building graph 
     today = dt.date.today()
-    x_r = []
+    x_r = None
     x_name = "Year"
     hover = "Year: %{x|%Y}"
     period = 'Y'
