@@ -24,7 +24,8 @@ layout = dbc.Container([
 
     dbc.Row([
         dbc.Col([
-            dcc.Graph(id='cont-drive-repeat'),
+            dcc.Loading(children=[dcc.Graph(id='cont-drive-repeat')], color="#119DFF", type="dot", fullscreen=False,),
+            #dcc.Graph(id='cont-drive-repeat'),
 
             dbc.Form(
                 dbc.Row(
@@ -52,7 +53,8 @@ layout = dbc.Container([
             ],
         ),
         dbc.Col([
-            dcc.Graph(id='first-time-contributors'),
+            dcc.Loading(children=[dcc.Graph(id='first-time-contributors')], color="#119DFF", type="dot", fullscreen=False,),
+            #dcc.Graph(id='first-time-contributors'),
             ],
         ),
         ]
@@ -61,7 +63,8 @@ layout = dbc.Container([
     dbc.Row([
         dbc.Col([
 
-            dcc.Graph(id='contributors-over-time'),
+            dcc.Loading(children=[dcc.Graph(id='contributors-over-time')], color="#119DFF", type="dot", fullscreen=False,),
+            #dcc.Graph(id='contributors-over-time'),
 
             dbc.Form(
                 dbc.Row(
