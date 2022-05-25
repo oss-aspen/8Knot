@@ -2,7 +2,6 @@
     Profiling stuff
 """
 import pstats
-from pstats import SortKey
 import cProfile
 
 """
@@ -158,23 +157,25 @@ def main():
     app.run_server(host="0.0.0.0", port=8050, debug=True)
 
 if __name__ == "__main__":
-    if(os.environ["profiling"] == "True"):
-        """
-            Ref for how to do this:
-            https://www.youtube.com/watch?v=dmnA3axZ3FY
+    try:
+        if(os.environ["profiling"] == "True"):
+            """
+                Ref for how to do this:
+                https://www.youtube.com/watch?v=dmnA3axZ3FY
 
-            Credit to IDG TECHTALK
-        """
-        print("Profiling")
+                Credit to IDG TECHTALK
+            """
+            print("Profiling")
 
-        cProfile.run("main()", "output.dat")
+            cProfile.run("main()", "output.dat")
 
-        with open("output_time.txt", "w") as f:
-            p = pstats.Stats("output.dat", stream=f)
-            p.sort_stats("time").print_stats()
+            with open("output_time.txt", "w") as f:
+                p = pstats.Stats("output.dat", stream=f)
+                p.sort_stats("time").print_stats()
 
-        with open("output_calls.txt", "w") as f:
-            p = pstats.Stats("output.dat", stream=f)
-            p.sort_stats("calls").print_stats()
-    else:
+            with open("output_calls.txt", "w") as f:
+                p = pstats.Stats("output.dat", stream=f)
+                p.sort_stats("calls").print_stats()
+    except KeyError:
+        print("---------PROFILING OFF---------")
         main()

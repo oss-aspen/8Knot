@@ -51,4 +51,8 @@ entries = np.concatenate(
 )
 entries = entries.tolist()
 entries = sorted(entries)
+entries = entries[:1000]
+
+print(f"Num Entries: {len(entries)}")
+
 print("AUGUR_ENTRY_LIST - END")
