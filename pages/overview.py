@@ -18,7 +18,8 @@ layout = dbc.Container(
             [
                 dbc.Col(
                     [
-                        dcc.Graph(id="commits-over-time"),
+                        dcc.Loading(children=[dcc.Graph(id="commits-over-time")], color="#119DFF", type="dot", fullscreen=False,),
+                        #dcc.Graph(id="commits-over-time"),
                         html.Label(["Date Interval"], style={"font-weight": "bold"}),
                         dcc.RadioItems(
                             id="time-interval",
@@ -41,7 +42,8 @@ layout = dbc.Container(
                 ),
                 dbc.Col(
                     [
-                        dcc.Graph(id="issues-over-time"),
+                        dcc.Loading(children=[dcc.Graph(id="issues-over-time")], color="#119DFF", type="dot", fullscreen=False,),
+                        #dcc.Graph(id="issues-over-time"),
                     ],
                 ),
             ]
