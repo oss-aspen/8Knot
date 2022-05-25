@@ -1,5 +1,5 @@
 ---
-name: Visualization
+name: New Visualization Request
 about: Outline the generation of a new visualization
 labels: enhancement,visualization
 ---
