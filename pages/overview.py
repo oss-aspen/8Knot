@@ -210,7 +210,7 @@ def get_graph_time_values(interval):
     print("GRAPH_TIME_VALUES_PROCESSING - START")
     #helper values for building graph 
     today = dt.date.today()
-    x_r = []
+    x_r = None
     x_name = "Year"
     hover = "Year: %{x|%Y}"
 
