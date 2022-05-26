@@ -3,7 +3,7 @@ import dash
 import dash_bootstrap_components as dbc
 
 # register the page
-dash.register_page(__name__)
+dash.register_page(__name__, order=4)
 
 layout = dbc.Container(
     [

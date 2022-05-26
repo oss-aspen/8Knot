@@ -7,7 +7,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # register the page
-dash.register_page(__name__)
+dash.register_page(__name__, order=3)
 
 from .callbacks import chaoss_callbacks
 

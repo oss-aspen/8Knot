@@ -4,7 +4,7 @@ import dash_bootstrap_components as dbc
 import dash
 
 # register the page
-dash.register_page(__name__, href="/")
+dash.register_page(__name__, path='/', order=1)
 
 layout = dbc.Container(
     [

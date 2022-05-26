@@ -1,11 +1,11 @@
 from dash import html, dcc
 import dash
 import dash_bootstrap_components as dbc
+from .callbacks import overview_callbacks
 
 # register the page
-dash.register_page(__name__)
+dash.register_page(__name__, order=2)
 
-from .callbacks import overview_callbacks
 
 layout = dbc.Container(
     [

@@ -17,6 +17,7 @@ import os
 
 # import page files from project.
 from pages import start, overview, cicd, chaoss
+import index_callbacks 
 
 """
     README -- Organization of Callback Functions 
@@ -31,7 +32,6 @@ from pages import start, overview, cicd, chaoss
     Having laid out the HTML-like organization of this page, we write the callbacks for this page in
     the neighbor 'index_callbacks.py' file.
 """
-import index_callbacks 
 
 # side bar code for page navigation
 sidebar = html.Div(
@@ -40,7 +40,7 @@ sidebar = html.Div(
         html.Hr(),
         dbc.Nav(
             [
-                dbc.NavLink(page["name"], href=page["path"], active="exact")
+                dbc.NavLink(page["name"], href=page["path"])
                 for page in dash.page_registry.values()
                 if page["module"] != "pages.not_found_404"
             ],
