@@ -12,10 +12,23 @@ layout = dbc.Container(
             [
                 dbc.Col(
                     [
+                        html.H1(
+                            "Start Page: User notes",
+                            #className="font-weight-bold mb-4",
+                        ),
                         html.P(
-                            "Start page text holder.",
-                            className="text-center font-weight-bold mb-4",
-                        )
+                            "This is WIP and format changes to come. Visualization are on other pages",
+                            className="font-weight-bold mb-4",
+                        ),
+                        html.P(
+                            "Plotly graphs have a mode bar if you hover over the top of the title.",
+                            className="font-weight-bold mb-4",
+                        ),
+                        html.P(
+                            "If you want to reset the view of a graph with customization options, toggle one of the options to reset the view.",
+                            className="font-weight-bold mb-4",
+                        ),
+
                     ]
                 )
             ]

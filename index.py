@@ -116,7 +116,7 @@ index_layout = dbc.Container(
                                 "width": "60%",
                             },
                         ),
-                        html.Div(id="results-output-container", className="mb-4"),
+                        dcc.Loading(children=[html.Div(id="results-output-container", className="mb-4")], color="#119DFF", type="dot", fullscreen=True,),
                         # where our page will be rendered
                         dl.plugins.page_container,
                     ],
@@ -129,12 +129,20 @@ index_layout = dbc.Container(
             [
                 dbc.Col(
                     [
-                        html.Footer(
-                            "Report issues to jkunstle@redhat.com, topic: Explorer Issue",
-                            style={"textDecoration": "underline"},
-                        )
+                        html.H5(
+                            "Have a bug or feature request?",className="mb-2"
+                            #style={"textDecoration": "underline"},
+                        ),
+                        html.Div([
+                            dbc.Button("Visualization request", color="primary", className="me-1",external_link=True, target="_blank",
+                                href ="https://github.com/sandiego-rh/explorer/issues/new?assignees=&labels=enhancement%2Cvisualization&template=visualizations.md"),
+                            dbc.Button("Bug", color="primary", className="me-1",external_link=True, target="_blank",
+                                href ="https://github.com/sandiego-rh/explorer/issues/new?assignees=&labels=bug&template=bug_report.md"),
+                            dbc.Button("Repo/Org Request", color="primary",external_link=True, target="_blank",
+                                href ="https://github.com/sandiego-rh/explorer/issues/new?assignees=&labels=augur&template=augur_load.md"),
+                        ])
                     ],
-                    width={"offset": 9},
+                    width={"offset": 10},
                 )
             ],
         ),
