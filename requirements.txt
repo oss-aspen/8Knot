@@ -1,9 +1,10 @@
 dash
+dash_labs
 gunicorn
 pandas
 numpy
 sqlalchemy
 psycopg2
-dash-bootstrap-components
+dash_bootstrap_components
 plotly
-plotly-express
+plotly_express

@@ -1,35 +1,55 @@
 import dash
+import dash_labs as dl
 import dash_bootstrap_components as dbc
+import numpy as np
 
 from db_interface.AugurInterface import AugurInterface
 import os
 
 """
-    Connect to the Augur instance.
+    Need to load our config parameters. 
+    
+    Parameters are either in the environment or they're in a config file at the same level as this file.
 
-    Get all of the unique repo names and group names.
-
-    Use those to populate the available options in the search bar.
+    Check first if we can get the parameters from the environment then default to trying to find the config
+    file in the directory.
 """
-
 try:
-    # check if we're running on production hardware. The 'running_on' variable will be set.
-    os.environ['running_on'] == 'prod'
-    print("Production config")
+    assert os.environ["running_on"] == "prod"
     augur_db = AugurInterface()
 except KeyError:
-    # otherwise, try to load the config from our local directory -- suggests we are running in local environment.
-    print("Development Config")
     augur_db = AugurInterface("./config.json")
 
+"""
+    Get our SQLAlchemy engine that connects to our database. This is declared at the global scope 
+    so that it is available to all of the pages later for their queries.
+"""
 engine = augur_db.get_engine()
 
-app = dash.Dash(__name__,external_stylesheets=[dbc.themes.SANDSTONE])
 
-# app = dash.Dash(__name__, suppress_callback_exceptions=True, external_stylesheets=[dbc.themes.SLATE],
-#                 meta_tags=[{'name': 'viewport',
-#                             'content': 'width=device-width, initial-scale=1.0'}]
-#                 )
+"""
+    Create out Dash app with the dash_labs plugin for multi-page apps and with the Sandstone bootstrap_components theme.
+"""
+app = dash.Dash(
+    __name__, plugins=[dl.plugins.pages], external_stylesheets=[dbc.themes.SANDSTONE]
+)
 
-server = app.server
+"""
+    Query the Augur DB for the list of all repos and orgs
+    that we have available from scraping. Populate that data structure
+    at the global level.
+"""
+print("AUGUR_ENTRY_LIST - START")
 
+# from our list of all org/repos
+pr_query = f"""SELECT * FROM augur_data.explorer_entry_list"""
+
+df_search_bar = augur_db.run_query(pr_query)
+
+entries = np.concatenate(
+    (df_search_bar.rg_name.unique(), df_search_bar.repo_git.unique()), axis=None
+)
+entries = entries.tolist()
+entries = sorted(entries)
+
+print("AUGUR_ENTRY_LIST - END")

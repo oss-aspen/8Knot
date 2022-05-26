@@ -1,30 +1,37 @@
-from dash import html, callback_context, callback
-from dash.dependencies import Input, Output, State
-import dash
+"""
+    Profiling stuff
+"""
+import pstats
+import cProfile
+
+"""
+    App imports
+"""
+from dash import html
 from dash import dcc
-import plotly.express as px
-from json import dumps
-import numpy as np
+import dash
+import dash_labs as dl
 import dash_bootstrap_components as dbc
-import pandas as pd
-import sqlalchemy as salc
-from app import app, augur_db
+from app import app, entries
 import os
 
 # import page files from project.
 from pages import start, overview, cicd, chaoss
-import query_callbacks
+import index_callbacks 
 
+"""
+    README -- Organization of Callback Functions 
 
-# generate entries for search bar
-pr_query = f"""SELECT * FROM augur_data.explorer_entry_list"""
+    In an effort to compartmentalize our development where possible, all callbacks directly relating
+    to pages in our application are in their own files. 
 
-df_search_bar = augur_db.run_query(pr_query)
+    For instance, this file contains the layout logic for the index page of our app-
+    this page serves all other paths by providing the searchbar, page routing faculties,
+    and data storage objects that the other pages in our app use. 
 
-entries = np.concatenate(
-    (df_search_bar.rg_name.unique(), df_search_bar.repo_git.unique()), axis=None
-)
-entries = entries.tolist()
+    Having laid out the HTML-like organization of this page, we write the callbacks for this page in
+    the neighbor 'index_callbacks.py' file.
+"""
 
 # side bar code for page navigation
 sidebar = html.Div(
@@ -33,10 +40,9 @@ sidebar = html.Div(
         html.Hr(),
         dbc.Nav(
             [
-                dbc.NavLink("Home", href="/", active="exact"),
-                dbc.NavLink("Overview Page", href="/overview", active="exact"),
-                dbc.NavLink("CI/CD Page", href="/cicd", active="exact"),
-                dbc.NavLink("Chaoss Page", href="/chaoss", active="exact"),
+                dbc.NavLink(page["name"], href=page["path"])
+                for page in dash.page_registry.values()
+                if page["module"] != "pages.not_found_404"
             ],
             vertical=True,
             pills=True,
@@ -44,7 +50,7 @@ sidebar = html.Div(
     ]
 )
 
-
+# summary layout of the page
 index_layout = dbc.Container(
     [
         # componets to store data from queries
@@ -52,20 +58,26 @@ index_layout = dbc.Container(
         dcc.Store(id="commits-data", data=[], storage_type="memory"),
         dcc.Store(id="contributions", data=[], storage_type="memory"),
         dcc.Store(id="issues-data", data=[], storage_type="memory"),
+
         dcc.Location(id="url"),
+
         dbc.Row(
             [
+                # from above definition
                 dbc.Col(sidebar, width=1),
+
                 dbc.Col(
                     [
                         html.H1(
                             "Sandiego Explorer Demo Multipage", className="text-center"
                         ),
+
                         # search bar with buttons
                         html.Label(
                             ["Select Github repos or orgs:"],
                             style={"font-weight": "bold"},
                         ),
+
                         html.Div(
                             [
                                 html.Div(
@@ -76,7 +88,7 @@ index_layout = dbc.Container(
                                             value=["agroal"],
                                             options=[
                                                 {"label": x, "value": x}
-                                                for x in sorted(entries)
+                                                for x in entries
                                             ],
                                         )
                                     ],
@@ -104,10 +116,11 @@ index_layout = dbc.Container(
                                 "width": "60%",
                             },
                         ),
-                        html.Div(id="results-output-container", className="mb-4"),
-                        html.Div(id="display-page", children=[]),
+                        dcc.Loading(children=[html.Div(id="results-output-container", className="mb-4")], color="#119DFF", type="dot", fullscreen=True,),
+                        # where our page will be rendered
+                        dl.plugins.page_container,
                     ],
-                    width={"size": 11, "offset": 0},
+                    width={"size": 11},
                 ),
             ],
             justify="start",
@@ -116,12 +129,20 @@ index_layout = dbc.Container(
             [
                 dbc.Col(
                     [
-                        html.Footer(
-                            "Report issues to jkunstle@redhat.com, topic: Explorer Issue",
-                            style={"textDecoration": "underline"},
-                        )
+                        html.H5(
+                            "Have a bug or feature request?",className="mb-2"
+                            #style={"textDecoration": "underline"},
+                        ),
+                        html.Div([
+                            dbc.Button("Visualization request", color="primary", className="me-1",external_link=True, target="_blank",
+                                href ="https://github.com/sandiego-rh/explorer/issues/new?assignees=&labels=enhancement%2Cvisualization&template=visualizations.md"),
+                            dbc.Button("Bug", color="primary", className="me-1",external_link=True, target="_blank",
+                                href ="https://github.com/sandiego-rh/explorer/issues/new?assignees=&labels=bug&template=bug_report.md"),
+                            dbc.Button("Repo/Org Request", color="primary",external_link=True, target="_blank",
+                                href ="https://github.com/sandiego-rh/explorer/issues/new?assignees=&labels=augur&template=augur_load.md"),
+                        ])
                     ],
-                    width={"offset": 9},
+                    width={"offset": 10},
                 )
             ],
         ),
@@ -130,31 +151,39 @@ index_layout = dbc.Container(
     style={"padding-top": "1em"},
 )
 
+print("VALIDATE_LAYOUT - START")
 app.layout = index_layout
 
 ### Assemble all layouts ###
 app.validation_layout = html.Div(
     children=[index_layout, start.layout, overview.layout, cicd.layout, chaoss.layout]
 )
+print("VALIDATE_LAYOUT - END")
 
-"""
-    Page Callbacks- all query callbacks are in query_callbacks.py
-"""
 
-# page selection call back
-@callback(Output("display-page", "children"), Input("url", "pathname"))
-def display_page(pathname):
-    if pathname == "/overview":
-        return overview.layout
-    elif pathname == "/cicd":
-        return cicd.layout
-    elif pathname == "/chaoss":
-        return chaoss.layout
-    elif pathname == "/":
-        return start.layout
-    else:
-        return "404"
-
+def main():
+    app.run_server(host="0.0.0.0", port=8050, debug=True)
 
 if __name__ == "__main__":
-    app.run_server(host="0.0.0.0", port=8050, debug=True)
+    try:
+        if(os.environ["profiling"] == "True"):
+            """
+                Ref for how to do this:
+                https://www.youtube.com/watch?v=dmnA3axZ3FY
+
+                Credit to IDG TECHTALK
+            """
+            print("Profiling")
+
+            cProfile.run("main()", "output.dat")
+
+            with open("output_time.txt", "w") as f:
+                p = pstats.Stats("output.dat", stream=f)
+                p.sort_stats("time").print_stats()
+
+            with open("output_calls.txt", "w") as f:
+                p = pstats.Stats("output.dat", stream=f)
+                p.sort_stats("calls").print_stats()
+    except KeyError:
+        print("---------PROFILING OFF---------")
+        main()

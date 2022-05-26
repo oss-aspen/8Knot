@@ -132,3 +132,7 @@ comm_cage.json
 config_temp.json
 copy_cage.json
 config.json
+
+output_calls.txt
+output_time.txt
+output.dat

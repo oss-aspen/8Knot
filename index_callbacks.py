@@ -1,18 +1,14 @@
-from dash import html, callback_context, callback
+from dash import callback
 from dash.dependencies import Input, Output, State
 import dash
-from dash import dcc
-import plotly.express as px
-from json import dumps
-import numpy as np
-import dash_bootstrap_components as dbc
 import pandas as pd
 import sqlalchemy as salc
-from app import app, server, engine, augur_db
-import os
+from app import app, engine, augur_db
 
 # helper function for repos to get repo_ids
 def _parse_repo_choices(repo_git_set):
+
+    print("_PARSE_REPO_CHOICES - start")
 
     repo_ids = []
     repo_names = []
@@ -43,11 +39,13 @@ def _parse_repo_choices(repo_git_set):
         repo_ids = [row[0] for row in results]
         repo_names = [row[1] for row in results]
 
+    print("_PARSE_REPO_CHOICES - end")
     return repo_ids, repo_names
 
 
 # helper function for orgs to get repo_ids
 def _parse_org_choices(org_name_set):
+    print("_PARSE_ORG_CHOICES - start")
     org_repo_ids = []
     org_repo_names = []
 
@@ -77,6 +75,7 @@ def _parse_org_choices(org_name_set):
         org_repo_ids = [row[0] for row in results]
         org_repo_names = [row[1] for row in results]
 
+    print("_PARSE_ORG_CHOICES - end")
     return org_repo_ids, org_repo_names
 
 
@@ -91,7 +90,7 @@ def update_output(n_clicks, value):
     """
     Section handles parsing the input repos / orgs when there is selected values
     """
-    print("search bar query start")
+    print("SEARCHBAR_ORG_REPO_PARSING - start")
     if len(value) > 0:
         repo_git_set = []
         org_name_set = []
@@ -115,9 +114,9 @@ def update_output(n_clicks, value):
         total_ids = list(total_ids)
 
         selections = str(value)
-        print("search bar query finish")
 
         # return the string that we want and return the list of the id's that we need for the other callback.
+        print("SEARCHBAR_ORG_REPO_PARSING - END")
         return f"Your current selections is: {selections[1:-1]}", list(total_ids)
     elif len(value) == 0:
         raise dash.exceptions.PreventUpdate
@@ -126,8 +125,7 @@ def update_output(n_clicks, value):
 # call back for commits query
 @callback(Output("commits-data", "data"), Input("repo_choices", "data"))
 def generate_commit_data(repo_ids):
-
-    print("commits query start")
+    print("COMMITS_DATA_QUERY - START")
     # query input format update
     repo_statement = str(repo_ids)
     repo_statement = repo_statement[1:-1]
@@ -150,14 +148,14 @@ def generate_commit_data(repo_ids):
 
     df_commits = augur_db.run_query(commits_query)
 
-    print("commits query complete")
+    print("COMMITS_DATA_QUERY - END")
     return df_commits.to_dict("records")
 
 
 # call back for contributions query
 @callback(Output("contributions", "data"), Input("repo_choices", "data"))
 def generate_contributions_data(repo_ids):
-    print("contributions query start")
+    print("CONTRIBUTIONS_DATA_QUERY - START")
     repo_statement = str(repo_ids)
     repo_statement = repo_statement[1:-1]
 
@@ -429,7 +427,7 @@ def generate_contributions_data(repo_ids):
 
     df_cont = df_cont.reset_index()
     df_cont.drop("index", axis=1, inplace=True)
-    print("contributions query complete")
+    print("CONTRIBUTIONS_DATA_QUERY - END")
     return df_cont.to_dict("records")
 
 
@@ -437,7 +435,7 @@ def generate_contributions_data(repo_ids):
 @callback(Output("issues-data", "data"), Input("repo_choices", "data"))
 def generate_issues_data(repo_ids):
 
-    print("issues query start")
+    print("ISSUES_DATA_QUERY - START")
 
     repo_statement = str(repo_ids)
     repo_statement = repo_statement[1:-1]
@@ -471,6 +469,6 @@ def generate_issues_data(repo_ids):
     df_issues = df_issues.reset_index()
     df_issues.drop("index", axis=1, inplace=True)
 
-    print("issues query complete")
+    print("ISSUES_DATA_QUERY - END")
 
     return df_issues.to_dict("records")
