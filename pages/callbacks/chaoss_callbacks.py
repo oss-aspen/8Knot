@@ -19,6 +19,8 @@ warnings.filterwarnings("ignore")
     ],
 )
 def create_graph(data, contribs, view):
+    print("CONTRIB_DRIVE_REPEAT_VIZ - START")
+
     # graph on contribution subset
     df_cont = pd.DataFrame(data)
     contributors = df_cont["cntrb_id"][df_cont["rank"] == contribs].to_list()
@@ -53,13 +55,15 @@ def create_graph(data, contribs, view):
             xaxis_title="Quarter",
             yaxis_title="Contributions",
         )
+        print("CONTRIB_DRIVE_REPEAT_VIZ - END")
         return fig
     else:
         return None
 
 
-@callback(Output("first-time-contributors", "figure"), Input("contributions", "data"))
+@callback(Output('first-time-contributions', "figure"), Input("contributions", "data"))
 def create_graph(data):
+    print("1ST_CONTRIBUTIONS_VIZ - START")
     df_cont = pd.DataFrame(data)
 
     # selection for 1st contribution only
@@ -86,6 +90,7 @@ def create_graph(data):
             xaxis_title="Quarter",
             yaxis_title="Contributions",
         )
+        print("1ST_CONTRIBUTIONS_VIZ - END")
         return fig
     else:
         return None
@@ -100,6 +105,8 @@ def create_graph(data):
     ],
 )
 def create_graph(data, contribs, interval):
+    print("CONTRIBUTIONS_OVER_TIME_VIZ - START")
+
     df_cont = pd.DataFrame(data)
     df_cont["created_at"] = pd.to_datetime(
         df_cont["created_at"], utc=True, format="%Y-%m-%d"
@@ -165,6 +172,7 @@ def create_graph(data, contribs, interval):
             legend_title_text="Type",
             yaxis_title="Number of Contributors",
         )
+        print("CONTRIBUTIONS_OVER_TIME_VIZ - END")
         return fig
     else:
         return None

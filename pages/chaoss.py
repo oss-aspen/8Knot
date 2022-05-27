@@ -77,7 +77,7 @@ layout = dbc.Container(
                 ),
                 dbc.Col(
                     [
-                        dcc.Loading(children=[dcc.Graph(id='first-time-contributors')], color="#119DFF", type="dot", fullscreen=False,),
+                        dcc.Loading(children=[dcc.Graph(id='first-time-contributions')], color="#119DFF", type="dot", fullscreen=False,),
                     ],
                 ),
             ]
