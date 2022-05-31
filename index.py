@@ -17,7 +17,7 @@ import os
 
 # import page files from project.
 from pages import start, overview, cicd, chaoss
-import index_callbacks 
+import index_callbacks
 
 """
     README -- Organization of Callback Functions 
@@ -58,26 +58,21 @@ index_layout = dbc.Container(
         dcc.Store(id="commits-data", data=[], storage_type="memory"),
         dcc.Store(id="contributions", data=[], storage_type="memory"),
         dcc.Store(id="issues-data", data=[], storage_type="memory"),
-
         dcc.Location(id="url"),
-
         dbc.Row(
             [
                 # from above definition
                 dbc.Col(sidebar, width=1),
-
                 dbc.Col(
                     [
                         html.H1(
                             "Sandiego Explorer Demo Multipage", className="text-center"
                         ),
-
                         # search bar with buttons
                         html.Label(
                             ["Select Github repos or orgs:"],
                             style={"font-weight": "bold"},
                         ),
-
                         html.Div(
                             [
                                 html.Div(
@@ -86,10 +81,7 @@ index_layout = dbc.Container(
                                             id="projects",
                                             multi=True,
                                             value=["agroal"],
-                                            options=[
-                                                {"label": x, "value": x}
-                                                for x in entries
-                                            ],
+                                            options=["agroal"],
                                         )
                                     ],
                                     style={
@@ -116,7 +108,16 @@ index_layout = dbc.Container(
                                 "width": "60%",
                             },
                         ),
-                        dcc.Loading(children=[html.Div(id="results-output-container", className="mb-4")], color="#119DFF", type="dot", fullscreen=True,),
+                        dcc.Loading(
+                            children=[
+                                html.Div(
+                                    id="results-output-container", className="mb-4"
+                                )
+                            ],
+                            color="#119DFF",
+                            type="dot",
+                            fullscreen=True,
+                        ),
                         # where our page will be rendered
                         dl.plugins.page_container,
                     ],
@@ -130,17 +131,37 @@ index_layout = dbc.Container(
                 dbc.Col(
                     [
                         html.H5(
-                            "Have a bug or feature request?",className="mb-2"
-                            #style={"textDecoration": "underline"},
+                            "Have a bug or feature request?",
+                            className="mb-2"
+                            # style={"textDecoration": "underline"},
                         ),
-                        html.Div([
-                            dbc.Button("Visualization request", color="primary", className="me-1",external_link=True, target="_blank",
-                                href ="https://github.com/sandiego-rh/explorer/issues/new?assignees=&labels=enhancement%2Cvisualization&template=visualizations.md"),
-                            dbc.Button("Bug", color="primary", className="me-1",external_link=True, target="_blank",
-                                href ="https://github.com/sandiego-rh/explorer/issues/new?assignees=&labels=bug&template=bug_report.md"),
-                            dbc.Button("Repo/Org Request", color="primary",external_link=True, target="_blank",
-                                href ="https://github.com/sandiego-rh/explorer/issues/new?assignees=&labels=augur&template=augur_load.md"),
-                        ])
+                        html.Div(
+                            [
+                                dbc.Button(
+                                    "Visualization request",
+                                    color="primary",
+                                    className="me-1",
+                                    external_link=True,
+                                    target="_blank",
+                                    href="https://github.com/sandiego-rh/explorer/issues/new?assignees=&labels=enhancement%2Cvisualization&template=visualizations.md",
+                                ),
+                                dbc.Button(
+                                    "Bug",
+                                    color="primary",
+                                    className="me-1",
+                                    external_link=True,
+                                    target="_blank",
+                                    href="https://github.com/sandiego-rh/explorer/issues/new?assignees=&labels=bug&template=bug_report.md",
+                                ),
+                                dbc.Button(
+                                    "Repo/Org Request",
+                                    color="primary",
+                                    external_link=True,
+                                    target="_blank",
+                                    href="https://github.com/sandiego-rh/explorer/issues/new?assignees=&labels=augur&template=augur_load.md",
+                                ),
+                            ]
+                        ),
                     ],
                     width={"offset": 10},
                 )
@@ -164,14 +185,15 @@ print("VALIDATE_LAYOUT - END")
 def main():
     app.run_server(host="0.0.0.0", port=8050, debug=True)
 
+
 if __name__ == "__main__":
     try:
-        if(os.environ["profiling"] == "True"):
+        if os.environ["profiling"] == "True":
             """
-                Ref for how to do this:
-                https://www.youtube.com/watch?v=dmnA3axZ3FY
+            Ref for how to do this:
+            https://www.youtube.com/watch?v=dmnA3axZ3FY
 
-                Credit to IDG TECHTALK
+            Credit to IDG TECHTALK
             """
             print("Profiling")
 
