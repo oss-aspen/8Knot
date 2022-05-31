@@ -8,7 +8,6 @@ from app import app, engine, augur_db
 # helper function for repos to get repo_ids
 def _parse_repo_choices(repo_git_set):
 
-    print("_PARSE_REPO_CHOICES - start")
 
     repo_ids = []
     repo_names = []
@@ -39,13 +38,11 @@ def _parse_repo_choices(repo_git_set):
         repo_ids = [row[0] for row in results]
         repo_names = [row[1] for row in results]
 
-    print("_PARSE_REPO_CHOICES - end")
     return repo_ids, repo_names
 
 
 # helper function for orgs to get repo_ids
 def _parse_org_choices(org_name_set):
-    print("_PARSE_ORG_CHOICES - start")
     org_repo_ids = []
     org_repo_names = []
 
@@ -75,7 +72,6 @@ def _parse_org_choices(org_name_set):
         org_repo_ids = [row[0] for row in results]
         org_repo_names = [row[1] for row in results]
 
-    print("_PARSE_ORG_CHOICES - end")
     return org_repo_ids, org_repo_names
 
 
@@ -90,7 +86,7 @@ def update_output(n_clicks, value):
     """
     Section handles parsing the input repos / orgs when there is selected values
     """
-    print("SEARCHBAR_ORG_REPO_PARSING - start")
+    print("SEARCHBAR_ORG_REPO_PARSING - START")
     if len(value) > 0:
         repo_git_set = []
         org_name_set = []

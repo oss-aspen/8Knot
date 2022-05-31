@@ -121,7 +121,6 @@ def create_graph(data, interval):
 
 
 def make_open_df(df_issues):
-    print("OPEN_PR_PROCESSING - START")
     # created dataframe
     df_created = pd.DataFrame(df_issues["created"])
     df_created.rename(columns={"created": "issue"}, inplace=True)
@@ -142,12 +141,10 @@ def make_open_df(df_issues):
     df_open["issue"] = df_open["issue"].dt.floor("D")
     df_open = df_open.drop_duplicates(subset="issue", keep="last")
     df_open = df_open.drop(columns="open")
-    print("OPEN_PR_PROCESSING - END")
     return df_open
 
 
 def get_graph_time_values(interval):
-    print("GRAPH_TIME_VALUES_PROCESSING - START")
     # helper values for building graph
     today = dt.date.today()
     x_r = None
@@ -167,5 +164,4 @@ def get_graph_time_values(interval):
         x_r = [str(today - dt.timedelta(weeks=104)), str(today)]
         x_name = "Month"
         hover = "Month: %{x|%b %Y}"
-    print("GRAPH_TIME_VALUES_PROCESSING - END")
     return x_r, x_name, hover
