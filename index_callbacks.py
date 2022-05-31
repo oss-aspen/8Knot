@@ -3,7 +3,7 @@ from dash.dependencies import Input, Output, State
 import dash
 import pandas as pd
 import sqlalchemy as salc
-from app import app, engine, augur_db
+from app import app, engine, augur_db, entries
 
 # helper function for repos to get repo_ids
 def _parse_repo_choices(repo_git_set):
@@ -75,6 +75,37 @@ def _parse_org_choices(org_name_set):
     return org_repo_ids, org_repo_names
 
 
+@app.callback(
+    [Output("projects", "options")],
+    [Input("projects", "search_value")],
+    [State("projects", "value")],
+)
+def dropdown_dynamic_callback(search, bar_state):
+
+    """
+    Ref: https://dash.plotly.com/dash-core-components/dropdown#dynamic-options
+
+    For all of the possible repo's / orgs, check if the substring currently
+    being searched is in the repo's name or if the repo / org name is
+    in the current list of states selected. Add it to the list if it matches
+    either of the options.
+    """
+
+    if search is None or len(search) == 0:
+        raise dash.exceptions.PreventUpdate
+    else:
+        if bar_state is not None:
+            opts = [i for i in entries if search in i or i in bar_state]
+        else:
+            opts = [i for i in entries if search in i]
+
+        # arbitrarily 'small' number of matches returned..
+        if len(opts) < 250:
+            return [opts]
+        else:
+            return [opts[:250]]
+
+
 # call back for repo selctions to feed into visualization call backs
 @app.callback(
     [Output("results-output-container", "children"), Output("repo_choices", "data")],
@@ -82,6 +113,8 @@ def _parse_org_choices(org_name_set):
     State("projects", "value"),
 )
 def update_output(n_clicks, value):
+    if value is None:
+        raise dash.exceptions.PreventUpdate
 
     """
     Section handles parsing the input repos / orgs when there is selected values
