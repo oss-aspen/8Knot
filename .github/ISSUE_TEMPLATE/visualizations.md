@@ -14,7 +14,7 @@ A clear and concise description of the type of graph or metric thats to be creat
 - [ ] Augur Query
 - [ ] Preprocess data into pandas data frame format for visualization
 - [ ] Plotly graph creation
-- [ ] Notes with any background context that would be useful for dash integration 
+- [ ] Notes with any background context that would be useful for Explorer integration 
 - [ ] Open issue on explorer for visualization integration using template
 
 **Additional context**
