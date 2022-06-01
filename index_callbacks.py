@@ -3,12 +3,11 @@ from dash.dependencies import Input, Output, State
 import dash
 import pandas as pd
 import sqlalchemy as salc
-from app import app, engine, augur_db
+from app import app, engine, augur_db, entries
 
 # helper function for repos to get repo_ids
 def _parse_repo_choices(repo_git_set):
 
-    print("_PARSE_REPO_CHOICES - start")
 
     repo_ids = []
     repo_names = []
@@ -39,13 +38,11 @@ def _parse_repo_choices(repo_git_set):
         repo_ids = [row[0] for row in results]
         repo_names = [row[1] for row in results]
 
-    print("_PARSE_REPO_CHOICES - end")
     return repo_ids, repo_names
 
 
 # helper function for orgs to get repo_ids
 def _parse_org_choices(org_name_set):
-    print("_PARSE_ORG_CHOICES - start")
     org_repo_ids = []
     org_repo_names = []
 
@@ -75,8 +72,38 @@ def _parse_org_choices(org_name_set):
         org_repo_ids = [row[0] for row in results]
         org_repo_names = [row[1] for row in results]
 
-    print("_PARSE_ORG_CHOICES - end")
     return org_repo_ids, org_repo_names
+
+
+@app.callback(
+    [Output("projects", "options")],
+    [Input("projects", "search_value")],
+    [State("projects", "value")],
+)
+def dropdown_dynamic_callback(search, bar_state):
+
+    """
+    Ref: https://dash.plotly.com/dash-core-components/dropdown#dynamic-options
+
+    For all of the possible repo's / orgs, check if the substring currently
+    being searched is in the repo's name or if the repo / org name is
+    in the current list of states selected. Add it to the list if it matches
+    either of the options.
+    """
+
+    if search is None or len(search) == 0:
+        raise dash.exceptions.PreventUpdate
+    else:
+        if bar_state is not None:
+            opts = [i for i in entries if search in i or i in bar_state]
+        else:
+            opts = [i for i in entries if search in i]
+
+        # arbitrarily 'small' number of matches returned..
+        if len(opts) < 250:
+            return [opts]
+        else:
+            return [opts[:250]]
 
 
 # call back for repo selctions to feed into visualization call backs
@@ -86,11 +113,13 @@ def _parse_org_choices(org_name_set):
     State("projects", "value"),
 )
 def update_output(n_clicks, value):
+    if value is None:
+        raise dash.exceptions.PreventUpdate
 
     """
     Section handles parsing the input repos / orgs when there is selected values
     """
-    print("SEARCHBAR_ORG_REPO_PARSING - start")
+    print("SEARCHBAR_ORG_REPO_PARSING - START")
     if len(value) > 0:
         repo_git_set = []
         org_name_set = []
