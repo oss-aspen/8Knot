@@ -483,8 +483,6 @@ def generate_contributions_data(repo_ids):
             ORDER BY 
             cntrb_id
         ) b 
-        WHERE 
-        RANK IN (1, 2, 3, 4, 5, 6, 7) 
         """
     )
 
