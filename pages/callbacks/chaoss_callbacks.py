@@ -1,6 +1,6 @@
 from dash import callback
 import plotly.express as px
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 import plotly.express as px
 import pandas as pd
 import datetime as dt
@@ -8,6 +8,29 @@ import numpy as np
 import warnings
 
 warnings.filterwarnings("ignore")
+
+@callback(
+    Output("popover-1", "is_open"),
+    [Input("popover-target-1", "n_clicks")],
+    [State("popover-1", "is_open")],
+)
+def toggle_popover(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
+@callback(
+    Output('graph-title-1','children'),
+    Input("drive-repeat", "value")
+)
+def graph_title(view):
+    title = ""
+    if view == "drive":
+        title = "Drive-by Contributions Per Quarter"
+    else:
+        title = "Repeat Contributions Per Quarter"
+    return title
+
 
 # call back for drive by vs commits over time graph
 @callback(

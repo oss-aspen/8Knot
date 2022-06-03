@@ -11,78 +11,95 @@ dash.register_page(__name__, order=3)
 
 from .callbacks import chaoss_callbacks
 
-layout = dbc.Container(
+graph_card = dbc.Card(
     [
-        dbc.Row([dbc.Col([html.H1(children="Chaoss WIP Page - live update")])]),
-        dbc.Row(
+        dbc.CardBody(
             [
-                dbc.Col(
-                    [
-                        dcc.Loading(children=[dcc.Graph(id='cont-drive-repeat')], color="#119DFF", type="dot", fullscreen=False,),
-                        dbc.Form(
-                            dbc.Row(
-                                [
-                                    dbc.Label(
-                                        "Contributions Required:",
-                                        html_for="num_contributions",
-                                        width={"offset": 1, "size": "auto"},
-                                        style={"font-weight": "bold"},
-                                    ),
-                                    dbc.Col(
-                                        [
-                                            dbc.Input(
-                                                id="num_contributions",
-                                                type="number",
-                                                min=1,
-                                                max=15,
-                                                step=1,
-                                                value=4,
-                                            )
-                                        ],
-                                        className="me-3",
-                                        width=2,
-                                    ),
-                                    dbc.Label(
-                                        "Graph View:",
-                                        html_for="drive-repeat",
-                                        width="auto",
-                                        style={"font-weight": "bold"},
-                                    ),
-                                    dbc.Col(
-                                        [
-                                            dbc.RadioItems(
-                                                id="drive-repeat",
-                                                options=[
-                                                    {
-                                                        "label": "Repeat",
-                                                        "value": "repeat",
-                                                    },
-                                                    {
-                                                        "label": "Drive-By",
-                                                        "value": "drive",
-                                                    },
-                                                ],
-                                                value="drive",
-                                            )
-                                        ],
-                                        className="me-3",
-                                    ),
-                                ],
-                                className="g-2",
-                                align="center",
-                                justify="start",
-                            )
-                        ),
-                    ],
+                html.H4(id = "graph-title-1", className="card-title", style={"text-align": "center"}),
+                dbc.Button(
+                    "About Graph", id="popover-target-1", color="info"
                 ),
-                dbc.Col(
+                dbc.Popover(
                     [
-                        dcc.Loading(children=[dcc.Graph(id='first-time-contributions')], color="#119DFF", type="dot", fullscreen=False,),
+                        dbc.PopoverHeader("Graph Info:"),
+                        dbc.PopoverBody(
+                            "Information on graph"),
                     ],
+                    id="popover-1",
+                    target="popover-target-1",  # needs to be the same as dbc.Button id
+                    placement="bottom",
+                    is_open=False,
+                ),
+                dcc.Loading(children=[dcc.Graph(id='cont-drive-repeat')], color="#119DFF", type="dot", fullscreen=False,),
+                dbc.Form(
+                    dbc.Row(
+                        [
+                            dbc.Label(
+                                "Contributions Required:",
+                                html_for="num_contributions",
+                                width={"offset": 1, "size": "auto"},
+                                style={"font-weight": "bold"},
+                            ),
+                            dbc.Col(
+                                [
+                                    dbc.Input(
+                                        id="num_contributions",
+                                        type="number",
+                                        min=1,
+                                        max=15,
+                                        step=1,
+                                        value=4,
+                                    )
+                                ],
+                                className="me-3",
+                                width=2,
+                            ),
+                            dbc.Label(
+                                "Graph View:",
+                                html_for="drive-repeat",
+                                width="auto",
+                                style={"font-weight": "bold"},
+                            ),
+                            dbc.Col(
+                                [
+                                    dbc.RadioItems(
+                                        id="drive-repeat",
+                                        options=[
+                                            {
+                                                "label": "Repeat",
+                                                "value": "repeat",
+                                            },
+                                            {
+                                                "label": "Drive-By",
+                                                "value": "drive",
+                                            },
+                                        ],
+                                        value="drive",
+                                    )
+                                ],
+                                className="me-3",
+                            ),
+                        ],
+                        className="g-2",
+                        align="center",
+                        justify="start",
+                    )
                 ),
             ]
         ),
+    ],
+    color="primary",
+)
 
+layout = dbc.Container(
+    [
+        dbc.Row([dbc.Col([html.H1(children="Chaoss WIP Page - live update")])]),
+        dbc.Row([
+            dbc.Col(graph_card, width=6),
+            dbc.Col(dcc.Loading(children=[dcc.Graph(id='first-time-contributions')], color="#119DFF", type="dot", fullscreen=False,))
+                ]
+            ,justify= "around"
+            ),
         dbc.Row(
             [
                 dbc.Col(
