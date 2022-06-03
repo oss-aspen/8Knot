@@ -11,160 +11,218 @@ dash.register_page(__name__, order=3)
 
 from .callbacks import chaoss_callbacks
 
-graph_card = dbc.Card(
+graph_card_1 = dbc.Card(
     [
         dbc.CardBody(
             [
                 html.H4(id = "graph-title-1", className="card-title", style={"text-align": "center"}),
-                dbc.Button(
-                    "About Graph", id="popover-target-1", color="info"
-                ),
+                
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "Information on graph"),
+                            "Information on graph 1"),
                     ],
                     id="popover-1",
                     target="popover-target-1",  # needs to be the same as dbc.Button id
-                    placement="bottom",
+                    placement="top",
                     is_open=False,
                 ),
                 dcc.Loading(children=[dcc.Graph(id='cont-drive-repeat')], color="#119DFF", type="dot", fullscreen=False,),
                 dbc.Form(
-                    dbc.Row(
-                        [
-                            dbc.Label(
-                                "Contributions Required:",
-                                html_for="num_contributions",
-                                width={"offset": 1, "size": "auto"},
-                                style={"font-weight": "bold"},
-                            ),
-                            dbc.Col(
-                                [
-                                    dbc.Input(
-                                        id="num_contributions",
-                                        type="number",
-                                        min=1,
-                                        max=15,
-                                        step=1,
-                                        value=4,
-                                    )
-                                ],
-                                className="me-3",
-                                width=2,
-                            ),
-                            dbc.Label(
-                                "Graph View:",
-                                html_for="drive-repeat",
-                                width="auto",
-                                style={"font-weight": "bold"},
-                            ),
-                            dbc.Col(
-                                [
-                                    dbc.RadioItems(
-                                        id="drive-repeat",
-                                        options=[
-                                            {
-                                                "label": "Repeat",
-                                                "value": "repeat",
-                                            },
-                                            {
-                                                "label": "Drive-By",
-                                                "value": "drive",
-                                            },
-                                        ],
-                                        value="drive",
-                                    )
-                                ],
-                                className="me-3",
-                            ),
-                        ],
-                        className="g-2",
-                        align="center",
-                        justify="start",
-                    )
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Label(
+                                    "Graph View:",
+                                    html_for="drive-repeat",
+                                    width="auto",
+                                    style={"font-weight": "bold"},
+                                ),
+                                dbc.Col(
+                                        dbc.RadioItems(
+                                            id="drive-repeat",
+                                            options=[
+                                                {
+                                                    "label": "Repeat",
+                                                    "value": "repeat",
+                                                },
+                                                {
+                                                    "label": "Drive-By",
+                                                    "value": "drive",
+                                                },
+                                            ],
+                                            value="drive",
+                                            inline=True,
+                                        ),
+                                    className="me-2",
+                                ),
+                                dbc.Col(
+                                    dbc.Button("About Graph", id="popover-target-1", color="secondary",size="sm"),
+                                    width= "auto"
+                                )
+                            ],
+                            align="center",
+                        ),
+                        dbc.Row(
+                            [
+                                dbc.Label(
+                                    "Contributions Required:",
+                                    html_for="num_contributions",
+                                    width={ "size": "auto"},
+                                    style={"font-weight": "bold"},
+                                ),
+                                dbc.Col(
+                                        dbc.Input(
+                                            id="num_contributions",
+                                            type="number",
+                                            min=1,
+                                            max=15,
+                                            step=1,
+                                            value=4,
+                                        ),    
+                                    className="me-2",
+                                    width=2,
+                                ),
+                            ],
+                            align="center",
+                        ),
+                    ]
                 ),
             ]
         ),
     ],
-    color="primary",
+    color="light",
 )
+
+graph_card_2 = dbc.Card(
+    [
+        dbc.CardBody(
+            [
+                html.H4("First Time Contributions Per Quarter", className="card-title", style={"text-align": "center"}),
+                
+                dbc.Popover(
+                    [
+                        dbc.PopoverHeader("Graph Info:"),
+                        dbc.PopoverBody(
+                            "Information on graph 2"),
+                    ],
+                    id="popover-2",
+                    target="popover-target-2",  # needs to be the same as dbc.Button id
+                    placement="top",
+                    is_open=False,
+                ),
+    
+                dcc.Loading(children=[dcc.Graph(id='first-time-contributions')], color="#119DFF", type="dot", fullscreen=False,),
+                dbc.Row(
+                    dbc.Button("About Graph", id="popover-target-2", color="secondary",size= "small"),
+                    align= 'end',
+                ),
+            ]
+        ),
+    ],
+    color="light",
+)
+
+graph_card_3 = dbc.Card(
+    [
+        dbc.CardBody(
+            [
+                html.H4("Contributor Types Over Time", className="card-title", style={"text-align": "center"}),
+                
+                dbc.Popover(
+                    [
+                        dbc.PopoverHeader("Graph Info:"),
+                        dbc.PopoverBody(
+                            "Information on graph 3"),
+                    ],
+                    id="popover-3",
+                    target="popover-target-3",  # needs to be the same as dbc.Button id
+                    placement="top",
+                    is_open=False,
+                ),
+                dcc.Loading(children=[dcc.Graph(id='contributors-over-time')], color="#119DFF", type="dot", fullscreen=False,),
+                dbc.Form(
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Label(
+                                    'Date Interval:',
+                                    html_for='contrib-time-interval',
+                                    width="auto",
+                                    style={"font-weight": "bold"},
+                                ),
+                                dbc.Col(
+                                        dbc.RadioItems(
+                                            id='contrib-time-interval',
+                                            options=[
+                                                {
+                                                    'label': 'Day', 
+                                                    'value': 86400000
+                                                }, #days in milliseconds for ploty use  
+                                                {
+                                                    "label": "Week",
+                                                    "value": 604800000
+                                                },#weeks in milliseconds for ploty use
+                                                {'label': 'Month', 'value': 'M1'},
+                                                {'label': 'Year', 'value': 'M12'}
+                                            ],
+                                            value="M1",
+                                            inline=True,
+                                        ),
+                                    className="me-2",
+                                ),
+                                dbc.Col(
+                                    dbc.Button("About Graph", id="popover-target-3", color="secondary",size="sm"),
+                                    width= "auto"
+                                )
+                            ],
+                            align="center",
+                        ),
+                        dbc.Row(
+                            [
+                                dbc.Label(
+                                    "Contributions Required:",
+                                    html_for='num_contribs_req',
+                                    width={ "size": "auto"},
+                                    style={"font-weight": "bold"},
+                                ),
+                                dbc.Col(
+                                        dbc.Input(
+                                            id='num_contribs_req',
+                                            type="number",
+                                            min=1,
+                                            max=15,
+                                            step=1,
+                                            value=4,
+                                        ),    
+                                    className="me-2",
+                                    width=2,
+                                ),
+                            ],
+                            align="center",
+                        ),
+                    ]
+                ),
+            ]
+        ),
+    ],
+    color="light",
+)
+
 
 layout = dbc.Container(
     [
         dbc.Row([dbc.Col([html.H1(children="Chaoss WIP Page - live update")])]),
-        dbc.Row([
-            dbc.Col(graph_card, width=6),
-            dbc.Col(dcc.Loading(children=[dcc.Graph(id='first-time-contributions')], color="#119DFF", type="dot", fullscreen=False,))
-                ]
-            ,justify= "around"
-            ),
         dbc.Row(
             [
-                dbc.Col(
-                    [
-                        dcc.Loading(children=[dcc.Graph(id='contributors-over-time')], color="#119DFF", type="dot", fullscreen=False,),
-                        #dcc.Graph(id='contributors-over-time'),
-
-                        dbc.Form(
-                            dbc.Row(
-                                [
-                                    dbc.Label(
-                                        'Contributions Required:', 
-                                        html_for='num_contribs_req', 
-                                        width={"offset": 1, "size":"auto"},
-                                        style={'font-weight': 'bold'}
-                                    ),
-                                    dbc.Col(
-                                        [
-                                            dbc.Input( 
-                                                id='num_contribs_req', 
-                                                type = 'number', 
-                                                min = 1, 
-                                                max= 15,
-                                                step =1, 
-                                                value = 4
-                                            )
-                                        ],
-                                        className="me-3", 
-                                        width= 2
-                                    ),
-                                    dbc.Label(
-                                        'Date Interval:', 
-                                        html_for='contrib-time-interval', 
-                                        width="auto",
-                                        style={'font-weight': 'bold'}
-                                    ),
-                                    dbc.Col(
-                                        [
-                                            dbc.RadioItems(
-                                                id='contrib-time-interval',
-                                                options=[
-                                                    {
-                                                        'label': 'Day', 
-                                                        'value': 86400000
-                                                    }, #days in milliseconds for ploty use  
-                                                    {
-                                                        'label': 'Week', 
-                                                        'value': 604800000
-                                                    }, #weeks in milliseconds for ploty use
-                                                    {'label': 'Month', 'value': 'M1'},
-                                                    {'label': 'Year', 'value': 'M12'}
-                                                ],
-                                                value='M1',
-                                            ),
-                                        ],
-                                        className="me-3",
-                                    ),
-                                ],
-                                className="g-2",
-                                align="center",
-                                justify="start"
-                            )
-                        ),
-                    ],
-                ),
+                dbc.Col(graph_card_1, width=6),
+                dbc.Col(graph_card_2, width=6),
+            ]
+        ),
+        dbc.Row(
+            [
+                dbc.Col(graph_card_3, width = 6),
             ]
         )
     ], 

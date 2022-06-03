@@ -2,6 +2,7 @@ import dash
 import dash_labs as dl
 import dash_bootstrap_components as dbc
 import numpy as np
+from dash_bootstrap_templates import load_figure_template
 
 from db_interface.AugurInterface import AugurInterface
 import os
@@ -30,6 +31,8 @@ engine = augur_db.get_engine()
 """
     Create out Dash app with the dash_labs plugin for multi-page apps and with the Sandstone bootstrap_components theme.
 """
+load_figure_template(["sanstone", "minty"])
+
 app = dash.Dash(
     __name__, plugins=[dl.plugins.pages], external_stylesheets=[dbc.themes.SANDSTONE]
 )

@@ -8,3 +8,4 @@ psycopg2
 dash_bootstrap_components
 plotly
 plotly_express
+dash_bootstrap_templates
