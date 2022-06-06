@@ -8,7 +8,6 @@ from app import app, engine, augur_db, entries
 # helper function for repos to get repo_ids
 def _parse_repo_choices(repo_git_set):
 
-
     repo_ids = []
     repo_names = []
 
