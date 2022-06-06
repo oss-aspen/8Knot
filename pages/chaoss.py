@@ -15,7 +15,7 @@ graph_card_1 = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H4(id = "graph-title-1", className="card-title", style={"text-align": "center"}),
+                html.H4(id = "chaoss-graph-title-1", className="card-title", style={"text-align": "center"}),
                 
                 dbc.Popover(
                     [
@@ -23,8 +23,8 @@ graph_card_1 = dbc.Card(
                         dbc.PopoverBody(
                             "Information on graph 1"),
                     ],
-                    id="popover-1",
-                    target="popover-target-1",  # needs to be the same as dbc.Button id
+                    id="chaoss-popover-1",
+                    target="chaoss-popover-target-1",  # needs to be the same as dbc.Button id
                     placement="top",
                     is_open=False,
                 ),
@@ -58,11 +58,12 @@ graph_card_1 = dbc.Card(
                                     className="me-2",
                                 ),
                                 dbc.Col(
-                                    dbc.Button("About Graph", id="popover-target-1", color="secondary",size="sm"),
-                                    width= "auto"
+                                    dbc.Button("About Graph", id="chaoss-popover-target-1", color="secondary",size="sm"),
+                                    width= "auto",
+                                    style={"padding-top": ".5em"}
                                 )
                             ],
-                            align="center",
+                            align = "center",
                         ),
                         dbc.Row(
                             [
@@ -107,16 +108,16 @@ graph_card_2 = dbc.Card(
                         dbc.PopoverBody(
                             "Information on graph 2"),
                     ],
-                    id="popover-2",
-                    target="popover-target-2",  # needs to be the same as dbc.Button id
+                    id="chaoss-popover-2",
+                    target="chaoss-popover-target-2",  # needs to be the same as dbc.Button id
                     placement="top",
                     is_open=False,
                 ),
     
                 dcc.Loading(children=[dcc.Graph(id='first-time-contributions')], color="#119DFF", type="dot", fullscreen=False,),
                 dbc.Row(
-                    dbc.Button("About Graph", id="popover-target-2", color="secondary",size= "small"),
-                    align= 'end',
+                    dbc.Button("About Graph", id="chaoss-popover-target-2", color="secondary",size= "small"),
+                    style={"padding-top": ".5em"}
                 ),
             ]
         ),
@@ -136,8 +137,8 @@ graph_card_3 = dbc.Card(
                         dbc.PopoverBody(
                             "Information on graph 3"),
                     ],
-                    id="popover-3",
-                    target="popover-target-3",  # needs to be the same as dbc.Button id
+                    id="chaoss-popover-3",
+                    target="chaoss-popover-target-3",  # needs to be the same as dbc.Button id
                     placement="top",
                     is_open=False,
                 ),
@@ -173,11 +174,12 @@ graph_card_3 = dbc.Card(
                                     className="me-2",
                                 ),
                                 dbc.Col(
-                                    dbc.Button("About Graph", id="popover-target-3", color="secondary",size="sm"),
-                                    width= "auto"
+                                    dbc.Button("About Graph", id="chaoss-popover-target-3", color="secondary",size="sm"),
+                                    width= "auto",
+                                    style={"padding-top": ".5em"}
                                 )
                             ],
-                            align="center",
+                            align = "center",
                         ),
                         dbc.Row(
                             [

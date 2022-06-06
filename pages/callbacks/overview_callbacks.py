@@ -2,15 +2,64 @@ import dash
 import datetime
 from dash import callback
 import plotly.express as px
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
 import datetime as dt
 
+#call backs for card graph 1 - total contributor growth 
+@callback(
+    Output("overview-popover-1", "is_open"),
+    [Input("overview-popover-target-1", "n_clicks")],
+    [State("overview-popover-1", "is_open")],
+)
+def toggle_popover(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
+@callback(
+    Output('overview-graph-title-1','children'),
+    Input("contributor-growth-time-interval", "value")
+)
+def graph_title(view):
+    title = ""
+    if view == -1:
+        title = "Total Contributors over Time"
+    elif view == "D1":
+        title = "New Contributors by Day"
+    elif view == "M1":
+        title = "New Contributors by Month"
+    else: 
+        title = "New Contributors by Year"
+    return title
+
+#call backs for card graph 2 - Commits Over Time
+@callback(
+    Output("overview-popover-2", "is_open"),
+    [Input("overview-popover-target-2", "n_clicks")],
+    [State("overview-popover-2", "is_open")],
+)
+def toggle_popover(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
+#call backs for card graph 3 - Issue Over Time
+@callback(
+    Output("overview-popover-3", "is_open"),
+    [Input("overview-popover-target-3", "n_clicks")],
+    [State("overview-popover-3", "is_open")],
+)
+def toggle_popover(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
 # callback for commits over time graph
 @callback(
     Output("commits-over-time", "figure"),
-    [Input("commits-data", "data"), Input("time-interval", "value")],
+    [Input("commits-data", "data"), Input("commits-time-interval", "value")],
 )
 def create_graph(data, interval):
     print("COMMITS_OVER_TIME_VIZ - START")
@@ -37,12 +86,6 @@ def create_graph(data, interval):
             rangeslider_yaxis_rangemode="match",
         )
         fig.update_layout(
-            title={
-                "text": "Commits Over Time",
-                "font": {"size": 28},
-                "x": 0.5,
-                "xanchor": "center",
-            },
             xaxis_title=x_name,
             yaxis_title="Number of Commits",
         )
@@ -55,7 +98,7 @@ def create_graph(data, interval):
 # callback for issues over time graph
 @callback(
     Output("issues-over-time", "figure"),
-    [Input("issues-data", "data"), Input("time-interval", "value")],
+    [Input("issues-data", "data"), Input("issue-time-interval", "value")],
 )
 def create_graph(data, interval):
     print("ISSUES_OVER_TIME_VIZ - START")
@@ -96,12 +139,6 @@ def create_graph(data, interval):
             range=x_r,
         )
         fig.update_layout(
-            title={
-                "text": "Issues Over Time",
-                "font": {"size": 28},
-                "x": 0.5,
-                "xanchor": "center",
-            },
             xaxis_title=x_name,
             yaxis_title="Number of Issues",
             barmode="overlay",
@@ -181,8 +218,6 @@ def total_contributor_growth(data, bin_size):
         Find the first rank-1 contribution of the contributors, saving the created_at
         date.
     """
-    # drop unnecessary columns 
-    df_contrib = df_contrib.drop(["repo_name", "full_name"], axis=1)
 
     # keep only first contributions
     df_contrib = df_contrib[df_contrib["rank"] == 1]
@@ -277,12 +312,6 @@ def contributor_growth_bar_graph(df_contrib, bin_size):
 
     # label the figure correctly.
     fig.update_layout(
-        title={
-            "text": "Number of New Contributors",
-            "font": {"size": 28},
-            "x": 0.5,
-            "xanchor": "center",
-        },
         xaxis_title = "Time",
         yaxis_title = "Number of Contributors"
     )
@@ -339,12 +368,6 @@ def contributor_growth_line_bar(df_contrib):
 
     # label the figure correctly
     fig.update_layout(
-        title={
-            "text": "Contributor Growth Over Time",
-            "font": {"size": 28},
-            "x": 0.5,
-            "xanchor": "center",
-        },
         xaxis_title = "Time",
         yaxis_title = "Number of Contributors"
     )
