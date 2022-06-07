@@ -10,9 +10,9 @@ import warnings
 warnings.filterwarnings("ignore")
 
 @callback(
-    Output("popover-1", "is_open"),
-    [Input("popover-target-1", "n_clicks")],
-    [State("popover-1", "is_open")],
+    Output("chaoss-popover-1", "is_open"),
+    [Input("chaoss-popover-target-1", "n_clicks")],
+    [State("chaoss-popover-1", "is_open")],
 )
 def toggle_popover(n, is_open):
     if n:
@@ -20,7 +20,7 @@ def toggle_popover(n, is_open):
     return is_open
 
 @callback(
-    Output('graph-title-1','children'),
+    Output('chaoss-graph-title-1','children'),
     Input("drive-repeat", "value")
 )
 def graph_title(view):
@@ -32,9 +32,9 @@ def graph_title(view):
     return title
 
 @callback(
-    Output("popover-2", "is_open"),
-    [Input("popover-target-2", "n_clicks")],
-    [State("popover-2", "is_open")],
+    Output("chaoss-popover-2", "is_open"),
+    [Input("chaoss-popover-target-2", "n_clicks")],
+    [State("chaoss-popover-2", "is_open")],
 )
 def toggle_popover(n, is_open):
     if n:
@@ -42,9 +42,9 @@ def toggle_popover(n, is_open):
     return is_open
 
 @callback(
-    Output("popover-3", "is_open"),
-    [Input("popover-target-3", "n_clicks")],
-    [State("popover-3", "is_open")],
+    Output("chaoss-popover-3", "is_open"),
+    [Input("chaoss-popover-target-3", "n_clicks")],
+    [State("chaoss-popover-3", "is_open")],
 )
 def toggle_popover(n, is_open):
     if n:
