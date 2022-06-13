@@ -93,6 +93,7 @@ def create_graph(data, contribs, view):
         fig.update_layout(
             xaxis_title="Quarter",
             yaxis_title="Contributions",
+            margin_b = 40,
         )
         print("CONTRIB_DRIVE_REPEAT_VIZ - END")
         return fig
@@ -122,6 +123,7 @@ def create_graph(data):
         fig.update_layout(
             xaxis_title="Quarter",
             yaxis_title="Contributions",
+            margin_b = 40,
         )
         print("1ST_CONTRIBUTIONS_VIZ - END")
         return fig
@@ -199,6 +201,7 @@ def create_graph(data, contribs, interval):
             xaxis_title=x_name,
             legend_title_text="Type",
             yaxis_title="Number of Contributors",
+            margin_b = 40,
         )
         print("CONTRIBUTIONS_OVER_TIME_VIZ - END")
         return fig
