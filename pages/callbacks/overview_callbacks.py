@@ -157,6 +157,7 @@ def create_graph(data, interval):
     else:
         return None
 
+
 def make_open_df(df_issues):
     # created dataframe
     df_created = pd.DataFrame(df_issues["created"])
@@ -203,12 +204,13 @@ def get_graph_time_values(interval):
         hover = "Month: %{x|%b %Y}"
     return x_r, x_name, hover
 
+
 @callback(
     Output("total_contributor_growth", "figure"),
     [
         Input("contributions", "data"),
-        Input("contributor-growth-time-interval", "value")
-    ]
+        Input("contributor-growth-time-interval", "value"),
+    ],
 )
 def total_contributor_growth(data, bin_size):
     df_contrib = pd.DataFrame(data)
@@ -224,7 +226,7 @@ def total_contributor_growth(data, bin_size):
 
     # order from beginning of time to most recent
     df_contrib = df_contrib.sort_values("created_at", axis=0, ascending=True)
-    
+
     # convert to datetime objects rather than strings, add day column
     df_contrib["created_at"] = pd.to_datetime(df_contrib["created_at"], utc=True)
     df_contrib["day"] = pd.DatetimeIndex(df_contrib['created_at']).day
@@ -232,81 +234,70 @@ def total_contributor_growth(data, bin_size):
     # get all of the unique entries by contributor ID
     df_contrib = df_contrib.drop_duplicates(subset=["cntrb_id"])
 
-    if(bin_size == -1):
+    if bin_size == -1:
         fig = contributor_growth_line_bar(df_contrib)
     else:
         fig = contributor_growth_bar_graph(df_contrib, bin_size)
-    
+
     # return the simple line graph
     return fig
+
 
 def contributor_growth_bar_graph(df_contrib, bin_size):
 
     """
-        Group-by determined by the radio button options.
-        Aggregation is the number of rows per time bin.
-        Days, Months, Years are all options.
+    Group-by determined by the radio button options.
+    Aggregation is the number of rows per time bin.
+    Days, Months, Years are all options.
     """
-    if(bin_size == "D1"):
+    if bin_size == "D1":
         group = df_contrib.groupby(
-            pd.Grouper(key='created_at', axis=0, 
-                      freq='1D')).size()
-    elif(bin_size == "M1"):
+            pd.Grouper(key="created_at", axis=0, freq="1D")
+        ).size()
+    elif bin_size == "M1":
         group = df_contrib.groupby(
-            pd.Grouper(key='created_at', axis=0, 
-                      freq='1M')).size()
+            pd.Grouper(key="created_at", axis=0, freq="1M")
+        ).size()
     else:
         group = df_contrib.groupby(
-            pd.Grouper(key='created_at', axis=0, 
-                      freq='1Y')).size()
+            pd.Grouper(key="created_at", axis=0, freq="1Y")
+        ).size()
 
     # reset index from group-by aggregation step
     group = group.reset_index()
     # rename the columns for clarity
-    group = group.rename(columns={'created_at': 'date', 0:'count'})
+    group = group.rename(columns={"created_at": "date", 0: "count"})
 
-    # correction for year binning - 
+    # correction for year binning -
     # rounded up to next year so this is a simple patch
-    if(bin_size == "M12"):
+    if bin_size == "M12":
         group["date"] = group["date"].dt.year
 
     # create the graph
-    fig = px.bar(group, x="date", y='count')
+    fig = px.bar(group, x="date", y="count")
 
     # make the bars thicker for further-spaced values
     # so that we can see the per-day increases clearly.
-    fig.update_traces(marker_color='blue',
-                  marker_line_color='blue',
-                  selector=dict(type="bar"))
+    fig.update_traces(
+        marker_color="blue", marker_line_color="blue", selector=dict(type="bar")
+    )
 
     # add the date-range selector
     fig.update_layout(
         xaxis=dict(
             rangeselector=dict(
-                buttons=list([
-                    dict(count=1,
-                        label="1m",
-                        step="month",
-                        stepmode="backward"),
-                    dict(count=6,
-                        label="6m",
-                        step="month",
-                        stepmode="backward"),
-                    dict(count=1,
-                        label="YTD",
-                        step="year",
-                        stepmode="todate"),
-                    dict(count=1,
-                        label="1y",
-                        step="year",
-                        stepmode="backward"),
-                    dict(step="all")
-                ])
+                buttons=list(
+                    [
+                        dict(count=1, label="1m", step="month", stepmode="backward"),
+                        dict(count=6, label="6m", step="month", stepmode="backward"),
+                        dict(count=1, label="YTD", step="year", stepmode="todate"),
+                        dict(count=1, label="1y", step="year", stepmode="backward"),
+                        dict(step="all"),
+                    ]
+                )
             ),
-            rangeslider=dict(
-                visible=True
-            ),
-            type="date"
+            rangeslider=dict(visible=True),
+            type="date",
         )
     )
 
@@ -317,6 +308,7 @@ def contributor_growth_bar_graph(df_contrib, bin_size):
     )
     return fig
 
+
 def contributor_growth_line_bar(df_contrib):
 
     # reset index to enumerate contributions
@@ -326,9 +318,9 @@ def contributor_growth_line_bar(df_contrib):
 
     # create the figure
     fig = px.line(
-        df_contrib, 
-        x='created_at', 
-        y='index',
+        df_contrib,
+        x="created_at",
+        y="index",
     )
 
     """
@@ -339,30 +331,18 @@ def contributor_growth_line_bar(df_contrib):
     fig.update_layout(
         xaxis=dict(
             rangeselector=dict(
-                buttons=list([
-                    dict(count=1,
-                        label="1m",
-                        step="month",
-                        stepmode="backward"),
-                    dict(count=6,
-                        label="6m",
-                        step="month",
-                        stepmode="backward"),
-                    dict(count=1,
-                        label="YTD",
-                        step="year",
-                        stepmode="todate"),
-                    dict(count=1,
-                        label="1y",
-                        step="year",
-                        stepmode="backward"),
-                    dict(step="all")
-                ])
+                buttons=list(
+                    [
+                        dict(count=1, label="1m", step="month", stepmode="backward"),
+                        dict(count=6, label="6m", step="month", stepmode="backward"),
+                        dict(count=1, label="YTD", step="year", stepmode="todate"),
+                        dict(count=1, label="1y", step="year", stepmode="backward"),
+                        dict(step="all"),
+                    ]
+                )
             ),
-            rangeslider=dict(
-                visible=True
-            ),
-            type="date"
+            rangeslider=dict(visible=True),
+            type="date",
         )
     )
 
