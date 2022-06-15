@@ -101,7 +101,7 @@ def create_graph(data, contribs, view):
         return None
 
 
-@callback(Output('first-time-contributions', "figure"), Input("contributions", "data"))
+@callback(Output("first-time-contributions", "figure"), Input("contributions", "data"))
 def create_graph(data):
     print("1ST_CONTRIBUTIONS_VIZ - START")
     df_cont = pd.DataFrame(data)

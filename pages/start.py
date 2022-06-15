@@ -1,10 +1,11 @@
 from dash import html
 import dash
+import dash_labs as dl
 import dash_bootstrap_components as dbc
 import dash
 
 # register the page
-dash.register_page(__name__, path='/', order=1)
+dl.plugins.register_page(__name__, path="/", order=1)
 
 layout = dbc.Container(
     [
@@ -14,7 +15,7 @@ layout = dbc.Container(
                     [
                         html.H1(
                             "Start Page: User notes",
-                            #className="font-weight-bold mb-4",
+                            # className="font-weight-bold mb-4",
                         ),
                         html.P(
                             "This is WIP and format changes to come. Visualization are on other pages",
@@ -28,7 +29,6 @@ layout = dbc.Container(
                             "If you want to reset the view of a graph with customization options, toggle one of the options to reset the view.",
                             className="font-weight-bold mb-4",
                         ),
-
                     ]
                 )
             ]
