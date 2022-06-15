@@ -88,6 +88,8 @@ def create_graph(data, interval):
         fig.update_layout(
             xaxis_title=x_name,
             yaxis_title="Number of Commits",
+            margin_b = 40,
+            margin_r = 20,
         )
         print("COMMITS_OVER_TIME_VIZ - END")
         return fig
@@ -142,6 +144,7 @@ def create_graph(data, interval):
             xaxis_title=x_name,
             yaxis_title="Number of Issues",
             barmode="overlay",
+            margin_b = 40,
         )
         fig.add_trace(
             go.Scatter(
@@ -304,7 +307,8 @@ def contributor_growth_bar_graph(df_contrib, bin_size):
     # label the figure correctly.
     fig.update_layout(
         xaxis_title = "Time",
-        yaxis_title = "Number of Contributors"
+        yaxis_title = "Number of Contributors",
+        margin_r = 20,
     )
     return fig
 
@@ -349,6 +353,8 @@ def contributor_growth_line_bar(df_contrib):
     # label the figure correctly
     fig.update_layout(
         xaxis_title = "Time",
-        yaxis_title = "Number of Contributors"
+        yaxis_title = "Number of Contributors",
+        margin_b = 40,
+        margin_r = 20,
     )
     return fig
