@@ -1,5 +1,6 @@
 import dash
 import datetime
+from dateutil.relativedelta import *
 from dash import callback
 import plotly.express as px
 from dash.dependencies import Input, Output, State
@@ -7,7 +8,7 @@ import plotly.graph_objects as go
 import pandas as pd
 import datetime as dt
 
-#call backs for card graph 1 - total contributor growth 
+# call backs for card graph 1 - total contributor growth
 @callback(
     Output("overview-popover-1", "is_open"),
     [Input("overview-popover-target-1", "n_clicks")],
@@ -18,23 +19,25 @@ def toggle_popover(n, is_open):
         return not is_open
     return is_open
 
+
 @callback(
-    Output('overview-graph-title-1','children'),
-    Input("contributor-growth-time-interval", "value")
+    Output("overview-graph-title-1", "children"),
+    Input("contributor-growth-time-interval", "value"),
 )
 def graph_title(view):
     title = ""
     if view == -1:
-        title = "Total Contributors over Time"
+        title = "Total Contributors Over Time"
     elif view == "D1":
         title = "New Contributors by Day"
     elif view == "M1":
         title = "New Contributors by Month"
-    else: 
+    else:
         title = "New Contributors by Year"
     return title
 
-#call backs for card graph 2 - Commits Over Time
+
+# call backs for card graph 2 - Commits Over Time
 @callback(
     Output("overview-popover-2", "is_open"),
     [Input("overview-popover-target-2", "n_clicks")],
@@ -45,7 +48,8 @@ def toggle_popover(n, is_open):
         return not is_open
     return is_open
 
-#call backs for card graph 3 - Issue Over Time
+
+# call backs for card graph 3 - Issue Over Time
 @callback(
     Output("overview-popover-3", "is_open"),
     [Input("overview-popover-target-3", "n_clicks")],
@@ -55,6 +59,19 @@ def toggle_popover(n, is_open):
     if n:
         return not is_open
     return is_open
+
+
+# call backs for card graph 4 - Active Drifting Away Over Time
+@callback(
+    Output("overview-popover-4", "is_open"),
+    [Input("overview-popover-target-4", "n_clicks")],
+    [State("overview-popover-4", "is_open")],
+)
+def toggle_popover(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
 
 # callback for commits over time graph
 @callback(
@@ -88,8 +105,8 @@ def create_graph(data, interval):
         fig.update_layout(
             xaxis_title=x_name,
             yaxis_title="Number of Commits",
-            margin_b = 40,
-            margin_r = 20,
+            margin_b=40,
+            margin_r=20,
         )
         print("COMMITS_OVER_TIME_VIZ - END")
         return fig
@@ -144,7 +161,7 @@ def create_graph(data, interval):
             xaxis_title=x_name,
             yaxis_title="Number of Issues",
             barmode="overlay",
-            margin_b = 40,
+            margin_b=40,
         )
         fig.add_trace(
             go.Scatter(
@@ -232,7 +249,6 @@ def total_contributor_growth(data, bin_size):
 
     # convert to datetime objects rather than strings, add day column
     df_contrib["created_at"] = pd.to_datetime(df_contrib["created_at"], utc=True)
-    df_contrib["day"] = pd.DatetimeIndex(df_contrib['created_at']).day
 
     # get all of the unique entries by contributor ID
     df_contrib = df_contrib.drop_duplicates(subset=["cntrb_id"])
@@ -306,9 +322,9 @@ def contributor_growth_bar_graph(df_contrib, bin_size):
 
     # label the figure correctly.
     fig.update_layout(
-        xaxis_title = "Time",
-        yaxis_title = "Number of Contributors",
-        margin_r = 20,
+        xaxis_title="Time",
+        yaxis_title="Number of Contributors",
+        margin_r=20,
     )
     return fig
 
@@ -352,9 +368,101 @@ def contributor_growth_line_bar(df_contrib):
 
     # label the figure correctly
     fig.update_layout(
-        xaxis_title = "Time",
-        yaxis_title = "Number of Contributors",
-        margin_b = 40,
-        margin_r = 20,
+        xaxis_title="Time",
+        yaxis_title="Number of Contributors",
+        margin_b=40,
+        margin_r=20,
     )
     return fig
+
+
+@callback(
+    Output("active_drifting_contributors", "figure"),
+    [Input("contributions", "data"), Input("active-drifting-interval", "value")],
+)
+def active_drifting_contributors(df, interval):
+    df = pd.DataFrame(df)
+
+    # order from beginning of time to most recent
+    df = df.sort_values("created_at", axis=0, ascending=True)
+
+    # convert to datetime objects
+    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
+
+    # first and last elements of the dataframe are the
+    # earliest and latest events respectively
+    earliest = df.iloc[0]["created_at"]
+    latest = df.iloc[-1]["created_at"]
+
+    # beginning to the end of time by the specified interval
+    dates = pd.date_range(start=earliest, end=latest, freq=interval, inclusive="both")
+
+    base = [["Date", "Active", "Drifting", "Away"]]
+    for date in dates:
+        counts = get_active_drifting_away_up_to(df, date)
+        base.append(counts)
+
+    df_status = pd.DataFrame(base[1:], columns=base[0])
+
+    # making a line graph if the bin-size is small enough.
+    if interval == "D":
+        fig = go.Figure(
+            [
+                go.Scatter(
+                    name="Active",
+                    x=df_status["Date"],
+                    y=df_status["Active"],
+                    mode="lines",
+                    marker=dict(color="red", size=2),
+                    showlegend=True,
+                ),
+                go.Scatter(
+                    name="Drifting",
+                    x=df_status["Date"],
+                    y=df_status["Drifting"],
+                    mode="lines",
+                    marker=dict(color="teal", size=2),
+                    showlegend=True,
+                ),
+                go.Scatter(
+                    name="Away",
+                    x=df_status["Date"],
+                    y=df_status["Away"],
+                    mode="lines",
+                    marker=dict(color="blue", size=2),
+                    showlegend=True,
+                ),
+            ]
+        )
+    else:
+        fig = px.bar(df_status, x="Date", y=["Active", "Drifting", "Away"])
+
+    fig.update_layout(xaxis_title="Time", yaxis_title="Number of Contributors")
+    return fig
+
+
+def get_active_drifting_away_up_to(df, date):
+
+    # drop rows that are more recent than the date limit
+    df_lim = df[df["created_at"] <= date]
+
+    # keep more recent contribution per ID
+    df_lim = df_lim.drop_duplicates(subset="cntrb_id", keep="last")
+
+    # time difference, 6 months before the threshold date
+    sixmos = date - relativedelta(months=+6)
+
+    # time difference, 6 months before the threshold date
+    twelvemos = date - relativedelta(months=+12)
+
+    # contributions in the last 6 months
+    numTotal = df_lim.shape[0]
+
+    numActive = df_lim[df_lim["created_at"] >= sixmos].shape[0]
+
+    drifting = df_lim[df_lim["created_at"] < sixmos]
+    numDrifting = drifting[drifting["created_at"] > twelvemos].shape[0]
+
+    numAway = numTotal - (numActive + numDrifting)
+
+    return [date, numActive, numDrifting, numAway]
