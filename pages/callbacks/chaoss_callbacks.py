@@ -1,6 +1,6 @@
 from dash import callback
 import plotly.express as px
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 import plotly.express as px
 import pandas as pd
 import datetime as dt
@@ -8,6 +8,49 @@ import numpy as np
 import warnings
 
 warnings.filterwarnings("ignore")
+
+@callback(
+    Output("chaoss-popover-1", "is_open"),
+    [Input("chaoss-popover-target-1", "n_clicks")],
+    [State("chaoss-popover-1", "is_open")],
+)
+def toggle_popover(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
+@callback(
+    Output('chaoss-graph-title-1','children'),
+    Input("drive-repeat", "value")
+)
+def graph_title(view):
+    title = ""
+    if view == "drive":
+        title = "Drive-by Contributions Per Quarter"
+    else:
+        title = "Repeat Contributions Per Quarter"
+    return title
+
+@callback(
+    Output("chaoss-popover-2", "is_open"),
+    [Input("chaoss-popover-target-2", "n_clicks")],
+    [State("chaoss-popover-2", "is_open")],
+)
+def toggle_popover(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
+@callback(
+    Output("chaoss-popover-3", "is_open"),
+    [Input("chaoss-popover-target-3", "n_clicks")],
+    [State("chaoss-popover-3", "is_open")],
+)
+def toggle_popover(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
 
 # call back for drive by vs commits over time graph
 @callback(
@@ -26,34 +69,31 @@ def create_graph(data, contribs, view):
     contributors = df_cont["cntrb_id"][df_cont["rank"] == contribs].to_list()
     df_cont_subset = pd.DataFrame(data)
 
-    # Inputs for Title of graph
-    title = ""
+    #filtering data by view
     if view == "drive":
         df_cont_subset = df_cont_subset.loc[
             ~df_cont_subset["cntrb_id"].isin(contributors)
         ]
-        title = "Drive-by Contributions Per Quarter"
     else:
         df_cont_subset = df_cont_subset.loc[
             df_cont_subset["cntrb_id"].isin(contributors)
         ]
-        title = "Repeat Contributions Per Quarter"
 
     # reset index to be ready for plotly
     df_cont_subset = df_cont_subset.reset_index()
 
     # graph geration
     if df_cont_subset is not None:
-        fig = px.histogram(df_cont_subset, x="created_at", color="Action")
+        fig = px.histogram(df_cont_subset, x="created_at", color="Action", template = 'minty')
         fig.update_traces(
             xbins_size="M3",
             hovertemplate="Date: %{x}" + "<br>Amount: %{y}<br><extra></extra>",
         )
         fig.update_xaxes(showgrid=True, ticklabelmode="period", dtick="M3")
         fig.update_layout(
-            title={"text": title, "font": {"size": 28}, "x": 0.5, "xanchor": "center"},
             xaxis_title="Quarter",
             yaxis_title="Contributions",
+            margin_b = 40,
         )
         print("CONTRIB_DRIVE_REPEAT_VIZ - END")
         return fig
@@ -61,7 +101,7 @@ def create_graph(data, contribs, view):
         return None
 
 
-@callback(Output('first-time-contributions', "figure"), Input("contributions", "data"))
+@callback(Output("first-time-contributions", "figure"), Input("contributions", "data"))
 def create_graph(data):
     print("1ST_CONTRIBUTIONS_VIZ - START")
     df_cont = pd.DataFrame(data)
@@ -74,21 +114,16 @@ def create_graph(data):
 
     # Graph generation
     if df_cont is not None:
-        fig = px.histogram(df_cont, x="created_at", color="Action")
+        fig = px.histogram(df_cont, x="created_at", color="Action",template = 'minty')
         fig.update_traces(
             xbins_size="M3",
             hovertemplate="Date: %{x}" + "<br>Amount: %{y}<br><extra></extra>",
         )
         fig.update_xaxes(showgrid=True, ticklabelmode="period", dtick="M3")
         fig.update_layout(
-            title={
-                "text": "First Time Contributions Per Quarter",
-                "font": {"size": 28},
-                "x": 0.5,
-                "xanchor": "center",
-            },
             xaxis_title="Quarter",
             yaxis_title="Contributions",
+            margin_b = 40,
         )
         print("1ST_CONTRIBUTIONS_VIZ - END")
         return fig
@@ -150,6 +185,7 @@ def create_graph(data, contribs, interval):
             y=[df_final["Repeat"], df_final["Drive-By"]],
             range_x=x_r,
             labels={"x": x_name, "y": "Contributors"},
+            template = 'minty'
         )
         fig.update_traces(
             xbins_size=interval,
@@ -162,15 +198,10 @@ def create_graph(data, contribs, interval):
             rangeslider_yaxis_rangemode="match",
         )
         fig.update_layout(
-            title={
-                "text": "Contributor Types over Time",
-                "font": {"size": 28},
-                "x": 0.5,
-                "xanchor": "center",
-            },
             xaxis_title=x_name,
             legend_title_text="Type",
             yaxis_title="Number of Contributors",
+            margin_b = 40,
         )
         print("CONTRIBUTIONS_OVER_TIME_VIZ - END")
         return fig

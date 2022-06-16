@@ -169,6 +169,7 @@ index_layout = dbc.Container(
         ),
     ],
     fluid=True,
+    className="dbc",
     style={"padding-top": "1em"},
 )
 
