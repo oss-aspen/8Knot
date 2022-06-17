@@ -367,9 +367,22 @@ def contributor_growth_line_bar(df_contrib):
 
 @callback(
     Output("active_drifting_contributors", "figure"),
-    [Input("contributions", "data"), Input("active-drifting-interval", "value")],
+    Output("drifting_away_check_alert", "is_open"),
+    [
+        Input("contributions", "data"),
+        Input("active-drifting-interval", "value"),
+        Input("drifting_months", "value"),
+        Input("away_months", "value"),
+    ],
 )
-def create_active_drifting_contributors_graph(df, interval):
+def active_drifting_contributors(df, interval, drift_interval, away_interval):
+
+    if drift_interval > away_interval:
+        return dash.no_update, True
+
+    if drift_interval is None or away_interval is None:
+        return dash.no_update, dash.no_update
+
     df = pd.DataFrame(df)
 
     # order from beginning of time to most recent
@@ -388,7 +401,7 @@ def create_active_drifting_contributors_graph(df, interval):
 
     base = [["Date", "Active", "Drifting", "Away"]]
     for date in dates:
-        counts = get_active_drifting_away_up_to(df, date)
+        counts = get_active_drifting_away_up_to(df, date, drift_interval, away_interval)
         base.append(counts)
 
     df_status = pd.DataFrame(base[1:], columns=base[0])
@@ -427,10 +440,10 @@ def create_active_drifting_contributors_graph(df, interval):
         fig = px.bar(df_status, x="Date", y=["Active", "Drifting", "Away"])
 
     fig.update_layout(xaxis_title="Time", yaxis_title="Number of Contributors")
-    return fig
+    return fig, False
 
 
-def get_active_drifting_away_up_to(df, date):
+def get_active_drifting_away_up_to(df, date, drift_interval, away_interval):
 
     # drop rows that are more recent than the date limit
     df_lim = df[df["created_at"] <= date]
@@ -439,18 +452,18 @@ def get_active_drifting_away_up_to(df, date):
     df_lim = df_lim.drop_duplicates(subset="cntrb_id", keep="last")
 
     # time difference, 6 months before the threshold date
-    sixmos = date - relativedelta(months=+6)
+    drift_mos = date - relativedelta(months=+drift_interval)
 
     # time difference, 6 months before the threshold date
-    twelvemos = date - relativedelta(months=+12)
+    away_mos = date - relativedelta(months=+away_interval)
 
     # contributions in the last 6 months
     numTotal = df_lim.shape[0]
 
-    numActive = df_lim[df_lim["created_at"] >= sixmos].shape[0]
+    numActive = df_lim[df_lim["created_at"] >= drift_mos].shape[0]
 
-    drifting = df_lim[df_lim["created_at"] < sixmos]
-    numDrifting = drifting[drifting["created_at"] > twelvemos].shape[0]
+    drifting = df_lim[df_lim["created_at"] > away_mos]
+    numDrifting = drifting[drifting["created_at"] < drift_mos].shape[0]
 
     numAway = numTotal - (numActive + numDrifting)
 
