@@ -241,7 +241,7 @@ graph_card_4 = dbc.Card(
         dbc.CardBody(
             [
                 html.H4(
-                    "Contributor Growth",
+                    "Contributor Growth by Engagement",
                     className="card-title",
                     style={"text-align": "center"},
                 ),
@@ -320,14 +320,14 @@ layout = dbc.Container(
         ),
         dbc.Row(
             [
-                dbc.Col(graph_card_1, width=6),
-                dbc.Col(graph_card_4, width=6),
+                dbc.Col(graph_card_3, width=6),
+                dbc.Col(graph_card_2, width=6),
             ]
         ),
         dbc.Row(
             [
-                dbc.Col(graph_card_3, width=6),
-                dbc.Col(graph_card_2, width=6),
+                dbc.Col(graph_card_1, width=6),
+                dbc.Col(graph_card_4, width=6),
             ]
         ),
     ],
