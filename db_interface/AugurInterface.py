@@ -49,9 +49,7 @@ class AugurInterface:
                 print("No config file exists of passed name.")
                 print("Defaulting to environment variables.")
             except KeyError:
-                print(
-                    "One or more of the needed config parameters were not in the config."
-                )
+                print("One or more of the needed config parameters were not in the config.")
                 print("Defaulting to environment variables.")
 
         if self.config_loaded is False:
@@ -72,9 +70,7 @@ class AugurInterface:
                 self.database = os.environ["database"]
                 self.schema = os.environ["schema"]
             except KeyError:
-                print(
-                    "Make sure all environment variables needed to connect to database are set."
-                )
+                print("Make sure all environment variables needed to connect to database are set.")
                 return
 
         database_connection_string = "postgresql+psycopg2://{}:{}@{}:{}/{}".format(

@@ -1,12 +1,19 @@
 """
-    Profiling stuff
+    README -- Organization of Callback Functions
+
+    In an effort to compartmentalize our development where possible, all callbacks directly relating
+    to pages in our application are in their own files.
+
+    For instance, this file contains the layout logic for the index page of our app-
+    this page serves all other paths by providing the searchbar, page routing faculties,
+    and data storage objects that the other pages in our app use.
+
+    Having laid out the HTML-like organization of this page, we write the callbacks for this page in
+    the neighbor 'index_callbacks.py' file.
 """
 import pstats
 import cProfile
 
-"""
-    App imports
-"""
 from dash import html
 from dash import dcc
 import dash
@@ -19,19 +26,6 @@ import os
 from pages import start, overview, cicd, chaoss
 import index_callbacks
 
-"""
-    README -- Organization of Callback Functions 
-
-    In an effort to compartmentalize our development where possible, all callbacks directly relating
-    to pages in our application are in their own files. 
-
-    For instance, this file contains the layout logic for the index page of our app-
-    this page serves all other paths by providing the searchbar, page routing faculties,
-    and data storage objects that the other pages in our app use. 
-
-    Having laid out the HTML-like organization of this page, we write the callbacks for this page in
-    the neighbor 'index_callbacks.py' file.
-"""
 
 # side bar code for page navigation
 sidebar = html.Div(
@@ -65,9 +59,7 @@ index_layout = dbc.Container(
                 dbc.Col(sidebar, width=1),
                 dbc.Col(
                     [
-                        html.H1(
-                            "Sandiego Explorer Demo Multipage", className="text-center"
-                        ),
+                        html.H1("Sandiego Explorer Demo Multipage", className="text-center"),
                         # search bar with buttons
                         html.Label(
                             ["Select Github repos or orgs:"],
@@ -109,11 +101,7 @@ index_layout = dbc.Container(
                             },
                         ),
                         dcc.Loading(
-                            children=[
-                                html.Div(
-                                    id="results-output-container", className="mb-4"
-                                )
-                            ],
+                            children=[html.Div(id="results-output-container", className="mb-4")],
                             color="#119DFF",
                             type="dot",
                             fullscreen=True,
@@ -177,9 +165,7 @@ print("VALIDATE_LAYOUT - START")
 app.layout = index_layout
 
 ### Assemble all layouts ###
-app.validation_layout = html.Div(
-    children=[index_layout, start.layout, overview.layout, cicd.layout, chaoss.layout]
-)
+app.validation_layout = html.Div(children=[index_layout, start.layout, overview.layout, cicd.layout, chaoss.layout])
 print("VALIDATE_LAYOUT - END")
 
 
