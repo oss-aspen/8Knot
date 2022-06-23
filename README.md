@@ -49,3 +49,7 @@ and then:
 bash scripts/run_docker_container.sh
 ```
 NOTE: When developing locally, each time you save reopen the chrome tab to confirm correct functionality
+
+## Development Note
+
+We use pre-commit to handle our code quality checks. Before you make a PR please make sure to install pre-commit and pass all of the checks that it requires.
