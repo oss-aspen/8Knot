@@ -180,7 +180,8 @@ def make_open_df(df_issues):
     df_created.rename(columns={"created": "issue"}, inplace=True)
     df_created["open"] = 1
 
-    # closed dataframe df_closed = pd.DataFrame(df_issues["closed"]).dropna()
+    # closed dataframe
+    df_closed = pd.DataFrame(df_issues["closed"]).dropna()
     df_closed.rename(columns={"closed": "issue"}, inplace=True)
     df_closed["open"] = -1
 

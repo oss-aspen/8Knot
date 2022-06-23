@@ -1,0 +1,22 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+numpy = "*"
+gunicorn = "*"
+pandas = "*"
+sqlalchemy = "*"
+psycopg2 = "*"
+dash = "*"
+dash-labs = "*"
+dash-bootstrap-components = "*"
+dash-bootstrap-templates = "*"
+plotly = "*"
+plotly-express = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.8"
