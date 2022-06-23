@@ -2,10 +2,13 @@ name: pre-commit
 
 on:
   pull_request:
-  - branches: [main, dev]
+    branches:
+        - main
+        - dev
   push:
-  - branches: [main, dev]
-
+    branches:
+        - main
+        - dev
 jobs:
   pre-commit:
     runs-on: ubuntu-latest

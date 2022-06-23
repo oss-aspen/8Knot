@@ -23,7 +23,7 @@ def _parse_repo_choices(repo_git_set):
             r.repo_name
         FROM
             repo r
-        JOIN repo_groups rg 
+        JOIN repo_groups rg
         ON r.repo_group_id = rg.repo_group_id
         WHERE
             r.repo_git in({url_query})
@@ -57,7 +57,7 @@ def _parse_org_choices(org_name_set):
             r.repo_name
         FROM
             repo r
-        JOIN repo_groups rg 
+        JOIN repo_groups rg
         ON r.repo_group_id = rg.repo_group_id
         WHERE
             rg.rg_name in({name_query})
@@ -162,13 +162,13 @@ def generate_commit_data(repo_ids):
                     SELECT
                         r.repo_name,
                         c.cmt_commit_hash AS commits,
-                        c.cmt_id AS file, 
+                        c.cmt_id AS file,
                         c.cmt_added AS lines_added,
                         c.cmt_removed AS lines_removed,
                         c.cmt_author_date AS date
                     FROM
                         repo r
-                    JOIN commits c 
+                    JOIN commits c
                     ON r.repo_id = c.repo_id
                     WHERE
                         c.repo_id in({repo_statement})
@@ -187,7 +187,9 @@ def generate_contributions_data(repo_ids):
     repo_statement = str(repo_ids)
     repo_statement = repo_statement[1:-1]
 
-    contributions_query = salc.sql.text(f"""SELECT * FROM augur_data.explorer_contributor_actions WHERE repo_id in({repo_statement})""")
+    contributions_query = salc.sql.text(
+        f"""SELECT * FROM augur_data.explorer_contributor_actions WHERE repo_id in({repo_statement})"""
+    )
 
     with engine.connect() as conn:
         df_cont = pd.read_sql(contributions_query, con=conn)
@@ -219,10 +221,10 @@ def generate_issues_data(repo_ids):
         f"""
                 SELECT
                     r.repo_name,
-					i.issue_id AS issue, 
+					i.issue_id AS issue,
 					i.gh_issue_number AS issue_number,
 					i.gh_issue_id AS gh_issue,
-					i.created_at AS created, 
+					i.created_at AS created,
 					i.closed_at AS closed,
                     i.pull_request_id
                 FROM
@@ -230,7 +232,7 @@ def generate_issues_data(repo_ids):
                     issues i
                 WHERE
                 	r.repo_id = i.repo_id AND
-                    i.repo_id in({repo_statement}) 
+                    i.repo_id in({repo_statement})
         """
     )
 

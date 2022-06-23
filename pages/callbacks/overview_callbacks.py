@@ -1,6 +1,6 @@
 import dash
 import datetime
-from dateutil.relativedelta import *
+from dateutil.relativedelta import *  # type: ignore
 from dash import callback
 import plotly.express as px
 from dash.dependencies import Input, Output, State
@@ -14,7 +14,7 @@ import datetime as dt
     [Input("overview-popover-target-1", "n_clicks")],
     [State("overview-popover-1", "is_open")],
 )
-def toggle_popover(n, is_open):
+def toggle_popover_1(n, is_open):
     if n:
         return not is_open
     return is_open
@@ -43,7 +43,7 @@ def graph_title(view):
     [Input("overview-popover-target-2", "n_clicks")],
     [State("overview-popover-2", "is_open")],
 )
-def toggle_popover(n, is_open):
+def toggle_popover_2(n, is_open):
     if n:
         return not is_open
     return is_open
@@ -55,7 +55,7 @@ def toggle_popover(n, is_open):
     [Input("overview-popover-target-3", "n_clicks")],
     [State("overview-popover-3", "is_open")],
 )
-def toggle_popover(n, is_open):
+def toggle_popover_3(n, is_open):
     if n:
         return not is_open
     return is_open
@@ -67,7 +67,7 @@ def toggle_popover(n, is_open):
     [Input("overview-popover-target-4", "n_clicks")],
     [State("overview-popover-4", "is_open")],
 )
-def toggle_popover(n, is_open):
+def toggle_popover_4(n, is_open):
     if n:
         return not is_open
     return is_open
@@ -78,7 +78,7 @@ def toggle_popover(n, is_open):
     Output("commits-over-time", "figure"),
     [Input("commits-data", "data"), Input("commits-time-interval", "value")],
 )
-def create_graph(data, interval):
+def create_commits_over_time_graph(data, interval):
     print("COMMITS_OVER_TIME_VIZ - START")
     df_commits = pd.DataFrame(data)
 
@@ -90,12 +90,8 @@ def create_graph(data, interval):
 
     # graph geration
     if df_commits is not None:
-        fig = px.histogram(
-            df_commits, x="date", range_x=x_r, labels={"x": x_name, "y": "Commits"}
-        )
-        fig.update_traces(
-            xbins_size=interval, hovertemplate=hover + "<br>Commits: %{y}<br>"
-        )
+        fig = px.histogram(df_commits, x="date", range_x=x_r, labels={"x": x_name, "y": "Commits"})
+        fig.update_traces(xbins_size=interval, hovertemplate=hover + "<br>Commits: %{y}<br>")
         fig.update_xaxes(
             showgrid=True,
             ticklabelmode="period",
@@ -119,7 +115,7 @@ def create_graph(data, interval):
     Output("issues-over-time", "figure"),
     [Input("issues-data", "data"), Input("issue-time-interval", "value")],
 )
-def create_graph(data, interval):
+def create_issues_over_time_graph(data, interval):
     print("ISSUES_OVER_TIME_VIZ - START")
     df_issues = pd.DataFrame(data)
 
@@ -184,8 +180,7 @@ def make_open_df(df_issues):
     df_created.rename(columns={"created": "issue"}, inplace=True)
     df_created["open"] = 1
 
-    # closed dataframe
-    df_closed = pd.DataFrame(df_issues["closed"]).dropna()
+    # closed dataframe df_closed = pd.DataFrame(df_issues["closed"]).dropna()
     df_closed.rename(columns={"closed": "issue"}, inplace=True)
     df_closed["open"] = -1
 
@@ -232,7 +227,7 @@ def get_graph_time_values(interval):
         Input("contributor-growth-time-interval", "value"),
     ],
 )
-def total_contributor_growth(data, bin_size):
+def create_total_contributor_growth_graph(data, bin_size):
     df_contrib = pd.DataFrame(data)
 
     """
@@ -270,17 +265,11 @@ def contributor_growth_bar_graph(df_contrib, bin_size):
     Days, Months, Years are all options.
     """
     if bin_size == "D1":
-        group = df_contrib.groupby(
-            pd.Grouper(key="created_at", axis=0, freq="1D")
-        ).size()
+        group = df_contrib.groupby(pd.Grouper(key="created_at", axis=0, freq="1D")).size()
     elif bin_size == "M1":
-        group = df_contrib.groupby(
-            pd.Grouper(key="created_at", axis=0, freq="1M")
-        ).size()
+        group = df_contrib.groupby(pd.Grouper(key="created_at", axis=0, freq="1M")).size()
     else:
-        group = df_contrib.groupby(
-            pd.Grouper(key="created_at", axis=0, freq="1Y")
-        ).size()
+        group = df_contrib.groupby(pd.Grouper(key="created_at", axis=0, freq="1Y")).size()
 
     # reset index from group-by aggregation step
     group = group.reset_index()
@@ -297,9 +286,7 @@ def contributor_growth_bar_graph(df_contrib, bin_size):
 
     # make the bars thicker for further-spaced values
     # so that we can see the per-day increases clearly.
-    fig.update_traces(
-        marker_color="blue", marker_line_color="blue", selector=dict(type="bar")
-    )
+    fig.update_traces(marker_color="blue", marker_line_color="blue", selector=dict(type="bar"))
 
     # add the date-range selector
     fig.update_layout(
@@ -380,7 +367,7 @@ def contributor_growth_line_bar(df_contrib):
     Output("active_drifting_contributors", "figure"),
     [Input("contributions", "data"), Input("active-drifting-interval", "value")],
 )
-def active_drifting_contributors(df, interval):
+def create_active_drifting_contributors_graph(df, interval):
     df = pd.DataFrame(df)
 
     # order from beginning of time to most recent
