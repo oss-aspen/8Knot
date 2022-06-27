@@ -7,7 +7,7 @@ FROM python:3.8.12-bullseye
 EXPOSE 8050
 
 # install pipenv
-RUN pip3 install pipenv
+RUN pip install pipenv
 
 # create a working directory
 RUN mkdir explorer
