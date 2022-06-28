@@ -1,0 +1,26 @@
+name: Build and Push Image
+on:
+    push:
+        branches:
+            - main
+            - dev
+
+jobs:
+  build:
+    name: Build and push image to Quay
+    runs-on: ubuntu-20.04
+
+    steps:
+        - uses: actions/checkout@v2
+
+        - name: login to quay
+          run: docker login quay.io -p ${{ secrets.REGISTRY_PASSWORD }} -u jkunstle
+
+        - name: build docker image
+          run: docker build -t explorer .
+
+        - name: commit docker image
+          run: docker tag explorer quay.io/jkunstle/explorer
+
+        - name: push committed docker image to quay.io
+          run: docker push quay.io/jkunstle/explorer:latest
