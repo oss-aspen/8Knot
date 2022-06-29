@@ -19,11 +19,11 @@ from dash import dcc
 import dash
 import dash_labs as dl
 import dash_bootstrap_components as dbc
-from app import app, entries
+from app import app, search_input
 import os
 
 # import page files from project.
-from pages import start, overview, cicd, chaoss
+from pages import home, overview, cicd, chaoss
 import index_callbacks
 
 
@@ -72,8 +72,8 @@ index_layout = dbc.Container(
                                         dcc.Dropdown(
                                             id="projects",
                                             multi=True,
-                                            value=["agroal"],
-                                            options=["agroal"],
+                                            value=[search_input],
+                                            options=[search_input],
                                         )
                                     ],
                                     style={
@@ -165,7 +165,7 @@ print("VALIDATE_LAYOUT - START")
 app.layout = index_layout
 
 ### Assemble all layouts ###
-app.validation_layout = html.Div(children=[index_layout, start.layout, overview.layout, cicd.layout, chaoss.layout])
+app.validation_layout = html.Div(children=[index_layout, home.layout, overview.layout, cicd.layout, chaoss.layout])
 print("VALIDATE_LAYOUT - END")
 
 

@@ -98,6 +98,8 @@ def dropdown_dynamic_callback(search, bar_state):
         else:
             opts = [i for i in entries if search in i]
 
+        opts.sort(key=lambda item: (len(item), item))
+
         # arbitrarily 'small' number of matches returned..
         if len(opts) < 250:
             return [opts]

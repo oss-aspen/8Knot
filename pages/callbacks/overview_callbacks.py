@@ -135,7 +135,7 @@ def create_issues_over_time_graph(data, interval):
             x=df_issues["closed"].dropna(),
             histfunc="count",
             name="closed",
-            opacity=1,
+            opacity=0.75,
             hovertemplate=hover + "<br>Closed: %{y}<br>" + "<extra></extra>",
         )
         fig.add_histogram(
@@ -156,7 +156,7 @@ def create_issues_over_time_graph(data, interval):
         fig.update_layout(
             xaxis_title=x_name,
             yaxis_title="Number of Issues",
-            barmode="overlay",
+            bargroupgap=0.1,
             margin_b=40,
         )
         fig.add_trace(

@@ -33,6 +33,7 @@ df_search_bar = augur_db.run_query(pr_query)
 
 entries = np.concatenate((df_search_bar.rg_name.unique(), df_search_bar.repo_git.unique()), axis=None)
 entries = entries.tolist()
-entries = sorted(entries)
+entries.sort(key=lambda item: (item, len(item)))
+search_input = entries[0]
 
 print("AUGUR_ENTRY_LIST - END")
