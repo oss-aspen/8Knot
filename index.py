@@ -21,6 +21,7 @@ import dash_labs as dl
 import dash_bootstrap_components as dbc
 from app import app, entries
 import os
+import logging
 
 # import page files from project.
 from pages import start, overview, cicd, chaoss
@@ -161,12 +162,12 @@ index_layout = dbc.Container(
     style={"padding-top": "1em"},
 )
 
-print("VALIDATE_LAYOUT - START")
+logging.debug("VALIDATE_LAYOUT - START")
 app.layout = index_layout
 
 ### Assemble all layouts ###
 app.validation_layout = html.Div(children=[index_layout, start.layout, overview.layout, cicd.layout, chaoss.layout])
-print("VALIDATE_LAYOUT - END")
+logging.debug("VALIDATE_LAYOUT - END")
 
 
 def main():
@@ -182,7 +183,7 @@ if __name__ == "__main__":
 
             Credit to IDG TECHTALK
             """
-            print("Profiling")
+            logging.debug("Profiling")
 
             cProfile.run("main()", "output.dat")
 
@@ -194,5 +195,5 @@ if __name__ == "__main__":
                 p = pstats.Stats("output.dat", stream=f)
                 p.sort_stats("calls").print_stats()
     except KeyError:
-        print("---------PROFILING OFF---------")
+        logging.debug("---------PROFILING OFF---------")
         main()
