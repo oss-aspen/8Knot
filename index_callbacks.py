@@ -3,7 +3,7 @@ from dash.dependencies import Input, Output, State
 import dash
 import pandas as pd
 import sqlalchemy as salc
-from app import app, engine, augur_db, entries
+from app import app, engine, augur_db, entries, all_entries
 
 # helper function for repos to get repo_ids
 def _parse_repo_choices(repo_git_set):
@@ -94,7 +94,8 @@ def dropdown_dynamic_callback(search, bar_state):
         raise dash.exceptions.PreventUpdate
     else:
         if bar_state is not None:
-            opts = [i for i in entries if search in i or i in bar_state]
+            opts = [i[1] for i in all_entries if search.lower() in i[0] or i[1] in bar_state]
+            # opts = [i for i in entries if search in i or i in bar_state]
         else:
             opts = [i for i in entries if search in i]
 
