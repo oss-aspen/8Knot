@@ -6,6 +6,7 @@ import pandas as pd
 import sqlalchemy as salc
 import json
 import os
+import logging
 
 
 class AugurInterface:
@@ -32,7 +33,7 @@ class AugurInterface:
             If we have been passed a config file, try to read it.
         """
         if self.config is not None:
-            print("Attempting to load parameters from config.")
+            logging.debug("Attempting to load parameters from config.")
             try:
                 with open(self.config) as config_file:
                     config = json.load(config_file)
@@ -46,11 +47,11 @@ class AugurInterface:
                     self.config_loaded = True
 
             except FileNotFoundError:
-                print("No config file exists of passed name.")
-                print("Defaulting to environment variables.")
+                logging.error("No config file exists of passed name.")
+                logging.error("Defaulting to environment variables.")
             except KeyError:
-                print("One or more of the needed config parameters were not in the config.")
-                print("Defaulting to environment variables.")
+                logging.error("One or more of the needed config parameters were not in the config.")
+                logging.error("Defaulting to environment variables.")
 
         if self.config_loaded is False:
             """
@@ -61,7 +62,7 @@ class AugurInterface:
             from the passed config file is not possible.
             """
 
-            print("Attempting to load parameters from environment.")
+            logging.debug("Attempting to load parameters from environment.")
             try:
                 self.user = os.environ["user"]
                 self.password = os.environ["password"]
@@ -70,7 +71,7 @@ class AugurInterface:
                 self.database = os.environ["database"]
                 self.schema = os.environ["schema"]
             except KeyError:
-                print("Make sure all environment variables needed to connect to database are set.")
+                logging.error("Make sure all environment variables needed to connect to database are set.")
                 return
 
         database_connection_string = "postgresql+psycopg2://{}:{}@{}:{}/{}".format(
@@ -86,12 +87,12 @@ class AugurInterface:
 
         self.engine = engine
 
-        print("Engine returned")
+        logging.debug("Engine returned")
         return engine
 
     def run_query(self, query_string: str) -> pd.DataFrame:
         if self.engine is None:
-            print("No engine- please use 'get_engine' method to create engine.")
+            logging.critical("No engine- please use 'get_engine' method to create engine.")
             return None
 
         this_df = pd.DataFrame()
