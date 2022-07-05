@@ -27,7 +27,20 @@ https://docs.docker.com/get-docker/
 
 If you have any issues with this process, please create a new issue and we'll address it!
 
-The config.json file should be at the same level as index.
+The config.json file should be at the same level as index. Here is a sample of what that config.json file needs to look like: 
+```
+{
+    "connection_string": "sqlite:///:memory:",
+    "database": "sandiegorh",
+    "host": "chaoss.tv",
+    "password": "<<Your Password>>",
+    "port": 5432,
+    "schema": "augur_data",
+    "user": "<<Your Username>>",
+    "user_type": "read_only"
+}
+
+```
 
 Please use the build/run scripts in the /scripts folder to handle the 
 construction of the Docker image and running the Docker container.
