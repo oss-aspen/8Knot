@@ -3,6 +3,7 @@ from dash.dependencies import Input, Output, State
 import dash
 import pandas as pd
 import sqlalchemy as salc
+import logging
 from app import app, engine, augur_db, entries
 
 # helper function for repos to get repo_ids
@@ -120,7 +121,7 @@ def update_output(n_clicks, value):
     """
     Section handles parsing the input repos / orgs when there is selected values
     """
-    print("SEARCHBAR_ORG_REPO_PARSING - START")
+    logging.debug("SEARCHBAR_ORG_REPO_PARSING - START")
     if len(value) > 0:
         repo_git_set = []
         org_name_set = []
@@ -146,7 +147,7 @@ def update_output(n_clicks, value):
         selections = str(value)
 
         # return the string that we want and return the list of the id's that we need for the other callback.
-        print("SEARCHBAR_ORG_REPO_PARSING - END")
+        logging.debug("SEARCHBAR_ORG_REPO_PARSING - END")
         return f"Your current selections is: {selections[1:-1]}", list(total_ids)
     elif len(value) == 0:
         raise dash.exceptions.PreventUpdate
@@ -155,7 +156,7 @@ def update_output(n_clicks, value):
 # call back for commits query
 @callback(Output("commits-data", "data"), Input("repo_choices", "data"))
 def generate_commit_data(repo_ids):
-    print("COMMITS_DATA_QUERY - START")
+    logging.debug("COMMITS_DATA_QUERY - START")
     # query input format update
     repo_statement = str(repo_ids)
     repo_statement = repo_statement[1:-1]
@@ -178,14 +179,14 @@ def generate_commit_data(repo_ids):
 
     df_commits = augur_db.run_query(commits_query)
 
-    print("COMMITS_DATA_QUERY - END")
+    logging.debug("COMMITS_DATA_QUERY - END")
     return df_commits.to_dict("records")
 
 
 # call back for contributions query
 @callback(Output("contributions", "data"), Input("repo_choices", "data"))
 def generate_contributions_data(repo_ids):
-    print("CONTRIBUTIONS_DATA_QUERY - START")
+    logging.debug("CONTRIBUTIONS_DATA_QUERY - START")
     repo_statement = str(repo_ids)
     repo_statement = repo_statement[1:-1]
 
@@ -206,7 +207,7 @@ def generate_contributions_data(repo_ids):
 
     df_cont = df_cont.reset_index()
     df_cont.drop("index", axis=1, inplace=True)
-    print("CONTRIBUTIONS_DATA_QUERY - END")
+    logging.debug("CONTRIBUTIONS_DATA_QUERY - END")
     return df_cont.to_dict("records")
 
 
@@ -214,7 +215,7 @@ def generate_contributions_data(repo_ids):
 @callback(Output("issues-data", "data"), Input("repo_choices", "data"))
 def generate_issues_data(repo_ids):
 
-    print("ISSUES_DATA_QUERY - START")
+    logging.debug("ISSUES_DATA_QUERY - START")
 
     repo_statement = str(repo_ids)
     repo_statement = repo_statement[1:-1]
@@ -248,6 +249,6 @@ def generate_issues_data(repo_ids):
     df_issues = df_issues.reset_index()
     df_issues.drop("index", axis=1, inplace=True)
 
-    print("ISSUES_DATA_QUERY - END")
+    logging.debug("ISSUES_DATA_QUERY - END")
 
     return df_issues.to_dict("records")

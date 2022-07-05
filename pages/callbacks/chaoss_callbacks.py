@@ -6,6 +6,7 @@ import pandas as pd
 import datetime as dt
 import numpy as np
 import warnings
+import logging
 
 warnings.filterwarnings("ignore")
 
@@ -63,7 +64,7 @@ def toggle_popover_3(n, is_open):
     ],
 )
 def create_drive_by_graph(data, contribs, view):
-    print("CONTRIB_DRIVE_REPEAT_VIZ - START")
+    logging.debug("CONTRIB_DRIVE_REPEAT_VIZ - START")
 
     # graph on contribution subset
     df_cont = pd.DataFrame(data)
@@ -92,7 +93,7 @@ def create_drive_by_graph(data, contribs, view):
             yaxis_title="Contributions",
             margin_b=40,
         )
-        print("CONTRIB_DRIVE_REPEAT_VIZ - END")
+        logging.debug("CONTRIB_DRIVE_REPEAT_VIZ - END")
         return fig
     else:
         return None
@@ -100,7 +101,7 @@ def create_drive_by_graph(data, contribs, view):
 
 @callback(Output("first-time-contributions", "figure"), Input("contributions", "data"))
 def create_first_time_contributors_graph(data):
-    print("1ST_CONTRIBUTIONS_VIZ - START")
+    logging.debug("1ST_CONTRIBUTIONS_VIZ - START")
     df_cont = pd.DataFrame(data)
 
     # selection for 1st contribution only
@@ -122,7 +123,7 @@ def create_first_time_contributors_graph(data):
             yaxis_title="Contributions",
             margin_b=40,
         )
-        print("1ST_CONTRIBUTIONS_VIZ - END")
+        logging.debug("1ST_CONTRIBUTIONS_VIZ - END")
         return fig
     else:
         return None
@@ -137,7 +138,7 @@ def create_first_time_contributors_graph(data):
     ],
 )
 def create_graph(data, contribs, interval):
-    print("CONTRIBUTIONS_OVER_TIME_VIZ - START")
+    logging.debug("CONTRIBUTIONS_OVER_TIME_VIZ - START")
 
     df_cont = pd.DataFrame(data)
     df_cont["created_at"] = pd.to_datetime(df_cont["created_at"], utc=True, format="%Y-%m-%d")
@@ -196,7 +197,7 @@ def create_graph(data, contribs, interval):
             yaxis_title="Number of Contributors",
             margin_b=40,
         )
-        print("CONTRIBUTIONS_OVER_TIME_VIZ - END")
+        logging.debug("CONTRIBUTIONS_OVER_TIME_VIZ - END")
         return fig
     else:
         return None
