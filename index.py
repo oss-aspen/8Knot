@@ -166,8 +166,9 @@ logging.debug("VALIDATE_LAYOUT - START")
 app.layout = index_layout
 
 ### Assemble all layouts ###
-app.validation_layout = html.Div(children=[index_layout, start.layout, overview.layout, cicd.layout, chaoss.layout])
+app.validation_layout = html.Div(children=[index_layout, home.layout, overview.layout, cicd.layout, chaoss.layout])
 logging.debug("VALIDATE_LAYOUT - END")
+
 
 def main():
 
