@@ -10,6 +10,7 @@ import logging
 
 from db_interface.AugurInterface import AugurInterface
 import os
+import sys
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -18,9 +19,17 @@ try:
     assert os.environ["running_on"] == "prod"
     augur_db = AugurInterface()
 except KeyError:
-    augur_db = AugurInterface("./config.json")
+    # check that config file is available
+    if os.path.exists("config.json"):
+        augur_db = AugurInterface("./config.json")
+    else:
+        print("No 'config.json' available at top level. Config required by name.")
+        sys.exit(1)
 
 engine = augur_db.get_engine()
+if engine is None:
+    print("Could not get engine; check config or try later")
+    sys.exit(1)
 
 
 # load styling and start app

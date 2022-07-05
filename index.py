@@ -171,7 +171,19 @@ logging.debug("VALIDATE_LAYOUT - END")
 
 
 def main():
-    app.run_server(host="0.0.0.0", port=8050, debug=True)
+
+    # shouldn't run server in debug mode if we're in a production setting
+
+    debug_mode = True
+    try:
+        if os.environ["running_on"] == "prod":
+            debug_mode = False
+        else:
+            debug_mode = True
+    except:
+        debug_mode = True
+
+    app.run_server(host="0.0.0.0", port=8050, debug=debug_mode)
 
 
 if __name__ == "__main__":
