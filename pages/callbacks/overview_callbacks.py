@@ -7,6 +7,7 @@ from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
 import datetime as dt
+import logging
 
 # call backs for card graph 1 - total contributor growth
 @callback(
@@ -79,7 +80,7 @@ def toggle_popover_4(n, is_open):
     [Input("commits-data", "data"), Input("commits-time-interval", "value")],
 )
 def create_commits_over_time_graph(data, interval):
-    print("COMMITS_OVER_TIME_VIZ - START")
+    logging.debug("COMMITS_OVER_TIME_VIZ - START")
     df_commits = pd.DataFrame(data)
 
     # reset index to be ready for plotly
@@ -104,7 +105,7 @@ def create_commits_over_time_graph(data, interval):
             margin_b=40,
             margin_r=20,
         )
-        print("COMMITS_OVER_TIME_VIZ - END")
+        logging.debug("COMMITS_OVER_TIME_VIZ - END")
         return fig
     else:
         return None
@@ -116,7 +117,7 @@ def create_commits_over_time_graph(data, interval):
     [Input("issues-data", "data"), Input("issue-time-interval", "value")],
 )
 def create_issues_over_time_graph(data, interval):
-    print("ISSUES_OVER_TIME_VIZ - START")
+    logging.debug("ISSUES_OVER_TIME_VIZ - START")
     df_issues = pd.DataFrame(data)
 
     # df for line chart
@@ -168,7 +169,7 @@ def create_issues_over_time_graph(data, interval):
                 hovertemplate="Issues Open: %{y}" + "<extra></extra>",
             )
         )
-        print("ISSUES_OVER_TIME_VIZ - END")
+        logging.debug("ISSUES_OVER_TIME_VIZ - END")
         return fig
     else:
         return None
