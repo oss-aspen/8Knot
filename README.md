@@ -27,7 +27,7 @@ https://docs.docker.com/get-docker/
 
 If you have any issues with this process, please create a new issue and we'll address it!
 
-The config.json file should be at the same level as index. Here is a sample of what that config.json file needs to look like: 
+The config.json file should be at the same level as index. Here is a sample of what that config.json file needs to look like:
 ```
 {
     "connection_string": "sqlite:///:memory:",
