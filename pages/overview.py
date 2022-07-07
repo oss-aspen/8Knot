@@ -58,7 +58,7 @@ graph_card_1 = dbc.Card(
                                             {"label": "Month", "value": "M1"},
                                             {"label": "Year", "value": "M12"},
                                         ],
-                                        value=-1,
+                                        value="M1",
                                         inline=True,
                                     ),
                                     className="me-2",

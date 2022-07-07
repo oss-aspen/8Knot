@@ -211,6 +211,10 @@ def get_graph_time_values(interval):
         x_r = [str(today - dt.timedelta(weeks=4)), str(today)]
         x_name = "Day"
         hover = "Day: %{x|%b %d, %Y}"
+    elif interval == "D1":
+        x_r = [str(today - dt.timedelta(weeks=4)), str(today)]
+        x_name = "Day"
+        hover = "Day: %{x|%b %d, %Y}"
     elif interval == 604800000:  # if statmement for weeks
         x_r = [str(today - dt.timedelta(weeks=30)), str(today)]
         x_name = "Week"
@@ -273,6 +277,9 @@ def contributor_growth_bar_graph(df_contrib, bin_size):
     else:
         group = df_contrib.groupby(pd.Grouper(key="created_at", axis=0, freq="1Y")).size()
 
+    # time values for graph
+    x_r, x_name, hover = get_graph_time_values(bin_size)
+
     # reset index from group-by aggregation step
     group = group.reset_index()
     # rename the columns for clarity
@@ -284,11 +291,14 @@ def contributor_growth_bar_graph(df_contrib, bin_size):
         group["date"] = group["date"].dt.year
 
     # create the graph
-    fig = px.bar(group, x="date", y="count")
+    fig = px.bar(group, x="date", y="count", range_x=x_r, labels={"x": x_name, "y": "Contributors"})
+
+    # edit hover values
+    fig.update_traces(hovertemplate=hover + "<br>Contributors: %{y}<br>")
 
     # make the bars thicker for further-spaced values
     # so that we can see the per-day increases clearly.
-    fig.update_traces(marker_color="blue", marker_line_color="blue", selector=dict(type="bar"))
+    # fig.update_traces(marker_color="blue", marker_line_color="blue", selector=dict(type="bar"))
 
     # add the date-range selector
     fig.update_layout(
@@ -331,6 +341,9 @@ def contributor_growth_line_bar(df_contrib):
         x="created_at",
         y="index",
     )
+
+    # edit hover values
+    fig.update_traces(hovertemplate="%{x}" + "<br>Contributors: %{y}<br>")
 
     """
         Ref. for this awesome button thing:
@@ -406,6 +419,9 @@ def active_drifting_contributors(df, interval, drift_interval, away_interval):
 
     df_status = pd.DataFrame(base[1:], columns=base[0])
 
+    # time values for graph
+    x_r, x_name, hover = get_graph_time_values(interval)
+
     # making a line graph if the bin-size is small enough.
     if interval == "D":
         fig = go.Figure(
@@ -415,29 +431,32 @@ def active_drifting_contributors(df, interval, drift_interval, away_interval):
                     x=df_status["Date"],
                     y=df_status["Active"],
                     mode="lines",
-                    marker=dict(color="red", size=2),
                     showlegend=True,
+                    hovertemplate="Contributors Active: %{y}" + "<extra></extra>",
                 ),
                 go.Scatter(
                     name="Drifting",
                     x=df_status["Date"],
                     y=df_status["Drifting"],
                     mode="lines",
-                    marker=dict(color="teal", size=2),
                     showlegend=True,
+                    hovertemplate="Contributors Drifting: %{y}" + "<extra></extra>",
                 ),
                 go.Scatter(
                     name="Away",
                     x=df_status["Date"],
                     y=df_status["Away"],
                     mode="lines",
-                    marker=dict(color="blue", size=2),
                     showlegend=True,
+                    hovertemplate="Contributors Away: %{y}" + "<extra></extra>",
                 ),
             ]
         )
     else:
         fig = px.bar(df_status, x="Date", y=["Active", "Drifting", "Away"])
+
+        # edit hover values
+        fig.update_traces(hovertemplate=hover + "<br>Contributors: %{y}<br>" + "<extra></extra>")
 
     fig.update_layout(xaxis_title="Time", yaxis_title="Number of Contributors")
     return fig, False
