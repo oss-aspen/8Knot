@@ -6,12 +6,8 @@ FROM python:3.8.12-bullseye
 # need this for the Dash app
 EXPOSE 8050
 
-# copy requirements from directory
-# -- trying to cache this step for faster container builds.
-COPY ./requirements.txt /
-
-# install requirements
-RUN pip3 install -r /requirements.txt
+# install pipenv
+RUN pip install pipenv
 
 # create a working directory
 RUN mkdir explorer
@@ -22,6 +18,9 @@ WORKDIR /explorer
 # copy the contents of current file into the
 # working directory.
 COPY ./ /explorer/
+
+# install required modules at system level
+RUN pipenv install --system --deploy
 
 # run app
 CMD python3 index.py

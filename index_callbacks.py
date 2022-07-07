@@ -3,7 +3,8 @@ from dash.dependencies import Input, Output, State
 import dash
 import pandas as pd
 import sqlalchemy as salc
-from app import app, engine, augur_db, entries
+import logging
+from app import app, engine, augur_db, entries, all_entries
 
 # helper function for repos to get repo_ids
 def _parse_repo_choices(repo_git_set):
@@ -23,7 +24,7 @@ def _parse_repo_choices(repo_git_set):
             r.repo_name
         FROM
             repo r
-        JOIN repo_groups rg 
+        JOIN repo_groups rg
         ON r.repo_group_id = rg.repo_group_id
         WHERE
             r.repo_git in({url_query})
@@ -57,7 +58,7 @@ def _parse_org_choices(org_name_set):
             r.repo_name
         FROM
             repo r
-        JOIN repo_groups rg 
+        JOIN repo_groups rg
         ON r.repo_group_id = rg.repo_group_id
         WHERE
             rg.rg_name in({name_query})
@@ -94,9 +95,12 @@ def dropdown_dynamic_callback(search, bar_state):
         raise dash.exceptions.PreventUpdate
     else:
         if bar_state is not None:
-            opts = [i for i in entries if search in i or i in bar_state]
+            opts = [i[1] for i in all_entries if search.lower() in i[0] or i[1] in bar_state]
+            # opts = [i for i in entries if search in i or i in bar_state]
         else:
             opts = [i for i in entries if search in i]
+
+        opts.sort(key=lambda item: (len(item), item))
 
         # arbitrarily 'small' number of matches returned..
         if len(opts) < 250:
@@ -118,7 +122,7 @@ def update_output(n_clicks, value):
     """
     Section handles parsing the input repos / orgs when there is selected values
     """
-    print("SEARCHBAR_ORG_REPO_PARSING - START")
+    logging.debug("SEARCHBAR_ORG_REPO_PARSING - START")
     if len(value) > 0:
         repo_git_set = []
         org_name_set = []
@@ -144,7 +148,7 @@ def update_output(n_clicks, value):
         selections = str(value)
 
         # return the string that we want and return the list of the id's that we need for the other callback.
-        print("SEARCHBAR_ORG_REPO_PARSING - END")
+        logging.debug("SEARCHBAR_ORG_REPO_PARSING - END")
         return f"Your current selections is: {selections[1:-1]}", list(total_ids)
     elif len(value) == 0:
         raise dash.exceptions.PreventUpdate
@@ -153,7 +157,7 @@ def update_output(n_clicks, value):
 # call back for commits query
 @callback(Output("commits-data", "data"), Input("repo_choices", "data"))
 def generate_commit_data(repo_ids):
-    print("COMMITS_DATA_QUERY - START")
+    logging.debug("COMMITS_DATA_QUERY - START")
     # query input format update
     repo_statement = str(repo_ids)
     repo_statement = repo_statement[1:-1]
@@ -162,13 +166,13 @@ def generate_commit_data(repo_ids):
                     SELECT
                         r.repo_name,
                         c.cmt_commit_hash AS commits,
-                        c.cmt_id AS file, 
+                        c.cmt_id AS file,
                         c.cmt_added AS lines_added,
                         c.cmt_removed AS lines_removed,
                         c.cmt_author_date AS date
                     FROM
                         repo r
-                    JOIN commits c 
+                    JOIN commits c
                     ON r.repo_id = c.repo_id
                     WHERE
                         c.repo_id in({repo_statement})
@@ -176,18 +180,20 @@ def generate_commit_data(repo_ids):
 
     df_commits = augur_db.run_query(commits_query)
 
-    print("COMMITS_DATA_QUERY - END")
+    logging.debug("COMMITS_DATA_QUERY - END")
     return df_commits.to_dict("records")
 
 
 # call back for contributions query
 @callback(Output("contributions", "data"), Input("repo_choices", "data"))
 def generate_contributions_data(repo_ids):
-    print("CONTRIBUTIONS_DATA_QUERY - START")
+    logging.debug("CONTRIBUTIONS_DATA_QUERY - START")
     repo_statement = str(repo_ids)
     repo_statement = repo_statement[1:-1]
 
-    contributions_query = salc.sql.text(f"""SELECT * FROM augur_data.explorer_contributor_actions WHERE repo_id in({repo_statement})""")
+    contributions_query = salc.sql.text(
+        f"""SELECT * FROM augur_data.explorer_contributor_actions WHERE repo_id in({repo_statement})"""
+    )
 
     with engine.connect() as conn:
         df_cont = pd.read_sql(contributions_query, con=conn)
@@ -202,7 +208,7 @@ def generate_contributions_data(repo_ids):
 
     df_cont = df_cont.reset_index()
     df_cont.drop("index", axis=1, inplace=True)
-    print("CONTRIBUTIONS_DATA_QUERY - END")
+    logging.debug("CONTRIBUTIONS_DATA_QUERY - END")
     return df_cont.to_dict("records")
 
 
@@ -210,7 +216,7 @@ def generate_contributions_data(repo_ids):
 @callback(Output("issues-data", "data"), Input("repo_choices", "data"))
 def generate_issues_data(repo_ids):
 
-    print("ISSUES_DATA_QUERY - START")
+    logging.debug("ISSUES_DATA_QUERY - START")
 
     repo_statement = str(repo_ids)
     repo_statement = repo_statement[1:-1]
@@ -219,10 +225,10 @@ def generate_issues_data(repo_ids):
         f"""
                 SELECT
                     r.repo_name,
-					i.issue_id AS issue, 
+					i.issue_id AS issue,
 					i.gh_issue_number AS issue_number,
 					i.gh_issue_id AS gh_issue,
-					i.created_at AS created, 
+					i.created_at AS created,
 					i.closed_at AS closed,
                     i.pull_request_id
                 FROM
@@ -230,7 +236,7 @@ def generate_issues_data(repo_ids):
                     issues i
                 WHERE
                 	r.repo_id = i.repo_id AND
-                    i.repo_id in({repo_statement}) 
+                    i.repo_id in({repo_statement})
         """
     )
 
@@ -244,6 +250,6 @@ def generate_issues_data(repo_ids):
     df_issues = df_issues.reset_index()
     df_issues.drop("index", axis=1, inplace=True)
 
-    print("ISSUES_DATA_QUERY - END")
+    logging.debug("ISSUES_DATA_QUERY - END")
 
     return df_issues.to_dict("records")

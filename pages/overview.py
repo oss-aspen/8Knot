@@ -58,7 +58,7 @@ graph_card_1 = dbc.Card(
                                             {"label": "Month", "value": "M1"},
                                             {"label": "Year", "value": "M12"},
                                         ],
-                                        value=-1,
+                                        value="M1",
                                         inline=True,
                                     ),
                                     className="me-2",
@@ -304,7 +304,56 @@ graph_card_4 = dbc.Card(
                                 ),
                             ],
                             align="center",
-                        )
+                        ),
+                        dbc.Row(
+                            [
+                                dbc.Label(
+                                    "Months Until Drifting:",
+                                    html_for="drifting_months",
+                                    width={"size": "auto"},
+                                    style={"font-weight": "bold"},
+                                ),
+                                dbc.Col(
+                                    dbc.Input(
+                                        id="drifting_months",
+                                        type="number",
+                                        min=1,
+                                        max=120,
+                                        step=1,
+                                        value=6,
+                                    ),
+                                    className="me-2",
+                                    width=2,
+                                ),
+                                dbc.Label(
+                                    "Months Until Away:",
+                                    html_for="away_months",
+                                    width={"size": "auto"},
+                                    style={"font-weight": "bold"},
+                                ),
+                                dbc.Col(
+                                    dbc.Input(
+                                        id="away_months",
+                                        type="number",
+                                        min=1,
+                                        max=120,
+                                        step=1,
+                                        value=12,
+                                    ),
+                                    className="me-2",
+                                    width=2,
+                                ),
+                            ],
+                            align="center",
+                        ),
+                        dbc.Alert(
+                            children="Please ensure that 'Months Until Drifting' is less than 'Months Until Away'",
+                            id="drifting_away_check_alert",
+                            dismissable=True,
+                            fade=False,
+                            is_open=False,
+                            color="warning",
+                        ),
                     ]
                 ),
             ]
