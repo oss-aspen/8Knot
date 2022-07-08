@@ -1,6 +1,5 @@
 from dash import html, dcc
 import dash
-import dash_labs as dl
 import plotly.express as px
 import dash_bootstrap_components as dbc
 import warnings
@@ -8,7 +7,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # register the page
-dl.plugins.register_page(__name__, order=3)
+dash.register_page(__name__, order=3)
 
 from .callbacks import chaoss_callbacks
 
