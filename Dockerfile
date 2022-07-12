@@ -23,4 +23,4 @@ COPY ./ /explorer/
 RUN pipenv install --system --deploy
 
 # run app
-CMD python3 index.py
+CMD python3 app.py

@@ -1,12 +1,10 @@
 from dash import html, dcc
 import dash
-import dash_labs as dl
 import dash_bootstrap_components as dbc
 from .callbacks import overview_callbacks
 
 # register the page
-dl.plugins.register_page(__name__, order=2)
-
+dash.register_page(__name__, order=2)
 
 graph_card_1 = dbc.Card(
     [
