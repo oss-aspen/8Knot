@@ -41,7 +41,7 @@ def _load_config():
     global augur_db
     # Get config details
     try:
-        assert os.environ["running_on"] == "prod"
+        #assert os.environ["running_on"] == "prod"
         augur_db = AugurInterface()
     except KeyError:
         # check that config file is available
