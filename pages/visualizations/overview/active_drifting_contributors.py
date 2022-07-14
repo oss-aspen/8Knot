@@ -9,6 +9,7 @@ import datetime as dt
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
+from utils.graph_utils import get_graph_time_values
 
 gc_active_drifting_contributors = dbc.Card(
     [
@@ -190,7 +191,7 @@ def active_drifting_contributors(df, interval, drift_interval, away_interval):
     df_status = pd.DataFrame(base[1:], columns=base[0])
 
     # time values for graph
-    x_r, x_name, hover = get_graph_time_values(interval)
+    x_r, x_name, hover, period = get_graph_time_values(interval)
 
     # making a line graph if the bin-size is small enough.
     if interval == "D":
@@ -257,30 +258,3 @@ def get_active_drifting_away_up_to(df, date, drift_interval, away_interval):
     numAway = numTotal - (numActive + numDrifting)
 
     return [date, numActive, numDrifting, numAway]
-
-
-def get_graph_time_values(interval):
-    # helper values for building graph
-    today = dt.date.today()
-    x_r = None
-    x_name = "Year"
-    hover = "Year: %{x|%Y}"
-
-    # graph input values based on date interval selection
-    if interval == 86400000:  # if statement for days
-        x_r = [str(today - dt.timedelta(weeks=4)), str(today)]
-        x_name = "Day"
-        hover = "Day: %{x|%b %d, %Y}"
-    elif interval == "D1":
-        x_r = [str(today - dt.timedelta(weeks=4)), str(today)]
-        x_name = "Day"
-        hover = "Day: %{x|%b %d, %Y}"
-    elif interval == 604800000:  # if statmement for weeks
-        x_r = [str(today - dt.timedelta(weeks=30)), str(today)]
-        x_name = "Week"
-        hover = "Week: %{x|%b %d, %Y}"
-    elif interval == "M1":  # if statement for months
-        x_r = [str(today - dt.timedelta(weeks=104)), str(today)]
-        x_name = "Month"
-        hover = "Month: %{x|%b %Y}"
-    return x_r, x_name, hover

@@ -8,7 +8,7 @@ import pandas as pd
 import datetime as dt
 import logging
 import plotly.express as px
-
+from utils.graph_utils import get_graph_time_values
 
 gc_commits_over_time = dbc.Card(
     [
@@ -111,7 +111,7 @@ def create_commits_over_time_graph(data, interval):
     df_commits = df_commits.reset_index()
 
     # time values for graph
-    x_r, x_name, hover = get_graph_time_values(interval)
+    x_r, x_name, hover, period = get_graph_time_values(interval)
 
     # graph geration
     if df_commits is not None:
@@ -133,30 +133,3 @@ def create_commits_over_time_graph(data, interval):
         return fig
     else:
         return None
-
-
-def get_graph_time_values(interval):
-    # helper values for building graph
-    today = dt.date.today()
-    x_r = None
-    x_name = "Year"
-    hover = "Year: %{x|%Y}"
-
-    # graph input values based on date interval selection
-    if interval == 86400000:  # if statement for days
-        x_r = [str(today - dt.timedelta(weeks=4)), str(today)]
-        x_name = "Day"
-        hover = "Day: %{x|%b %d, %Y}"
-    elif interval == "D1":
-        x_r = [str(today - dt.timedelta(weeks=4)), str(today)]
-        x_name = "Day"
-        hover = "Day: %{x|%b %d, %Y}"
-    elif interval == 604800000:  # if statmement for weeks
-        x_r = [str(today - dt.timedelta(weeks=30)), str(today)]
-        x_name = "Week"
-        hover = "Week: %{x|%b %d, %Y}"
-    elif interval == "M1":  # if statement for months
-        x_r = [str(today - dt.timedelta(weeks=104)), str(today)]
-        x_name = "Month"
-        hover = "Month: %{x|%b %Y}"
-    return x_r, x_name, hover
