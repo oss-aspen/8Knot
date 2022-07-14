@@ -24,7 +24,9 @@ import os
 
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.DEBUG)
 
 # GLOBAL VARIABLE DECLARATIONS
 engine = None
@@ -238,7 +240,7 @@ def main():
     except:
         debug_mode = True
 
-    app.run_server(host="0.0.0.0", port=8050, debug=debug_mode)
+    app.run_server(host="0.0.0.0", port=8080, debug=debug_mode)
 
 
 if __name__ == "__main__":
