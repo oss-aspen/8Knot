@@ -1,11 +1,9 @@
 from dash import html
 import dash
-import dash_labs as dl
 import dash_bootstrap_components as dbc
-import dash
 
 # register the page
-dl.plugins.register_page(__name__, path="/", order=1)
+dash.register_page(__name__, path="/", order=1)
 
 layout = dbc.Container(
     [

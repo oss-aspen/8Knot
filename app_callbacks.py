@@ -4,7 +4,7 @@ import dash
 import pandas as pd
 import sqlalchemy as salc
 import logging
-from app import app, engine, augur_db, entries, all_entries
+from app import engine, augur_db, entries, all_entries
 
 # helper function for repos to get repo_ids
 def _parse_repo_choices(repo_git_set):
@@ -75,7 +75,7 @@ def _parse_org_choices(org_name_set):
     return org_repo_ids, org_repo_names
 
 
-@app.callback(
+@callback(
     [Output("projects", "options")],
     [Input("projects", "search_value")],
     [State("projects", "value")],
@@ -110,7 +110,7 @@ def dropdown_dynamic_callback(search, bar_state):
 
 
 # call back for repo selctions to feed into visualization call backs
-@app.callback(
+@callback(
     [Output("results-output-container", "children"), Output("repo_choices", "data")],
     Input("search", "n_clicks"),
     State("projects", "value"),
