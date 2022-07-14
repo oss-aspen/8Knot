@@ -1,0 +1,4 @@
+# This file contains the necessary python packages for your application to run.
+# It is seeded with the necessary packages for Dash.
+
+pipenv
