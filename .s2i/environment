@@ -1,0 +1,20 @@
+# this file allows you to set environment vars via source to image
+
+# gunicorn config
+# https://github.com/sclorg/s2i-python-container/tree/master/3.8#environment-variables
+
+APP_CONFIG=config.py
+
+# uncomment below to run application w/o gunicorn
+#APP_FILE=wsgi.py
+
+# add proxy config via s2i scripts (no secrets)
+
+#http_proxy=http://proxy.example.com:8080
+#https_proxy=http://proxy.example.com:8080
+#no_proxy=example.com,localhost,localdomain.com,cluster.local,svc
+
+# override defaults for pip (aka use a nexus repo)
+
+#PIP_INDEX=https://<userid>:<token>@nexus-repo.example.com/repository/pypi-proxy
+#PIP_INDEX_URL=https://<userid>:<token>@nexus-repo.example.com/repository/pypi-proxy/simple
