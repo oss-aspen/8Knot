@@ -64,12 +64,12 @@ class AugurInterface:
 
             logging.debug("Attempting to load parameters from environment.")
             try:
-                self.user = os.environ["user"]
-                self.password = os.environ["password"]
-                self.host = os.environ["host"]
-                self.port = os.environ["port"]
-                self.database = os.environ["database"]
-                self.schema = os.environ["schema"]
+                self.user = os.getenv("DB_USER", "root")
+                self.password = os.getenv("DB_PASSWORD", "password")
+                self.host = os.getenv("DB_HOST", "localhost")
+                self.port = os.getenv("DB_PORT", "6432")
+                self.database = os.getenv("DB_NAME")
+                self.schema = os.getenv("DB_SCHEMA")
             except KeyError:
                 logging.error("Make sure all environment variables needed to connect to database are set.")
                 return
