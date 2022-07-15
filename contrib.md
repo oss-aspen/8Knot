@@ -23,7 +23,7 @@ IF you need to add a new query:
 3. add a ddc.store componet to the (app.py)[https://github.com/sandiego-rh/explorer/blob/main/app.py]
 4. Create the call back in the (app_callback.py)[https://github.com/sandiego-rh/explorer/blob/main/app_callbacks.py]for the data query in a similar format to the 3 at the bottom
 
-## Steps to create a new page 
+## Steps to create a new page
 1. Add a file to the (pages)[https://github.com/sandiego-rh/explorer/tree/dev/pages] folder with the same format as the others
 2. Create a new folder in the (visualizations)[https://github.com/sandiego-rh/explorer/tree/main/pages/visualizations] for the respective page name
 
