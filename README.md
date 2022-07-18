@@ -22,6 +22,17 @@ for more convenient user access.
 
 The buildout of sandiego-rh/explorer is very much in its infancy but please feel free to try our app as we develop it!
 
+## How to Export an Environment
+[How to Export an Environment Variable](https://phoenixnap.com/kb/linux-set-environment-variable)
+```
+export DB_USER=root
+export DB_PASSWORD=password
+export DB_HOST=localhost
+export DB_PORT=6432
+export DB_NAME=sandiego
+export DB_SCHEMA=augur_data
+```
+
 ## To Launch
 
 Explorer is a plotly/Dash app that is designed to be run as a Docker container.
