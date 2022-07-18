@@ -86,11 +86,15 @@ _project_list_query()
 # can import this file once we've loaded relevant global variables.
 import app_callbacks
 
+
 # CREATE APP OBJECT
 load_figure_template(["sandstone", "minty"])
 app = dash.Dash(
     __name__, use_pages=True, external_stylesheets=[dbc.themes.SANDSTONE], suppress_callback_exceptions=True
 )
+
+# expose the server variable so that gunicorn can use it.
+server = app.server
 
 # side bar code for page navigation
 sidebar = html.Div(
