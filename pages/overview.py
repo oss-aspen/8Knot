@@ -14,7 +14,7 @@ dash.register_page(__name__, order=2)
 layout = dbc.Container(
     [
         dbc.Row(
-            dbc.Col(html.H1(children="Overview Page - live update!")),
+            dbc.Col(html.H1(children="Overview Page")),
         ),
         dbc.Row(
             [

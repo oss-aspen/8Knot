@@ -17,7 +17,7 @@ dash.register_page(__name__, order=3)
 
 layout = dbc.Container(
     [
-        dbc.Row([dbc.Col([html.H1(children="Chaoss WIP Page - live update")])]),
+        dbc.Row([dbc.Col([html.H1(children="Chaoss Page - WIP")])]),
         dbc.Row(
             [
                 dbc.Col(gc_contrib_drive_repeat, width=6),
