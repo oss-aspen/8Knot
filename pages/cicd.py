@@ -9,7 +9,7 @@ layout = dbc.Container(
     [
         dbc.Row(
             [
-                dbc.Col([html.H1(children="CICD Temp Page!")]),
+                dbc.Col([html.H1(children="CICD Page - temporary")]),
             ]
         ),
     ],
