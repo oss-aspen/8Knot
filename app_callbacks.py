@@ -253,3 +253,12 @@ def generate_issues_data(repo_ids):
     logging.debug("ISSUES_DATA_QUERY - END")
 
     return df_issues.to_dict("records")
+
+
+@callback(Output("help-alert", "is_open"), Input("search-help", "n_clicks"), State("help-alert", "is_open"))
+def show_help_alert(n_clicks, openness):
+    if n_clicks == 0:
+        return dash.no_update
+    # switch the openness parameter, allows button to also
+    # dismiss the Alert.
+    return not openness
