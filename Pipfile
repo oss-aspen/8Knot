@@ -15,6 +15,7 @@ dash-bootstrap-components = "*"
 dash-bootstrap-templates = "*"
 plotly = "*"
 plotly-express = "*"
+pytest = "*"
 
 [dev-packages]
 

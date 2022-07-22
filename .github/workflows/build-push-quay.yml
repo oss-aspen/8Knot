@@ -1,15 +1,17 @@
-name: Build and Push Image
+name: Build, Test, and Push Image to :dev
 on:
+    # ensure that code that gets pushed to our dev branch passes tests
     push:
         branches:
             - dev
 
 jobs:
-  build:
-    name: Build and push image to Quay
-    runs-on: ubuntu-20.04
 
+  build-push:
+    name: Checkout, build, push to Quay as :test
+    runs-on: ubuntu-latest
     steps:
+
         - uses: actions/checkout@v2
 
         - name: login to quay
@@ -18,8 +20,46 @@ jobs:
         - name: build docker image
           run: docker build -t explorer .
 
-        - name: commit docker image
-          run: docker tag explorer quay.io/jkunstle/explorer
+        # if the tests pass we tag the image as successful
+        - name: tag docker image
+          run: docker tag explorer quay.io/jkunstle/explorer:test
 
-        - name: push committed docker image to quay.io
-          run: docker push quay.io/jkunstle/explorer:latest
+        - name: push tagged docker image to quay.io
+          run: docker push quay.io/jkunstle/explorer:test
+
+  pull-test:
+    name: Pull image as runner, run tests
+    needs: [build-push]
+    runs-on: ubuntu-latest
+    env:
+        user: $${{ secrets.DB_USER }}
+        password: $${{ secrets.DB_PASSWORD }}
+        host: $${{ secrets.DB_HOST }}
+        port: $${{ secrets.DB_PORT }}
+        database: $${{ secrets.DB_DATABASE }}
+        schema: $${{ secrets.DB_SCHEMA }}
+    container: quay.io/jkunstle/explorer:test
+    steps:
+
+        - name: checkout code
+          uses: actions/checkout@v2
+
+        - name: run tests
+          run: pytest
+
+  retag-dev:
+    name: Pull :test from Quay, promote to :dev
+    needs: [pull-test]
+    runs-on: ubuntu-20.04
+    steps:
+        - name: login to quay
+          run: docker login quay.io -p ${{ secrets.REGISTRY_PASSWORD }} -u jkunstle
+
+        - name: pull image
+          run: docker pull quay.io/jkunstle/explorer:test
+
+        - name: retag image
+          run: docker tag quay.io/jkunstle/explorer:test quay.io/jkunstle/explorer:dev
+
+        - name: push img
+          run: docker push quay.io/jkunstle/explorer:dev

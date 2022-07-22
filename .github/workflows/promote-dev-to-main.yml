@@ -1,0 +1,22 @@
+name: Promote :dev to :main for OCP deployment
+on:
+    push:
+        branches:
+            - main
+
+jobs:
+    promote:
+        name: Promote dev image to :main tag on Quay
+        runs-on: ubuntu-latest
+        steps:
+            - name: login to quay
+              run: docker login quay.io -p ${{ secrets.REGISTRY_PASSWORD }} -u jkunstle
+
+            - name: pull image
+              run: docker pull quay.io/jkunstle/explorer:dev
+
+            - name: retag image
+              run: docker tag quay.io/jkunstle/explorer:dev quay.io/jkunstle/explorer:main
+
+            - name: push img
+              run: docker push quay.io/jkunstle/explorer:main
