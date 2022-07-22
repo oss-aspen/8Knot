@@ -80,7 +80,7 @@ def _parse_org_choices(org_name_set):
     [Input("projects", "search_value")],
     [State("projects", "value")],
 )
-def dropdown_dynamic_callback(search, bar_state):
+def dropdown_dynamic_callback(user_in, selections):
 
     """
     Ref: https://dash.plotly.com/dash-core-components/dropdown#dynamic-options
@@ -91,22 +91,25 @@ def dropdown_dynamic_callback(search, bar_state):
     either of the options.
     """
 
-    if search is None or len(search) == 0:
+    if selections is None:
+        selections = []
+
+    if user_in is None or len(user_in) == 0:
         raise dash.exceptions.PreventUpdate
     else:
-        if bar_state is not None:
-            opts = [i[1] for i in all_entries if search.lower() in i[0] or i[1] in bar_state]
-            # opts = [i for i in entries if search in i or i in bar_state]
-        else:
-            opts = [i for i in entries if search in i]
+        # match lowercase inputs with lowercase possible values
+        opts = [i[1] for i in all_entries if user_in.lower() in i[0]]
 
+        # sort matches by length
         opts.sort(key=lambda item: (len(item), item))
 
+        # always include the previous selections from the searchbar to avoid
+        # those values being clobbered when we truncate the total length.
         # arbitrarily 'small' number of matches returned..
         if len(opts) < 250:
-            return [opts]
+            return [opts + selections]
         else:
-            return [opts[:250]]
+            return [opts[:250] + selections]
 
 
 # call back for repo selctions to feed into visualization call backs
