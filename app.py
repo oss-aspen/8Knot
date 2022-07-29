@@ -139,7 +139,18 @@ app.layout = dbc.Container(
                                             multi=True,
                                             value=[search_input],
                                             options=[search_input],
-                                        )
+                                        ),
+                                        dbc.Alert(
+                                            children='Please ensure that your spelling is correct. \
+                                                If your selection definitely isn\'t present, please request that \
+                                                it be loaded using the help button "REPO/ORG Request" \
+                                                in the bottom right corner of the screen.',
+                                            id="help-alert",
+                                            dismissable=True,
+                                            fade=True,
+                                            is_open=False,
+                                            color="info",
+                                        ),
                                     ],
                                     style={
                                         "width": "50%",
@@ -153,6 +164,16 @@ app.layout = dbc.Container(
                                     id="search",
                                     n_clicks=0,
                                     class_name="btn btn-primary",
+                                    style={
+                                        "verticalAlign": "top",
+                                        "display": "table-cell",
+                                    },
+                                ),
+                                dbc.Button(
+                                    "Help",
+                                    id="search-help",
+                                    n_clicks=0,
+                                    class_name="btn btn-light",
                                     style={
                                         "verticalAlign": "top",
                                         "display": "table-cell",
