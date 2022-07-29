@@ -155,8 +155,6 @@ app.layout = dbc.Container(
                                             is_open=False,
                                             color="info",
                                         ),
-                                    ]
-                                        )
                                     ],
                                     style={
                                         "width": "50%",
