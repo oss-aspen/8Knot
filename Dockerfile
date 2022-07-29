@@ -5,6 +5,7 @@ FROM python:3.8.12-bullseye
 
 # need this for the Dash app
 EXPOSE 8050
+EXPOSE 8888
 
 # install pipenv
 RUN pip install pipenv
@@ -23,4 +24,6 @@ COPY ./ /explorer/
 RUN pipenv install --system --deploy
 
 # run app
-CMD python3 app.py
+# CMD python3 app.py
+# using production-level WSGI interface for server deployment
+CMD gunicorn --bind :8050 app:server
