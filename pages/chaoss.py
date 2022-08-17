@@ -8,6 +8,7 @@ import warnings
 from .visualizations.chaoss.contrib_drive_repeat import gc_contrib_drive_repeat
 from .visualizations.chaoss.first_time_contributions import gc_first_time_contributions
 from .visualizations.chaoss.contributors_over_time import gc_contributors_over_time
+from .visualizations.chaoss.discourse_insights import gc_discourse_insights
 
 warnings.filterwarnings("ignore")
 
@@ -27,6 +28,7 @@ layout = dbc.Container(
         dbc.Row(
             [
                 dbc.Col(gc_contributors_over_time, width=6),
+                dbc.Col(gc_discourse_insights, width=6),
             ]
         ),
     ],
