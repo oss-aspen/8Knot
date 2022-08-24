@@ -24,9 +24,8 @@ gc_pr_staleness = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "<NEW> Pull Requests actively open within the lower time varible.\n\
-                            <DRIFT> Pull Requests actively open between the two time varibles.\n\
-                            <STALE> Pull Requests actively open after the upper time varible."
+                            "This visualization shows how many PRs have been open different buckets of time.\n\
+                            It can tell you if there are PRS that are staying idly open."
                         ),
                     ],
                     id="overview-popover-prs",
@@ -160,7 +159,7 @@ def toggle_popover_prs(n, is_open):
     ],
 )
 def new_drifting_prs(df, interval, drift_interval, stale_interval):
-    logging.debug("ISSUE STALENESS - START")
+    logging.debug("PULL REQUEST STALENESS - START")
 
     if drift_interval > stale_interval:
         return dash.no_update, True
@@ -169,7 +168,11 @@ def new_drifting_prs(df, interval, drift_interval, stale_interval):
         return dash.no_update, dash.no_update
 
     df = pd.DataFrame(df)
-    print(df[:10])
+
+    # change all to datetime
+    df["created"] = pd.to_datetime(df["created"], utc=True)
+    df["merged"] = pd.to_datetime(df["merged"], utc=True)
+    df["closed"] = pd.to_datetime(df["closed"], utc=True)
 
     # first and last elements of the dataframe are the
     # earliest and latest events respectively
@@ -179,11 +182,10 @@ def new_drifting_prs(df, interval, drift_interval, stale_interval):
     # generating buckets beginning to the end of time by the specified interval
     dates = pd.date_range(start=earliest, end=latest, freq=interval, inclusive="both")
 
-    base = [["Date", "New", "Drift", "Stale"]]
+    base = [["Date", "New", "Drifting", "Stale"]]
     for date in dates:
         counts = get_new_drifting_stale_up_to(df, date, drift_interval, stale_interval)
         base.append(counts)
-    print("here")
 
     df_status = pd.DataFrame(base[1:], columns=base[0])
 
@@ -221,14 +223,18 @@ def new_drifting_prs(df, interval, drift_interval, stale_interval):
             ]
         )
     else:
-        fig = px.bar(df_status, x="Date", y=["New", "Drifting", "Stale"])
+        fig = px.bar(
+            df_status,
+            x="Date",
+            y=["New", "Drifting", "Stale"],
+        )
 
         # edit hover values
-        fig.update_traces(hovertemplate=hover + "<br>Contributors: %{y}<br>" + "<extra></extra>")
+        fig.update_traces(hovertemplate=hover + "<br>PRs: %{y}<br>" + "<extra></extra>")
 
-    fig.update_layout(xaxis_title="Time", yaxis_title="Number of Contributors")
+    fig.update_layout(xaxis_title="Time", yaxis_title="Pull Requests", legend_title="Type")
 
-    logging.debug("ISSUE STALENESS - END")
+    logging.debug("PULL REQUEST STALENESS - END")
     return fig, False
 
 
