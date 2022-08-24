@@ -265,3 +265,48 @@ def show_help_alert(n_clicks, openness):
     # switch the openness parameter, allows button to also
     # dismiss the Alert.
     return not openness
+
+
+@callback(Output("pr-data", "data"), Input("repo_choices", "data"))
+def generate_pr_data(repo_ids):
+
+    logging.debug("PR_DATA_QUERY - START")
+
+    repo_statement = str(repo_ids)
+    repo_statement = repo_statement[1:-1]
+
+    pr_query = salc.sql.text(
+        f"""
+            SET SCHEMA 'augur_data';
+            SELECT
+                r.repo_name,
+                pr.pull_request_id AS pull_request,
+                pr.pr_src_number,
+                pr.pr_created_at AS created,
+                pr.pr_closed_at AS closed,
+				pr.pr_merged_at  AS merged
+            FROM
+                repo r,
+                pull_requests pr
+            WHERE
+                r.repo_id = pr.repo_id AND
+                r.repo_id in({repo_statement})
+        """
+    )
+
+    with engine.connect() as conn:
+        df_pr = pd.read_sql(pr_query, con=conn)
+
+    # sort by the date created
+    df_pr = df_pr.sort_values(by="created")
+
+    # convert to datetime objects
+    df_pr["created"] = pd.to_datetime(df_pr["created"], utc=True)
+    df_pr["merged"] = pd.to_datetime(df_pr["merged"], utc=True)
+    df_pr["closed"] = pd.to_datetime(df_pr["merged"], utc=True)
+    df_pr = df_pr.reset_index()
+    df_pr.drop("index", axis=1, inplace=True)
+
+    logging.debug("PR_DATA_QUERY - END")
+
+    return df_pr.to_dict("records")

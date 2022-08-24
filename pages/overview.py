@@ -7,6 +7,7 @@ from .visualizations.overview.total_contributor_growth import gc_total_contribut
 from .visualizations.overview.commits_over_time import gc_commits_over_time
 from .visualizations.overview.issues_over_time import gc_issues_over_time
 from .visualizations.overview.active_drifting_contributors import gc_active_drifting_contributors
+from .visualizations.overview.pr_staleness import gc_pr_staleness
 
 # register the page
 dash.register_page(__name__, order=2)
@@ -26,6 +27,11 @@ layout = dbc.Container(
             [
                 dbc.Col(gc_total_contributor_growth, width=6),
                 dbc.Col(gc_active_drifting_contributors, width=6),
+            ]
+        ),
+        dbc.Row(
+            [
+                dbc.Col(gc_pr_staleness, width=6),
             ]
         ),
     ],

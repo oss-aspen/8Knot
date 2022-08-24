@@ -121,6 +121,7 @@ app.layout = dbc.Container(
         dcc.Store(id="commits-data", data=[], storage_type="memory"),
         dcc.Store(id="contributions", data=[], storage_type="memory"),
         dcc.Store(id="issues-data", data=[], storage_type="memory"),
+        dcc.Store(id="pr-data", data=[], storage_type="memory"),
         dcc.Location(id="url"),
         dbc.Row(
             [
