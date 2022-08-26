@@ -246,6 +246,9 @@ def get_new_drifting_stale_up_to(df, date, drift_interval, stale_interval):
     # drop rows that have been closed before date
     df_lim = df_lim_created[df_lim_created["closed"] > date]
 
+    # include rows that have a null closed value
+    df_lim = df_lim.append(df_lim_created[df_lim_created.closed.isnull()])
+
     # time difference for the amount of days before the threshold date
     drift_days = date - relativedelta(days=+drift_interval)
 
