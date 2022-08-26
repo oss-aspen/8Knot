@@ -1,0 +1,268 @@
+from dash import html, dcc
+import dash
+import dash_bootstrap_components as dbc
+from dash import callback
+from dash.dependencies import Input, Output, State
+import plotly.graph_objects as go
+import pandas as pd
+import datetime as dt
+import logging
+from dateutil.relativedelta import *  # type: ignore
+import plotly.express as px
+from utils.graph_utils import get_graph_time_values
+
+gc_pr_staleness = dbc.Card(
+    [
+        dbc.CardBody(
+            [
+                html.H4(
+                    "Issue Activity- Staleness",
+                    className="card-title",
+                    style={"text-align": "center"},
+                ),
+                dbc.Popover(
+                    [
+                        dbc.PopoverHeader("Graph Info:"),
+                        dbc.PopoverBody(
+                            "This visualization shows how many issues have been open different buckets of time.\n\
+                            It can tell you if there are issuesS that are staying idly open."
+                        ),
+                    ],
+                    id="overview-popover-is",
+                    target="overview-popover-target-is",  # needs to be the same as dbc.Button id
+                    placement="top",
+                    is_open=False,
+                ),
+                dcc.Loading(
+                    children=[dcc.Graph(id="issue_staleness")],
+                    color="#119DFF",
+                    type="dot",
+                    fullscreen=False,
+                ),
+                dbc.Form(
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Label(
+                                    "Date Interval:",
+                                    html_for="issue-staleness-interval",
+                                    width="auto",
+                                    style={"font-weight": "bold"},
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.RadioItems(
+                                            id="issue-staleness-interval",
+                                            options=[
+                                                {
+                                                    "label": "Day",
+                                                    "value": "D",
+                                                },  # days in milliseconds for ploty use
+                                                {"label": "Month", "value": "M"},
+                                                {"label": "Year", "value": "Y"},
+                                            ],
+                                            value="M",
+                                            inline=True,
+                                        ),
+                                    ]
+                                ),
+                                dbc.Col(
+                                    dbc.Button(
+                                        "About Graph",
+                                        id="overview-popover-target-is",
+                                        color="secondary",
+                                        size="sm",
+                                    ),
+                                    width="auto",
+                                    style={"padding-top": ".5em"},
+                                ),
+                            ],
+                            align="center",
+                        ),
+                        dbc.Row(
+                            [
+                                dbc.Label(
+                                    "Days Until Drift:",
+                                    html_for="i_drift_days",
+                                    width={"size": "auto"},
+                                    style={"font-weight": "bold"},
+                                ),
+                                dbc.Col(
+                                    dbc.Input(
+                                        id="i_drift_days",
+                                        type="number",
+                                        min=1,
+                                        max=120,
+                                        step=1,
+                                        value=7,
+                                    ),
+                                    className="me-2",
+                                    width=2,
+                                ),
+                                dbc.Label(
+                                    "Days Until Stale:",
+                                    html_for="i_stale_days",
+                                    width={"size": "auto"},
+                                    style={"font-weight": "bold"},
+                                ),
+                                dbc.Col(
+                                    dbc.Input(
+                                        id="i_stale_days",
+                                        type="number",
+                                        min=1,
+                                        max=120,
+                                        step=1,
+                                        value=30,
+                                    ),
+                                    className="me-2",
+                                    width=2,
+                                ),
+                            ],
+                            align="center",
+                        ),
+                        dbc.Alert(
+                            children="Please ensure that 'Days Until Drift' is less than 'Days Until Stale'",
+                            id="i_drift_stale_check_alert",
+                            dismissable=True,
+                            fade=False,
+                            is_open=False,
+                            color="warning",
+                        ),
+                    ]
+                ),
+            ]
+        )
+    ],
+    color="light",
+)
+
+
+@callback(
+    Output("overview-popover-is", "is_open"),
+    [Input("overview-popover-target-is", "n_clicks")],
+    [State("overview-popover-is", "is_open")],
+)
+def toggle_popover_prs(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
+
+@callback(
+    Output("issue_staleness", "figure"),
+    Output("i_drift_stale_check_alert", "is_open"),
+    [
+        Input("issues-data", "data"),
+        Input("issue-staleness-interval", "value"),
+        Input("i_drift_days", "value"),
+        Input("i_stale_days", "value"),
+    ],
+)
+def new_drifting_prs(df, interval, drift_interval, stale_interval):
+    logging.debug("ISSUE STALENESS - START")
+
+    if drift_interval > stale_interval:
+        return dash.no_update, True
+
+    if drift_interval is None or stale_interval is None:
+        return dash.no_update, dash.no_update
+
+    df = pd.DataFrame(df)
+
+    # change all to datetime
+    df["created"] = pd.to_datetime(df["created"], utc=True)
+    df["closed"] = pd.to_datetime(df["closed"], utc=True)
+
+    # first and last elements of the dataframe are the
+    # earliest and latest events respectively
+    earliest = df.iloc[0]["created"]
+    latest = df.iloc[-1]["created"]
+
+    # generating buckets beginning to the end of time by the specified interval
+    dates = pd.date_range(start=earliest, end=latest, freq=interval, inclusive="both")
+
+    base = [["Date", "New", "Drifting", "Stale"]]
+    for date in dates:
+        counts = get_new_drifting_stale_up_to(df, date, drift_interval, stale_interval)
+        base.append(counts)
+
+    df_status = pd.DataFrame(base[1:], columns=base[0])
+
+    # time values for graph
+    x_r, x_name, hover, period = get_graph_time_values(interval)
+
+    # making a line graph if the bin-size is small enough.
+    if interval == "D":
+        fig = go.Figure(
+            [
+                go.Scatter(
+                    name="New",
+                    x=df_status["Date"],
+                    y=df_status["New"],
+                    mode="lines",
+                    showlegend=True,
+                    hovertemplate="Issues New: %{y}" + "<extra></extra>",
+                ),
+                go.Scatter(
+                    name="Drifting",
+                    x=df_status["Date"],
+                    y=df_status["Drifting"],
+                    mode="lines",
+                    showlegend=True,
+                    hovertemplate="Issues Drifting: %{y}" + "<extra></extra>",
+                ),
+                go.Scatter(
+                    name="Stale",
+                    x=df_status["Date"],
+                    y=df_status["Stale"],
+                    mode="lines",
+                    showlegend=True,
+                    hovertemplate="Issues Stale: %{y}" + "<extra></extra>",
+                ),
+            ]
+        )
+    else:
+        fig = px.bar(
+            df_status,
+            x="Date",
+            y=["New", "Drifting", "Stale"],
+        )
+
+        # edit hover values
+        fig.update_traces(hovertemplate=hover + "<br>Issues: %{y}<br>" + "<extra></extra>")
+
+    fig.update_layout(xaxis_title="Time", yaxis_title="Issues", legend_title="Type")
+
+    logging.debug("ISSUE STALENESS - END")
+    return fig, False
+
+
+def get_new_drifting_stale_up_to(df, date, drift_interval, stale_interval):
+
+    # drop rows that are more recent than the date limit
+    df_lim_created = df[df["created"] <= date]
+
+    # drop rows that have been closed before date
+    df_lim = df_lim_created[df_lim_created["closed"] > date]
+
+    # include rows that have a null closed value
+    df_lim = df_lim.append(df_lim_created[df_lim_created.closed.isnull()])
+
+    # time difference for the amount of days before the threshold date
+    drift_days = date - relativedelta(days=+drift_interval)
+
+    # time difference for the amount of days before the threshold date
+    stale_days = date - relativedelta(days=+stale_interval)
+
+    # PRs still open at the specified date
+    numTotal = df_lim.shape[0]
+
+    # num of currently open PRs that have been create in the last drift_value amount of days
+    numNew = df_lim[df_lim["created"] >= drift_days].shape[0]
+
+    drifting = df_lim[df_lim["created"] > stale_days]
+    numDrifting = drifting[drifting["created"] < drift_days].shape[0]
+
+    numStale = numTotal - (numNew + numDrifting)
+
+    return [date, numNew, numDrifting, numStale]
