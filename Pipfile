@@ -16,6 +16,8 @@ dash-bootstrap-templates = "*"
 plotly = "*"
 plotly-express = "*"
 gevent = "*"
+redis = "*"
+rq = "*"
 
 [dev-packages]
 

@@ -11,9 +11,12 @@
     Having laid out the HTML-like organization of this page, we write the callbacks for this page in
     the neighbor 'app_callbacks.py' file.
 """
+from concurrent.futures import process
 import pstats
 import cProfile
-from db_interface.AugurInterface import AugurInterface
+import threading
+from db_manager.AugurInterface import AugurInterface
+from job_manager.job_manager import JobManager
 import dash
 from dash import html, dcc
 import dash_bootstrap_components as dbc
@@ -32,26 +35,17 @@ search_input = None
 all_entries = None
 entries = None
 augur_db = None
+jm = JobManager()
 
 
 def _load_config():
     global engine
     global augur_db
     # Get config details
-    try:
-        assert os.environ["running_on"] == "prod"
-        augur_db = AugurInterface()
-    except KeyError:
-        # check that config file is available
-        if os.path.exists("config.json"):
-            augur_db = AugurInterface("./config.json")
-        else:
-            print("No 'config.json' available at top level. Config required by name.")
-            sys.exit(1)
-
+    augur_db = AugurInterface()
     engine = augur_db.get_engine()
     if engine is None:
-        print("Could not get engine; check config or try later")
+        logging.critical("Could not get engine; check config or try later")
         sys.exit(1)
 
 
@@ -117,10 +111,7 @@ sidebar = html.Div(
 app.layout = dbc.Container(
     [
         # componets to store data from queries
-        dcc.Store(id="repo_choices", storage_type="session", data=[]),
-        dcc.Store(id="commits-data", data=[], storage_type="memory"),
-        dcc.Store(id="contributions", data=[], storage_type="memory"),
-        dcc.Store(id="issues-data", data=[], storage_type="memory"),
+        dcc.Store(id="repo-choices", storage_type="session", data=[]),
         dcc.Location(id="url"),
         dbc.Row(
             [
@@ -263,7 +254,7 @@ def main():
     except:
         debug_mode = True
 
-    app.run_server(host="0.0.0.0", port=8050, debug=debug_mode)
+    app.run(host="0.0.0.0", port=8050, debug=False, process=4, threading=False)
 
 
 if __name__ == "__main__":

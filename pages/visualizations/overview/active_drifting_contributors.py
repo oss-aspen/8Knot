@@ -9,12 +9,25 @@ import datetime as dt
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
-from utils.graph_utils import get_graph_time_values
+from pages.utils.graph_utils import get_graph_time_values
+
+from app import jm
+from pages.utils.job_utils import handle_job_state
+from queries.contributors_query import contributors_query as ctq
+
+import time
 
 gc_active_drifting_contributors = dbc.Card(
     [
         dbc.CardBody(
             [
+                dcc.Interval(
+                    id="active-drifting-contributors-timer",
+                    disabled=False,
+                    n_intervals=1,
+                    max_intervals=1,
+                    interval=800,
+                ),
                 html.H4(
                     "Contributor Growth by Engagement",
                     className="card-title",
@@ -152,22 +165,33 @@ def toggle_popover_4(n, is_open):
 @callback(
     Output("active_drifting_contributors", "figure"),
     Output("drifting_away_check_alert", "is_open"),
+    Output("active-drifting-contributors-timer", "n_intervals"),
     [
-        Input("contributions", "data"),
+        Input("repo-choices", "data"),
+        Input("active-drifting-contributors-timer", "n_intervals"),
         Input("active-drifting-interval", "value"),
         Input("drifting_months", "value"),
         Input("away_months", "value"),
     ],
 )
-def active_drifting_contributors(df, interval, drift_interval, away_interval):
+def active_drifting_contributors(repolist, timer_pings, interval, drift_interval, away_interval):
 
-    if drift_interval > away_interval:
-        return dash.no_update, True
+    logging.debug("ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - START")
 
     if drift_interval is None or away_interval is None:
-        return dash.no_update, dash.no_update
+        return dash.no_update, dash.no_update, dash.no_update
 
-    df = pd.DataFrame(df)
+    if drift_interval > away_interval:
+        return dash.no_update, True, dash.no_update
+
+    ready, results, graph_update, interval_update = handle_job_state(jm, ctq, repolist)
+    if not ready:
+        return graph_update, dash.no_update, interval_update
+
+    start = time.perf_counter()
+
+    # create dataframe from record data
+    df = pd.DataFrame(results)
 
     # order from beginning of time to most recent
     df = df.sort_values("created_at", axis=0, ascending=True)
@@ -230,7 +254,9 @@ def active_drifting_contributors(df, interval, drift_interval, away_interval):
         fig.update_traces(hovertemplate=hover + "<br>Contributors: %{y}<br>" + "<extra></extra>")
 
     fig.update_layout(xaxis_title="Time", yaxis_title="Number of Contributors")
-    return fig, False
+
+    logging.debug(f"ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}")
+    return fig, False, dash.no_update
 
 
 def get_active_drifting_away_up_to(df, date, drift_interval, away_interval):

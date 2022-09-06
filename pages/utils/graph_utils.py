@@ -1,14 +1,4 @@
-from dash import html, dcc
-import dash
-import dash_bootstrap_components as dbc
-from dash import callback
-from dash.dependencies import Input, Output, State
-import plotly.graph_objects as go
-import pandas as pd
 import datetime as dt
-import logging
-import numpy as np
-import plotly.express as px
 
 
 def get_graph_time_values(interval):

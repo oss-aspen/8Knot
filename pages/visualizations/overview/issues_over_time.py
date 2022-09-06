@@ -8,12 +8,25 @@ import pandas as pd
 import datetime as dt
 import logging
 import plotly.express as px
-from utils.graph_utils import get_graph_time_values
+from pages.utils.graph_utils import get_graph_time_values
+
+from pages.utils.job_utils import handle_job_state, nodata_graph
+from queries.issues_query import issues_query as iq
+from app import jm
+
+import time
 
 gc_issues_over_time = dbc.Card(
     [
         dbc.CardBody(
             [
+                dcc.Interval(
+                    id="issues-over-time-timer",
+                    disabled=False,
+                    n_intervals=1,
+                    max_intervals=1,
+                    interval=800,
+                ),
                 html.H4(
                     "Issues Over Time",
                     className="card-title",
@@ -101,14 +114,30 @@ def toggle_popover_3(n, is_open):
 # callback for issues over time graph
 @callback(
     Output("issues-over-time", "figure"),
-    [Input("issues-data", "data"), Input("issue-time-interval", "value")],
+    Output("issues-over-time-timer", "n_intervals"),
+    [
+        Input("repo-choices", "data"),
+        Input("issues-over-time-timer", "n_intervals"),
+        Input("issue-time-interval", "value"),
+    ],
 )
-def create_issues_over_time_graph(data, interval):
+def issues_over_time_graph(repolist, timer_pings, interval):
     logging.debug("ISSUES_OVER_TIME_VIZ - START")
-    df_issues = pd.DataFrame(data)
+
+    ready, results, graph_update, interval_update = handle_job_state(jm, iq, repolist)
+    if not ready:
+        return graph_update, interval_update
+
+    start = time.perf_counter()
+
+    # create dataframe from record data
+    df_issues = pd.DataFrame(results)
 
     # df for line chart
     df_open = make_open_df(df_issues)
+    if df_open is None:
+        logging.debug("ISSUES_OVER_TIME_VIZ - NO DATA AVAILABLE")
+        return nodata_graph, dash.no_update
 
     # reset index to be ready for plotly
     df_issues = df_issues.reset_index()
@@ -116,7 +145,7 @@ def create_issues_over_time_graph(data, interval):
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
-    # graph geration
+    # graph generation
     if df_issues is not None:
         fig = go.Figure()
         fig.add_histogram(
@@ -156,15 +185,23 @@ def create_issues_over_time_graph(data, interval):
                 hovertemplate="Issues Open: %{y}" + "<extra></extra>",
             )
         )
-        logging.debug("ISSUES_OVER_TIME_VIZ - END")
-        return fig
+        logging.debug(f"ISSUES_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
+
+        # return fig, diable timer.
+        return fig, dash.no_update
     else:
-        return None
+        # don't change figure, disable timer.
+        return dash.no_update, dash.no_update
 
 
 def make_open_df(df_issues):
     # created dataframe
-    df_created = pd.DataFrame(df_issues["created"])
+    # TODO: dataframes don't always have the 'created_at' column for some reason.
+    try:
+        df_created = pd.DataFrame(df_issues["created"])
+    except KeyError:
+        return None
+
     df_created.rename(columns={"created": "issue"}, inplace=True)
     df_created["open"] = 1
 

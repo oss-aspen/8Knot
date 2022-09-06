@@ -9,10 +9,22 @@ import datetime as dt
 import logging
 import plotly.express as px
 
+from app import jm
+from pages.utils.job_utils import handle_job_state, nodata_graph
+from queries.contributors_query import contributors_query as ctq
+import time
+
 gc_contrib_drive_repeat = dbc.Card(
     [
         dbc.CardBody(
             [
+                dcc.Interval(
+                    id="contrib-drive-repeat-timer",
+                    n_intervals=1,
+                    max_intervals=1,
+                    disabled=False,
+                    interval=800,
+                ),
                 html.H4(id="chaoss-graph-title-1", className="card-title", style={"text-align": "center"}),
                 dbc.Popover(
                     [
@@ -124,19 +136,27 @@ def graph_title(view):
 # call back for drive by vs commits over time graph
 @callback(
     Output("cont-drive-repeat", "figure"),
+    Output("contrib-drive-repeat-timer", "n_intervals"),
     [
-        Input("contributions", "data"),
+        Input("repo-choices", "data"),
+        Input("contrib-drive-repeat-timer", "n_intervals"),
         Input("num_contributions", "value"),
         Input("drive-repeat", "value"),
     ],
 )
-def create_drive_by_graph(data, contribs, view):
+def create_drive_by_graph(repolist, timer_pings, contribs, view):
     logging.debug("CONTRIB_DRIVE_REPEAT_VIZ - START")
 
+    ready, results, graph_update, interval_update = handle_job_state(jm, ctq, repolist)
+    if not ready:
+        return graph_update, interval_update
+
+    start = time.perf_counter()
+
     # graph on contribution subset
-    df_cont = pd.DataFrame(data)
+    df_cont = pd.DataFrame(results)
     contributors = df_cont["cntrb_id"][df_cont["rank"] == contribs].to_list()
-    df_cont_subset = pd.DataFrame(data)
+    df_cont_subset = pd.DataFrame(results)
 
     # filtering data by view
     if view == "drive":
@@ -160,7 +180,7 @@ def create_drive_by_graph(data, contribs, view):
             yaxis_title="Contributions",
             margin_b=40,
         )
-        logging.debug("CONTRIB_DRIVE_REPEAT_VIZ - END")
-        return fig
+        logging.debug(f"CONTRIB_DRIVE_REPEAT_VIZ - END - {time.perf_counter() - start}")
+        return fig, dash.no_update
     else:
-        return None
+        return nodata_graph, dash.no_update

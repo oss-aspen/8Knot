@@ -1,1 +1,1 @@
-sudo docker build -t explorer .
+sudo docker build -f Dockerfile.server -t explorer .
