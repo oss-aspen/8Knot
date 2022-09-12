@@ -134,7 +134,7 @@ gc_issue_staleness = dbc.Card(
                         ),
                         dbc.Alert(
                             children="Please ensure that 'Days Until Staling' is less than 'Days Until Stale'",
-                            id="i_staling_stale_check_alert",
+                            id="issue_staling_stale_check_alert",
                             dismissable=True,
                             fade=False,
                             is_open=False,
@@ -162,7 +162,7 @@ def toggle_popover_issues(n, is_open):
 
 @callback(
     Output("issue_staleness", "figure"),
-    Output("i_staling_stale_check_alert", "is_open"),
+    Output("issue_staling_stale_check_alert", "is_open"),
     Output("issue-staleness-timer", "n_intervals"),
     [
         Input("repo-choices", "data"),
