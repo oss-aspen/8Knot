@@ -9,10 +9,23 @@ import datetime as dt
 import logging
 import plotly.express as px
 
+from app import jm
+from pages.utils.job_utils import handle_job_state, nodata_graph
+from queries.contributors_query import contributors_query as ctq
+
+import time
+
 gc_first_time_contributions = dbc.Card(
     [
         dbc.CardBody(
             [
+                dcc.Interval(
+                    id="first-time-contributors-timer",
+                    n_intervals=1,
+                    max_intervals=1,
+                    disabled=False,
+                    interval=800,
+                ),
                 html.H4("First Time Contributions Per Quarter", className="card-title", style={"text-align": "center"}),
                 dbc.Popover(
                     [
@@ -52,10 +65,21 @@ def toggle_popover_2(n, is_open):
     return is_open
 
 
-@callback(Output("first-time-contributions", "figure"), Input("contributions", "data"))
-def create_first_time_contributors_graph(data):
+@callback(
+    Output("first-time-contributions", "figure"),
+    Output("first-time-contributors-timer", "n_intervals"),
+    [Input("repo-choices", "data"), Input("first-time-contributors-timer", "n_intervals")],
+)
+def create_first_time_contributors_graph(repolist, timer_pings):
     logging.debug("1ST_CONTRIBUTIONS_VIZ - START")
-    df_cont = pd.DataFrame(data)
+
+    ready, results, graph_update, interval_update = handle_job_state(jm, ctq, repolist)
+    if not ready:
+        return graph_update, interval_update
+
+    start = time.perf_counter()
+
+    df_cont = pd.DataFrame(results)
 
     # selection for 1st contribution only
     df_cont = df_cont[df_cont["rank"] == 1]
@@ -76,7 +100,7 @@ def create_first_time_contributors_graph(data):
             yaxis_title="Contributions",
             margin_b=40,
         )
-        logging.debug("1ST_CONTRIBUTIONS_VIZ - END")
-        return fig
+        logging.debug(f"1ST_CONTRIBUTIONS_VIZ - END - {time.perf_counter() - start}")
+        return fig, dash.no_update
     else:
-        return None
+        return nodata_graph, dash.no_update

@@ -8,12 +8,25 @@ import pandas as pd
 import datetime as dt
 import logging
 import plotly.express as px
-from utils.graph_utils import get_graph_time_values
+from pages.utils.graph_utils import get_graph_time_values
+
+from app import jm
+from pages.utils.job_utils import handle_job_state, nodata_graph
+from queries.contributors_query import contributors_query as ctq
+
+import time
 
 gc_total_contributor_growth = dbc.Card(
     [
         dbc.CardBody(
             [
+                dcc.Interval(
+                    id="total-contributor-growth-timer",
+                    disabled=False,
+                    n_intervals=1,
+                    max_intervals=1,
+                    interval=800,
+                ),
                 html.H4(
                     id="overview-graph-title-1",
                     className="card-title",
@@ -118,14 +131,23 @@ def graph_title(view):
 
 @callback(
     Output("total_contributor_growth", "figure"),
+    Output("total-contributor-growth-timer", "n_intervals"),
     [
-        Input("contributions", "data"),
+        Input("repo-choices", "data"),
+        Input("total-contributor-growth-timer", "n_intervals"),
         Input("contributor-growth-time-interval", "value"),
     ],
 )
-def create_total_contributor_growth_graph(data, bin_size):
+def create_total_contributor_growth_graph(repolist, timer_pings, bin_size):
     logging.debug("TOTAL_CONTRIBUTOR_GROWTH_VIZ - START")
-    df_contrib = pd.DataFrame(data)
+    ready, results, graph_update, interval_update = handle_job_state(jm, ctq, repolist)
+    if not ready:
+        return graph_update, interval_update
+
+    start = time.perf_counter()
+
+    # create dataframe from record data
+    df_contrib = pd.DataFrame(results)
 
     """
         Assume that the cntrb_id values are unique to individual contributors.
@@ -150,9 +172,9 @@ def create_total_contributor_growth_graph(data, bin_size):
     else:
         fig = contributor_growth_bar_graph(df_contrib, bin_size)
 
-    logging.debug("TOTAL_CONTRIBUTOR_GROWTH_VIZ - END")
+    logging.debug(f"TOTAL_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}")
     # return the simple line graph
-    return fig
+    return fig, dash.no_update
 
 
 def contributor_growth_bar_graph(df_contrib, bin_size):

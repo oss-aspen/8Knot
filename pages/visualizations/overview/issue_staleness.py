@@ -11,25 +11,24 @@ from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values
 
+from pages.utils.job_utils import handle_job_state, nodata_graph
+from queries.issues_query import issues_query as iq
 from app import jm
-from pages.utils.job_utils import handle_job_state
-from queries.contributors_query import contributors_query as ctq
-
 import time
 
-gc_active_drifting_contributors = dbc.Card(
+gc_issue_staleness = dbc.Card(
     [
         dbc.CardBody(
             [
                 dcc.Interval(
-                    id="active-drifting-contributors-timer",
+                    id="issue-staleness-timer",
                     disabled=False,
                     n_intervals=1,
                     max_intervals=1,
                     interval=800,
                 ),
                 html.H4(
-                    "Contributor Growth by Engagement",
+                    "Issue Activity- Staleness",
                     className="card-title",
                     style={"text-align": "center"},
                 ),
@@ -37,18 +36,17 @@ gc_active_drifting_contributors = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "<ACTIVE> contributors have contributed within last 6 months.\n\
-                            <DRIFTING> contributors have contributed within last year but are not active.\n\
-                            <AWAY> contributors haven't made any contributions in the last year at least."
+                            "This visualization shows how many issues have been open different buckets of time.\n\
+                            It can tell you if there are issues that are staying idly open."
                         ),
                     ],
-                    id="overview-popover-4",
-                    target="overview-popover-target-4",  # needs to be the same as dbc.Button id
+                    id="overview-popover-is",
+                    target="overview-popover-target-is",  # needs to be the same as dbc.Button id
                     placement="top",
                     is_open=False,
                 ),
                 dcc.Loading(
-                    children=[dcc.Graph(id="active_drifting_contributors")],
+                    children=[dcc.Graph(id="issue_staleness")],
                     color="#119DFF",
                     type="dot",
                     fullscreen=False,
@@ -59,14 +57,14 @@ gc_active_drifting_contributors = dbc.Card(
                             [
                                 dbc.Label(
                                     "Date Interval:",
-                                    html_for="active-drifting-interval",
+                                    html_for="issue-staleness-interval",
                                     width="auto",
                                     style={"font-weight": "bold"},
                                 ),
                                 dbc.Col(
                                     [
                                         dbc.RadioItems(
-                                            id="active-drifting-interval",
+                                            id="issue-staleness-interval",
                                             options=[
                                                 {
                                                     "label": "Day",
@@ -83,7 +81,7 @@ gc_active_drifting_contributors = dbc.Card(
                                 dbc.Col(
                                     dbc.Button(
                                         "About Graph",
-                                        id="overview-popover-target-4",
+                                        id="overview-popover-target-is",
                                         color="secondary",
                                         size="sm",
                                     ),
@@ -96,37 +94,37 @@ gc_active_drifting_contributors = dbc.Card(
                         dbc.Row(
                             [
                                 dbc.Label(
-                                    "Months Until Drifting:",
-                                    html_for="drifting_months",
+                                    "Days Until Staling:",
+                                    html_for="i_staling_days",
                                     width={"size": "auto"},
                                     style={"font-weight": "bold"},
                                 ),
                                 dbc.Col(
                                     dbc.Input(
-                                        id="drifting_months",
+                                        id="i_staling_days",
                                         type="number",
                                         min=1,
                                         max=120,
                                         step=1,
-                                        value=6,
+                                        value=7,
                                     ),
                                     className="me-2",
                                     width=2,
                                 ),
                                 dbc.Label(
-                                    "Months Until Away:",
-                                    html_for="away_months",
+                                    "Days Until Stale:",
+                                    html_for="i_stale_days",
                                     width={"size": "auto"},
                                     style={"font-weight": "bold"},
                                 ),
                                 dbc.Col(
                                     dbc.Input(
-                                        id="away_months",
+                                        id="i_stale_days",
                                         type="number",
                                         min=1,
                                         max=120,
                                         step=1,
-                                        value=12,
+                                        value=30,
                                     ),
                                     className="me-2",
                                     width=2,
@@ -135,8 +133,8 @@ gc_active_drifting_contributors = dbc.Card(
                             align="center",
                         ),
                         dbc.Alert(
-                            children="Please ensure that 'Months Until Drifting' is less than 'Months Until Away'",
-                            id="drifting_away_check_alert",
+                            children="Please ensure that 'Days Until Staling' is less than 'Days Until Stale'",
+                            id="issue_staling_stale_check_alert",
                             dismissable=True,
                             fade=False,
                             is_open=False,
@@ -150,41 +148,40 @@ gc_active_drifting_contributors = dbc.Card(
     color="light",
 )
 
-# call backs for card graph 4 - Active Drifting Away Over Time
+
 @callback(
-    Output("overview-popover-4", "is_open"),
-    [Input("overview-popover-target-4", "n_clicks")],
-    [State("overview-popover-4", "is_open")],
+    Output("overview-popover-is", "is_open"),
+    [Input("overview-popover-target-is", "n_clicks")],
+    [State("overview-popover-is", "is_open")],
 )
-def toggle_popover_4(n, is_open):
+def toggle_popover_issues(n, is_open):
     if n:
         return not is_open
     return is_open
 
 
 @callback(
-    Output("active_drifting_contributors", "figure"),
-    Output("drifting_away_check_alert", "is_open"),
-    Output("active-drifting-contributors-timer", "n_intervals"),
+    Output("issue_staleness", "figure"),
+    Output("issue_staling_stale_check_alert", "is_open"),
+    Output("issue-staleness-timer", "n_intervals"),
     [
         Input("repo-choices", "data"),
-        Input("active-drifting-contributors-timer", "n_intervals"),
-        Input("active-drifting-interval", "value"),
-        Input("drifting_months", "value"),
-        Input("away_months", "value"),
+        Input("issue-staleness-timer", "n_intervals"),
+        Input("issue-staleness-interval", "value"),
+        Input("i_staling_days", "value"),
+        Input("i_stale_days", "value"),
     ],
 )
-def active_drifting_contributors(repolist, timer_pings, interval, drift_interval, away_interval):
+def new_staling_issues(repolist, timer_pings, interval, staling_interval, stale_interval):
+    logging.debug("ISSUE STALENESS - START")
 
-    logging.debug("ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - START")
-
-    if drift_interval is None or away_interval is None:
-        return dash.no_update, dash.no_update, dash.no_update
-
-    if drift_interval > away_interval:
+    if staling_interval > stale_interval:
         return dash.no_update, True, dash.no_update
 
-    ready, results, graph_update, interval_update = handle_job_state(jm, ctq, repolist)
+    if staling_interval is None or stale_interval is None:
+        return dash.no_update, dash.no_update, dash.no_update
+
+    ready, results, graph_update, interval_update = handle_job_state(jm, iq, repolist)
     if not ready:
         return graph_update, dash.no_update, interval_update
 
@@ -193,23 +190,21 @@ def active_drifting_contributors(repolist, timer_pings, interval, drift_interval
     # create dataframe from record data
     df = pd.DataFrame(results)
 
-    # order from beginning of time to most recent
-    df = df.sort_values("created_at", axis=0, ascending=True)
-
-    # convert to datetime objects
-    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
+    # change all to datetime
+    df["created"] = pd.to_datetime(df["created"], utc=True)
+    df["closed"] = pd.to_datetime(df["closed"], utc=True)
 
     # first and last elements of the dataframe are the
     # earliest and latest events respectively
-    earliest = df.iloc[0]["created_at"]
-    latest = df.iloc[-1]["created_at"]
+    earliest = df.iloc[0]["created"]
+    latest = df.iloc[-1]["created"]
 
-    # beginning to the end of time by the specified interval
+    # generating buckets beginning to the end of time by the specified interval
     dates = pd.date_range(start=earliest, end=latest, freq=interval, inclusive="both")
 
-    base = [["Date", "Active", "Drifting", "Away"]]
+    base = [["Date", "New", "Staling", "Stale"]]
     for date in dates:
-        counts = get_active_drifting_away_up_to(df, date, drift_interval, away_interval)
+        counts = get_new_staling_stale_up_to(df, date, staling_interval, stale_interval)
         base.append(counts)
 
     df_status = pd.DataFrame(base[1:], columns=base[0])
@@ -222,65 +217,73 @@ def active_drifting_contributors(repolist, timer_pings, interval, drift_interval
         fig = go.Figure(
             [
                 go.Scatter(
-                    name="Active",
+                    name="New",
                     x=df_status["Date"],
-                    y=df_status["Active"],
+                    y=df_status["New"],
                     mode="lines",
                     showlegend=True,
-                    hovertemplate="Contributors Active: %{y}" + "<extra></extra>",
+                    hovertemplate="Issues New: %{y}" + "<extra></extra>",
                 ),
                 go.Scatter(
-                    name="Drifting",
+                    name="Staling",
                     x=df_status["Date"],
-                    y=df_status["Drifting"],
+                    y=df_status["Staling"],
                     mode="lines",
                     showlegend=True,
-                    hovertemplate="Contributors Drifting: %{y}" + "<extra></extra>",
+                    hovertemplate="Issues Staling: %{y}" + "<extra></extra>",
                 ),
                 go.Scatter(
-                    name="Away",
+                    name="Stale",
                     x=df_status["Date"],
-                    y=df_status["Away"],
+                    y=df_status["Stale"],
                     mode="lines",
                     showlegend=True,
-                    hovertemplate="Contributors Away: %{y}" + "<extra></extra>",
+                    hovertemplate="Issues Stale: %{y}" + "<extra></extra>",
                 ),
             ]
         )
     else:
-        fig = px.bar(df_status, x="Date", y=["Active", "Drifting", "Away"])
+        fig = px.bar(
+            df_status,
+            x="Date",
+            y=["New", "Staling", "Stale"],
+        )
 
         # edit hover values
-        fig.update_traces(hovertemplate=hover + "<br>Contributors: %{y}<br>" + "<extra></extra>")
+        fig.update_traces(hovertemplate=hover + "<br>Issues: %{y}<br>" + "<extra></extra>")
 
-    fig.update_layout(xaxis_title="Time", yaxis_title="Number of Contributors")
+    fig.update_layout(xaxis_title="Time", yaxis_title="Issues", legend_title="Type")
 
-    logging.debug(f"ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}")
+    logging.debug("ISSUE STALENESS - END")
     return fig, False, dash.no_update
 
 
-def get_active_drifting_away_up_to(df, date, drift_interval, away_interval):
+def get_new_staling_stale_up_to(df, date, staling_interval, stale_interval):
 
     # drop rows that are more recent than the date limit
-    df_lim = df[df["created_at"] <= date]
+    df_lim_created = df[df["created"] <= date]
 
-    # keep more recent contribution per ID
-    df_lim = df_lim.drop_duplicates(subset="cntrb_id", keep="last")
+    # drop rows that have been closed before date
+    df_lim = df_lim_created[df_lim_created["closed"] > date]
 
-    # time difference, 6 months before the threshold date
-    drift_mos = date - relativedelta(months=+drift_interval)
+    # include rows that have a null closed value
+    df_lim = df_lim.append(df_lim_created[df_lim_created.closed.isnull()])
 
-    # time difference, 6 months before the threshold date
-    away_mos = date - relativedelta(months=+away_interval)
+    # time difference for the amount of days before the threshold date
+    staling_days = date - relativedelta(days=+staling_interval)
 
-    # contributions in the last 6 months
+    # time difference for the amount of days before the threshold date
+    stale_days = date - relativedelta(days=+stale_interval)
+
+    # issuess still open at the specified date
     numTotal = df_lim.shape[0]
 
-    numActive = df_lim[df_lim["created_at"] >= drift_mos].shape[0]
+    # num of currently open issues that have been create in the last staling_value amount of days
+    numNew = df_lim[df_lim["created"] >= staling_days].shape[0]
 
-    drifting = df_lim[df_lim["created_at"] > away_mos]
-    numDrifting = drifting[drifting["created_at"] < drift_mos].shape[0]
+    staling = df_lim[df_lim["created"] > stale_days]
+    numStaling = staling[staling["created"] < staling_days].shape[0]
 
-    numAway = numTotal - (numActive + numDrifting)
+    numStale = numTotal - (numNew + numStaling)
 
-    return [date, numActive, numDrifting, numAway]
+    return [date, numNew, numStaling, numStale]

@@ -12,11 +12,11 @@ layout = dbc.Container(
                 dbc.Col(
                     [
                         html.H1(
-                            "Start Page: User notes",
+                            "Home Pages",
                             # className="font-weight-bold mb-4",
                         ),
                         html.P(
-                            "This is WIP and format changes to come. Visualization are on other pages",
+                            "Page is a WIP.",
                             className="font-weight-bold mb-4",
                         ),
                         html.P(

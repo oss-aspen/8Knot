@@ -8,12 +8,24 @@ import pandas as pd
 import datetime as dt
 import logging
 import plotly.express as px
-from utils.graph_utils import get_graph_time_values
+from pages.utils.graph_utils import get_graph_time_values
+
+from pages.utils.job_utils import handle_job_state, nodata_graph
+from queries.commits_query import commits_query as cmq
+from app import jm
+import time
 
 gc_commits_over_time = dbc.Card(
     [
         dbc.CardBody(
             [
+                dcc.Interval(
+                    id="commits-over-time-timer",
+                    disabled=False,
+                    n_intervals=1,
+                    max_intervals=1,
+                    interval=800,
+                ),
                 html.H4(
                     "Commits Over Time",
                     className="card-title",
@@ -30,7 +42,11 @@ gc_commits_over_time = dbc.Card(
                     is_open=False,
                 ),
                 dcc.Loading(
-                    children=[dcc.Graph(id="commits-over-time")],
+                    children=[
+                        dcc.Graph(
+                            id="commits-over-time",
+                        )
+                    ],
                     color="#119DFF",
                     type="dot",
                     fullscreen=False,
@@ -101,11 +117,24 @@ def toggle_popover_2(n, is_open):
 # callback for commits over time graph
 @callback(
     Output("commits-over-time", "figure"),
-    [Input("commits-data", "data"), Input("commits-time-interval", "value")],
+    Output("commits-over-time-timer", "n_intervals"),
+    [
+        Input("repo-choices", "data"),
+        Input("commits-over-time-timer", "n_intervals"),
+        Input("commits-time-interval", "value"),
+    ],
 )
-def create_commits_over_time_graph(data, interval):
+def create_commits_over_time_graph(repolist, timer_pings, interval):
     logging.debug("COMMITS_OVER_TIME_VIZ - START")
-    df_commits = pd.DataFrame(data)
+
+    ready, results, graph_update, interval_update = handle_job_state(jm, cmq, repolist)
+    if not ready:
+        # set n_intervals to 0 so it'll fire again.
+        return graph_update, interval_update
+
+    start = time.perf_counter()
+
+    df_commits = pd.DataFrame(results)
 
     # reset index to be ready for plotly
     df_commits = df_commits.reset_index()
@@ -129,7 +158,7 @@ def create_commits_over_time_graph(data, interval):
             margin_b=40,
             margin_r=20,
         )
-        logging.debug("COMMITS_OVER_TIME_VIZ - END")
-        return fig
+        logging.debug(f"COMMITS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
+        return fig, dash.no_update
     else:
-        return None
+        return nodata_graph, True

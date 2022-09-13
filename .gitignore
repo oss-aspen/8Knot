@@ -139,3 +139,5 @@ config.json
 output_calls.txt
 output_time.txt
 output.dat
+env.sh
+dump.rdb

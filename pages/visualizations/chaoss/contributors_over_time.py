@@ -9,12 +9,24 @@ import datetime as dt
 import logging
 import numpy as np
 import plotly.express as px
-from utils.graph_utils import get_graph_time_values
+from pages.utils.graph_utils import get_graph_time_values
+
+from app import jm
+from pages.utils.job_utils import handle_job_state, nodata_graph
+from queries.contributors_query import contributors_query as ctq
+import time
 
 gc_contributors_over_time = dbc.Card(
     [
         dbc.CardBody(
             [
+                dcc.Interval(
+                    id="contributors-over-time-timer",
+                    n_intervals=1,
+                    max_intervals=1,
+                    disabled=False,
+                    interval=800,
+                ),
                 html.H4("Contributor Types Over Time", className="card-title", style={"text-align": "center"}),
                 dbc.Popover(
                     [
@@ -114,16 +126,24 @@ def toggle_popover_3(n, is_open):
 
 @callback(
     Output("contributors-over-time", "figure"),
+    Output("contributors-over-time-timer", "n_intervals"),
     [
-        Input("contributions", "data"),
+        Input("repo-choices", "data"),
+        Input("contributors-over-time-timer", "n_intervals"),
         Input("num_contribs_req", "value"),
         Input("contrib-time-interval", "value"),
     ],
 )
-def create_graph(data, contribs, interval):
+def create_graph(repolist, timer_pings, contribs, interval):
     logging.debug("CONTRIBUTIONS_OVER_TIME_VIZ - START")
 
-    df_cont = pd.DataFrame(data)
+    ready, results, graph_update, interval_update = handle_job_state(jm, ctq, repolist)
+    if not ready:
+        return graph_update, interval_update
+
+    start = time.perf_counter()
+
+    df_cont = pd.DataFrame(results)
     df_cont["created_at"] = pd.to_datetime(df_cont["created_at"], utc=True, format="%Y-%m-%d")
 
     # create column for identifying Drive by and Repeat Contributors
@@ -180,7 +200,7 @@ def create_graph(data, contribs, interval):
             yaxis_title="Number of Contributors",
             margin_b=40,
         )
-        logging.debug("CONTRIBUTIONS_OVER_TIME_VIZ - END")
-        return fig
+        logging.debug(f"CONTRIBUTIONS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
+        return fig, dash.no_update
     else:
-        return None
+        return nodata_graph, dash.no_update

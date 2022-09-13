@@ -11,9 +11,12 @@
     Having laid out the HTML-like organization of this page, we write the callbacks for this page in
     the neighbor 'app_callbacks.py' file.
 """
+from concurrent.futures import process
 import pstats
 import cProfile
-from db_interface.AugurInterface import AugurInterface
+import threading
+from db_manager.AugurInterface import AugurInterface
+from job_manager.job_manager import JobManager
 import dash
 from dash import html, dcc
 import dash_bootstrap_components as dbc
@@ -32,26 +35,17 @@ search_input = None
 all_entries = None
 entries = None
 augur_db = None
+jm = JobManager()
 
 
 def _load_config():
     global engine
     global augur_db
     # Get config details
-    try:
-        assert os.environ["running_on"] == "prod"
-        augur_db = AugurInterface()
-    except KeyError:
-        # check that config file is available
-        if os.path.exists("config.json"):
-            augur_db = AugurInterface("./config.json")
-        else:
-            print("No 'config.json' available at top level. Config required by name.")
-            sys.exit(1)
-
+    augur_db = AugurInterface()
     engine = augur_db.get_engine()
     if engine is None:
-        print("Could not get engine; check config or try later")
+        logging.critical("Could not get engine; check config or try later")
         sys.exit(1)
 
 
@@ -86,11 +80,15 @@ _project_list_query()
 # can import this file once we've loaded relevant global variables.
 import app_callbacks
 
+
 # CREATE APP OBJECT
 load_figure_template(["sandstone", "minty"])
 app = dash.Dash(
     __name__, use_pages=True, external_stylesheets=[dbc.themes.SANDSTONE], suppress_callback_exceptions=True
 )
+
+# expose the server variable so that gunicorn can use it.
+server = app.server
 
 # side bar code for page navigation
 sidebar = html.Div(
@@ -113,10 +111,7 @@ sidebar = html.Div(
 app.layout = dbc.Container(
     [
         # componets to store data from queries
-        dcc.Store(id="repo_choices", storage_type="session", data=[]),
-        dcc.Store(id="commits-data", data=[], storage_type="memory"),
-        dcc.Store(id="contributions", data=[], storage_type="memory"),
-        dcc.Store(id="issues-data", data=[], storage_type="memory"),
+        dcc.Store(id="repo-choices", storage_type="session", data=[]),
         dcc.Location(id="url"),
         dbc.Row(
             [
@@ -137,9 +132,20 @@ app.layout = dbc.Container(
                                         dcc.Dropdown(
                                             id="projects",
                                             multi=True,
-                                            value=[search_input],
                                             options=[search_input],
-                                        )
+                                            value=[search_input],
+                                        ),
+                                        dbc.Alert(
+                                            children='Please ensure that your spelling is correct. \
+                                                If your selection definitely isn\'t present, please request that \
+                                                it be loaded using the help button "REPO/ORG Request" \
+                                                in the bottom right corner of the screen.',
+                                            id="help-alert",
+                                            dismissable=True,
+                                            fade=True,
+                                            is_open=False,
+                                            color="info",
+                                        ),
                                     ],
                                     style={
                                         "width": "50%",
@@ -153,6 +159,16 @@ app.layout = dbc.Container(
                                     id="search",
                                     n_clicks=0,
                                     class_name="btn btn-primary",
+                                    style={
+                                        "verticalAlign": "top",
+                                        "display": "table-cell",
+                                    },
+                                ),
+                                dbc.Button(
+                                    "Help",
+                                    id="search-help",
+                                    n_clicks=0,
+                                    class_name="btn btn-light",
                                     style={
                                         "verticalAlign": "top",
                                         "display": "table-cell",
@@ -238,7 +254,7 @@ def main():
     except:
         debug_mode = True
 
-    app.run_server(host="0.0.0.0", port=8050, debug=debug_mode)
+    app.run(host="0.0.0.0", port=8050, debug=False, process=4, threading=False)
 
 
 if __name__ == "__main__":

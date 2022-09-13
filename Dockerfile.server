@@ -5,6 +5,7 @@ FROM python:3.8.12-bullseye
 
 # need this for the Dash app
 EXPOSE 8050
+EXPOSE 8888
 
 # install pipenv
 RUN pip install pipenv
@@ -23,4 +24,10 @@ COPY ./ /explorer/
 RUN pipenv install --system --deploy
 
 # run app
-CMD python3 app.py
+# CMD python3 app.py
+# using production-level WSGI interface for server deployment
+# Description of how to choose the number of workers and threads.
+# common wisdom is (2*CPU)+1 workers: 
+# https://medium.com/building-the-system/gunicorn-3-means-of-concurrency-efbb547674b7
+CMD gunicorn --bind :8050 app:server --workers 4 --threads 4
+
