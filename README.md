@@ -8,7 +8,7 @@ Welcome to Explorer!
 
 *tl;dr sandiego-rh/explorer organizes the visualizations and data generated in the sandiego-rh/sandiego repo as a web-app.*
 
-[Example of Application](https://sandiego-explorer.osci.io/overview)
+[Example of Application](http://eightknot-server-route-prod-sandiego-explorer-osci-io.apps.ospo-osci.z3b1.p1.openshiftapps.com)
 
 The number of repositories and projects that GitHub hosts is staggering. Even more impressive is the rate at which this number is growing.
 Projects on GitHub range some student projects that are likely to only be updated a handful of times ever to technological monoliths like the
