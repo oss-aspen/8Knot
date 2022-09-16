@@ -16,7 +16,7 @@ class JobManager:
             # openshift will reconcile the 'redis' naming via the dns
             host=os.getenv("REDIS_SERVICE_HOST", "localhost"),
             port=os.getenv("REDIS_SERVICE_PORT", "6379"),
-            password=os.getenv("dbpw", ""),
+            password=os.getenv("REDIS_PASSWORD", ""),
         )
         # RQ service connected to Redis
         self._rq = Queue(connection=self._redis)
