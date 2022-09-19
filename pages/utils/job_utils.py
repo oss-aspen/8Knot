@@ -3,18 +3,9 @@ import dash
 from app import augur_db
 import plotly.graph_objects as go
 import logging
+import pandas as pd
 
 columns = ["1", "2", "3"]
-
-# graph displayed while data is downloading
-temp_graph = go.Figure([go.Bar(x=columns, y=[20, 14, 23])])
-temp_graph.update_traces(
-    marker_color="rgb(230,230,230)", marker_line_color="rgb(200,200,300)", marker_line_width=1.5, opacity=0.33
-)
-temp_graph.update_layout(
-    title={"text": "Downloading and Processing Data", "y": 0.9, "x": 0.5, "xanchor": "center", "yanchor": "top"},
-    font=dict(size=18, color="black"),
-)
 
 # graph displayed if no data is available
 nodata_graph = go.Figure([go.Bar(x=columns, y=[20, 14, 23])])
@@ -36,6 +27,21 @@ timeout_graph.update_layout(
     font=dict(size=18, color="orange"),
 )
 
+def _loading_graph(done, queued, retry, failed):
+    colors = ['gold', 'mediumturquoise', 'lightgreen', 'black']
+
+    fig = go.Figure(
+        data=[
+            go.Pie(
+                    labels=['Done','Queued', 'Retry', 'Failed'],
+                    values=[done, queued, retry, failed]
+                )
+            ]
+        )
+    fig.update_traces(hoverinfo='label', textinfo='value', textfont_size=20,
+                    marker=dict(colors=colors, line=dict(color='#000000', width=2)))
+
+    return fig
 
 def handle_job_state(jm, func, repolist):
     """
@@ -56,35 +62,70 @@ def handle_job_state(jm, func, repolist):
         temp_graph (px.Figure): Loading graph of RepoList processing steps, per repo.
         timer_set (int | dash.no_update): 0 if timer (dcc.Interval) is being set to run again, else dash.no_update.
     """
+    num_done = 0
+    num_failed = 0
+    num_retry = 0
+    num_total = len(repolist)
 
-    # job status, job results.
-    status, results = jm.get_results(func, repolist)
+    for repo in repolist:
 
-    # results aren't ready
-    if results is None:
+        # job status, job results.
+        status, results = jm.get_results(func, repo)
 
-        # job doesn't exists
-        if status is None:
+        # results aren't ready
+        if results is None:
 
-            # create new job
-            jm.add_job(func, augur_db.package_config(), repolist)
+            # job doesn't exists
+            if status is None:
 
-            # Job not ready, no results, display temp graph, set timer to run again.
-            return (False, None, temp_graph, 0)
+                # create new job
+                jm.add_job(func, augur_db.package_config(), repo)
 
-        # job exists, in one of running states
-        elif status in ["queued", "started", "finished"]:
+                # Job not ready, no results, display temp graph, set timer to run again.
+                # return (False, None, temp_graph, 0)
 
-            # Job not ready, no results, display temp graph, set timer to run again.
-            return (False, None, temp_graph, 0)
+            # job exists, in one of running states
+            elif status in ["queued", "started", "finished"]:
+                pass
 
-        # job not in healthy state
+            elif status == "scheduled":
+                logging.error(f"Job failed and was rescheduled.")
+                num_retry += 1
+
+            # job not in healthy state
+            else:
+
+                # Job not ready, no results, display timeout graph, don't reset timer.
+                # return (False, None, timeout_graph, dash.no_update)
+                num_failed += 1
+                logging.critical(f"Job failed; status: {status}")
+
         else:
 
-            # Job not ready, no results, display timeout graph, don't reset timer.
-            return (False, None, timeout_graph, dash.no_update)
+            num_done += 1
+            # Job ready, results included, no graph, don't reset timer.
+            # return (True, results, None, dash.no_update)
 
-    else:
+    if num_done == num_total:
+        
+        out = [] 
+        for repo in repolist:
+
+            stat, res = jm.get_results(func, repo)
+
+            # merge the lists together
+            if res is not None:
+                out += res           
 
         # Job ready, results included, no graph, don't reset timer.
-        return (True, results, None, dash.no_update)
+        return (True, out, None, dash.no_update) 
+    
+    else:
+        loading_graph = _loading_graph(
+            num_done,
+            num_total - (num_done + num_failed),
+            num_retry,
+            num_failed
+        )
+
+        return (False, None, loading_graph, 0)

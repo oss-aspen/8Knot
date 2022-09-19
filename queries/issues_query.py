@@ -3,7 +3,7 @@ import pandas as pd
 from db_manager.AugurInterface import AugurInterface
 
 
-def issues_query(dbmc, repo_ids):
+def issues_query(dbmc, repo):
     """
     (Worker Query)
     Executes SQL query against Augur database for issue data.
@@ -21,9 +21,6 @@ def issues_query(dbmc, repo_ids):
 
     logging.debug("ISSUES_DATA_QUERY - START")
 
-    repo_statement = str(repo_ids)
-    repo_statement = repo_statement[1:-1]
-
     query_string = f"""
                     SELECT
                         r.repo_name,
@@ -38,7 +35,7 @@ def issues_query(dbmc, repo_ids):
                         issues i
                     WHERE
                         r.repo_id = i.repo_id AND
-                        i.repo_id in({repo_statement})
+                        i.repo_id = {repo}
                     """
 
     # create database connection, load config, execute query above.

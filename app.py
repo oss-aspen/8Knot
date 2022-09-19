@@ -119,7 +119,7 @@ app.layout = dbc.Container(
                 dbc.Col(sidebar, width=1),
                 dbc.Col(
                     [
-                        html.H1("Sandiego Explorer Demo Multipage", className="text-center"),
+                        html.H1("8Knot Community Data", className="text-center"),
                         # search bar with buttons
                         html.Label(
                             ["Select Github repos or orgs:"],

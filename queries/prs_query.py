@@ -3,7 +3,7 @@ import pandas as pd
 from db_manager.AugurInterface import AugurInterface
 
 
-def prs_query(dbmc, repo_ids):
+def prs_query(dbmc, repo):
     """
     (Worker Query)
     Executes SQL query against Augur database for pull request data.
@@ -19,9 +19,6 @@ def prs_query(dbmc, repo_ids):
         dict: Results from SQL query, interpreted from pd.to_dict('records')
     """
     logging.debug("PR_DATA_QUERY - START")
-    # query input format update
-    repo_statement = str(repo_ids)
-    repo_statement = repo_statement[1:-1]
 
     query_string = f"""
                     SELECT
@@ -36,7 +33,7 @@ def prs_query(dbmc, repo_ids):
                         pull_requests pr
                     WHERE
                         r.repo_id = pr.repo_id AND
-                        r.repo_id in({repo_statement})
+                        r.repo_id = {repo}
                     """
 
     # create database connection, load config, execute query above.

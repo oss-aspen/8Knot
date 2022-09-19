@@ -38,12 +38,7 @@ gc_contributors_over_time = dbc.Card(
                     placement="top",
                     is_open=False,
                 ),
-                dcc.Loading(
-                    children=[dcc.Graph(id="contributors-over-time")],
-                    color="#119DFF",
-                    type="dot",
-                    fullscreen=False,
-                ),
+                dcc.Graph(id="contributors-over-time"),
                 dbc.Form(
                     [
                         dbc.Row(

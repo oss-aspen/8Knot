@@ -24,7 +24,7 @@ gc_commits_over_time = dbc.Card(
                     disabled=False,
                     n_intervals=1,
                     max_intervals=1,
-                    interval=800,
+                    interval=1500,
                 ),
                 html.H4(
                     "Commits Over Time",
@@ -41,16 +41,7 @@ gc_commits_over_time = dbc.Card(
                     placement="top",
                     is_open=False,
                 ),
-                dcc.Loading(
-                    children=[
-                        dcc.Graph(
-                            id="commits-over-time",
-                        )
-                    ],
-                    color="#119DFF",
-                    type="dot",
-                    fullscreen=False,
-                ),
+                dcc.Graph(id="commits-over-time"),
                 dbc.Form(
                     [
                         dbc.Row(

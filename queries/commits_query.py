@@ -3,7 +3,7 @@ import pandas as pd
 from db_manager.AugurInterface import AugurInterface
 
 
-def commits_query(dbmc, repo_ids):
+def commits_query(dbmc, repo):
     """
     (Worker Query)
     Executes SQL query against Augur database for commit data.
@@ -19,9 +19,6 @@ def commits_query(dbmc, repo_ids):
         dict: Results from SQL query, interpreted from pd.to_dict('records')
     """
     logging.debug("COMMITS_DATA_QUERY - START")
-    # query input format update
-    repo_statement = str(repo_ids)
-    repo_statement = repo_statement[1:-1]
 
     query_string = f"""
                     SELECT
@@ -36,7 +33,7 @@ def commits_query(dbmc, repo_ids):
                     JOIN commits c
                     ON r.repo_id = c.repo_id
                     WHERE
-                        c.repo_id in({repo_statement})
+                        c.repo_id = {repo}
                     """
 
     # create database connection, load config, execute query above.

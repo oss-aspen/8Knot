@@ -25,7 +25,7 @@ gc_issue_staleness = dbc.Card(
                     disabled=False,
                     n_intervals=1,
                     max_intervals=1,
-                    interval=800,
+                    interval=1500,
                 ),
                 html.H4(
                     "Issue Activity- Staleness",
@@ -45,12 +45,7 @@ gc_issue_staleness = dbc.Card(
                     placement="top",
                     is_open=False,
                 ),
-                dcc.Loading(
-                    children=[dcc.Graph(id="issue_staleness")],
-                    color="#119DFF",
-                    type="dot",
-                    fullscreen=False,
-                ),
+                dcc.Graph(id="issue_staleness"),
                 dbc.Form(
                     [
                         dbc.Row(
@@ -190,9 +185,13 @@ def new_staling_issues(repolist, timer_pings, interval, staling_interval, stale_
     # create dataframe from record data
     df = pd.DataFrame(results)
 
-    # change all to datetime
-    df["created"] = pd.to_datetime(df["created"], utc=True)
-    df["closed"] = pd.to_datetime(df["closed"], utc=True)
+    try:
+        df["created"] = pd.to_datetime(df["created"], utc=True)
+        df["closed"] = pd.to_datetime(df["closed"], utc=True)
+    except:
+        logging.debug("ISSUE STALENESS - NO DATA AVAILABLE")
+        return nodata_graph, False, dash.no_update
+        
 
     # first and last elements of the dataframe are the
     # earliest and latest events respectively
@@ -254,7 +253,7 @@ def new_staling_issues(repolist, timer_pings, interval, staling_interval, stale_
 
     fig.update_layout(xaxis_title="Time", yaxis_title="Issues", legend_title="Type")
 
-    logging.debug("ISSUE STALENESS - END")
+    logging.debug(f"ISSUE STALENESS - END - {time.perf_counter() - start}")
     return fig, False, dash.no_update
 
 

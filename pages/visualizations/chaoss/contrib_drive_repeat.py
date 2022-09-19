@@ -36,12 +36,7 @@ gc_contrib_drive_repeat = dbc.Card(
                     placement="top",
                     is_open=False,
                 ),
-                dcc.Loading(
-                    children=[dcc.Graph(id="cont-drive-repeat")],
-                    color="#119DFF",
-                    type="dot",
-                    fullscreen=False,
-                ),
+                dcc.Graph(id="cont-drive-repeat"),
                 dbc.Form(
                     [
                         dbc.Row(

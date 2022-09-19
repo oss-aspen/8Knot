@@ -3,7 +3,7 @@ import pandas as pd
 from db_manager.AugurInterface import AugurInterface
 
 
-def contributors_query(dbmc, repo_ids):
+def contributors_query(dbmc, repo):
     """
     (Worker Query)
     Executes SQL query against Augur database for contributor data.
@@ -19,8 +19,6 @@ def contributors_query(dbmc, repo_ids):
         dict: Results from SQL query, interpreted from pd.to_dict('records')
     """
     logging.debug("CONTRIBUTIONS_DATA_QUERY - START")
-    repo_statement = str(repo_ids)
-    repo_statement = repo_statement[1:-1]
 
     query_string = f"""
                     SELECT
@@ -28,7 +26,7 @@ def contributors_query(dbmc, repo_ids):
                     FROM
                         augur_data.explorer_contributor_actions
                     WHERE
-                        repo_id in({repo_statement})
+                        repo_id = {repo}
                 """
 
     # create database connection, load config, execute query above.

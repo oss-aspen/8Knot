@@ -29,7 +29,7 @@ if [ -z "$1" ]
 fi
 
 # create network for containers 
-docker network create eightknot-network ;
+docker network create eightknot-network;
 
 # create a redis instance inside of a container, on our docker network, mapped to its respective port. 
 docker run --rm -itd --name redis --net eightknot-network -p $REDIS_PORT_MAP:6379 redis;
