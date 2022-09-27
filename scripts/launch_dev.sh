@@ -8,6 +8,12 @@
 # yet. It sometimes works on Mac but not always.
 
 # can pass target port number to script for redis as: bash ./this_script.sh <new_port>
+# Script builds, connects, and runs the three components of this app: Server, Worker Pool, and Redis instance.
+
+# can pass override target port number to script for redis as: bash ./this_script.sh <new_port>
+
+# if you want more/fewer worker processes in the workerpool, please edit the 'numprocs' field in supervisord.conf
+
 # TODO redis doesn't currently like this and I'm not sure why
 if [ -z "$1" ]
     then
@@ -21,7 +27,6 @@ if [ -z "$1" ]
         printf "\n";
         REDIS_PORT_MAP=$1;
 fi
-
 
 # create network for containers 
 docker network create eightknot-network ;

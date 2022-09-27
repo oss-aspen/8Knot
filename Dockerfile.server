@@ -1,7 +1,4 @@
 FROM python:3.8.12
-# If you are deploying this container yourself,
-# include your own label. Example below.
-#LABEL James Kunstle <jkunstle@redhat.com>
 
 # need this for the Dash app
 EXPOSE 8050
