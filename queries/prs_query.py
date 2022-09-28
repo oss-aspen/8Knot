@@ -44,7 +44,7 @@ def prs_query(dbmc, repo_ids):
     # convert to datetime objects
     df_pr["created"] = pd.to_datetime(df_pr["created"], utc=True)
     df_pr["merged"] = pd.to_datetime(df_pr["merged"], utc=True)
-    df_pr["closed"] = pd.to_datetime(df_pr["merged"], utc=True)
+    df_pr["closed"] = pd.to_datetime(df_pr["closed"], utc=True)
     df_pr = df_pr.reset_index()
     df_pr.drop("index", axis=1, inplace=True)
 
