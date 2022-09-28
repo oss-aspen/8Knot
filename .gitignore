@@ -141,3 +141,4 @@ output_time.txt
 output.dat
 env.sh
 dump.rdb
+env.list
