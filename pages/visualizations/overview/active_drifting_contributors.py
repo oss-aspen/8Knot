@@ -37,9 +37,10 @@ gc_active_drifting_contributors = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "<ACTIVE> contributors have contributed within last 6 months.\n\
-                            <DRIFTING> contributors have contributed within last year but are not active.\n\
-                            <AWAY> contributors haven't made any contributions in the last year at least."
+                            "Select the intervals that make sense for your community!\n\
+                            <ACTIVE> contributors that have a contribution within the drifting parameter.\n\
+                            <DRIFTING> contributors that are views as drifting away from the community, they have a contribution between the two intervals.\n\
+                            <AWAY> Contributors that are considered no longer participating members of the community"
                         ),
                     ],
                     id="overview-popover-4",
@@ -253,7 +254,7 @@ def active_drifting_contributors(repolist, timer_pings, interval, drift_interval
         # edit hover values
         fig.update_traces(hovertemplate=hover + "<br>Contributors: %{y}<br>" + "<extra></extra>")
 
-    fig.update_layout(xaxis_title="Time", yaxis_title="Number of Contributors")
+    fig.update_layout(xaxis_title="Time", yaxis_title="Number of Contributors", legend_title="Type")
 
     logging.debug(f"ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}")
     return fig, False, dash.no_update
@@ -267,20 +268,25 @@ def get_active_drifting_away_up_to(df, date, drift_interval, away_interval):
     # keep more recent contribution per ID
     df_lim = df_lim.drop_duplicates(subset="cntrb_id", keep="last")
 
-    # time difference, 6 months before the threshold date
+    # time difference, drifting_months before the threshold date
     drift_mos = date - relativedelta(months=+drift_interval)
 
-    # time difference, 6 months before the threshold date
+    # time difference, away_months before the threshold date
     away_mos = date - relativedelta(months=+away_interval)
 
-    # contributions in the last 6 months
+    # number of total contributors up until date
     numTotal = df_lim.shape[0]
 
+    # number of 'active' contributors, people with contributions before the drift time
     numActive = df_lim[df_lim["created_at"] >= drift_mos].shape[0]
 
+    # set of contributions that are before the away time
     drifting = df_lim[df_lim["created_at"] > away_mos]
+
+    # number of the set of contributions that are after the drift time, but before away
     numDrifting = drifting[drifting["created_at"] < drift_mos].shape[0]
 
+    # difference of the total to get the away value
     numAway = numTotal - (numActive + numDrifting)
 
     return [date, numActive, numDrifting, numAway]
