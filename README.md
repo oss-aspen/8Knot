@@ -1,14 +1,14 @@
-# Explorer
+# 8Knot (Explorer)
 
 ![Pre-Commit](https://github.com/JamesKunstle/explorer/actions/workflows/pre-commit.yml/badge.svg)
 ![Build-Push](https://github.com/JamesKunstle/explorer/actions/workflows/build-push-quay.yml/badge.svg)
 
 
-Welcome to Explorer!
+Welcome to 8Knot!
 
 *tl;dr sandiego-rh/explorer organizes the visualizations and data generated in the sandiego-rh/sandiego repo as a web-app.*
 
-[Example of Application](http://eightknot-server-route-prod-sandiego-explorer-osci-io.apps.ospo-osci.z3b1.p1.openshiftapps.com)
+[Example of Application](https://eightknot.osci.io/)
 
 The number of repositories and projects that GitHub hosts is staggering. Even more impressive is the rate at which this number is growing.
 Projects on GitHub range some student projects that are likely to only be updated a handful of times ever to technological monoliths like the
@@ -20,11 +20,11 @@ Explorer aims to be this resource, extending the work done in its sibling repo s
 sandiego-rh/sandiego- visualizations of open-source community originated data are created in sandiego-rh/sandiego and are added to sandiego-rh/explorer
 for more convenient user access.
 
-The buildout of sandiego-rh/explorer is very much in its infancy but please feel free to try our app as we develop it!
+The buildout of sandiego-rh/8Knot is very much in its infancy but please feel free to try our app as we develop it!
 
 ## To Launch
 
-Explorer is a plotly/Dash app that is designed to be run as a Docker container.
+8Knot is a plotly/Dash app that is designed to be run as a Docker container.
 Scripts to build the Docker image and subsequently run the Docker container
 are provided below but please make sure you have the Docker Desktop (Daemon) installed and
 running on your machine.
@@ -51,7 +51,7 @@ The config.json file should be at the same level as index. Here is a sample of w
 Please use the build/run scripts in the /scripts folder to handle the
 construction of the Docker image and running the Docker container.
 
-From the /explorer folder, run:
+From the /8Knot folder, run:
 
 ```bash
 bash scripts/build_docker_image.sh
