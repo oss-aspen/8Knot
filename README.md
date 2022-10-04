@@ -6,6 +6,7 @@
 
 Welcome to 8Knot!
 
+<<<<<<< HEAD
 *tl;dr sandiego-rh/explorer organizes the visualizations and data generated in the sandiego-rh/sandiego repo as a web-app.*
 
 [Example of Application](https://eightknot.osci.io/)
