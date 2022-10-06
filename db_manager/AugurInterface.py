@@ -81,6 +81,7 @@ class AugurInterface:
         Creates _engine.Engine object connected to our Augur database.
 
         Returns:
+        --------
             _engine.Engine: SQLAlchemy engine object. 
         """
         if self.engine is not None:
@@ -134,9 +135,11 @@ class AugurInterface:
         Runs SQL query against our Augur database.
 
         Args:
+        -----
             query_string (str): SQL query to run.
 
         Returns:
+        --------
             pd.DataFrame: Results from SQL query.
         """
         if self.engine is None:
@@ -161,9 +164,8 @@ class AugurInterface:
         We need to do this because _engine.Engine objects can't be pickled and
         passed as parameters to workers via Queue objects.
 
-        Args:
-
         Returns:
+        --------
             list(str): List of credentials to recreate same connection to Augur instance.
         """
         if self.config_loaded:
@@ -179,6 +181,7 @@ class AugurInterface:
         passed as parameters to workers via Queue objects.
 
         Args:
+        -----
             pconfig (list): Credentials to create AugurInterface object in RQ Workers. 
         """
         self.pconfig = True

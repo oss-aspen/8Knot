@@ -3,14 +3,20 @@ import pandas as pd
 from db_manager.AugurInterface import AugurInterface
 
 
-def commits_query(dbmc, repo_ids):
+def commits_query(dbmc: AugurInterface, repo_ids: list(str)) -> dict:
     """
-    Worker query
+    (Worker Query)
+    Executes SQL query against Augur database for commit data.
 
-    From an input list of repos, get relevant data about the
-    commit history of those repos. Cache as dictionary in Redis.
+    Args:
+    -----
+        dbmc (AugurInterface): Handles connection to Augur database, executes queries and returns results.
 
-    Expects dbm to be db_manager/AugurInterface.
+        repo_ids ([str]): repos that SQL query is executed on.
+
+    Returns:
+    --------
+        dict: Results from SQL query, interpreted from pd.to_dict('records')
     """
     logging.debug("COMMITS_DATA_QUERY - START")
     # query input format update
