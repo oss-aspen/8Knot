@@ -39,9 +39,22 @@ timeout_graph.update_layout(
 
 def handle_job_state(jm, func, repolist):
     """
-    All visualizations use this interface
-    to handle whether or not the job queue / result cache
-    has the data that they need.
+    Handle the state of a specific Job in the Queue object.
+    Code used by visualization callbacks to manage Job
+    enqueuement, status-checking, and result-getting.
+
+    Args:
+    -----
+        jm (JobManager): Object that handles Jobs in Queue object in Redis.
+        func (function): Function that worker picks up to run as job.
+        repolist ([str]): Arguments to function, list of repos.
+
+    Returns:
+    --------
+        ready (boolean): Is True if the results from the Job are ready to be consumed, else False.
+        results ({[]} | None): Are not None if results are ready.
+        temp_graph (px.Figure): Loading graph of RepoList processing steps, per repo.
+        timer_set (int | dash.no_update): 0 if timer (dcc.Interval) is being set to run again, else dash.no_update.
     """
 
     # job status, job results.

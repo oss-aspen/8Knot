@@ -3,7 +3,7 @@ import pandas as pd
 from db_manager.AugurInterface import AugurInterface
 
 
-def commits_query(dbmc: AugurInterface, repo_ids: list(str)) -> dict:
+def commits_query(dbmc, repo_ids):
     """
     (Worker Query)
     Executes SQL query against Augur database for commit data.

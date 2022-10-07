@@ -158,7 +158,7 @@ class AugurInterface:
 
         return this_df
 
-    def package_config(self) -> list(str):
+    def package_config(self):
         """
         Packages current credentials into a list for transportation to workers.
         We need to do this because _engine.Engine objects can't be pickled and
