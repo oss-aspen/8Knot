@@ -5,12 +5,18 @@ from db_manager.AugurInterface import AugurInterface
 
 def contributors_query(dbmc, repo_ids):
     """
-    Worker query
+    (Worker Query)
+    Executes SQL query against Augur database for contributor data.
 
-    From an input list of repos, get relevant data about the
-    contributions history of those repos. Cache as dictionary in Redis.
+    Args:
+    -----
+        dbmc (AugurInterface): Handles connection to Augur database, executes queries and returns results.
 
-    Expects dbm to be db_manager/AugurInterface.
+        repo_ids ([str]): repos that SQL query is executed on.
+
+    Returns:
+    --------
+        dict: Results from SQL query, interpreted from pd.to_dict('records')
     """
     logging.debug("CONTRIBUTIONS_DATA_QUERY - START")
     repo_statement = str(repo_ids)
