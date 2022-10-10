@@ -253,7 +253,7 @@ def new_staling_prs(repolist, timer_pings, interval, staling_interval, stale_int
 
     fig.update_layout(xaxis_title="Time", yaxis_title="Pull Requests", legend_title="Type")
 
-    logging.debug("PULL REQUEST STALENESS - END - {time.perf_counter() - start}")
+    logging.debug(f"PULL REQUEST STALENESS - END - {time.perf_counter() - start}")
     return fig, False, dash.no_update
 
 

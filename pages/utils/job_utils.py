@@ -28,6 +28,22 @@ timeout_graph.update_layout(
 )
 
 def _loading_graph(done, queued, retry, failed):
+    """
+    While the user is waiting for all of the data
+    for all of their selected repos to become available,
+    we'll represent the progress the workers are making as a
+    pie-chart. This method creates that pie-chart.
+
+    Args:
+    -----
+        done (int): Num repos with data currently cached. 
+        queued (int): Num repos queued to be downloaded. 
+        retry (int): Num repos that have failed and are being retried.
+        failed (int): Num repos that have failed and won't be retried.
+
+    Returns:
+        go.Figure: Pie-chart summarizing repo-wise progress.
+    """
     colors = ['gold', 'mediumturquoise', 'lightgreen', 'black']
 
     fig = go.Figure(
@@ -40,6 +56,8 @@ def _loading_graph(done, queued, retry, failed):
         )
     fig.update_traces(hoverinfo='label', textinfo='value', textfont_size=20,
                     marker=dict(colors=colors, line=dict(color='#000000', width=2)))
+    
+    fig.update_layout(legend_title_text='Repository Data Downloading...')
 
     return fig
 
@@ -62,9 +80,17 @@ def handle_job_state(jm, func, repolist):
         temp_graph (px.Figure): Loading graph of RepoList processing steps, per repo.
         timer_set (int | dash.no_update): 0 if timer (dcc.Interval) is being set to run again, else dash.no_update.
     """
+
+    # number of repos that have data cached.
     num_done = 0
+
+    # number of repos that have failed completely.
     num_failed = 0
+
+    # number of repos that have failed but are being retried.
     num_retry = 0
+
+    # total number of repos that are being queried.
     num_total = len(repolist)
 
     for repo in repolist:
@@ -106,6 +132,7 @@ def handle_job_state(jm, func, repolist):
             # Job ready, results included, no graph, don't reset timer.
             # return (True, results, None, dash.no_update)
 
+    # all of the repo data is available.
     if num_done == num_total:
         
         out = [] 
