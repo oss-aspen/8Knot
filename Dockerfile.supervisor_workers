@@ -21,12 +21,16 @@ RUN mkdir explorer
 # set that directory as working dir
 WORKDIR /explorer
 
-# copy the contents of current file into the
-# working directory.
-COPY ./ /explorer/
+# environment first
+COPY ./Pipfile.lock /explorer/ 
+COPY ./Pipfile /explorer/ 
 
 # install required modules at system level
 RUN pipenv install --system --deploy
+
+# copy the contents of current file into the
+# working directory.
+COPY ./ /explorer/
 
 # run supervisord
 CMD supervisord
