@@ -37,12 +37,7 @@ gc_first_time_contributions = dbc.Card(
                     placement="top",
                     is_open=False,
                 ),
-                dcc.Loading(
-                    children=[dcc.Graph(id="first-time-contributions")],
-                    color="#119DFF",
-                    type="dot",
-                    fullscreen=False,
-                ),
+                dcc.Graph(id="first-time-contributions"),
                 dbc.Row(
                     dbc.Button("About Graph", id="chaoss-popover-target-2", color="secondary", size="small"),
                     style={"padding-top": ".5em"},

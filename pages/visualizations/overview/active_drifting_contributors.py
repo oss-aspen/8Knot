@@ -26,7 +26,7 @@ gc_active_drifting_contributors = dbc.Card(
                     disabled=False,
                     n_intervals=1,
                     max_intervals=1,
-                    interval=800,
+                    interval=1500,
                 ),
                 html.H4(
                     "Contributor Growth by Engagement",
@@ -48,12 +48,7 @@ gc_active_drifting_contributors = dbc.Card(
                     placement="top",
                     is_open=False,
                 ),
-                dcc.Loading(
-                    children=[dcc.Graph(id="active_drifting_contributors")],
-                    color="#119DFF",
-                    type="dot",
-                    fullscreen=False,
-                ),
+                dcc.Graph(id="active_drifting_contributors"),
                 dbc.Form(
                     [
                         dbc.Row(

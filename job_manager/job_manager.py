@@ -1,5 +1,5 @@
 from redis import Redis
-from rq import Queue
+from rq import Queue, Retry
 from queries.commits_query import commits_query
 from queries.contributors_query import contributors_query
 from queries.issues_query import issues_query
@@ -57,9 +57,9 @@ class JobManager:
             password=os.getenv("REDIS_PASSWORD", ""),
         )
         # RQ service connected to Redis
-        self._rq = Queue(connection=self._redis)
+        self._rq = Queue(connection=self._redis, default_timeout=600)
 
-    def _get_job_hash(self, func, arglist):
+    def _get_job_hash(self, func, repo):
         """
         (private)
         Creates an MD5-hash based on the string-bytes
@@ -72,7 +72,7 @@ class JobManager:
         Args:
         -----
             func (function): Function that worker picks up to run as job.
-            arglist ([str]): Arguments to function, list of repos.
+            repo (str): Argument to function. Repo data downloaded for.
 
         Returns:
         --------
@@ -88,14 +88,13 @@ class JobManager:
         hashfunc.update(bytes(func.__name__, "utf-8"))
 
         # and the repo list we're passing to it
-        hashfunc.update(bytes(str(frozenset(arglist)), "utf-8"))
-
+        hashfunc.update(bytes(str(repo), "utf-8"))
         # grab the hex hash that's been generated.
         h = hashfunc.hexdigest()
 
         return h
 
-    def add_job(self, func, dbmc, repolist):
+    def add_job(self, func, dbmc, repo):
         """
         Adds job to Queue object hosted in Redis.
 
@@ -103,7 +102,7 @@ class JobManager:
         -----
             func (function): Function that worker picks up to run as job.
             dbmc (AugurInterface class): DatabaseManagerClass, handles access to database of community data.
-            repolist ([str]): Arguments to function, list of repos.
+            repo (str): Argument to function. Repo data downloaded for.
 
         Returns:
         --------
@@ -111,14 +110,14 @@ class JobManager:
         """
 
         # get a hash of the function used and the args supplied
-        job_hash = self._get_job_hash(func, repolist)
+        job_hash = self._get_job_hash(func, repo)
 
-        # add a job to our queue, 10 minute timeout (6000ms), id of its hash.
-        job = self._rq.enqueue(func, dbmc, repolist, job_id=job_hash, job_timeout=6000)
+        # add a job to our queue, 1 day timeout (86400 sec), id of its hash, retry if failed
+        job = self._rq.enqueue(func, dbmc, repo, job_id=job_hash, result_ttl=86400, retry=Retry(max=3, interval=[5, 10, 15]))
 
         return job_hash
 
-    def get_job(self, func, arglist):
+    def get_job(self, func, repo):
         """
         Gets job object from Queue object in Redis instance, if it exists.
         Keyed by its job_hash.
@@ -128,7 +127,7 @@ class JobManager:
         Args:
         -----
             func (function): Function that worker picks up to run as job.
-            arglist ([str]): Arguments to function, list of repos.
+            repo (str): Argument to function. Repo data downloaded for.
 
         Returns:
         --------
@@ -136,20 +135,19 @@ class JobManager:
         """
 
         # get an identifying hash of the function used and the args supplied
-        job_hash = self._get_job_hash(func, arglist)
+        job_hash = self._get_job_hash(func, repo)
 
         # grab the job from the job queue
         job = self._rq.fetch_job(job_hash)
 
         # check if job was fetched from queue
         if job is not None:
-            logging.debug(f"CACHE HIT: {func.__name__}")
             return job
         # if job didn't exist, nothing to return.
         else:
             return None
 
-    def get_results(self, func, arglist):
+    def get_results(self, func, repo):
         """
         Gets status and results from Job in Queue object,
         if job exists.
@@ -159,7 +157,7 @@ class JobManager:
         Args:
         -----
             func (function): Function that worker picks up to run as job.
-            arglist ([str]): Arguments to function, list of repos.
+            repo (str): Argument to function. Repo data downloaded for.
 
         Returns:
         --------
@@ -168,7 +166,7 @@ class JobManager:
         """
 
         # check to see if job already exists.
-        job = self.get_job(func, arglist)
+        job = self.get_job(func, repo)
 
         # does job exist by ID in Queue?
         if job is not None:
@@ -218,7 +216,7 @@ class JobManager:
             # because add_job will handle that.
             return None
 
-    def get_job_status(self, func, arglist):
+    def get_job_status(self, func, repo):
         """
         Current status of Job in Queue, if it exists.
         
@@ -235,7 +233,7 @@ class JobManager:
         """
 
         # check to see if job exists.
-        job = self.get_job(func, arglist)
+        job = self.get_job(func, repo)
 
         # if job exists, return its status
         if job is not None:

@@ -25,7 +25,7 @@ gc_total_contributor_growth = dbc.Card(
                     disabled=False,
                     n_intervals=1,
                     max_intervals=1,
-                    interval=800,
+                    interval=1500,
                 ),
                 html.H4(
                     id="overview-graph-title-1",
@@ -42,12 +42,7 @@ gc_total_contributor_growth = dbc.Card(
                     placement="top",
                     is_open=False,
                 ),
-                dcc.Loading(
-                    children=[dcc.Graph(id="total_contributor_growth")],
-                    color="#119DFF",
-                    type="dot",
-                    fullscreen=False,
-                ),
+                dcc.Graph(id="total_contributor_growth"),
                 dbc.Form(
                     [
                         dbc.Row(

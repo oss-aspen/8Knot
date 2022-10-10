@@ -12,7 +12,7 @@ import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values
 
 from app import jm
-from pages.utils.job_utils import handle_job_state
+from pages.utils.job_utils import handle_job_state, nodata_graph
 from queries.prs_query import prs_query as prq
 import time
 
@@ -25,7 +25,7 @@ gc_pr_staleness = dbc.Card(
                     disabled=False,
                     n_intervals=1,
                     max_intervals=1,
-                    interval=800,
+                    interval=1500,
                 ),
                 html.H4(
                     "Pull Request Activity- Staleness",
@@ -45,12 +45,7 @@ gc_pr_staleness = dbc.Card(
                     placement="top",
                     is_open=False,
                 ),
-                dcc.Loading(
-                    children=[dcc.Graph(id="pr_staleness")],
-                    color="#119DFF",
-                    type="dot",
-                    fullscreen=False,
-                ),
+                dcc.Graph(id="pr_staleness"),
                 dbc.Form(
                     [
                         dbc.Row(
@@ -190,10 +185,13 @@ def new_staling_prs(repolist, timer_pings, interval, staling_interval, stale_int
     # create dataframe from record data
     df = pd.DataFrame(results)
 
-    # change all to datetime
-    df["created"] = pd.to_datetime(df["created"], utc=True)
-    df["merged"] = pd.to_datetime(df["merged"], utc=True)
-    df["closed"] = pd.to_datetime(df["closed"], utc=True)
+    try:
+        df["created"] = pd.to_datetime(df["created"], utc=True)
+        df["merged"] = pd.to_datetime(df["merged"], utc=True)
+        df["closed"] = pd.to_datetime(df["closed"], utc=True)
+    except:
+        logging.debug("PULL REQUEST STALENESS - NO DATA AVAILABLE")
+        return nodata_graph, False, dash.no_update 
 
     # first and last elements of the dataframe are the
     # earliest and latest events respectively
@@ -255,7 +253,7 @@ def new_staling_prs(repolist, timer_pings, interval, staling_interval, stale_int
 
     fig.update_layout(xaxis_title="Time", yaxis_title="Pull Requests", legend_title="Type")
 
-    logging.debug("PULL REQUEST STALENESS - END")
+    logging.debug(f"PULL REQUEST STALENESS - END - {time.perf_counter() - start}")
     return fig, False, dash.no_update
 
 

@@ -12,12 +12,8 @@ layout = dbc.Container(
                 dbc.Col(
                     [
                         html.H1(
-                            "Home Pages",
+                            "Home Page",
                             # className="font-weight-bold mb-4",
-                        ),
-                        html.P(
-                            "Page is a WIP.",
-                            className="font-weight-bold mb-4",
                         ),
                         html.P(
                             "Plotly graphs have a mode bar if you hover over the top of the title.",
