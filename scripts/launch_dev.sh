@@ -34,10 +34,10 @@ if [ -z "$1" ]
         REDIS_PORT_MAP=$1;
 fi
 
-# create network for containers 
+# create network for containers
 ${CONTAINER_CMD} network create eightknot-network;
 
-# create a redis instance inside of a container, on our Docker network, mapped to its respective port. 
+# create a redis instance inside of a container, on our Docker network, mapped to its respective port.
 ${CONTAINER_CMD} run --rm -itd --name redis --net eightknot-network -p $REDIS_PORT_MAP:6379 redis;
 
 # grab the route to the redis server from the running redis container

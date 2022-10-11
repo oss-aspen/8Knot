@@ -134,11 +134,12 @@ def graph_title(view):
     ],
 )
 def create_total_contributor_growth_graph(repolist, timer_pings, bin_size):
-    logging.debug("TOTAL_CONTRIBUTOR_GROWTH_VIZ - START")
+    logging.debug("TCG - PONG")
     ready, results, graph_update, interval_update = handle_job_state(jm, ctq, repolist)
     if not ready:
         return graph_update, interval_update
 
+    logging.debug("TOTAL_CONTRIBUTOR_GROWTH_VIZ - START")
     start = time.perf_counter()
 
     # create dataframe from record data
