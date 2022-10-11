@@ -191,7 +191,7 @@ def new_staling_prs(repolist, timer_pings, interval, staling_interval, stale_int
         df["closed"] = pd.to_datetime(df["closed"], utc=True)
     except:
         logging.debug("PULL REQUEST STALENESS - NO DATA AVAILABLE")
-        return nodata_graph, False, dash.no_update 
+        return nodata_graph, False, dash.no_update
 
     # first and last elements of the dataframe are the
     # earliest and latest events respectively

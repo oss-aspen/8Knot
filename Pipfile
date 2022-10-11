@@ -18,6 +18,8 @@ plotly-express = "*"
 gevent = "*"
 redis = "*"
 rq = "*"
+types-redis = "*"
+pre-commit = "*"
 
 [dev-packages]
 yamllint = "*"

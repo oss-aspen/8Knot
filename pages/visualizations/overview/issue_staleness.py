@@ -191,7 +191,6 @@ def new_staling_issues(repolist, timer_pings, interval, staling_interval, stale_
     except:
         logging.debug("ISSUE STALENESS - NO DATA AVAILABLE")
         return nodata_graph, False, dash.no_update
-        
 
     # first and last elements of the dataframe are the
     # earliest and latest events respectively
