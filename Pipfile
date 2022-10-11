@@ -20,6 +20,8 @@ redis = "*"
 rq = "*"
 
 [dev-packages]
+yamllint = "*"
+pyspelling = "*"
 
 [requires]
 python_version = "3.8"
