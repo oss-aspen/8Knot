@@ -18,7 +18,7 @@ Please try to understand the architecture by reading the code before you begin
 any of your own development work. There are few "gotchas" but some are unavoidable.
 A recommended way of doing this is to start by looking at /pages/overview.py.
 This file sketches the markup of the Overview page. You'll see that we import
-the files that have the appropriate callback functions for the pages's figures from
+the files that have the appropriate callback functions for the pages' figures from
 /pages/visualizations/overview/. In this respect, we aim to isolate larger logical
 "chunks" of our application- the page's structure is higher in the hierarchy, and 
 individual visualizations are imported and further organized below.
