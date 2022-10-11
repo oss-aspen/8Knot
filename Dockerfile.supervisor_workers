@@ -1,16 +1,13 @@
-FROM python:3.8.12
+FROM docker.io/python:3.8.12
 
 # need this for the Dash app
 EXPOSE 8050
 
-# install pipenv
-RUN pip install pipenv
-
-# install supervisor
-RUN pip install supervisor 
+# install pipenv supervisor
+RUN pip --no-cache-dir install pipenv supervisor
 
 # copy config
-ADD supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # create a working directory
 RUN mkdir explorer
@@ -30,4 +27,4 @@ RUN pipenv install --system --deploy
 COPY ./ /explorer/
 
 # run supervisord
-CMD supervisord
+CMD [ "supervisord" ]
