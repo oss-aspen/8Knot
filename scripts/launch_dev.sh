@@ -1,10 +1,10 @@
-# It's common to have access permission denied by the ${CONTAINER_CMD} Daemon
-# on Linux machines if you don't run ${CONTAINER_CMD} with root permissions.
+# It's common to have access permission denied by the Docker Daemon
+# on Linux machines if you don't run Docker with root permissions.
 
 # If containers aren't created because of a 'permission denied' error
-# or other by ${CONTAINER_CMD}, run this script as '$ sudo bash scripts/launch_dev.sh'
+# or other by Docker, run this script as '$ sudo bash scripts/launch_dev.sh'
 
-# ${CONTAINER_CMD} is working on running rootless but this hasn't been implemented
+# Docker is working on running rootless but this hasn't been implemented
 # yet. It sometimes works on Mac but not always.
 
 # can pass target port number to script for redis as: bash ./this_script.sh <new_port>
@@ -35,7 +35,7 @@ fi
 # create network for containers 
 ${CONTAINER_CMD} network create eightknot-network;
 
-# create a redis instance inside of a container, on our ${CONTAINER_CMD} network, mapped to its respective port. 
+# create a redis instance inside of a container, on our Docker network, mapped to its respective port. 
 ${CONTAINER_CMD} run --rm -itd --name redis --net eightknot-network -p $REDIS_PORT_MAP:6379 redis;
 
 # grab the route to the redis server from the running redis container
