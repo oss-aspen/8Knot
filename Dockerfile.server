@@ -1,13 +1,13 @@
-FROM python:3.8.12
+FROM docker.io/python:3.8.12
 
 # need this for the Dash app
 EXPOSE 8050
 
 # install pipenv
-RUN pip install pipenv
+RUN pip --no-cache-dir install pipenv
 
 # create a working directory
-RUN mkdir explorer
+# RUN mkdir explorer
 
 # set that directory as working dir
 WORKDIR /explorer
@@ -27,5 +27,4 @@ COPY ./ /explorer/
 # Description of how to choose the number of workers and threads.
 # common wisdom is (2*CPU)+1 workers: 
 # https://medium.com/building-the-system/gunicorn-3-means-of-concurrency-efbb547674b7
-CMD gunicorn --bind :8050 app:server --workers 8 --threads 4
-
+CMD [ "gunicorn", "--bind", ":8050", "app:server", "--workers", "8", "--threads", "4" ]

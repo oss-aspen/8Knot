@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # It's common to have access permission denied by the Docker Daemon
 # on Linux machines if you don't run Docker with root permissions.
 
