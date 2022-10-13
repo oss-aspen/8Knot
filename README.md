@@ -31,11 +31,11 @@ Augur, a project in the [CHAOSS](https://chaoss.community/) Foundation, is closi
 
 Quoting Augur's own README.md:
 
->"Augur’s main focus is to measure the overall health and sustainability of open source projects, as these types of projects are system critical for nearly every software organization or company. 
+>"Augur’s main focus is to measure the overall health and sustainability of open source projects, as these types of projects are system critical for nearly every software organization or company.
 >We do this by gathering data about project repositories and normalizing that into our data model to provide useful metrics about your project’s health."
 
 8knot's contribution to further closing this gap is to provide an interface to the data collected and organized by Augur as a data web-app with both essential statistical figures,
-and higher-order machine learning and data science-informed insights. 
+and higher-order machine learning and data science-informed insights.
 
 ---
 

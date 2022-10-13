@@ -13,8 +13,8 @@ RUN pip --no-cache-dir install pipenv
 WORKDIR /explorer
 
 # environment first
-COPY ./Pipfile.lock /explorer/ 
-COPY ./Pipfile /explorer/ 
+COPY ./Pipfile.lock /explorer/
+COPY ./Pipfile /explorer/
 
 # install required modules at system level
 RUN pipenv install --system --deploy

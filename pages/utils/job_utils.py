@@ -27,6 +27,7 @@ timeout_graph.update_layout(
     font=dict(size=18, color="orange"),
 )
 
+
 def _loading_graph(done, queued, retry, failed):
     """
     While the user is waiting for all of the data
@@ -36,30 +37,28 @@ def _loading_graph(done, queued, retry, failed):
 
     Args:
     -----
-        done (int): Num repos with data currently cached. 
-        queued (int): Num repos queued to be downloaded. 
+        done (int): Num repos with data currently cached.
+        queued (int): Num repos queued to be downloaded.
         retry (int): Num repos that have failed and are being retried.
         failed (int): Num repos that have failed and won't be retried.
 
     Returns:
         go.Figure: Pie-chart summarizing repo-wise progress.
     """
-    colors = ['gold', 'mediumturquoise', 'lightgreen', 'black']
+    colors = ["gold", "mediumturquoise", "lightgreen", "black"]
 
-    fig = go.Figure(
-        data=[
-            go.Pie(
-                    labels=['Done','Queued', 'Retry', 'Failed'],
-                    values=[done, queued, retry, failed]
-                )
-            ]
-        )
-    fig.update_traces(hoverinfo='label', textinfo='value', textfont_size=20,
-                    marker=dict(colors=colors, line=dict(color='#000000', width=2)))
-    
-    fig.update_layout(legend_title_text='Repository Data Downloading...')
+    fig = go.Figure(data=[go.Pie(labels=["Done", "Queued", "Retry", "Failed"], values=[done, queued, retry, failed])])
+    fig.update_traces(
+        hoverinfo="label",
+        textinfo="value",
+        textfont_size=20,
+        marker=dict(colors=colors, line=dict(color="#000000", width=2)),
+    )
+
+    fig.update_layout(legend_title_text="Repository Data Downloading...")
 
     return fig
+
 
 def handle_job_state(jm, func, repolist):
     """
@@ -134,25 +133,20 @@ def handle_job_state(jm, func, repolist):
 
     # all of the repo data is available.
     if num_done == num_total:
-        
-        out = [] 
+
+        out = []
         for repo in repolist:
 
             stat, res = jm.get_results(func, repo)
 
             # merge the lists together
             if res is not None:
-                out += res           
+                out += res
 
         # Job ready, results included, no graph, don't reset timer.
-        return (True, out, None, dash.no_update) 
-    
+        return (True, out, None, dash.no_update)
+
     else:
-        loading_graph = _loading_graph(
-            num_done,
-            num_total - (num_done + num_failed),
-            num_retry,
-            num_failed
-        )
+        loading_graph = _loading_graph(num_done, num_total - (num_done + num_failed), num_retry, num_failed)
 
         return (False, None, loading_graph, 0)

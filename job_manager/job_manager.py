@@ -23,7 +23,7 @@ class JobManager:
         _rq : (private) Queue object
             Queue onto which jobs are pushed, FIFO, for RQ workers to pick up.
 
-        
+
     Methods
     -------
         _get_job_hash(func, arglist) (private) :
@@ -40,14 +40,15 @@ class JobManager:
         get_results(func, arglist) :
             Returns the status of a job and the results from that job, if they exist.
 
-        job_refreshed(job) : 
+        job_refreshed(job) :
             Returns job-object refreshed with most updated contents from Queue, if
             it exists.
 
         get_job_status(func, arglist) :
             Returns a job's status, if it exists.
-    
+
     """
+
     def __init__(self):
         # Redis cache for job queue and results cache
         self._redis = Redis(
@@ -68,7 +69,7 @@ class JobManager:
 
         Hash is used as a key by which the status of and results from the
         worker are accessed from the Queue.
-        
+
         Args:
         -----
             func (function): Function that worker picks up to run as job.
@@ -76,7 +77,7 @@ class JobManager:
 
         Returns:
         --------
-            _Hash: Unique key in Queue object to access job status and results. 
+            _Hash: Unique key in Queue object to access job status and results.
         """
 
         # use md5 instead of sha256 or better because
@@ -113,7 +114,9 @@ class JobManager:
         job_hash = self._get_job_hash(func, repo)
 
         # add a job to our queue, 1 day timeout (86400 sec), id of its hash, retry if failed
-        job = self._rq.enqueue(func, dbmc, repo, job_id=job_hash, result_ttl=86400, retry=Retry(max=3, interval=[5, 10, 15]))
+        job = self._rq.enqueue(
+            func, dbmc, repo, job_id=job_hash, result_ttl=86400, retry=Retry(max=3, interval=[5, 10, 15])
+        )
 
         return job_hash
 
@@ -131,7 +134,7 @@ class JobManager:
 
         Returns:
         --------
-            Job | None: Reference to Job object or None 
+            Job | None: Reference to Job object or None
         """
 
         # get an identifying hash of the function used and the args supplied
@@ -219,7 +222,7 @@ class JobManager:
     def get_job_status(self, func, repo):
         """
         Current status of Job in Queue, if it exists.
-        
+
         None if Job not in Queue.
 
         Args:

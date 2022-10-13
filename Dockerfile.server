@@ -13,8 +13,8 @@ RUN pip --no-cache-dir install pipenv
 WORKDIR /explorer
 
 # environment first
-COPY ./Pipfile.lock /explorer/ 
-COPY ./Pipfile /explorer/ 
+COPY ./Pipfile.lock /explorer/
+COPY ./Pipfile /explorer/
 
 # install required modules at system level
 RUN pipenv install --system --deploy
@@ -25,6 +25,6 @@ COPY ./ /explorer/
 
 # run app
 # Description of how to choose the number of workers and threads.
-# common wisdom is (2*CPU)+1 workers: 
+# common wisdom is (2*CPU)+1 workers:
 # https://medium.com/building-the-system/gunicorn-3-means-of-concurrency-efbb547674b7
 CMD [ "gunicorn", "--bind", ":8050", "app:server", "--workers", "8", "--threads", "4" ]
