@@ -117,12 +117,13 @@ def toggle_popover_3(n, is_open):
     ],
 )
 def issues_over_time_graph(repolist, timer_pings, interval):
-    logging.debug("ISSUES_OVER_TIME_VIZ - START")
+    logging.debug("IOT - PONG")
 
     ready, results, graph_update, interval_update = handle_job_state(jm, iq, repolist)
     if not ready:
         return graph_update, interval_update
 
+    logging.debug("ISSUES_OVER_TIME_VIZ - START")
     start = time.perf_counter()
 
     # create dataframe from record data
