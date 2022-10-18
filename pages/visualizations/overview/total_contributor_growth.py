@@ -144,6 +144,9 @@ def create_total_contributor_growth_graph(repolist, timer_pings, bin_size):
     # create dataframe from record data
     df_contrib = pd.DataFrame(results)
 
+    # order from beginning of time to most recent
+    df_contrib = df_contrib.sort_values("created_at", axis=0, ascending=True)
+
     """
         Assume that the cntrb_id values are unique to individual contributors.
         Find the first rank-1 contribution of the contributors, saving the created_at
@@ -152,9 +155,6 @@ def create_total_contributor_growth_graph(repolist, timer_pings, bin_size):
 
     # keep only first contributions
     df_contrib = df_contrib[df_contrib["rank"] == 1]
-
-    # order from beginning of time to most recent
-    df_contrib = df_contrib.sort_values("created_at", axis=0, ascending=True)
 
     # convert to datetime objects rather than strings, add day column
     df_contrib["created_at"] = pd.to_datetime(df_contrib["created_at"], utc=True)

@@ -185,13 +185,16 @@ def new_staling_prs(repolist, timer_pings, interval, staling_interval, stale_int
     # create dataframe from record data
     df = pd.DataFrame(results)
 
+    # order values chronologically by creation date
+    df = df.sort_values(by="created")
+
     try:
         df["created"] = pd.to_datetime(df["created"], utc=True)
         df["merged"] = pd.to_datetime(df["merged"], utc=True)
         df["closed"] = pd.to_datetime(df["closed"], utc=True)
     except:
         logging.debug("PULL REQUEST STALENESS - NO DATA AVAILABLE")
-        return nodata_graph, False, dash.no_update 
+        return nodata_graph, False, dash.no_update
 
     # first and last elements of the dataframe are the
     # earliest and latest events respectively
