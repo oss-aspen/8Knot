@@ -33,11 +33,11 @@ class AugurInterface:
         port : str
             Port credential to Augur database.
             Which port on the server machine we'll target.
-    
+
         database : str
             Database credential to Augur database.
             Which of the available databases on the server machine we'll target.
-        
+
         schema : str
             Schema credential to Augur database.
             The target schema of the database we want to access.
@@ -65,6 +65,7 @@ class AugurInterface:
             We need to do this because _engine.Engine objects can't be pickled and
             passed as parameters to workers via Queue objects.
     """
+
     def __init__(self):
         self.pconfig = False
         self.engine = None
@@ -82,26 +83,25 @@ class AugurInterface:
 
         Returns:
         --------
-            _engine.Engine: SQLAlchemy engine object. 
+            _engine.Engine: SQLAlchemy engine object.
         """
         if self.engine is not None:
             return self.engine
 
         if self.config_loaded is False and not self.pconfig:
 
-            
             # make sure all of the environment variables are available
             env_values = ["user", "password", "host", "port", "database", "schema"]
             for v in env_values:
 
                 if v not in os.environ:
-                    logging.critical(f"Required environment variable \"{v}\" not available.")
+                    logging.critical(f'Required environment variable "{v}" not available.')
                     return None
 
                 if os.getenv(v) is None:
-                    logging.critical(f"Required environment variable: \"{v}\" available but none.")
+                    logging.critical(f'Required environment variable: "{v}" available but none.')
                     return None
-            
+
             # have confirmed that necessary environment variables exist- proceed.
             self.user = os.getenv("user")
             self.password = os.getenv("password")
@@ -146,17 +146,17 @@ class AugurInterface:
             logging.critical("No engine- please use 'get_engine' method to create engine.")
             return None
 
-        this_df = pd.DataFrame()
+        result_df = pd.DataFrame()
 
-        pr_query = salc.sql.text(query_string)
+        query = salc.sql.text(query_string)
 
         with self.engine.connect() as conn:
-            this_df = pd.read_sql(pr_query, con=conn)
+            result_df = pd.read_sql(query, con=conn)
 
-        this_df = this_df.reset_index()
-        this_df.drop("index", axis=1, inplace=True)
+        result_df = result_df.reset_index()
+        result_df.drop("index", axis=1, inplace=True)
 
-        return this_df
+        return result_df
 
     def package_config(self):
         """
@@ -182,7 +182,7 @@ class AugurInterface:
 
         Args:
         -----
-            pconfig (list): Credentials to create AugurInterface object in RQ Workers. 
+            pconfig (list): Credentials to create AugurInterface object in RQ Workers.
         """
         self.pconfig = True
         self.engine = None
