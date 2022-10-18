@@ -20,7 +20,7 @@ def _parse_repo_choices(repo_git_set):
 # helper function for orgs to get repo_ids
 def _parse_org_choices(org_name_set):
 
-    # get git urls for the repos in the organization, sum operater is used to flatten the 2D list to 1D
+    # get git urls for the repos in the organization, flatten the 2D list to 1D
     org_repos = sum([org_dict[x] for x in org_name_set], [])
     # get repo values from repo dictionary
     repo_values = [repo_dict[x] for x in org_repos]
