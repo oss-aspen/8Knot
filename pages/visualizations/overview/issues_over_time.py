@@ -129,6 +129,9 @@ def issues_over_time_graph(repolist, timer_pings, interval):
     # create dataframe from record data
     df_issues = pd.DataFrame(results)
 
+    # order values chronologically by creation date
+    df_issues = df_issues.sort_values(by="created")
+
     # df for line chart
     df_open = make_open_df(df_issues)
     if df_open is None:

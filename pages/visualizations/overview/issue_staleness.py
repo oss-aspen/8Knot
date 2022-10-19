@@ -186,6 +186,9 @@ def new_staling_issues(repolist, timer_pings, interval, staling_interval, stale_
     # create dataframe from record data
     df = pd.DataFrame(results)
 
+    # order values chronologically by creation date
+    df = df.sort_values(by="created")
+
     try:
         df["created"] = pd.to_datetime(df["created"], utc=True)
         df["closed"] = pd.to_datetime(df["closed"], utc=True)
