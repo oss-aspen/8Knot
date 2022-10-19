@@ -140,12 +140,13 @@ def graph_title(view):
     ],
 )
 def create_drive_by_graph(repolist, timer_pings, contribs, view):
-    logging.debug("CONTRIB_DRIVE_REPEAT_VIZ - START")
+    logging.debug("CDR - PONG")
 
     ready, results, graph_update, interval_update = handle_job_state(jm, ctq, repolist)
     if not ready:
         return graph_update, interval_update
 
+    logging.debug("CONTRIB_DRIVE_REPEAT_VIZ - START")
     start = time.perf_counter()
 
     # graph on contribution subset

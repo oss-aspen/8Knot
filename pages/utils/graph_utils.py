@@ -3,7 +3,7 @@ import datetime as dt
 
 def get_graph_time_values(interval):
     """
-    Utility needed in page visualizations- 
+    Utility needed in page visualizations-
     when the user inputs an 'interval', they're wanting to view
     data in some time window. This function converts that
     'interval' value to the necessary Plotly figure update values.

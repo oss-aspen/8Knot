@@ -1,0 +1,14 @@
+extends: default
+
+rules:
+  comments:
+    ignore: |
+      openshift/cronjob/*
+  comments-indentation: disable
+  document-start: disable
+  line-length: disable
+  indentation:
+    indent-sequences: whatever
+    # ignore: |
+    #   k8s/*
+    #   openshift/*

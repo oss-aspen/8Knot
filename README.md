@@ -16,10 +16,10 @@ The number of repositories and projects that GitHub hosts is staggering. Even mo
 Projects on GitHub range from student projects to technological monoliths like the
 Linux Kernel. Understanding the growth trajectory, contributor behavior, progress blockers, etc. intuitively is no longer feasible for individual
 large projects, and is even less so for groups of projects. It is necessary that community architects and contributors alike have an accessible,
-correct, and extendible resource that can aggregate and interpret the data describing these communities.
+correct, and extendable resource that can aggregate and interpret the data describing these communities.
 
 The goal of this application is to serve Open Source community mangers, stakeholders, contributors, and enthusiasts by
-providing an insightful and convenient interface to the Open Source project dataset collected by the project [Augur](https://github.com/chaoss/augur) (CHAOSS).
+providing an insightful and convenient interface to the Open Source project data set collected by the project [Augur](https://github.com/chaoss/augur) (CHAOSS).
 
 ---
 
@@ -31,11 +31,11 @@ Augur, a project in the [CHAOSS](https://chaoss.community/) Foundation, is closi
 
 Quoting Augur's own README.md:
 
->"Augur’s main focus is to measure the overall health and sustainability of open source projects, as these types of projects are system critical for nearly every software organization or company. 
+>"Augur’s main focus is to measure the overall health and sustainability of open source projects, as these types of projects are system critical for nearly every software organization or company.
 >We do this by gathering data about project repositories and normalizing that into our data model to provide useful metrics about your project’s health."
 
 8knot's contribution to further closing this gap is to provide an interface to the data collected and organized by Augur as a data web-app with both essential statistical figures,
-and higher-order machine learning and data science-informed insights. 
+and higher-order machine learning and data science-informed insights.
 
 ---
 

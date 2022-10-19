@@ -66,12 +66,13 @@ def toggle_popover_2(n, is_open):
     [Input("repo-choices", "data"), Input("first-time-contributors-timer", "n_intervals")],
 )
 def create_first_time_contributors_graph(repolist, timer_pings):
-    logging.debug("1ST_CONTRIBUTIONS_VIZ - START")
+    logging.debug("1stC - PONG")
 
     ready, results, graph_update, interval_update = handle_job_state(jm, ctq, repolist)
     if not ready:
         return graph_update, interval_update
 
+    logging.debug("1ST_CONTRIBUTIONS_VIZ - START")
     start = time.perf_counter()
 
     df_cont = pd.DataFrame(results)

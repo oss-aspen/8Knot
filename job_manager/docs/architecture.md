@@ -12,7 +12,7 @@ This is highly performant because we can arbitrarily scale our application by du
 
 To bolster the responsiveness of this app, it is ideal for the resources dedicated to serving user requests to be allocated separately from those used to do any hard work.
 
-For our purposes this is a solved problem with a well-documented design pattern: if we know that a task would take more than a reasonable amount of time to run and would consume relatively more than minimal resources, we can add that task to a queue datastructure to be processed later.
+For our purposes this is a solved problem with a well-documented design pattern: if we know that a task would take more than a reasonable amount of time to run and would consume relatively more than minimal resources, we can add that task to a queue data structure to be processed later.
 
 Workers, with resources allocated separately from those that serve client requests, take jobs from this queue in order and publish the results from these jobs in a cache.
 
@@ -24,7 +24,7 @@ We implement a scalable and minimalist job queue that resolves previous applicat
 
 ### Queries
 
-The longest-running tasks our app runs are SQL queries to our instance of an Augur database. These can take as little as 500ms to resolve but in the worst case it can take up to 15 minutes to get a response. These are I/O-bound tasks so they could be solved by implementing naive multithreading, but a job-queue design is far more easily scalable.
+The longest-running tasks our app runs are SQL queries to our instance of an Augur database. These can take as little as 500ms to resolve but in the worst case it can take up to 15 minutes to get a response. These are I/O-bound tasks so they could be solved by implementing naive multi-threading, but a job-queue design is far more easily scalable.
 
 ### RQ
 
@@ -32,7 +32,7 @@ We enqueue our long-running queries in a Queue object implemented by the RQ (Red
 
 ### Redis
 
-Redis is an in-RAM datastructure store library. RQ implements its queue structure using Redis, and the results of a worker's task are cached in the Redis datastore, accessible by reference.
+Redis is an in-RAM data structure store library. RQ implements its queue structure using Redis, and the results of a worker's task are cached in the Redis data store, accessible by reference.
 
 ### Dash Server
 
@@ -46,4 +46,4 @@ The server routinely polls the job it created for its results. When the job's me
 
 ## Conclusion
 
-This architecture is minimally configured and low-overhead, likely requiring very little maintenance. It is likely that worker management by the Supervisor module will be effective in the future if Openshift scaling isn't a satisfying solution.
+This architecture is minimally configured and low-overhead, likely requiring very little maintenance. It is likely that worker management by the Supervisor module will be effective in the future if OpenShift scaling isn't a satisfying solution.
