@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # It's common to have access permission denied by the Docker Daemon
 # on Linux machines if you don't run Docker with root permissions.
 
@@ -14,6 +16,10 @@
 
 # if you want more/fewer worker processes in the workerpool, please edit the 'numprocs' field in supervisord.conf
 
+# Pick podman if available
+CONTAINER_CMD=podman
+which podman || CONTAINER_CMD=docker
+
 # TODO redis doesn't currently like this and I'm not sure why
 if [ -z "$1" ]
     then
@@ -28,27 +34,27 @@ if [ -z "$1" ]
         REDIS_PORT_MAP=$1;
 fi
 
-# create network for containers 
-docker network create eightknot-network;
+# create network for containers
+${CONTAINER_CMD} network create eightknot-network;
 
-# create a redis instance inside of a container, on our docker network, mapped to its respective port. 
-docker run --rm -itd --name redis --net eightknot-network -p $REDIS_PORT_MAP:6379 redis;
+# create a redis instance inside of a container, on our Docker network, mapped to its respective port.
+${CONTAINER_CMD} run --rm -itd --name redis --net eightknot-network -p $REDIS_PORT_MAP:6379 redis;
 
 # grab the route to the redis server from the running redis container
-REDIS_CONTAINER_URL=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' redis);
+REDIS_CONTAINER_URL=$(${CONTAINER_CMD} inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' redis);
 printf "\nRedis URL is: ${REDIS_CONTAINER_URL}:${REDIS_PORT_MAP}\n";
 
 # build and run the worker pool
-docker build -f Dockerfile.supervisor_workers -t worker_pool .;
-docker run --rm -dit --name worker_pool \
+${CONTAINER_CMD} build -f Dockerfile.supervisor_workers -t worker_pool .;
+${CONTAINER_CMD} run --rm -dit --name worker_pool \
                      --net eightknot-network \
                      --env REDIS_SERVICE_HOST=$REDIS_CONTAINER_URL \
                      --env REDIS_SERVICE_PORT=$REDIS_PORT_MAP \
                      worker_pool;
 
 # build and run the web server
-docker build -f Dockerfile.server -t eightknot_server .;
-docker run --rm -it --name eightknot_server \
+${CONTAINER_CMD} build -f Dockerfile.server -t eightknot_server .;
+${CONTAINER_CMD} run --rm -it --name eightknot_server \
                          --net eightknot-network \
                          --env REDIS_SERVICE_HOST=$REDIS_CONTAINER_URL \
                          --env REDIS_SERVICE_PORT=$REDIS_PORT_MAP \
@@ -58,15 +64,15 @@ docker run --rm -it --name eightknot_server \
 
 # cleanup
 printf "\nShutting down worker pool...\n"
-docker stop worker_pool;
+${CONTAINER_CMD} stop worker_pool;
 
 printf "\nShutting down redis...\n"
-docker stop redis;
+${CONTAINER_CMD} stop redis;
 
 printf "\nRemaining containers:\n"
-docker ps -a;
+${CONTAINER_CMD} ps -a;
 
 printf "\nDeleting network...\n"
-docker network rm eightknot-network;
+${CONTAINER_CMD} network rm eightknot-network;
 
 printf "\nCleanup Done :) \n"

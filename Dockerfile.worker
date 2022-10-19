@@ -1,20 +1,20 @@
-FROM python:3.8.12
+FROM docker.io/python:3.8.12
 
 # need this for the Dash app
 EXPOSE 8050
 
 # install pipenv
-RUN pip install pipenv
+RUN pip --no-cache-dir install pipenv
 
 # create a working directory
-RUN mkdir explorer
+# RUN mkdir explorer
 
 # set that directory as working dir
 WORKDIR /explorer
 
 # environment first
-COPY ./Pipfile.lock /explorer/ 
-COPY ./Pipfile /explorer/ 
+COPY ./Pipfile.lock /explorer/
+COPY ./Pipfile /explorer/
 
 # install required modules at system level
 RUN pipenv install --system --deploy
@@ -24,4 +24,4 @@ RUN pipenv install --system --deploy
 COPY ./ /explorer/
 
 # run worker
-CMD rq worker -c worker_settings
+CMD [ "rq", "worker", "-c", "worker_settings" ]

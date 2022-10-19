@@ -168,7 +168,7 @@ def toggle_popover_prs(n, is_open):
     ],
 )
 def new_staling_prs(repolist, timer_pings, interval, staling_interval, stale_interval):
-    logging.debug("PULL REQUEST STALENESS - START")
+    logging.debug("PRS - PONG")
 
     if staling_interval > stale_interval:
         return dash.no_update, True, dash.no_update
@@ -180,6 +180,7 @@ def new_staling_prs(repolist, timer_pings, interval, staling_interval, stale_int
     if not ready:
         return graph_update, dash.no_update, interval_update
 
+    logging.debug("PULL REQUEST STALENESS - START")
     start = time.perf_counter()
 
     # create dataframe from record data
@@ -191,7 +192,7 @@ def new_staling_prs(repolist, timer_pings, interval, staling_interval, stale_int
         df["closed"] = pd.to_datetime(df["closed"], utc=True)
     except:
         logging.debug("PULL REQUEST STALENESS - NO DATA AVAILABLE")
-        return nodata_graph, False, dash.no_update 
+        return nodata_graph, False, dash.no_update
 
     # first and last elements of the dataframe are the
     # earliest and latest events respectively

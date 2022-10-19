@@ -16,11 +16,11 @@ If you are interested in making a code contribution and would like to learn more
 13. Make changes to the pull request if the reviewing maintainer recommends them.
 14. Celebrate your success after your pull request is merged!
 
-## Steps to create a new visulization
+## Steps to create a new visualization
 1. Make a new file for the visualization and put it in the folder of the [page](https://github.com/sandiego-rh/explorer/tree/main/pages) you want to add it to
 2. Once the file is created, import the card to the respective page file and put it into the layout
 IF you need to add a new query:
-3. add a ddc.store componet to the (app.py)[https://github.com/sandiego-rh/explorer/blob/main/app.py]
+3. add a ddc.store component to the (app.py)[https://github.com/sandiego-rh/explorer/blob/main/app.py]
 4. Create the call back in the (app_callback.py)[https://github.com/sandiego-rh/explorer/blob/main/app_callbacks.py]for the data query in a similar format to the 3 at the bottom
 
 ## Steps to create a new page

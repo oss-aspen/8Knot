@@ -11,10 +11,8 @@
     Having laid out the HTML-like organization of this page, we write the callbacks for this page in
     the neighbor 'app_callbacks.py' file.
 """
-from concurrent.futures import process
 import pstats
 import cProfile
-import threading
 from db_manager.AugurInterface import AugurInterface
 from job_manager.job_manager import JobManager
 import dash
@@ -27,7 +25,7 @@ import os
 
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.DEBUG)
 
 # GLOBAL VARIABLE DECLARATIONS
 engine = None

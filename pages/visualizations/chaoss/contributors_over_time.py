@@ -130,12 +130,13 @@ def toggle_popover_3(n, is_open):
     ],
 )
 def create_graph(repolist, timer_pings, contribs, interval):
-    logging.debug("CONTRIBUTIONS_OVER_TIME_VIZ - START")
+    logging.debug("COT - PONG")
 
     ready, results, graph_update, interval_update = handle_job_state(jm, ctq, repolist)
     if not ready:
         return graph_update, interval_update
 
+    logging.debug("CONTRIBUTIONS_OVER_TIME_VIZ - START")
     start = time.perf_counter()
 
     df_cont = pd.DataFrame(results)

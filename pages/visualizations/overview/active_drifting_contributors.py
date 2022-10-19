@@ -172,7 +172,7 @@ def toggle_popover_4(n, is_open):
 )
 def active_drifting_contributors(repolist, timer_pings, interval, drift_interval, away_interval):
 
-    logging.debug("ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - START")
+    logging.debug("ADC - PONG")
 
     if drift_interval is None or away_interval is None:
         return dash.no_update, dash.no_update, dash.no_update
@@ -184,6 +184,7 @@ def active_drifting_contributors(repolist, timer_pings, interval, drift_interval
     if not ready:
         return graph_update, dash.no_update, interval_update
 
+    logging.debug("ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - START")
     start = time.perf_counter()
 
     # create dataframe from record data

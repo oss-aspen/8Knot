@@ -116,13 +116,14 @@ def toggle_popover_2(n, is_open):
     ],
 )
 def create_commits_over_time_graph(repolist, timer_pings, interval):
-    logging.debug("COMMITS_OVER_TIME_VIZ - START")
+    logging.debug("COT - PONG")
 
     ready, results, graph_update, interval_update = handle_job_state(jm, cmq, repolist)
     if not ready:
         # set n_intervals to 0 so it'll fire again.
         return graph_update, interval_update
 
+    logging.debug("COMMITS_OVER_TIME_VIZ - START")
     start = time.perf_counter()
 
     df_commits = pd.DataFrame(results)

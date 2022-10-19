@@ -1,0 +1,39 @@
+name: File Linting
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches:
+      - "*"
+  pull_request:
+    branches:
+      - "*"
+
+jobs:
+
+  yaml-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code Checkout
+        uses: actions/checkout@v2
+      - name: Validate YAML
+        uses: ibiqlik/action-yamllint@v3
+
+  bash-lint:
+    name: bash-lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          version: v0.8.0
+          severity: warning
+
+  containerfile-lint:
+    runs-on: ubuntu-latest
+    name: containerfile-lint
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run Hadolint
+        uses: jbergstroem/hadolint-gh-action@v1
+        with:
+          dockerfile: "Dockerfile*"
