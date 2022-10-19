@@ -33,6 +33,8 @@ search_input = None
 all_entries = None
 entries = None
 augur_db = None
+repo_dict = None
+org_dict = None
 jm = JobManager()
 
 
@@ -52,20 +54,41 @@ def _project_list_query():
     global all_entries
     global search_input
     global augur_db
+    global repo_dict
+    global org_dict
 
     # query of available orgs / repos
     logging.debug("AUGUR_ENTRY_LIST - START")
-    pr_query = f"""SELECT * FROM augur_data.explorer_entry_list"""
+    pr_query = f"""SELECT DISTINCT
+                        r.repo_git,
+                        r.repo_id,
+                        r.repo_name,
+                        rg.rg_name
+                    FROM
+                        repo r
+                    JOIN repo_groups rg
+                    ON rg.repo_group_id = r.repo_group_id
+                    ORDER BY rg.rg_name"""
 
+    # query for search bar entry generation
     df_search_bar = augur_db.run_query(pr_query)
 
+    # handling case sensitive options for search bar
     entries = np.concatenate((df_search_bar.rg_name.unique(), df_search_bar.repo_git.unique()), axis=None)
     entries = entries.tolist()
     entries.sort(key=lambda item: (item, len(item)))
 
+    # generating search bar entries
     lower_entries = [i.lower() for i in entries]
     all_entries = list(zip(lower_entries, entries))
 
+    # generating dictionary with the git urls as the key and the repo_id and name as a list as the value pair
+    repo_dict = df_search_bar[["repo_git", "repo_id", "repo_name"]].set_index("repo_git").T.to_dict("list")
+
+    # generating dictionary with the org name as the key and the git repos of the org in a list as the value pair
+    org_dict = df_search_bar.groupby("rg_name")["repo_git"].apply(list).to_dict()
+
+    # making first selection for the search bar
     search_input = entries[0]
 
     logging.debug("AUGUR_ENTRY_LIST - END")

@@ -146,17 +146,17 @@ class AugurInterface:
             logging.critical("No engine- please use 'get_engine' method to create engine.")
             return None
 
-        this_df = pd.DataFrame()
+        result_df = pd.DataFrame()
 
-        pr_query = salc.sql.text(query_string)
+        query = salc.sql.text(query_string)
 
         with self.engine.connect() as conn:
-            this_df = pd.read_sql(pr_query, con=conn)
+            result_df = pd.read_sql(query, con=conn)
 
-        this_df = this_df.reset_index()
-        this_df.drop("index", axis=1, inplace=True)
+        result_df = result_df.reset_index()
+        result_df.drop("index", axis=1, inplace=True)
 
-        return this_df
+        return result_df
 
     def package_config(self):
         """

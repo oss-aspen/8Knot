@@ -4,73 +4,29 @@ import dash
 import pandas as pd
 import sqlalchemy as salc
 import logging
-from app import engine, augur_db, entries, all_entries
+from app import engine, repo_dict, org_dict, all_entries
 
 # helper function for repos to get repo_ids
 def _parse_repo_choices(repo_git_set):
-
-    repo_ids = []
-    repo_names = []
-
-    if len(repo_git_set) > 0:
-        url_query = str(repo_git_set)
-        url_query = url_query[1:-1]
-
-        repo_query = salc.sql.text(
-            f"""
-        SET SCHEMA 'augur_data';
-        SELECT DISTINCT
-            r.repo_id,
-            r.repo_name
-        FROM
-            repo r
-        JOIN repo_groups rg
-        ON r.repo_group_id = rg.repo_group_id
-        WHERE
-            r.repo_git in({url_query})
-        """
-        )
-
-        with engine.connect() as conn:
-            t = conn.execute(repo_query)
-
-        results = t.all()
-        repo_ids = [row[0] for row in results]
-        repo_names = [row[1] for row in results]
+    # get repo values from repo dictionary
+    repo_values = [repo_dict[x] for x in repo_git_set]
+    # values for the repo_ids and names
+    repo_ids = [row[0] for row in repo_values]
+    repo_names = [row[1] for row in repo_values]
 
     return repo_ids, repo_names
 
 
 # helper function for orgs to get repo_ids
 def _parse_org_choices(org_name_set):
-    org_repo_ids = []
-    org_repo_names = []
 
-    if len(org_name_set) > 0:
-        name_query = str(org_name_set)
-        name_query = name_query[1:-1]
-
-        org_query = salc.sql.text(
-            f"""
-        SET SCHEMA 'augur_data';
-        SELECT DISTINCT
-            r.repo_id,
-            r.repo_name
-        FROM
-            repo r
-        JOIN repo_groups rg
-        ON r.repo_group_id = rg.repo_group_id
-        WHERE
-            rg.rg_name in({name_query})
-        """
-        )
-
-        with engine.connect() as conn:
-            t = conn.execute(org_query)
-
-        results = t.all()
-        org_repo_ids = [row[0] for row in results]
-        org_repo_names = [row[1] for row in results]
+    # get git urls for the repos in the organization, sum operater is used to flatten the 2D list to 1D
+    org_repos = sum([org_dict[x] for x in org_name_set], [])
+    # get repo values from repo dictionary
+    repo_values = [repo_dict[x] for x in org_repos]
+    # values for the repo_ids and names
+    org_repo_ids = [row[0] for row in repo_values]
+    org_repo_names = [row[1] for row in repo_values]
 
     return org_repo_ids, org_repo_names
 
