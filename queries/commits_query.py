@@ -20,14 +20,19 @@ def commits_query(dbmc, repo):
     """
     logging.debug("COMMITS_DATA_QUERY - START")
 
+    # NOTE: (jkunstle) I'm removing currently unused fields from the 'SELECT' statement.
+    #                  We can re-add them later as required.
+
+    #                   Right now we're only using the 'date' from this query.
+
     query_string = f"""
                     SELECT
-                        r.repo_name,
-                        c.cmt_commit_hash AS commits,
-                        c.cmt_id AS file,
-                        c.cmt_added AS lines_added,
-                        c.cmt_removed AS lines_removed,
-                        c.cmt_author_date AS date
+                        --r.repo_name,
+                        --c.cmt_commit_hash AS commits,
+                        --c.cmt_id AS file,
+                        --c.cmt_added AS lines_added,
+                        --c.cmt_removed AS lines_removed,
+                        c.cmt_committer_timestamp AS date
                     FROM
                         repo r
                     JOIN commits c
@@ -40,6 +45,9 @@ def commits_query(dbmc, repo):
     dbm = AugurInterface()
     dbm.load_pconfig(dbmc)
     df_commits = dbm.run_query(query_string)
+
+    # massage SQL timestampdz to Posix timestamp int64- much smaller than string or datetime object.
+    df_commits["date"] = pd.to_datetime(df_commits["date"], utc=True).map(pd.Timestamp.timestamp).astype("int64")
 
     logging.debug("COMMITS_DATA_QUERY - END")
     return df_commits.to_dict("records")

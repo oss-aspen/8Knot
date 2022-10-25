@@ -131,6 +131,9 @@ def handle_job_state(jm, func, repolist):
             # Job ready, results included, no graph, don't reset timer.
             # return (True, results, None, dash.no_update)
 
+    # NOTE:
+    # BECAUSE I'M DUMB I CAN'T GROUP-AGGREGATE THE RETURN VALUES FROM REDIS. THEY'RE IN JOB OBJECTS. COULD JUST STORE
+    # THE RETURN VALUES NAIVELY INSTEAD OF USING THE BAD JOB RESULT CACHING STUFF BUT W/E
     # all of the repo data is available.
     if num_done == num_total:
 
