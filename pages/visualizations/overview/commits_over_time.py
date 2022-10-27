@@ -128,6 +128,8 @@ def create_commits_over_time_graph(repolist, timer_pings, interval):
         # set n_intervals to 0 so it'll fire again.
         return graph_update, interval_update
 
+    logging.debug("COMMITS_OVER_TIME_VIZ - START")
+
     # default time values for figure
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
@@ -144,7 +146,13 @@ def create_commits_over_time_graph(repolist, timer_pings, interval):
 def create_figure(df: pd.DataFrame, x_r, x_name, hover, interval):
 
     # create figure
-    fig = px.bar(data_frame=df, x="period", y="counts", range_x=x_r, labels={"x": x_name, "y": "Commits"})
+    fig = px.bar(
+        data_frame=df,
+        x="period",
+        y="counts",
+        range_x=x_r,
+        labels={"x": x_name, "y": "Commits"},
+    )
 
     # set figure styling
     fig.update_layout(
@@ -179,7 +187,9 @@ def process_data(results, period):
     df["date"] = pd.to_datetime(df["date"], unit="s")
 
     # group data by period and count instances, sort by time from earlier to later
-    by_period = pd.to_datetime(df["date"]).dt.to_period(period).value_counts().sort_index()
+    by_period = (
+        pd.to_datetime(df["date"]).dt.to_period(period).value_counts().sort_index()
+    )
 
     # because index is PeriodIndex we can convert to a series and then to a string easily
     by_period.index = pd.PeriodIndex(by_period.index).to_series().astype(str)

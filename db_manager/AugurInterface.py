@@ -192,5 +192,5 @@ class AugurInterface:
         self.port = pconfig[3]
         self.database = pconfig[4]
         self.schema = pconfig[5]
-        self.config_loaded = False
+        self.config_loaded = True 
         self.get_engine()
