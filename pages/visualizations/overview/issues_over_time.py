@@ -263,74 +263,65 @@ def issues_over_time_graph(repolist, timer_pings, interval):
     
 def process_data(results, period):
     # load data into dataframe
-    df = pd.DataFrame(results).reset_index()
+    df = pd.DataFrame(results)
 
     # check that there are datapoints to render.
     if df.shape[0] == 0:
         return None
 
     # from POSIX timestamp to datetime, sort in ascending order
-    df["created"] = pd.to_datetime(df["created"], unit="s").sort_values()
-    df["closed"] = pd.to_datetime(df["closed"], unit="s").sort_values()
+    df["created"] = pd.to_datetime(df["created"], unit="s").sort_values().dropna()
+    df["closed"] = pd.to_datetime(df["closed"], unit="s").sort_values().dropna()
 
     # timestamps of issues being created 
     df_created = df["created"]
     # group data by period and count instances, sort by time from earlier to later
-    df_created_period = pd.to_datetime(df_created["created"]).dt.to_period(period).value_counts().sort_index()
+    df_created = df_created.dt.to_period(period).value_counts().sort_index()
     # because index is PeriodIndex we can convert to a series and then to a string easily
-    df_created_period.index = pd.PeriodIndex(df_created_period.index).to_series().astype(str)
-    # name the time index and the counts index
-    df_created_period = df_created_period.rename_axis("period").reset_index(name="counts")
-    # set created event
-    df_created_period["event_type"] = "created"
+    df_created.index = pd.PeriodIndex(df_created.index).to_series().astype(str)
 
     # timestamps of when issues being closed
-    df_closed = df[df["closed"].notna()]["closed"]
+    df_closed = df["closed"]
     # group data by period and count instances, sort by time from earlier to later
-    df_closed_period = pd.to_datetime(df_closed["closed"]).dt.to_period(period).value_counts().sort_index()
+    df_closed = df_closed.dt.to_period(period).value_counts().sort_index()
     # because index is PeriodIndex we can convert to a series and then to a string easily
-    df_closed_period.index = pd.PeriodIndex(df_closed_period.index).to_series().astype(str)
-    # name the time index and the counts index
-    df_closed_period = df_closed_period.rename_axis("period").reset_index(name="counts")
-    # set created event
-    df_closed_period["event_type"] = "closed"
+    df_closed.index = pd.PeriodIndex(df_closed.index).to_series().astype(str)
 
-    df_concat = pd.concat([df_created_period, df_closed_period], ignore_index=True, axis=0)
+    min_date = df_created.index.min()
+    max_date = max([df_created.index.max(), df_closed.index.max()]) 
 
-    logging.debug(df_concat)
+    df_date_range = pd.DataFrame(pd.date_range(start=min_date, end=max_date, freq=period).to_period(period).astype(str)).reset_index(drop=True).set_index(0)
+    df_date_range = df_date_range.join([df_created, df_closed]).fillna(0)
 
-    return df_concat
+    return df_date_range 
 
 def create_figure(df: pd.DataFrame, x_r, x_name, hover, interval):
     fig = go.Figure()
     fig.add_bar(
-        x=df[df["event_type"] == "created"]["created"],
-        y=df[df["event_type"] == "created"]["counts"],
+        x=df.index,
+        y=df["created"],
         name="created",
         opacity=0.6,
-        hovertemplate=hover + "<br>Created: %{y}<br>" + "<extra></extra>"
+        hovertemplate="<b>%{x|%b '%y}</b> <br>Num Created: %{y}" + "<extra></extra>"
     )
     fig.add_bar(
-        x=df[df["event_type"] == "closed"]["closed"],
-        y=df[df["event_type"] == "closed"]["counts"],
+        x=df.index,
+        y=df["closed"],
         name="closed",
         opacity=0.6,
-        hovertemplate=hover + "<br>Closed: %{y}<br>" + "<extra></extra>"
+        hovertemplate="<b>%{x|%b '%y}</b> <br>Num Closed: %{y}" + "<extra></extra>"
     )
-    fig.update_traces(xbins_size=interval)
     fig.update_xaxes(
         showgrid=True,
-        ticklabelmode="instant",
-        dtick=interval,
         rangeslider_yaxis_rangemode="match",
-        range=x_r,
     )
     fig.update_layout(
         xaxis_title=x_name,
         yaxis_title="Number of Issues",
-        bargroupgap=0.1,
-        margin_b=40,
+        xaxis_tickformatstops = [
+            dict(dtickrange=[None, "M3"], value="%b '%y"),
+            dict(dtickrange=["M3", None], value="%Y")
+        ]
     )
 
-    #fig = px.bar(data_frame=df, x="period", y="counts", barmode="group", color="event_type")
     return fig

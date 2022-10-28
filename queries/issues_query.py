@@ -43,7 +43,6 @@ def issues_query(dbmc, repo):
     dbm.load_pconfig(dbmc)
 
     df_issues = dbm.run_query(query_string)
-    df_issues = df_issues.reset_index()
     
     # check if query returned any rows of data.
     # if there is no data, store no data -
@@ -54,8 +53,29 @@ def issues_query(dbmc, repo):
         df_issues["created"] = pd.to_datetime(df_issues["created"], utc=True).map(pd.Timestamp.timestamp).astype("int64")
         # coerce means that invalid values are set to 'NaT', handling the error naturally.
         df_issues["closed"] = pd.to_datetime(df_issues["closed"], utc=True, errors="coerce")
-        print(type(df_issues["closed"]))
-        df_issues["closed"] = df_issues["closed"].map(pd.Timestamp.timestamp).astype("int64")
+    #     print(type(df_issues["closed"]))
+    #     df_issues["closed"] = df_issues["closed"].map(pd.Timestamp.timestamp).astype("int64")
 
-    logging.debug("ISSUES_DATA_QUERY - END")
+        def posix_time_convert(time):
+            """
+                Will try to convert a datetime64[ns, UTC] to
+                a pandas Timestamp object, and to then convert that to a posix timestamp.
+
+            Args:
+                time (datetime[ns, utc]): incoming datetime object to convert 
+
+            Returns:
+                posix_time (np.int64) | (pd.NaT)
+            """
+            try:
+                return int(pd.Timestamp.timestamp(time))
+            except:
+                return pd.NaT 
+
+        # convert datetime[ns, utc] to integer posix timestamps if possible, NotaTime if not.
+        # types will be 'object' when printed because of the 'NaT' values but valid values are 'int64'
+        # .astype(errors='ignore') will skip values that can't be coerced to int64.
+        df_issues["closed"] = df_issues["closed"].map(posix_time_convert).astype("int64", errors="ignore")
+
+    # logging.debug("ISSUES_DATA_QUERY - END")
     return df_issues.to_dict("records")
