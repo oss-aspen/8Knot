@@ -62,7 +62,7 @@ gc_issue_staleness = dbc.Card(
                                             id="issue-staleness-interval",
                                             options=[
                                                 {
-                                                    "label": "Day",
+                                                    "label": "Trend",
                                                     "value": "D",
                                                 },  # days in milliseconds for ploty use
                                                 {"label": "Month", "value": "M"},

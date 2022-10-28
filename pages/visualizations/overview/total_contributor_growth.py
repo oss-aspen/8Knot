@@ -61,10 +61,6 @@ gc_total_contributor_growth = dbc.Card(
                                                 "label": "Trend",
                                                 "value": -1,
                                             },
-                                            {
-                                                "label": "Day",
-                                                "value": "D1",
-                                            },
                                             {"label": "Month", "value": "M1"},
                                             {"label": "Year", "value": "M12"},
                                         ],
@@ -115,8 +111,6 @@ def graph_title(view):
     title = ""
     if view == -1:
         title = "Total Contributors Over Time"
-    elif view == "D1":
-        title = "New Contributors by Day"
     elif view == "M1":
         title = "New Contributors by Month"
     else:
@@ -178,11 +172,9 @@ def contributor_growth_bar_graph(df_contrib, bin_size):
     """
     Group-by determined by the radio button options.
     Aggregation is the number of rows per time bin.
-    Days, Months, Years are all options.
+    Months and Years are  options.
     """
-    if bin_size == "D1":
-        group = df_contrib.groupby(pd.Grouper(key="created_at", axis=0, freq="1D")).size()
-    elif bin_size == "M1":
+    if bin_size == "M1":
         group = df_contrib.groupby(pd.Grouper(key="created_at", axis=0, freq="1M")).size()
     else:
         group = df_contrib.groupby(pd.Grouper(key="created_at", axis=0, freq="1Y")).size()
@@ -199,6 +191,9 @@ def contributor_growth_bar_graph(df_contrib, bin_size):
     # rounded up to next year so this is a simple patch
     if bin_size == "M12":
         group["date"] = group["date"].dt.year
+
+    if bin_size == "M1":
+        group["date"] = group["date"].dt.strftime("%Y-%m")
 
     # create the graph
     fig = px.bar(group, x="date", y="count", range_x=x_r, labels={"x": x_name, "y": "Contributors"})

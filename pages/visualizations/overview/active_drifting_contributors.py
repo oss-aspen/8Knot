@@ -65,7 +65,7 @@ gc_active_drifting_contributors = dbc.Card(
                                             id="active-drifting-interval",
                                             options=[
                                                 {
-                                                    "label": "Day",
+                                                    "label": "Trend",
                                                     "value": "D",
                                                 },  # days in milliseconds for ploty use
                                                 {"label": "Month", "value": "M"},
