@@ -1,10 +1,8 @@
 """
     Imports
 """
-from re import I
 import pandas as pd
 import sqlalchemy as salc
-import json
 import os
 import logging
 
@@ -150,8 +148,11 @@ class AugurInterface:
 
         query = salc.sql.text(query_string)
 
-        with self.engine.connect() as conn:
-            result_df = pd.read_sql(query, con=conn)
+        try:
+            with self.engine.connect() as conn:
+                result_df = pd.read_sql(query, con=conn)
+        except:
+            raise Exception("DB Read Failure")
 
         result_df = result_df.reset_index()
         result_df.drop("index", axis=1, inplace=True)
@@ -169,7 +170,14 @@ class AugurInterface:
             list(str): List of credentials to recreate same connection to Augur instance.
         """
         if self.config_loaded:
-            pconfig = [self.user, self.password, self.host, self.port, self.database, self.schema]
+            pconfig = [
+                self.user,
+                self.password,
+                self.host,
+                self.port,
+                self.database,
+                self.schema,
+            ]
             return pconfig
         else:
             return None

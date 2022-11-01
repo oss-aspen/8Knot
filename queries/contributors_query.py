@@ -1,9 +1,18 @@
 import logging
 import pandas as pd
 from db_manager.AugurInterface import AugurInterface
+from app_global import celery_app
+from cache_manager.cache_manager import CacheManager as cm
 
 
-def contributors_query(dbmc, repo):
+@celery_app.task(
+    bind=True,
+    autoretry_for=(Exception,),
+    exponential_backoff=2,
+    retry_kwargs={"max_retries": 5},
+    retry_jitter=True,
+)
+def contributors_query(self, dbmc, repos):
     """
     (Worker Query)
     Executes SQL query against Augur database for contributor data.
@@ -20,13 +29,21 @@ def contributors_query(dbmc, repo):
     """
     logging.debug("CONTRIBUTIONS_DATA_QUERY - START")
 
+    if len(repos) == 0:
+        return None
+
     query_string = f"""
                     SELECT
-                        *
+                        repo_id as id,
+                        cntrb_id,
+                        created_at,
+                        login,
+                        action,
+                        rank
                     FROM
                         augur_data.explorer_contributor_actions
                     WHERE
-                        repo_id = {repo}
+                        repo_id in ({str(repos)[1:-1]})
                 """
 
     # create database connection, load config, execute query above.
@@ -44,5 +61,20 @@ def contributors_query(dbmc, repo):
 
     df_cont = df_cont.reset_index()
     df_cont.drop("index", axis=1, inplace=True)
+    pic = []
+
+    for i, r in enumerate(repos):
+        # convert series to a dataframe
+        c_df = pd.DataFrame(df_cont.loc[df_cont["id"] == r]).to_csv()
+
+        # add pickled dataframe to list of pickled objects
+        pic.append(c_df)
+
+    del df_cont
+
+    # store results in Redis
+    cm_o = cm()
+    ack = cm_o.setm(func=contributors_query, repos=repos, datas=pic)
     logging.debug("CONTRIBUTIONS_DATA_QUERY - END")
-    return df_cont.to_dict("records")
+
+    return ack

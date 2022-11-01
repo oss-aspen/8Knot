@@ -5,28 +5,18 @@ from dash import callback
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
-import datetime as dt
 import logging
-import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values
-
-from pages.utils.job_utils import handle_job_state, nodata_graph
+from pages.utils.job_utils import nodata_graph
 from queries.issues_query import issues_query as iq
-from app import jm
-
+from cache_manager.cache_manager import CacheManager as cm
+import io
 import time
 
 gc_issues_over_time = dbc.Card(
     [
         dbc.CardBody(
             [
-                dcc.Interval(
-                    id="issues-over-time-timer",
-                    disabled=False,
-                    n_intervals=1,
-                    max_intervals=1,
-                    interval=1500,
-                ),
                 html.H4(
                     "Issues Over Time",
                     className="card-title",
@@ -42,7 +32,9 @@ gc_issues_over_time = dbc.Card(
                     placement="top",
                     is_open=False,
                 ),
-                dcc.Graph(id="issues-over-time"),
+                dcc.Loading(
+                    dcc.Graph(id="issues-over-time"),
+                ),
                 dbc.Form(
                     [
                         dbc.Row(
@@ -106,33 +98,89 @@ def toggle_popover_3(n, is_open):
     return is_open
 
 
+columns = ["1", "2", "3"]
+
+# graph displayed if no data is available
+nodata_graph = go.Figure([go.Bar(x=columns, y=[20, 14, 23])])
+nodata_graph.update_traces(
+    marker_color="rgb(230,230,230)",
+    marker_line_color="rgb(200,200,300)",
+    marker_line_width=1.5,
+    opacity=0.6,
+)
+nodata_graph.update_layout(
+    title={
+        "text": "No Available Data",
+        "y": 0.9,
+        "x": 0.5,
+        "xanchor": "center",
+        "yanchor": "top",
+    },
+    font=dict(size=18, color="red"),
+)
+
+# graph displayed if a worker fails
+timeout_graph = go.Figure([go.Bar(x=columns, y=[20, 14, 23])])
+timeout_graph.update_traces(
+    marker_color="rgb(230,230,230)",
+    marker_line_color="rgb(200,200,300)",
+    marker_line_width=1.5,
+    opacity=0.6,
+)
+timeout_graph.update_layout(
+    title={
+        "text": "No Available Data",
+        "y": 0.9,
+        "x": 0.5,
+        "xanchor": "center",
+        "yanchor": "top",
+    },
+    font=dict(size=18, color="orange"),
+)
+
 # callback for issues over time graph
 @callback(
     Output("issues-over-time", "figure"),
-    Output("issues-over-time-timer", "n_intervals"),
+    # Output("issues-over-time-timer", "n_intervals"),
     [
         Input("repo-choices", "data"),
-        Input("issues-over-time-timer", "n_intervals"),
+        # Input("issues-over-time-timer", "n_intervals"),
         Input("issue-time-interval", "value"),
     ],
+    background=True,
 )
-def issues_over_time_graph(repolist, timer_pings, interval):
-    logging.debug("IOT - PONG")
+def issues_over_time_graph(repolist, interval):
 
-    ready, results, graph_update, interval_update = handle_job_state(jm, iq, repolist)
-    if not ready:
-        return graph_update, interval_update
+    num_repos = len(repolist)
+    cache = cm()
+    ready = cache.existsm(func=iq, repos=repolist) == num_repos
 
-    logging.debug("ISSUES_OVER_TIME_VIZ - START")
+    while not ready:
+        time.sleep(1.0)
+        ready = cache.existsm(func=iq, repos=repolist) == num_repos
+
     start = time.perf_counter()
+    logging.debug("ISSUES_OVER_TIME_VIZ - START")
 
-    # create dataframe from record data
-    df = pd.DataFrame(results)
+    # get all results from cache
+    results = cache.getm(func=iq, repos=repolist)
+
+    # deserialize results, create list of dfs
+    dfs = []
+    for r in results:
+        try:
+            dfs.append(pd.read_csv(io.StringIO(r), sep=","))
+        except:
+            # some json lists are empty and aren't deserializable
+            pass
+
+    # aggregate dataframe from list of dfs
+    df = pd.concat(dfs, ignore_index=True)
 
     # test if there is data
     if df.empty:
         logging.debug("ISSUES OVER TIME - NO DATA AVAILABLE")
-        return nodata_graph, False, dash.no_update
+        return nodata_graph
 
     # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
@@ -232,8 +280,10 @@ def issues_over_time_graph(repolist, timer_pings, interval):
     )
     logging.debug(f"ISSUES_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
 
-    # return fig, diable timer.
-    return fig, dash.no_update
+    # df = px.data.iris()  # iris is a pandas DataFrame
+    # fig = px.scatter(df, x="sepal_width", y="sepal_length")
+
+    return fig
 
 
 # for each day, this function calculates the amount of open issues

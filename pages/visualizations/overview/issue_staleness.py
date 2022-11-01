@@ -10,23 +10,16 @@ import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values
-
-from pages.utils.job_utils import handle_job_state, nodata_graph
 from queries.issues_query import issues_query as iq
-from app import jm
+from pages.utils.job_utils import nodata_graph
+from cache_manager.cache_manager import CacheManager as cm
+import io
 import time
 
 gc_issue_staleness = dbc.Card(
     [
         dbc.CardBody(
             [
-                dcc.Interval(
-                    id="issue-staleness-timer",
-                    disabled=False,
-                    n_intervals=1,
-                    max_intervals=1,
-                    interval=1500,
-                ),
                 html.H4(
                     "Issue Activity- Staleness",
                     className="card-title",
@@ -45,7 +38,9 @@ gc_issue_staleness = dbc.Card(
                     placement="top",
                     is_open=False,
                 ),
-                dcc.Graph(id="issue_staleness"),
+                dcc.Loading(
+                    dcc.Graph(id="issue_staleness"),
+                ),
                 dbc.Form(
                     [
                         dbc.Row(
@@ -155,17 +150,15 @@ def toggle_popover_issues(n, is_open):
 @callback(
     Output("issue_staleness", "figure"),
     Output("issue_staling_stale_check_alert", "is_open"),
-    Output("issue-staleness-timer", "n_intervals"),
     [
         Input("repo-choices", "data"),
-        Input("issue-staleness-timer", "n_intervals"),
         Input("issue-staleness-interval", "value"),
         Input("i_staling_days", "value"),
         Input("i_stale_days", "value"),
     ],
+    background=True,
 )
-def new_staling_issues(repolist, timer_pings, interval, staling_interval, stale_interval):
-    logging.debug("IS - PONG")
+def new_staling_issues(repolist, interval, staling_interval, stale_interval):
 
     if staling_interval > stale_interval:
         return dash.no_update, True, dash.no_update
@@ -173,20 +166,39 @@ def new_staling_issues(repolist, timer_pings, interval, staling_interval, stale_
     if staling_interval is None or stale_interval is None:
         return dash.no_update, dash.no_update, dash.no_update
 
-    ready, results, graph_update, interval_update = handle_job_state(jm, iq, repolist)
-    if not ready:
-        return graph_update, dash.no_update, interval_update
+    num_repos = len(repolist)
+    cache = cm()
+    ready = cache.existsm(func=iq, repos=repolist) == num_repos
 
-    logging.debug("ISSUE_STALENESS_VIZ - START")
+    while not ready:
+        time.sleep(1.0)
+        ready = cache.existsm(func=iq, repos=repolist) == num_repos
+
     start = time.perf_counter()
+    logging.debug("ISSUES STALENESS - START")
 
-    # create dataframe from record data
-    df = pd.DataFrame(results)
+    # get all results from cache
+    results = cache.getm(func=iq, repos=repolist)
+
+    # deserialize results, create list of dfs
+    dfs = []
+    for r in results:
+        try:
+            dfs.append(pd.read_csv(io.StringIO(r), sep=","))
+        except:
+            # some json lists are empty and aren't deserializable
+            pass
+
+    # aggregate dataframe from list of dfs
+    df = pd.concat(dfs, ignore_index=True)
+
+    if df.empty:
+        return nodata_graph, False
 
     # test if there is data
     if df.empty:
         logging.debug("ISSUE STALENESS - NO DATA AVAILABLE")
-        return nodata_graph, False, dash.no_update
+        return nodata_graph, False
 
     # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
@@ -208,7 +220,8 @@ def new_staling_issues(repolist, timer_pings, interval, staling_interval, stale_
 
     df_status["New"], df_status["Staling"], df_status["Stale"] = zip(
         *df_status.apply(
-            lambda row: get_new_staling_stale_up_to(df, row.Date, staling_interval, stale_interval), axis=1
+            lambda row: get_new_staling_stale_up_to(df, row.Date, staling_interval, stale_interval),
+            axis=1,
         )
     )
 
@@ -262,8 +275,8 @@ def new_staling_issues(repolist, timer_pings, interval, staling_interval, stale_
 
     fig.update_layout(xaxis_title="Time", yaxis_title="Issues", legend_title="Type")
 
-    logging.debug(f"ISSUE_STALENESS_VIZ - END - {time.perf_counter() - start}")
-    return fig, False, dash.no_update
+    logging.debug(f"ISSUE STALENESS - END - {time.perf_counter() - start}")
+    return fig, False
 
 
 def get_new_staling_stale_up_to(df, date, staling_interval, stale_interval):

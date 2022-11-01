@@ -3,16 +3,14 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import callback
 from dash.dependencies import Input, Output, State
-import plotly.graph_objects as go
 import pandas as pd
-import datetime as dt
 import logging
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values
-
-from app import jm
-from pages.utils.job_utils import handle_job_state, nodata_graph
 from queries.contributors_query import contributors_query as ctq
+import io
+from cache_manager.cache_manager import CacheManager as cm
+from pages.utils.job_utils import nodata_graph
 
 import time
 
@@ -20,13 +18,6 @@ gc_total_contributor_growth = dbc.Card(
     [
         dbc.CardBody(
             [
-                dcc.Interval(
-                    id="total-contributor-growth-timer",
-                    disabled=False,
-                    n_intervals=1,
-                    max_intervals=1,
-                    interval=1500,
-                ),
                 html.H4(
                     id="overview-graph-title-1",
                     className="card-title",
@@ -42,7 +33,9 @@ gc_total_contributor_growth = dbc.Card(
                     placement="top",
                     is_open=False,
                 ),
-                dcc.Graph(id="total_contributor_growth"),
+                dcc.Loading(
+                    dcc.Graph(id="total_contributor_growth"),
+                ),
                 dbc.Form(
                     [
                         dbc.Row(
@@ -120,29 +113,44 @@ def graph_title(view):
 
 @callback(
     Output("total_contributor_growth", "figure"),
-    Output("total-contributor-growth-timer", "n_intervals"),
     [
         Input("repo-choices", "data"),
-        Input("total-contributor-growth-timer", "n_intervals"),
         Input("contributor-growth-time-interval", "value"),
     ],
+    background=True,
 )
-def create_total_contributor_growth_graph(repolist, timer_pings, bin_size):
-    logging.debug("TCG - PONG")
-    ready, results, graph_update, interval_update = handle_job_state(jm, ctq, repolist)
-    if not ready:
-        return graph_update, interval_update
+def create_total_contributor_growth_graph(repolist, bin_size):
+
+    num_repos = len(repolist)
+    cache = cm()
+    ready = cache.existsm(func=ctq, repos=repolist) == num_repos
+
+    while not ready:
+        time.sleep(1.0)
+        ready = cache.existsm(func=ctq, repos=repolist) == num_repos
 
     logging.debug("TOTAL_CONTRIBUTOR_GROWTH_VIZ - START")
     start = time.perf_counter()
 
-    # create dataframe from record data
-    df = pd.DataFrame(results)
+    # get all results from cache
+    results = cache.getm(func=ctq, repos=repolist)
+
+    # deserialize results, create list of dfs
+    dfs = []
+    for r in results:
+        try:
+            dfs.append(pd.read_csv(io.StringIO(r), sep=","))
+        except:
+            # some json lists are empty and aren't deserializable
+            pass
+
+    # aggregate dataframe from list of dfs
+    df = pd.concat(dfs, ignore_index=True)
 
     # test if there is data
     if df.empty:
         logging.debug("TOTAL_CONTRIBUTOR_GROWTH_VIZ - NO DATA AVAILABLE")
-        return nodata_graph, False, dash.no_update
+        return nodata_graph
 
     # convert to datetime objects with consistent column name
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
@@ -170,7 +178,7 @@ def create_total_contributor_growth_graph(repolist, timer_pings, bin_size):
 
     logging.debug(f"TOTAL_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}")
     # return the simple line graph
-    return fig, dash.no_update
+    return fig
 
 
 def contributor_growth_bar_graph(df, interval):
@@ -202,7 +210,13 @@ def contributor_growth_bar_graph(df, interval):
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
     # create the graph
-    fig = px.bar(df_contribs, x="Date", y="contribs", range_x=x_r, labels={"x": x_name, "y": "Contributors"})
+    fig = px.bar(
+        df_contribs,
+        x="Date",
+        y="contribs",
+        range_x=x_r,
+        labels={"x": x_name, "y": "Contributors"},
+    )
 
     # edit hover values
     fig.update_traces(hovertemplate=hover + "<br>Contributors: %{y}<br>")

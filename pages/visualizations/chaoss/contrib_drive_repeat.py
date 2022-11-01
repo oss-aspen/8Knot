@@ -3,30 +3,25 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import callback
 from dash.dependencies import Input, Output, State
-import plotly.graph_objects as go
 import pandas as pd
-import datetime as dt
 import logging
 import plotly.express as px
-from pages.utils.graph_utils import get_graph_time_values
 
-from app import jm
-from pages.utils.job_utils import handle_job_state, nodata_graph
+from pages.utils.job_utils import nodata_graph
 from queries.contributors_query import contributors_query as ctq
 import time
+import io
+from cache_manager.cache_manager import CacheManager as cm
 
 gc_contrib_drive_repeat = dbc.Card(
     [
         dbc.CardBody(
             [
-                dcc.Interval(
-                    id="contrib-drive-repeat-timer",
-                    n_intervals=1,
-                    max_intervals=1,
-                    disabled=False,
-                    interval=800,
+                html.H4(
+                    id="chaoss-graph-title-1",
+                    className="card-title",
+                    style={"text-align": "center"},
                 ),
-                html.H4(id="chaoss-graph-title-1", className="card-title", style={"text-align": "center"}),
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
@@ -37,7 +32,9 @@ gc_contrib_drive_repeat = dbc.Card(
                     placement="top",
                     is_open=False,
                 ),
-                dcc.Graph(id="cont-drive-repeat"),
+                dcc.Loading(
+                    dcc.Graph(id="cont-drive-repeat"),
+                ),
                 dbc.Form(
                     [
                         dbc.Row(
@@ -68,7 +65,10 @@ gc_contrib_drive_repeat = dbc.Card(
                                 ),
                                 dbc.Col(
                                     dbc.Button(
-                                        "About Graph", id="chaoss-popover-target-1", color="secondary", size="sm"
+                                        "About Graph",
+                                        id="chaoss-popover-target-1",
+                                        color="secondary",
+                                        size="sm",
                                     ),
                                     width="auto",
                                     style={"padding-top": ".5em"},
@@ -132,26 +132,40 @@ def graph_title(view):
 # call back for drive by vs commits over time graph
 @callback(
     Output("cont-drive-repeat", "figure"),
-    Output("contrib-drive-repeat-timer", "n_intervals"),
     [
         Input("repo-choices", "data"),
-        Input("contrib-drive-repeat-timer", "n_intervals"),
         Input("num_contributions", "value"),
         Input("drive-repeat", "value"),
     ],
+    background=True,
 )
-def create_drive_by_graph(repolist, timer_pings, contribs, view):
-    logging.debug("CDR - PONG")
+def create_drive_by_graph(repolist, contribs, view):
 
-    ready, results, graph_update, interval_update = handle_job_state(jm, ctq, repolist)
-    if not ready:
-        return graph_update, interval_update
+    num_repos = len(repolist)
+    cache = cm()
+    ready = cache.existsm(func=ctq, repos=repolist) == num_repos
 
-    logging.debug("CONTRIB_DRIVE_REPEAT_VIZ - START")
+    while not ready:
+        time.sleep(1.0)
+        ready = cache.existsm(func=ctq, repos=repolist) == num_repos
+
     start = time.perf_counter()
+    logging.debug("CONTRIB_DRIVE_REPEAT_VIZ - START")
 
-    # create dataframe from record data
-    df = pd.DataFrame(results)
+    # get all results from cache
+    results = cache.getm(func=ctq, repos=repolist)
+
+    # deserialize results, create list of dfs
+    dfs = []
+    for r in results:
+        try:
+            dfs.append(pd.read_csv(io.StringIO(r), sep=","))
+        except:
+            # some json lists are empty and aren't deserializable
+            pass
+
+    # aggregate dataframe from list of dfs
+    df = pd.concat(dfs, ignore_index=True)
 
     # test if there is data
     if df.empty:
@@ -175,7 +189,7 @@ def create_drive_by_graph(repolist, timer_pings, contribs, view):
     # reset index to be ready for plotly
     df_cont_subset = df_cont_subset.reset_index()
 
-    # graph geration
+    # graph generation
     if df_cont_subset is not None:
         fig = px.histogram(df_cont_subset, x="created", color="Action", template="minty")
         fig.update_traces(
@@ -189,6 +203,6 @@ def create_drive_by_graph(repolist, timer_pings, contribs, view):
             margin_b=40,
         )
         logging.debug(f"CONTRIB_DRIVE_REPEAT_VIZ - END - {time.perf_counter() - start}")
-        return fig, dash.no_update
+        return fig
     else:
-        return nodata_graph, dash.no_update
+        return nodata_graph

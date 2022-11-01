@@ -1,0 +1,35 @@
+services:
+  web-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    ports:
+      - 8050:8050
+    depends_on:
+      - worker-pool
+      - cache
+    env_file:
+      - ./env.list
+    environment:
+      REDIS_SERVICE_HOST: cache
+      REDIS_SERVICE_PORT: 6379
+    restart: always
+
+  worker-pool:
+    build:
+      context: .
+      dockerfile: Dockerfile.supervisor_workers
+    depends_on:
+      - cache
+    env_file:
+      - ./env.list
+    environment:
+      REDIS_SERVICE_HOST: cache
+      REDIS_SERVICE_PORT: 6379
+    restart: always
+
+  cache:
+    image: redis
+    ports:
+      - 6379:6379
+    restart: always

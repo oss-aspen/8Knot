@@ -1,10 +1,17 @@
 from dash import callback
 from dash.dependencies import Input, Output, State
+from app import repo_dict, org_dict, all_entries, augur_db
 import dash
-import pandas as pd
-import sqlalchemy as salc
 import logging
-from app import engine, repo_dict, org_dict, all_entries
+from cache_manager.cache_manager import CacheManager as cm
+from queries.issues_query import issues_query as iq
+from queries.commits_query import commits_query as cq
+from queries.contributors_query import contributors_query as cnq
+from queries.prs_query import prs_query as prq
+import time
+
+# list of queries to be run
+QUERIES = [iq, cq, cnq, prq]
 
 # helper function for repos to get repo_ids
 def _parse_repo_choices(repo_git_set):
@@ -115,10 +122,65 @@ def update_output(n_clicks, value):
         return dash.exceptions.PreventUpdate, dash.exceptions.PreventUpdate
 
 
-@callback(Output("help-alert", "is_open"), Input("search-help", "n_clicks"), State("help-alert", "is_open"))
+@callback(
+    Output("help-alert", "is_open"),
+    Input("search-help", "n_clicks"),
+    State("help-alert", "is_open"),
+)
 def show_help_alert(n_clicks, openness):
     if n_clicks == 0:
         return dash.no_update
     # switch the openness parameter, allows button to also
     # dismiss the Alert.
     return not openness
+
+
+@callback(
+    [Output("data_badge", "children"), Output("data_badge", "color")],
+    Input("repo-choices", "data"),
+    background=True,
+)
+def run_queries(repos):
+    """
+    Executes queries defined in /queries against Augur
+    instance for input Repos; caches results in redis per
+    (query_function,repo) pair.
+
+    Args:
+        repos ([int]): repositories we collect data for.
+    """
+
+    # cache manager object
+    cache = cm()
+
+    # list of queries to process
+    funcs = QUERIES
+
+    # list of job promises
+    jobs = []
+
+    for f in funcs:
+
+        # only download repos that aren't currently in cache
+        not_ready = [r for r in repos if cache.exists(f, r) != 1]
+
+        # add job to queue
+        j = f.apply_async(args=(augur_db.package_config(), not_ready))
+
+        # add job promise to local promise list
+        jobs.append(j)
+
+    while True:
+        logging.info([j.status for j in jobs])
+        # jobs are either all ready
+        if all([j.successful() for j in jobs]):
+            logging.info([j.status for j in jobs])
+            return "Data Ready", "success"
+
+        # or one of them has failed
+        # TODO only fail if all retries fail
+        if any(j.failed() for j in jobs):
+            return "Data Incomplete- Retry", "danger"
+
+        # pause to let something change
+        time.sleep(2.0)

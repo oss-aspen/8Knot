@@ -27,5 +27,5 @@ RUN pip3 install -r requirements.txt
 COPY ./ /explorer/
 
 # run worker
-CMD [ "rq", "worker", "-c", "worker_settings" ]
-# CMD ["celery", "-A", "app:celery_app", "worker", "--loglevel=DEBUG", "--concurrency=6"]
+# CMD [ "rq", "worker", "-c", "worker_settings" ]
+CMD ["celery", "-A", "app:celery_app", "worker", "--loglevel=DEBUG", "--concurrency=15"]

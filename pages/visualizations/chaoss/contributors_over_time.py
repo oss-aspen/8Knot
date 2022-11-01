@@ -3,31 +3,27 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import callback
 from dash.dependencies import Input, Output, State
-import plotly.graph_objects as go
 import pandas as pd
-import datetime as dt
 import logging
 import numpy as np
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values
 
-from app import jm
-from pages.utils.job_utils import handle_job_state, nodata_graph
+from pages.utils.job_utils import nodata_graph
 from queries.contributors_query import contributors_query as ctq
 import time
+import io
+from cache_manager.cache_manager import CacheManager as cm
 
 gc_contributors_over_time = dbc.Card(
     [
         dbc.CardBody(
             [
-                dcc.Interval(
-                    id="contributors-over-time-timer",
-                    n_intervals=1,
-                    max_intervals=1,
-                    disabled=False,
-                    interval=800,
+                html.H4(
+                    "Contributor Types Over Time",
+                    className="card-title",
+                    style={"text-align": "center"},
                 ),
-                html.H4("Contributor Types Over Time", className="card-title", style={"text-align": "center"}),
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
@@ -38,7 +34,9 @@ gc_contributors_over_time = dbc.Card(
                     placement="top",
                     is_open=False,
                 ),
-                dcc.Graph(id="contributors-over-time"),
+                dcc.Loading(
+                    dcc.Graph(id="contributors-over-time"),
+                ),
                 dbc.Form(
                     [
                         dbc.Row(
@@ -67,7 +65,10 @@ gc_contributors_over_time = dbc.Card(
                                 ),
                                 dbc.Col(
                                     dbc.Button(
-                                        "About Graph", id="chaoss-popover-target-3", color="secondary", size="sm"
+                                        "About Graph",
+                                        id="chaoss-popover-target-3",
+                                        color="secondary",
+                                        size="sm",
                                     ),
                                     width="auto",
                                     style={"padding-top": ".5em"},
@@ -120,31 +121,45 @@ def toggle_popover_3(n, is_open):
 
 @callback(
     Output("contributors-over-time", "figure"),
-    Output("contributors-over-time-timer", "n_intervals"),
     [
         Input("repo-choices", "data"),
-        Input("contributors-over-time-timer", "n_intervals"),
         Input("num_contribs_req", "value"),
         Input("contrib-time-interval", "value"),
     ],
+    background=True,
 )
-def create_graph(repolist, timer_pings, contribs, interval):
-    logging.debug("COT - PONG")
+def create_graph(repolist, contribs, interval):
 
-    ready, results, graph_update, interval_update = handle_job_state(jm, ctq, repolist)
-    if not ready:
-        return graph_update, interval_update
+    num_repos = len(repolist)
+    cache = cm()
+    ready = cache.existsm(func=ctq, repos=repolist) == num_repos
 
-    logging.debug("CONTRIBUTIONS_OVER_TIME_VIZ - START")
+    while not ready:
+        time.sleep(1.0)
+        ready = cache.existsm(func=ctq, repos=repolist) == num_repos
+
     start = time.perf_counter()
+    logging.debug("CONTRIB_DRIVE_REPEAT_VIZ - START")
 
-    # create dataframe from record data
-    df = pd.DataFrame(results)
+    # get all results from cache
+    results = cache.getm(func=ctq, repos=repolist)
+
+    # deserialize results, create list of dfs
+    dfs = []
+    for r in results:
+        try:
+            dfs.append(pd.read_csv(io.StringIO(r), sep=","))
+        except:
+            # some json lists are empty and aren't deserializable
+            pass
+
+    # aggregate dataframe from list of dfs
+    df = pd.concat(dfs, ignore_index=True)
 
     # test if there is data
     if df.empty:
         logging.debug("PULL REQUESTS OVER TIME - NO DATA AVAILABLE")
-        return nodata_graph, False, dash.no_update
+        return nodata_graph
 
     # convert to datetime objects with consistent column name
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
@@ -223,4 +238,4 @@ def create_graph(repolist, timer_pings, contribs, interval):
         margin_b=40,
     )
     logging.debug(f"CONTRIBUTIONS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
-    return fig, dash.no_update
+    return fig

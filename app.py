@@ -14,16 +14,15 @@
 import pstats
 import cProfile
 from db_manager.AugurInterface import AugurInterface
-from job_manager.job_manager import JobManager
-import dash
 from dash import html, dcc
+import dash
 import dash_bootstrap_components as dbc
 from dash_bootstrap_templates import load_figure_template
 import numpy as np
 import sys
 import os
-
 import logging
+from app_global import celery_manager, celery_app
 
 logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.DEBUG)
 
@@ -35,7 +34,6 @@ entries = None
 augur_db = None
 repo_dict = None
 org_dict = None
-jm = JobManager()
 
 
 def _load_config():
@@ -101,11 +99,14 @@ _project_list_query()
 # can import this file once we've loaded relevant global variables.
 import app_callbacks
 
-
 # CREATE APP OBJECT
 load_figure_template(["sandstone", "minty"])
 app = dash.Dash(
-    __name__, use_pages=True, external_stylesheets=[dbc.themes.SANDSTONE], suppress_callback_exceptions=True
+    __name__,
+    use_pages=True,
+    external_stylesheets=[dbc.themes.SANDSTONE],
+    suppress_callback_exceptions=True,
+    background_callback_manager=celery_manager,
 )
 
 # expose the server variable so that gunicorn can use it.
@@ -133,6 +134,7 @@ app.layout = dbc.Container(
     [
         # componets to store data from queries
         dcc.Store(id="repo-choices", storage_type="session", data=[]),
+        dcc.Store(id="dead-end", storage_type="session", data=[]),
         dcc.Location(id="url"),
         dbc.Row(
             [
@@ -207,6 +209,15 @@ app.layout = dbc.Container(
                             color="#119DFF",
                             type="dot",
                             fullscreen=True,
+                        ),
+                        dcc.Loading(
+                            dbc.Badge(
+                                children="Data Loaded",
+                                id="data_badge",
+                                color="success",
+                                className="me-1",
+                            ),
+                            type="cube",
                         ),
                         # where our page will be rendered
                         dash.page_container,
