@@ -62,7 +62,7 @@ gc_pr_staleness = dbc.Card(
                                             id="pr-staleness-interval",
                                             options=[
                                                 {
-                                                    "label": "Day",
+                                                    "label": "Trend",
                                                     "value": "D",
                                                 },  # days in milliseconds for ploty use
                                                 {"label": "Month", "value": "M"},
