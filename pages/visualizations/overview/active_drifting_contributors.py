@@ -214,6 +214,11 @@ def active_drifting_contributors(repolist, timer_pings, interval, drift_interval
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
+    if interval == "M":
+        df_status["Date"] = df_status["Date"].dt.strftime("%Y-%m")
+    elif interval == "Y":
+        df_status["Date"] = df_status["Date"].dt.year
+
     # making a line graph if the bin-size is small enough.
     if interval == "D":
         fig = go.Figure(
