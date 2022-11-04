@@ -60,11 +60,11 @@ gc_issues_over_time = dbc.Card(
                                             {
                                                 "label": "Day",
                                                 "value": "D",
-                                            },  # days in milliseconds for ploty use
+                                            },
                                             {
                                                 "label": "Week",
                                                 "value": "W",
-                                            },  # weeks in milliseconds for ploty use
+                                            },
                                             {"label": "Month", "value": "M"},
                                             {"label": "Year", "value": "Y"},
                                         ],
@@ -129,115 +129,123 @@ def issues_over_time_graph(repolist, timer_pings, interval):
     # create dataframe from record data
     df = pd.DataFrame(results)
 
-    # convert to datetime objects rather than strings
-    try:
-        df["created"] = pd.to_datetime(df["created"], utc=True)
-        df["closed"] = pd.to_datetime(df["closed"], utc=True)
-    except:
-        logging.debug("PULL REQUEST STALENESS - NO DATA AVAILABLE")
+    # test if there is data
+    if df.empty:
+        logging.debug("ISSUES OVER TIME - NO DATA AVAILABLE")
         return nodata_graph, False, dash.no_update
 
+    # convert to datetime objects rather than strings
+    df["created"] = pd.to_datetime(df["created"], utc=True)
+    df["closed"] = pd.to_datetime(df["closed"], utc=True)
+
     # order values chronologically by creation date
-    df = df.sort_values(by="created")
+    df = df.sort_values(by="created", axis=0, ascending=True)
+
+    # variable to slice on to handle weekly period edge case
+    period_slice = None
+    if interval == "W":
+        period_slice = 10
+
+    # data frames for issues created, merged, or closed. Detailed description applies for all 3.
+
+    # get the count of created issues in the desired interval in pandas period format, sort index to order entries
+    created_range = pd.to_datetime(df["created"]).dt.to_period(interval).value_counts().sort_index()
+
+    # converts to data frame object and creates date column from period values
+    df_created = created_range.to_frame().reset_index().rename(columns={"index": "Date"})
+
+    # converts date column to a datetime object, converts to string first to handle period information
+    # the period slice is to handle weekly corner case
+    df_created["Date"] = pd.to_datetime(df_created["Date"].astype(str).str[:period_slice])
+
+    # df for merged issues in time interval
+    closed_range = pd.to_datetime(df["closed"]).dt.to_period(interval).value_counts().sort_index()
+    df_closed = closed_range.to_frame().reset_index().rename(columns={"index": "Date"})
+    df_closed["Date"] = pd.to_datetime(df_closed["Date"].astype(str).str[:period_slice])
+
+    if interval == "M":
+        df_created["Date"] = df_created["Date"].dt.strftime("%Y-%m-01")
+        df_closed["Date"] = df_closed["Date"].dt.strftime("%Y-%m-01")
+    elif interval == "Y":
+        df_created["Date"] = df_created["Date"].dt.strftime("%Y-01-01")
+        df_closed["Date"] = df_closed["Date"].dt.strftime("%Y-01-01")
 
     # first and last elements of the dataframe are the
     # earliest and latest events respectively
-    earliest = df.iloc[0]["created"]
-    latest = df.iloc[-1]["created"]
+    earliest, latest = df.iloc[0]["created"], df.iloc[-1]["created"]
 
     # beginning to the end of time by the specified interval
-    dates = pd.date_range(start=earliest, end=latest, freq=interval, inclusive="both")
+    dates = pd.date_range(start=earliest, end=latest, freq="D", inclusive="both")
 
-    base = [["Date", "Created", "Closed", "Open"]]
-    for date in dates:
-        counts = try_new(df, date, interval)
-        base.append(counts)
+    # df for open issues for time interval
+    df_open = dates.to_frame(index=False, name="Date")
 
-    df_status = pd.DataFrame(base[1:], columns=base[0])
+    # aplies function to get the amount of open issues for each day
+    df_open["Open"] = df_open.apply(lambda row: get_open(df, row.Date), axis=1)
+
+    df_open["Date"] = df_open["Date"].dt.strftime("%Y-%m-%d")
 
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
     # graph generation
-    if df is not None:
-        fig = go.Figure()
-        fig.add_bar(
-            x=df_status["Date"],
-            y=df_status["Created"],
-            opacity=0.75,
-            hovertemplate=hover + "<br>Created: %{y}<br>" + "<extra></extra>",
-            offsetgroup=0,
-            name="Issues Created",
+    fig = go.Figure()
+    fig.add_bar(
+        x=df_created["Date"],
+        y=df_created["created"],
+        opacity=0.75,
+        hovertemplate=hover + "<br>Created: %{y}<br>" + "<extra></extra>",
+        offsetgroup=0,
+        name="Issues Created",
+    )
+    fig.add_bar(
+        x=df_closed["Date"],
+        y=df_closed["closed"],
+        opacity=0.6,
+        hovertemplate=hover + "<br>Closed: %{y}<br>" + "<extra></extra>",
+        offsetgroup=1,
+        name="Issues Closed",
+    )
+    fig.update_xaxes(
+        showgrid=True,
+        ticklabelmode="period",
+        dtick=period,
+        rangeslider_yaxis_rangemode="match",
+        range=x_r,
+    )
+    fig.update_layout(
+        xaxis_title=x_name,
+        yaxis_title="Number of Issues",
+        bargroupgap=0.1,
+        margin_b=40,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=df_open["Date"],
+            y=df_open["Open"],
+            mode="lines",
+            name="Issues Actively Open",
+            hovertemplate="Issues Open: %{y}" + "<extra></extra>",
         )
-        fig.add_bar(
-            x=df_status["Date"],
-            y=df_status["Closed"],
-            opacity=0.6,
-            hovertemplate=hover + "<br>Closed: %{y}<br>" + "<extra></extra>",
-            offsetgroup=1,
-            name="Issues Closed",
-        )
-        # fig.update_traces(xbins_size=interval)
-        fig.update_xaxes(
-            showgrid=True,
-            ticklabelmode="period",
-            dtick=period,
-            rangeslider_yaxis_rangemode="match",
-            range=x_r,
-        )
-        fig.update_layout(
-            xaxis_title=x_name,
-            yaxis_title="Number of Issues",
-            bargroupgap=0.1,
-            margin_b=40,
-        )
-        fig.add_trace(
-            go.Scatter(
-                x=df_status["Date"],
-                y=df_status["Open"],
-                mode="lines",
-                name="Issues Actively Open",
-                hovertemplate="Issues Open: %{y}" + "<extra></extra>",
-            )
-        )
-        logging.debug(f"ISSUES_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
+    )
+    logging.debug(f"ISSUES_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
 
-        # return fig, diable timer.
-        return fig, dash.no_update
-    else:
-        # don't change figure, disable timer.
-        return dash.no_update, dash.no_update
+    # return fig, diable timer.
+    return fig, dash.no_update
 
 
-def try_new(df, date, interval):
-
-    num_created = 0
-    num_closed = 0
+# for each day, this function calculates the amount of open issues
+def get_open(df, date):
 
     # drop rows that are more recent than the date limit
     df_lim = df[df["created"] <= date]
 
+    # drops rows that have been closed after date
     df_open = df_lim[df_lim["closed"] > date]
-    df_open = df_open.append(df_lim[df_lim.closed.isnull()])
+
+    # include issues that have not been close yet
+    df_open = pd.concat([df_open, df_lim[df_lim.closed.isnull()]])
+
+    # generates number of columns ie open issues
     num_open = df_open.shape[0]
-
-    str_date = date.isoformat()
-
-    if interval == "D":
-        num_created = df_lim[df_lim["created"].dt.date == date].shape[0]
-        num_closed = df_lim[df_lim["closed"].dt.date == date].shape[0]
-    elif interval == "W":
-        num_created = df_lim[(df_lim["created"].dt.week == date.week) & (df_lim["created"].dt.year == date.year)].shape[
-            0
-        ]
-        num_closed = df_lim[(df_lim["closed"].dt.week == date.week) & (df_lim["closed"].dt.year == date.year)].shape[0]
-    elif interval == "M":
-        num_created = df_lim[df_lim["created"].dt.strftime("%Y-%m") == str_date[:7]].shape[0]
-        num_closed = df_lim[df_lim["closed"].dt.strftime("%Y-%m") == str_date[:7]].shape[0]
-    elif interval == "Y":
-        num_created = df_lim[df_lim["created"].dt.year == date.year].shape[0]
-        num_closed = df_lim[df_lim["closed"].dt.year == date.year].shape[0]
-    else:
-        return "error"
-
-    return [date, num_created, num_closed, num_open]
+    return num_open

@@ -61,10 +61,7 @@ gc_pr_staleness = dbc.Card(
                                         dbc.RadioItems(
                                             id="pr-staleness-interval",
                                             options=[
-                                                {
-                                                    "label": "Trend",
-                                                    "value": "D",
-                                                },  # days in milliseconds for ploty use
+                                                {"label": "Trend", "value": "D"},
                                                 {"label": "Month", "value": "M"},
                                                 {"label": "Year", "value": "Y"},
                                             ],
@@ -180,38 +177,53 @@ def new_staling_prs(repolist, timer_pings, interval, staling_interval, stale_int
     if not ready:
         return graph_update, dash.no_update, interval_update
 
-    logging.debug("PULL REQUEST STALENESS - START")
+    logging.debug("PULL_REQUEST_STALENESS_VIZ - START")
     start = time.perf_counter()
 
     # create dataframe from record data
     df = pd.DataFrame(results)
 
-    # order values chronologically by creation date
-    df = df.sort_values(by="created")
-
-    try:
-        df["created"] = pd.to_datetime(df["created"], utc=True)
-        df["merged"] = pd.to_datetime(df["merged"], utc=True)
-        df["closed"] = pd.to_datetime(df["closed"], utc=True)
-    except:
-        logging.debug("PULL REQUEST STALENESS - NO DATA AVAILABLE")
+    # test if there is data
+    if df.empty:
+        logging.debug("PULL REQUEST STALENESS  - NO DATA AVAILABLE")
         return nodata_graph, False, dash.no_update
+
+    # convert to datetime objects rather than strings
+    df["created"] = pd.to_datetime(df["created"], utc=True)
+    df["merged"] = pd.to_datetime(df["merged"], utc=True)
+    df["closed"] = pd.to_datetime(df["closed"], utc=True)
+
+    # order values chronologically by creation date
+    df = df.sort_values(by="created", axis=0, ascending=True)
 
     # first and last elements of the dataframe are the
     # earliest and latest events respectively
-    earliest = df.iloc[0]["created"]
-    latest = df.iloc[-1]["created"]
+    earliest, latest = df.iloc[0]["created"], df.iloc[-1]["created"]
 
     # generating buckets beginning to the end of time by the specified interval
     dates = pd.date_range(start=earliest, end=latest, freq=interval, inclusive="both")
 
-    base = [["Date", "New", "Staling", "Stale"]]
-    for date in dates:
-        counts = get_new_staling_stale_up_to(df, date, staling_interval, stale_interval)
-        base.append(counts)
+    # df for new, staling, and stale prs for time interval
+    df_status = dates.to_frame(index=False, name="Date")
 
-    df_status = pd.DataFrame(base[1:], columns=base[0])
+    df_status["New"], df_status["Staling"], df_status["Stale"] = zip(
+        *df_status.apply(
+            lambda row: get_new_staling_stale_up_to(df, row.Date, staling_interval, stale_interval), axis=1
+        )
+    )
 
+    if interval == "M":
+        df_status["Date"] = df_status["Date"].dt.strftime("%Y-%m")
+    elif interval == "Y":
+        df_status["Date"] = df_status["Date"].dt.year
+
+        """base = [["Date", "New", "Staling", "Stale"]]
+        for date in dates:
+            counts = get_new_staling_stale_up_to(df, date, staling_interval, stale_interval)
+            base.append(counts)
+
+        df_status = pd.DataFrame(base[1:], columns=base[0])
+    """
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
@@ -257,20 +269,20 @@ def new_staling_prs(repolist, timer_pings, interval, staling_interval, stale_int
 
     fig.update_layout(xaxis_title="Time", yaxis_title="Pull Requests", legend_title="Type")
 
-    logging.debug(f"PULL REQUEST STALENESS - END - {time.perf_counter() - start}")
+    logging.debug(f"PULL_REQUEST_STALENESS_VIZ - END - {time.perf_counter() - start}")
     return fig, False, dash.no_update
 
 
 def get_new_staling_stale_up_to(df, date, staling_interval, stale_interval):
 
     # drop rows that are more recent than the date limit
-    df_lim_created = df[df["created"] <= date]
+    df_created = df[df["created"] <= date]
 
     # drop rows that have been closed before date
-    df_lim = df_lim_created[df_lim_created["closed"] > date]
+    df_in_range = df_created[df_created["closed"] > date]
 
     # include rows that have a null closed value
-    df_lim = df_lim.append(df_lim_created[df_lim_created.closed.isnull()])
+    df_in_range = pd.concat([df_in_range, df_created[df_created.closed.isnull()]])
 
     # time difference for the amount of days before the threshold date
     staling_days = date - relativedelta(days=+staling_interval)
@@ -279,14 +291,14 @@ def get_new_staling_stale_up_to(df, date, staling_interval, stale_interval):
     stale_days = date - relativedelta(days=+stale_interval)
 
     # PRs still open at the specified date
-    numTotal = df_lim.shape[0]
+    numTotal = df_in_range.shape[0]
 
     # num of currently open PRs that have been create in the last staling_value amount of days
-    numNew = df_lim[df_lim["created"] >= staling_days].shape[0]
+    numNew = df_in_range[df_in_range["created"] >= staling_days].shape[0]
 
-    staling = df_lim[df_lim["created"] > stale_days]
+    staling = df_in_range[df_in_range["created"] > stale_days]
     numStaling = staling[staling["created"] < staling_days].shape[0]
 
     numStale = numTotal - (numNew + numStaling)
 
-    return [date, numNew, numStaling, numStale]
+    return [numNew, numStaling, numStale]

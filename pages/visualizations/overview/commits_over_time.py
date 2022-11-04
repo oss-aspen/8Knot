@@ -58,16 +58,16 @@ gc_commits_over_time = dbc.Card(
                                         options=[
                                             {
                                                 "label": "Day",
-                                                "value": 86400000,
-                                            },  # days in milliseconds for ploty use
+                                                "value": "D",
+                                            },
                                             {
                                                 "label": "Week",
-                                                "value": 604800000,
-                                            },  # weeks in milliseconds for ploty use
-                                            {"label": "Month", "value": "M1"},
-                                            {"label": "Year", "value": "M12"},
+                                                "value": "W",
+                                            },
+                                            {"label": "Month", "value": "M"},
+                                            {"label": "Year", "value": "Y"},
                                         ],
-                                        value="M1",
+                                        value="M",
                                         inline=True,
                                     ),
                                     className="me-2",
@@ -126,31 +126,53 @@ def create_commits_over_time_graph(repolist, timer_pings, interval):
     logging.debug("COMMITS_OVER_TIME_VIZ - START")
     start = time.perf_counter()
 
-    df_commits = pd.DataFrame(results)
+    # create dataframe from record data
+    df = pd.DataFrame(results)
 
-    # reset index to be ready for plotly
-    df_commits = df_commits.reset_index()
+    # test if there is data
+    if df.empty:
+        logging.debug("COMMITS OVER TIME - NO DATA AVAILABLE")
+        return nodata_graph, False, dash.no_update
+
+    # convert to datetime objects with consistent column name
+    df["date"] = pd.to_datetime(df["date"], utc=True)
+    df.rename(columns={"date": "created"}, inplace=True)
+
+    # variable to slice on to handle weekly period edge case
+    period_slice = None
+    if interval == "W":
+        period_slice = 10
+
+    # get the count of commits in the desired interval in pandas period format, sort index to order entries
+    df_created = (
+        df.groupby(by=df.created.dt.to_period(interval))["commits"]
+        .nunique()
+        .reset_index()
+        .rename(columns={"created": "Date"})
+    )
+
+    # converts date column to a datetime object, converts to string first to handle period information
+    # the period slice is to handle weekly corner case
+    df_created["Date"] = pd.to_datetime(df_created["Date"].astype(str).str[:period_slice])
 
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
     # graph geration
-    if df_commits is not None:
-        fig = px.histogram(df_commits, x="date", range_x=x_r, labels={"x": x_name, "y": "Commits"})
-        fig.update_traces(xbins_size=interval, hovertemplate=hover + "<br>Commits: %{y}<br>")
-        fig.update_xaxes(
-            showgrid=True,
-            ticklabelmode="period",
-            dtick=interval,
-            rangeslider_yaxis_rangemode="match",
-        )
-        fig.update_layout(
-            xaxis_title=x_name,
-            yaxis_title="Number of Commits",
-            margin_b=40,
-            margin_r=20,
-        )
-        logging.debug(f"COMMITS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
-        return fig, dash.no_update
-    else:
-        return nodata_graph, True
+    fig = px.bar(df_created, x="Date", y="commits", range_x=x_r, labels={"x": x_name, "y": "Commits"})
+    fig.update_traces(hovertemplate=hover + "<br>Commits: %{y}<br>")
+    fig.update_xaxes(
+        showgrid=True,
+        ticklabelmode="period",
+        dtick=period,
+        rangeslider_yaxis_rangemode="match",
+        range=x_r,
+    )
+    fig.update_layout(
+        xaxis_title=x_name,
+        yaxis_title="Number of Commits",
+        margin_b=40,
+        margin_r=20,
+    )
+    logging.debug(f"COMMITS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
+    return fig, dash.no_update

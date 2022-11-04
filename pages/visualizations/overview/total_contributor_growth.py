@@ -61,10 +61,10 @@ gc_total_contributor_growth = dbc.Card(
                                                 "label": "Trend",
                                                 "value": -1,
                                             },
-                                            {"label": "Month", "value": "M1"},
-                                            {"label": "Year", "value": "M12"},
+                                            {"label": "Month", "value": "M"},
+                                            {"label": "Year", "value": "Y"},
                                         ],
-                                        value="M1",
+                                        value="M",
                                         inline=True,
                                     ),
                                     className="me-2",
@@ -111,7 +111,7 @@ def graph_title(view):
     title = ""
     if view == -1:
         title = "Total Contributors Over Time"
-    elif view == "M1":
+    elif view == "M":
         title = "New Contributors by Month"
     else:
         title = "New Contributors by Year"
@@ -137,73 +137,75 @@ def create_total_contributor_growth_graph(repolist, timer_pings, bin_size):
     start = time.perf_counter()
 
     # create dataframe from record data
-    df_contrib = pd.DataFrame(results)
+    df = pd.DataFrame(results)
+
+    # test if there is data
+    if df.empty:
+        logging.debug("TOTAL_CONTRIBUTOR_GROWTH_VIZ - NO DATA AVAILABLE")
+        return nodata_graph, False, dash.no_update
+
+    # convert to datetime objects with consistent column name
+    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
+    df.rename(columns={"created_at": "created"}, inplace=True)
 
     # order from beginning of time to most recent
-    df_contrib = df_contrib.sort_values("created_at", axis=0, ascending=True)
+    df = df.sort_values("created", axis=0, ascending=True)
 
     """
         Assume that the cntrb_id values are unique to individual contributors.
-        Find the first rank-1 contribution of the contributors, saving the created_at
+        Find the first rank-1 contribution of the contributors, saving the created
         date.
     """
 
     # keep only first contributions
-    df_contrib = df_contrib[df_contrib["rank"] == 1]
-
-    # convert to datetime objects rather than strings, add day column
-    df_contrib["created_at"] = pd.to_datetime(df_contrib["created_at"], utc=True)
+    df = df[df["rank"] == 1]
 
     # get all of the unique entries by contributor ID
-    df_contrib = df_contrib.drop_duplicates(subset=["cntrb_id"])
+    df = df.drop_duplicates(subset=["cntrb_id"])
 
     if bin_size == -1:
-        fig = contributor_growth_line_bar(df_contrib)
+        fig = contributor_growth_line_bar(df)
     else:
-        fig = contributor_growth_bar_graph(df_contrib, bin_size)
+        fig = contributor_growth_bar_graph(df, bin_size)
 
     logging.debug(f"TOTAL_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}")
     # return the simple line graph
     return fig, dash.no_update
 
 
-def contributor_growth_bar_graph(df_contrib, bin_size):
+def contributor_growth_bar_graph(df, interval):
 
     """
     Group-by determined by the radio button options.
     Aggregation is the number of rows per time bin.
     Months and Years are  options.
     """
-    if bin_size == "M1":
-        group = df_contrib.groupby(pd.Grouper(key="created_at", axis=0, freq="1M")).size()
-    else:
-        group = df_contrib.groupby(pd.Grouper(key="created_at", axis=0, freq="1Y")).size()
 
-    # time values for graph
-    x_r, x_name, hover, period = get_graph_time_values(bin_size)
+    # get the count of new contributors in the desired interval in pandas period format, sort index to order entries
+    created_range = pd.to_datetime(df["created"]).dt.to_period(interval).value_counts().sort_index()
 
-    # reset index from group-by aggregation step
-    group = group.reset_index()
-    # rename the columns for clarity
-    group = group.rename(columns={"created_at": "date", 0: "count"})
+    # converts to data frame object and creates date column from period values
+    df_contribs = created_range.to_frame().reset_index().rename(columns={"index": "Date", "created": "contribs"})
+
+    # converts date column to a datetime object, converts to string first to handle period information
+    df_contribs["Date"] = pd.to_datetime(df_contribs["Date"].astype(str))
 
     # correction for year binning -
     # rounded up to next year so this is a simple patch
-    if bin_size == "M12":
-        group["date"] = group["date"].dt.year
+    if interval == "Y":
+        df_contribs["Date"] = df_contribs["Date"].dt.year
 
-    if bin_size == "M1":
-        group["date"] = group["date"].dt.strftime("%Y-%m")
+    if interval == "M":
+        df_contribs["Date"] = df_contribs["Date"].dt.strftime("%Y-%m")
+
+    # time values for graph
+    x_r, x_name, hover, period = get_graph_time_values(interval)
 
     # create the graph
-    fig = px.bar(group, x="date", y="count", range_x=x_r, labels={"x": x_name, "y": "Contributors"})
+    fig = px.bar(df_contribs, x="Date", y="contribs", range_x=x_r, labels={"x": x_name, "y": "Contributors"})
 
     # edit hover values
     fig.update_traces(hovertemplate=hover + "<br>Contributors: %{y}<br>")
-
-    # make the bars thicker for further-spaced values
-    # so that we can see the per-day increases clearly.
-    # fig.update_traces(marker_color="blue", marker_line_color="blue", selector=dict(type="bar"))
 
     # add the date-range selector
     fig.update_layout(
@@ -233,17 +235,17 @@ def contributor_growth_bar_graph(df_contrib, bin_size):
     return fig
 
 
-def contributor_growth_line_bar(df_contrib):
+def contributor_growth_line_bar(df):
 
     # reset index to enumerate contributions
-    df_contrib = df_contrib.reset_index()
-    df_contrib = df_contrib.drop(["index"], axis=1)
-    df_contrib = df_contrib.reset_index()
+    df = df.reset_index()
+    df = df.drop(["index"], axis=1)
+    df = df.reset_index()
 
     # create the figure
     fig = px.line(
-        df_contrib,
-        x="created_at",
+        df,
+        x="created",
         y="index",
     )
 

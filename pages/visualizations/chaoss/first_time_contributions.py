@@ -75,28 +75,35 @@ def create_first_time_contributors_graph(repolist, timer_pings):
     logging.debug("1ST_CONTRIBUTIONS_VIZ - START")
     start = time.perf_counter()
 
-    df_cont = pd.DataFrame(results)
+    # create dataframe from record data
+    df = pd.DataFrame(results)
+
+    # test if there is data
+    if df.empty:
+        logging.debug("1ST CONTRIBUTIONS - NO DATA AVAILABLE")
+        return nodata_graph, False, dash.no_update
+
+    # convert to datetime objects with consistent column name
+    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
+    df.rename(columns={"created_at": "created"}, inplace=True)
 
     # selection for 1st contribution only
-    df_cont = df_cont[df_cont["rank"] == 1]
+    df = df[df["rank"] == 1]
 
     # reset index to be ready for plotly
-    df_cont = df_cont.reset_index()
+    df = df.reset_index()
 
     # Graph generation
-    if df_cont is not None:
-        fig = px.histogram(df_cont, x="created_at", color="Action", template="minty")
-        fig.update_traces(
-            xbins_size="M3",
-            hovertemplate="Date: %{x}" + "<br>Amount: %{y}<br><extra></extra>",
-        )
-        fig.update_xaxes(showgrid=True, ticklabelmode="period", dtick="M3")
-        fig.update_layout(
-            xaxis_title="Quarter",
-            yaxis_title="Contributions",
-            margin_b=40,
-        )
-        logging.debug(f"1ST_CONTRIBUTIONS_VIZ - END - {time.perf_counter() - start}")
-        return fig, dash.no_update
-    else:
-        return nodata_graph, dash.no_update
+    fig = px.histogram(df, x="created", color="Action", template="minty")
+    fig.update_traces(
+        xbins_size="M3",
+        hovertemplate="Date: %{x}" + "<br>Amount: %{y}<br><extra></extra>",
+    )
+    fig.update_xaxes(showgrid=True, ticklabelmode="period", dtick="M3")
+    fig.update_layout(
+        xaxis_title="Quarter",
+        yaxis_title="Contributions",
+        margin_b=40,
+    )
+    logging.debug(f"1ST_CONTRIBUTIONS_VIZ - END - {time.perf_counter() - start}")
+    return fig, dash.no_update

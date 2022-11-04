@@ -60,7 +60,11 @@ gc_pr_over_time = dbc.Card(
                                             {
                                                 "label": "Day",
                                                 "value": "D",
-                                            },  # days in milliseconds for ploty use
+                                            },
+                                            {
+                                                "label": "Week",
+                                                "value": "W",
+                                            },
                                             {"label": "Month", "value": "M"},
                                             {"label": "Year", "value": "Y"},
                                         ],
@@ -125,19 +129,55 @@ def prs_over_time_graph(repolist, timer_pings, interval):
     # create dataframe from record data
     df = pd.DataFrame(results)
 
+    # test if there is data
+    if df.empty:
+        logging.debug("PULL REQUESTS OVER TIME - NO DATA AVAILABLE")
+        return nodata_graph, False, dash.no_update
+
+    # convert dates to datetime objects rather than strings
+    df["created"] = pd.to_datetime(df["created"], utc=True)
+    df["merged"] = pd.to_datetime(df["merged"], utc=True)
+    df["closed"] = pd.to_datetime(df["closed"], utc=True)
+
     # order values chronologically by creation date
     df = df.sort_values(by="created", axis=0, ascending=True)
 
-    try:
-        df["created"] = pd.to_datetime(df["created"], utc=True)
-        df["merged"] = pd.to_datetime(df["merged"], utc=True)
-        df["closed"] = pd.to_datetime(df["closed"], utc=True)
-    except:
-        logging.debug("PULL REQUEST STALENESS - NO DATA AVAILABLE")
-        return nodata_graph, False, dash.no_update
+    # variable to slice on to handle weekly period edge case
+    period_slice = None
+    if interval == "W":
+        period_slice = 10
 
-    df_closed = df[df.merged.isnull()]
-    df_merged = df
+    # data frames for PR created, merged, or closed. Detailed description applies for all 3.
+
+    # get the count of created prs in the desired interval in pandas period format, sort index to order entries
+    created_range = df["created"].dt.to_period(interval).value_counts().sort_index()
+
+    # converts to data frame object and created date column from period values
+    df_created = created_range.to_frame().reset_index().rename(columns={"index": "Date"})
+
+    # converts date column to a datetime object, converts to string first to handle period information
+    # the period slice is to handle weekly corner case
+    df_created["Date"] = pd.to_datetime(df_created["Date"].astype(str).str[:period_slice])
+
+    # df for merged prs in time interval
+    merged_range = pd.to_datetime(df["merged"]).dt.to_period(interval).value_counts().sort_index()
+    df_merged = merged_range.to_frame().reset_index().rename(columns={"index": "Date"})
+    df_merged["Date"] = pd.to_datetime(df_merged["Date"].astype(str).str[:period_slice])
+
+    # df for closed prs in time interval
+    closed_range = pd.to_datetime(df["closed"]).dt.to_period(interval).value_counts().sort_index()
+    df_closed = closed_range.to_frame().reset_index().rename(columns={"index": "Date"})
+    df_closed["Date"] = pd.to_datetime(df_closed["Date"].astype(str).str[:period_slice])
+
+    # A single df created for plotting merged and closed as stacked bar chart
+    df_closed_merged = pd.merge(df_merged, df_closed, on="Date", how="outer")
+
+    if interval == "M":
+        df_created["Date"] = df_created["Date"].dt.strftime("%Y-%m-01")
+        df_closed_merged["Date"] = df_closed_merged["Date"].dt.strftime("%Y-%m-01")
+    elif interval == "Y":
+        df_created["Date"] = df_created["Date"].dt.strftime("%Y-01-01")
+        df_closed_merged["Date"] = df_closed_merged["Date"].dt.strftime("%Y-01-01")
 
     # first and last elements of the dataframe are the
     # earliest and latest events respectively
@@ -145,110 +185,86 @@ def prs_over_time_graph(repolist, timer_pings, interval):
     latest = df.iloc[-1]["created"]
 
     # beginning to the end of time by the specified interval
-    dates = pd.date_range(start=earliest, end=latest, freq=interval, inclusive="both")
+    dates = pd.date_range(start=earliest, end=latest, freq="D", inclusive="both")
 
-    base = [["Date", "Created", "Closed", "Merged", "Open"]]
-    for date in dates:
-        counts = get_merged_closed(df, date, interval)
-        base.append(counts)
+    # df for open prs from time interval
+    df_open = dates.to_frame(index=False, name="Date")
 
-    df_status = pd.DataFrame(base[1:], columns=base[0])
+    # aplies function to get the amount of open prs for each day
+    df_open["Open"] = df_open.apply(lambda row: get_open(df, row.Date), axis=1)
+
+    df_open["Date"] = df_open["Date"].dt.strftime("%Y-%m-%d")
 
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
-    if interval == "M":
-        df_status["Date"] = df_status["Date"].dt.strftime("%Y-%m")
-    elif interval == "Y":
-        df_status["Date"] = df_status["Date"].dt.year
-
     # graph generation
-    if df_status is not None:
-        fig = go.Figure()
-        fig.add_bar(
-            x=df_status["Date"],
-            y=df_status["Created"],
-            opacity=0.75,
-            hovertemplate=hover + "<br>Created: %{y}<br>" + "<extra></extra>",
-            offsetgroup=0,
-            name="PRs Created",
+    fig = go.Figure()
+    fig.add_bar(
+        x=df_created["Date"],
+        y=df_created["created"],
+        opacity=0.75,
+        hovertemplate=hover + "<br>Created: %{y}<br>" + "<extra></extra>",
+        offsetgroup=0,
+        name="PRs Created",
+    )
+    fig.add_bar(
+        x=df_closed_merged["Date"],
+        y=df_closed_merged["merged"],
+        opacity=0.6,
+        hovertemplate=hover + "<br>Merged: %{y}<br>" + "<extra></extra>",
+        offsetgroup=1,
+        name="PRs Merged",
+    )
+    fig.add_bar(
+        x=df_closed_merged["Date"],
+        y=df_closed_merged["closed"],
+        opacity=0.6,
+        hovertemplate=[f"{hover}<br>Closed: {val}<br><extra></extra>" for val in df_closed_merged["closed"]],
+        offsetgroup=1,
+        base=df_closed_merged["merged"],
+        name="PRs Closed",
+    )
+    fig.update_xaxes(
+        showgrid=True,
+        ticklabelmode="period",
+        dtick=period,
+        rangeslider_yaxis_rangemode="match",
+        range=x_r,
+    )
+    fig.update_layout(
+        xaxis_title=x_name,
+        yaxis_title="Number of PRs",
+        bargroupgap=0.1,
+        margin_b=40,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=df_open["Date"],
+            y=df_open["Open"],
+            mode="lines",
+            name="PRs Actively Open",
+            hovertemplate=hover + "<br>PRs Open: %{y}" + "<extra></extra>",
         )
-        fig.add_bar(
-            x=df_status["Date"],
-            y=df_status["Merged"],
-            opacity=0.6,
-            hovertemplate=hover + "<br>Merged: %{y}<br>" + "<extra></extra>",
-            offsetgroup=1,
-            name="PRs Merged",
-        )
-        fig.add_bar(
-            x=df_status["Date"],
-            y=df_status["Closed"],
-            opacity=0.6,
-            hovertemplate=[f"{hover}<br>Closed: {val}<br><extra></extra>" for val in df_status["Closed"]],
-            offsetgroup=1,
-            base=df_status["Merged"],
-            name="PRs Closed",
-        )
-        fig.update_xaxes(
-            showgrid=True,
-            ticklabelmode="period",
-            dtick=period,
-            rangeslider_yaxis_rangemode="match",
-            range=x_r,
-        )
-        fig.update_layout(
-            xaxis_title=x_name,
-            yaxis_title="Number of PRs",
-            bargroupgap=0.1,
-            margin_b=40,
-        )
-        fig.add_trace(
-            go.Scatter(
-                x=df_status["Date"],
-                y=df_status["Open"],
-                mode="lines",
-                name="PRs Actively Open",
-                hovertemplate="PRs Open: %{y}" + "<extra></extra>",
-            )
-        )
-        logging.debug(f"PRS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
+    )
+    logging.debug(f"PRS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
 
-        # return fig, diable timer.
-        return fig, dash.no_update
-    else:
-        # don't change figure, disable timer.
-        return dash.no_update, dash.no_update
+    # return fig, diable timer.
+    return fig, dash.no_update
 
 
-def get_merged_closed(df, date, interval):
-
-    num_created = 0
-    num_closed = 0
-    num_merged = 0
+# for each day, this function calculates the amount of open prs
+def get_open(df, date):
 
     # drop rows that are more recent than the date limit
-    df_lim = df[df["created"] <= date]
+    df_created = df[df["created"] <= date]
 
-    df_merged = df_lim[df_lim.merged.notnull()]
-    df_closed = df_lim[df_lim.closed.notnull()]
+    # drops rows that have been closed after date
+    df_open = df_created[df_created["closed"] > date]
 
-    df_open = df_lim[df_lim["closed"] > date]
-    df_open = df_open.append(df_lim[df_lim.closed.isnull()])
+    # include prs that have not been close yet
+    df_open = pd.concat([df_open, df_created[df_created.closed.isnull()]])
+
+    # generates number of columns ie open prs
     num_open = df_open.shape[0]
-
-    if interval == "M":
-        str_interval = date.strftime("%Y-%m")
-        num_created = df_lim[df_lim["created"].dt.strftime("%Y-%m") == str_interval].shape[0]
-        num_closed = df_lim[df_lim["closed"].dt.strftime("%Y-%m") == str_interval].shape[0]
-        num_merged = df_lim[df_lim["merged"].dt.strftime("%Y-%m") == str_interval].shape[0]
-    elif interval == "Y":
-        num_created = df_lim[df_lim["created"].dt.year == date.year].shape[0]
-        num_closed = df_closed[df_closed["closed"].dt.year == date.year].shape[0]
-        num_merged = df_merged[df_merged["merged"].dt.year == date.year].shape[0]
-    else:
-        return "day"
-
-    num_closed = num_closed - num_merged
-
-    return [date, num_created, num_closed, num_merged, num_open]
+    return num_open

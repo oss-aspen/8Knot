@@ -8,6 +8,7 @@ import pandas as pd
 import datetime as dt
 import logging
 import plotly.express as px
+from pages.utils.graph_utils import get_graph_time_values
 
 from app import jm
 from pages.utils.job_utils import handle_job_state, nodata_graph
@@ -149,10 +150,21 @@ def create_drive_by_graph(repolist, timer_pings, contribs, view):
     logging.debug("CONTRIB_DRIVE_REPEAT_VIZ - START")
     start = time.perf_counter()
 
+    # create dataframe from record data
+    df = pd.DataFrame(results)
+
+    # test if there is data
+    if df.empty:
+        logging.debug("CONTRIB DRIVE REPEAT - NO DATA AVAILABLE")
+        return nodata_graph, False, dash.no_update
+
+    # convert to datetime objects with consistent column name
+    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
+    df.rename(columns={"created_at": "created"}, inplace=True)
+
     # graph on contribution subset
-    df_cont = pd.DataFrame(results)
-    contributors = df_cont["cntrb_id"][df_cont["rank"] == contribs].to_list()
-    df_cont_subset = pd.DataFrame(results)
+    contributors = df["cntrb_id"][df["rank"] == contribs].to_list()
+    df_cont_subset = pd.DataFrame(df)
 
     # filtering data by view
     if view == "drive":
@@ -165,7 +177,7 @@ def create_drive_by_graph(repolist, timer_pings, contribs, view):
 
     # graph geration
     if df_cont_subset is not None:
-        fig = px.histogram(df_cont_subset, x="created_at", color="Action", template="minty")
+        fig = px.histogram(df_cont_subset, x="created", color="Action", template="minty")
         fig.update_traces(
             xbins_size="M3",
             hovertemplate="Date: %{x}" + "<br>Amount: %{y}<br><extra></extra>",
