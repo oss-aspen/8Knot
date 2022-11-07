@@ -225,7 +225,7 @@ def issues_over_time_graph(repolist, timer_pings, interval):
             y=df_open["Open"],
             mode="lines",
             name="Issues Actively Open",
-            hovertemplate="Issues Open: %{y}" + "<extra></extra>",
+            hovertemplate="Issues Open: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
         )
     )
     logging.debug(f"ISSUES_OVER_TIME_VIZ - END - {time.perf_counter() - start}")

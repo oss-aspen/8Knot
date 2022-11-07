@@ -244,7 +244,7 @@ def prs_over_time_graph(repolist, timer_pings, interval):
             y=df_open["Open"],
             mode="lines",
             name="PRs Actively Open",
-            hovertemplate=hover + "<br>PRs Open: %{y}" + "<extra></extra>",
+            hovertemplate="PRs Open: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
         )
     )
     logging.debug(f"PRS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")

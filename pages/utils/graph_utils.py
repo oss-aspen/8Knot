@@ -23,14 +23,14 @@ def get_graph_time_values(interval):
     x_r = None
     x_name = "Year"
     hover = "Year: %{x|%Y}"
-    period = "M12"
+    period = "M12"  # dtick values must be in millisecond or M format
 
     # graph input values based on date interval selection
     if interval == 86400000 or interval == "D":  # if statement for days
         x_r = [str(today - dt.timedelta(weeks=4)), str(today)]
         x_name = "Day"
         hover = "Day: %{x|%b %d, %Y}"
-        period = 86400000
+        period = 86400000 * 2
     elif interval == 604800000 or interval == "W":  # if statmement for weeks
         x_r = [str(today - dt.timedelta(weeks=30)), str(today)]
         x_name = "Week"

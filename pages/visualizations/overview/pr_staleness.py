@@ -237,7 +237,7 @@ def new_staling_prs(repolist, timer_pings, interval, staling_interval, stale_int
                     y=df_status["New"],
                     mode="lines",
                     showlegend=True,
-                    hovertemplate="Contributors New: %{y}" + "<extra></extra>",
+                    hovertemplate="PRs New: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
                 ),
                 go.Scatter(
                     name="Staling",
@@ -245,7 +245,7 @@ def new_staling_prs(repolist, timer_pings, interval, staling_interval, stale_int
                     y=df_status["Staling"],
                     mode="lines",
                     showlegend=True,
-                    hovertemplate="Contributors Staling: %{y}" + "<extra></extra>",
+                    hovertemplate="PRs Staling: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
                 ),
                 go.Scatter(
                     name="Stale",
@@ -253,7 +253,7 @@ def new_staling_prs(repolist, timer_pings, interval, staling_interval, stale_int
                     y=df_status["Stale"],
                     mode="lines",
                     showlegend=True,
-                    hovertemplate="Contributors Stale: %{y}" + "<extra></extra>",
+                    hovertemplate="PRs Stale: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
                 ),
             ]
         )

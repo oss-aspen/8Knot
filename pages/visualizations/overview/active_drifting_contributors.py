@@ -233,7 +233,7 @@ def active_drifting_contributors(repolist, timer_pings, interval, drift_interval
                     y=df_status["Active"],
                     mode="lines",
                     showlegend=True,
-                    hovertemplate="Contributors Active: %{y}" + "<extra></extra>",
+                    hovertemplate="Contributors Active: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
                 ),
                 go.Scatter(
                     name="Drifting",
@@ -241,7 +241,7 @@ def active_drifting_contributors(repolist, timer_pings, interval, drift_interval
                     y=df_status["Drifting"],
                     mode="lines",
                     showlegend=True,
-                    hovertemplate="Contributors Drifting: %{y}" + "<extra></extra>",
+                    hovertemplate="Contributors Drifting: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
                 ),
                 go.Scatter(
                     name="Away",
@@ -249,7 +249,7 @@ def active_drifting_contributors(repolist, timer_pings, interval, drift_interval
                     y=df_status["Away"],
                     mode="lines",
                     showlegend=True,
-                    hovertemplate="Contributors Away: %{y}" + "<extra></extra>",
+                    hovertemplate="Contributors Away: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
                 ),
             ]
         )

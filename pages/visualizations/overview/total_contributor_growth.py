@@ -250,7 +250,7 @@ def contributor_growth_line_bar(df):
     )
 
     # edit hover values
-    fig.update_traces(hovertemplate="%{x}" + "<br>Contributors: %{y}<br>")
+    fig.update_traces(hovertemplate="Contributors: %{y}<br>%{x|%b %d, %Y} <extra></extra>")
 
     """
         Ref. for this awesome button thing:

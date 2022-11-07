@@ -229,7 +229,7 @@ def new_staling_issues(repolist, timer_pings, interval, staling_interval, stale_
                     y=df_status["New"],
                     mode="lines",
                     showlegend=True,
-                    hovertemplate="Issues New: %{y}" + "<extra></extra>",
+                    hovertemplate="Issues New: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
                 ),
                 go.Scatter(
                     name="Staling",
@@ -237,7 +237,7 @@ def new_staling_issues(repolist, timer_pings, interval, staling_interval, stale_
                     y=df_status["Staling"],
                     mode="lines",
                     showlegend=True,
-                    hovertemplate="Issues Staling: %{y}" + "<extra></extra>",
+                    hovertemplate="Issues Staling: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
                 ),
                 go.Scatter(
                     name="Stale",
@@ -245,7 +245,7 @@ def new_staling_issues(repolist, timer_pings, interval, staling_interval, stale_
                     y=df_status["Stale"],
                     mode="lines",
                     showlegend=True,
-                    hovertemplate="Issues Stale: %{y}" + "<extra></extra>",
+                    hovertemplate="Issues Stale: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
                 ),
             ]
         )
