@@ -13,11 +13,14 @@ RUN pip --no-cache-dir install pipenv
 WORKDIR /explorer
 
 # environment first
-COPY ./Pipfile.lock /explorer/
-COPY ./Pipfile /explorer/
+# COPY ./Pipfile.lock /explorer/
+# COPY ./Pipfile /explorer/
 
 # install required modules at system level
-RUN pipenv install --system --deploy
+# RUN pipenv install --system --deploy
+
+COPY ./requirements.txt /explorer/
+RUN pip3 install -r requirements.txt
 
 # copy the contents of current file into the
 # working directory.
@@ -25,3 +28,4 @@ COPY ./ /explorer/
 
 # run worker
 CMD [ "rq", "worker", "-c", "worker_settings" ]
+# CMD ["celery", "-A", "app:celery_app", "worker", "--loglevel=DEBUG", "--concurrency=6"]
