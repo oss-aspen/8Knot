@@ -12,7 +12,7 @@ import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values
 
 from app import jm
-from pages.utils.job_utils import handle_job_state
+from pages.utils.job_utils import handle_job_state, nodata_graph
 from queries.contributors_query import contributors_query as ctq
 
 import time
@@ -64,10 +64,7 @@ gc_active_drifting_contributors = dbc.Card(
                                         dbc.RadioItems(
                                             id="active-drifting-interval",
                                             options=[
-                                                {
-                                                    "label": "Trend",
-                                                    "value": "D",
-                                                },  # days in milliseconds for ploty use
+                                                {"label": "Trend", "value": "D"},
                                                 {"label": "Month", "value": "M"},
                                                 {"label": "Year", "value": "Y"},
                                             ],
@@ -190,29 +187,41 @@ def active_drifting_contributors(repolist, timer_pings, interval, drift_interval
     # create dataframe from record data
     df = pd.DataFrame(results)
 
-    # order from beginning of time to most recent
-    df = df.sort_values("created_at", axis=0, ascending=True)
+    # test if there is data
+    if df.empty:
+        logging.debug("PULL REQUEST STALENESS - NO DATA AVAILABLE")
+        return nodata_graph, False, dash.no_update
 
-    # convert to datetime objects
+    # convert to datetime objects with consistent column name
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
+    df.rename(columns={"created_at": "created"}, inplace=True)
+
+    # order from beginning of time to most recent
+    df = df.sort_values("created", axis=0, ascending=True)
 
     # first and last elements of the dataframe are the
     # earliest and latest events respectively
-    earliest = df.iloc[0]["created_at"]
-    latest = df.iloc[-1]["created_at"]
+    earliest, latest = df["created"].min(), df["created"].max()
 
     # beginning to the end of time by the specified interval
     dates = pd.date_range(start=earliest, end=latest, freq=interval, inclusive="both")
 
-    base = [["Date", "Active", "Drifting", "Away"]]
-    for date in dates:
-        counts = get_active_drifting_away_up_to(df, date, drift_interval, away_interval)
-        base.append(counts)
+    # df for active, driving, and away contributors for time interval
+    df_status = dates.to_frame(index=False, name="Date")
 
-    df_status = pd.DataFrame(base[1:], columns=base[0])
+    df_status["Active"], df_status["Drifting"], df_status["Away"] = zip(
+        *df_status.apply(
+            lambda row: get_active_drifting_away_up_to(df, row.Date, drift_interval, away_interval), axis=1
+        )
+    )
 
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
+
+    if interval == "M":
+        df_status["Date"] = df_status["Date"].dt.strftime("%Y-%m")
+    elif interval == "Y":
+        df_status["Date"] = df_status["Date"].dt.year
 
     # making a line graph if the bin-size is small enough.
     if interval == "D":
@@ -224,7 +233,7 @@ def active_drifting_contributors(repolist, timer_pings, interval, drift_interval
                     y=df_status["Active"],
                     mode="lines",
                     showlegend=True,
-                    hovertemplate="Contributors Active: %{y}" + "<extra></extra>",
+                    hovertemplate="Contributors Active: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
                 ),
                 go.Scatter(
                     name="Drifting",
@@ -232,7 +241,7 @@ def active_drifting_contributors(repolist, timer_pings, interval, drift_interval
                     y=df_status["Drifting"],
                     mode="lines",
                     showlegend=True,
-                    hovertemplate="Contributors Drifting: %{y}" + "<extra></extra>",
+                    hovertemplate="Contributors Drifting: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
                 ),
                 go.Scatter(
                     name="Away",
@@ -240,7 +249,7 @@ def active_drifting_contributors(repolist, timer_pings, interval, drift_interval
                     y=df_status["Away"],
                     mode="lines",
                     showlegend=True,
-                    hovertemplate="Contributors Away: %{y}" + "<extra></extra>",
+                    hovertemplate="Contributors Away: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
                 ),
             ]
         )
@@ -259,7 +268,7 @@ def active_drifting_contributors(repolist, timer_pings, interval, drift_interval
 def get_active_drifting_away_up_to(df, date, drift_interval, away_interval):
 
     # drop rows that are more recent than the date limit
-    df_lim = df[df["created_at"] <= date]
+    df_lim = df[df["created"] <= date]
 
     # keep more recent contribution per ID
     df_lim = df_lim.drop_duplicates(subset="cntrb_id", keep="last")
@@ -274,15 +283,15 @@ def get_active_drifting_away_up_to(df, date, drift_interval, away_interval):
     numTotal = df_lim.shape[0]
 
     # number of 'active' contributors, people with contributions before the drift time
-    numActive = df_lim[df_lim["created_at"] >= drift_mos].shape[0]
+    numActive = df_lim[df_lim["created"] >= drift_mos].shape[0]
 
     # set of contributions that are before the away time
-    drifting = df_lim[df_lim["created_at"] > away_mos]
+    drifting = df_lim[df_lim["created"] > away_mos]
 
     # number of the set of contributions that are after the drift time, but before away
-    numDrifting = drifting[drifting["created_at"] < drift_mos].shape[0]
+    numDrifting = drifting[drifting["created"] < drift_mos].shape[0]
 
     # difference of the total to get the away value
     numAway = numTotal - (numActive + numDrifting)
 
-    return [date, numActive, numDrifting, numAway]
+    return [numActive, numDrifting, numAway]

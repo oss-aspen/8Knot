@@ -53,15 +53,14 @@ gc_contributors_over_time = dbc.Card(
                                     dbc.RadioItems(
                                         id="contrib-time-interval",
                                         options=[
-                                            {"label": "Day", "value": 86400000},  # days in milliseconds for ploty use
                                             {
                                                 "label": "Week",
-                                                "value": 604800000,
-                                            },  # weeks in milliseconds for ploty use
-                                            {"label": "Month", "value": "M1"},
-                                            {"label": "Year", "value": "M12"},
+                                                "value": "W",
+                                            },
+                                            {"label": "Month", "value": "M"},
+                                            {"label": "Year", "value": "Y"},
                                         ],
-                                        value="M1",
+                                        value="M",
                                         inline=True,
                                     ),
                                     className="me-2",
@@ -139,64 +138,89 @@ def create_graph(repolist, timer_pings, contribs, interval):
     logging.debug("CONTRIBUTIONS_OVER_TIME_VIZ - START")
     start = time.perf_counter()
 
-    df_cont = pd.DataFrame(results)
-    df_cont["created_at"] = pd.to_datetime(df_cont["created_at"], utc=True, format="%Y-%m-%d")
+    # create dataframe from record data
+    df = pd.DataFrame(results)
+
+    # test if there is data
+    if df.empty:
+        logging.debug("PULL REQUESTS OVER TIME - NO DATA AVAILABLE")
+        return nodata_graph, False, dash.no_update
+
+    # convert to datetime objects with consistent column name
+    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
+    df.rename(columns={"created_at": "created"}, inplace=True)
+
+    # remove null contrib ids
+    df.dropna(inplace=True)
 
     # create column for identifying Drive by and Repeat Contributors
-    contributors = df_cont["cntrb_id"][df_cont["rank"] == contribs].to_list()
-    df_cont["type"] = np.where(df_cont["cntrb_id"].isin(contributors), "Repeat", "Drive-By")
+    contributors = df["cntrb_id"][df["rank"] == contribs].to_list()
 
-    # reset index to be ready for plotly
-    df_cont = df_cont.reset_index()
+    # dfs for drive by and repeat contributors
+    df_drive_temp = df.loc[~df["cntrb_id"].isin(contributors)]
+    df_repeat_temp = df.loc[df["cntrb_id"].isin(contributors)]
+
+    # order values chronologically by creation date
+    df = df.sort_values(by="created", axis=0, ascending=True)
+
+    # variable to slice on to handle weekly period edge case
+    period_slice = None
+    if interval == "W":
+        # this is to slice the extra period information that comes with the weekly case
+        period_slice = 10
+
+    # df for drive by contributros in time interval
+    df_drive = (
+        df_drive_temp.groupby(by=df_drive_temp.created.dt.to_period(interval))["cntrb_id"]
+        .nunique()
+        .reset_index()
+        .rename(columns={"cntrb_id": "Drive", "created": "Date"})
+    )
+    df_drive["Date"] = pd.to_datetime(df_drive["Date"].astype(str).str[:period_slice])
+
+    # df for repeat contributors in time interval
+    df_repeat = (
+        df_repeat_temp.groupby(by=df_repeat_temp.created.dt.to_period(interval))["cntrb_id"]
+        .nunique()
+        .reset_index()
+        .rename(columns={"cntrb_id": "Repeat", "created": "Date"})
+    )
+    df_repeat["Date"] = pd.to_datetime(df_repeat["Date"].astype(str).str[:period_slice])
+
+    # A single df created for plotting merged and closed as stacked bar chart
+    df_drive_repeat = pd.merge(df_drive, df_repeat, on="Date", how="outer")
+
+    # formating for graph generation
+    if interval == "M":
+        df_drive_repeat["Date"] = df_drive_repeat["Date"].dt.strftime("%Y-%m-01")
+    elif interval == "Y":
+        df_drive_repeat["Date"] = df_drive_repeat["Date"].dt.strftime("%Y-01-01")
 
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
-    # graphs generated for aggregation by time interval
-    drive_temp = (
-        df_cont[df_cont["type"] == "Drive-By"]
-        .groupby(by=df_cont.created_at.dt.to_period(period))["cntrb_id"]
-        .nunique()
-        .reset_index()
-        .rename(columns={"cntrb_id": "Drive-By"})
+    fig = px.bar(
+        df_drive_repeat,
+        x="Date",
+        y=["Repeat", "Drive"],
+        labels={"x": x_name, "y": "Contributors"},
+        template="minty",
     )
-    repeat_temp = (
-        df_cont[df_cont["type"] == "Repeat"]
-        .groupby(by=df_cont.created_at.dt.to_period(period))["cntrb_id"]
-        .nunique()
-        .reset_index()
-        .rename(columns={"cntrb_id": "Repeat"})
+    fig.update_traces(
+        hovertemplate=hover + "<br>Contributors: %{y}<br><extra></extra>",
     )
-    df_final = pd.merge(repeat_temp, drive_temp, on="created_at", how="outer")
-    df_final["created_at"] = df_final["created_at"].dt.to_timestamp()
-
-    # graph geration
-    if df_final is not None:
-        fig = px.histogram(
-            df_final,
-            x="created_at",
-            y=[df_final["Repeat"], df_final["Drive-By"]],
-            range_x=x_r,
-            labels={"x": x_name, "y": "Contributors"},
-            template="minty",
-        )
-        fig.update_traces(
-            xbins_size=interval,
-            hovertemplate=hover + "<br>Contributors: %{y}<br><extra></extra>",
-        )
-        fig.update_xaxes(
-            showgrid=True,
-            ticklabelmode="period",
-            dtick=interval,
-            rangeslider_yaxis_rangemode="match",
-        )
-        fig.update_layout(
-            xaxis_title=x_name,
-            legend_title_text="Type",
-            yaxis_title="Number of Contributors",
-            margin_b=40,
-        )
-        logging.debug(f"CONTRIBUTIONS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
-        return fig, dash.no_update
-    else:
-        return nodata_graph, dash.no_update
+    fig.update_xaxes(
+        showgrid=True,
+        ticklabelmode="period",
+        dtick=period,
+        rangeslider_yaxis_rangemode="match",
+        range=x_r,
+    )
+    fig.update_layout(
+        xaxis_title=x_name,
+        legend_title_text="Type",
+        yaxis_title="Number of Contributors",
+        margin_b=40,
+    )
+    logging.debug(f"CONTRIBUTIONS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
+    return fig, dash.no_update
