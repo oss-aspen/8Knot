@@ -198,7 +198,8 @@ def new_staling_prs(repolist, timer_pings, interval, staling_interval, stale_int
 
     # first and last elements of the dataframe are the
     # earliest and latest events respectively
-    earliest, latest = df.iloc[0]["created"], df.iloc[-1]["created"]
+    earliest = df["created"].min()
+    latest = max(df["created"].max(), df["closed"].max())
 
     # generating buckets beginning to the end of time by the specified interval
     dates = pd.date_range(start=earliest, end=latest, freq=interval, inclusive="both")

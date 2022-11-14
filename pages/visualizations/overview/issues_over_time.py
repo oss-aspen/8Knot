@@ -144,6 +144,7 @@ def issues_over_time_graph(repolist, timer_pings, interval):
     # variable to slice on to handle weekly period edge case
     period_slice = None
     if interval == "W":
+        # this is to slice the extra period information that comes with the weekly case
         period_slice = 10
 
     # data frames for issues created, merged, or closed. Detailed description applies for all 3.
@@ -172,7 +173,8 @@ def issues_over_time_graph(repolist, timer_pings, interval):
 
     # first and last elements of the dataframe are the
     # earliest and latest events respectively
-    earliest, latest = df.iloc[0]["created"], df.iloc[-1]["created"]
+    earliest = df["created"].min()
+    latest = max(df["created"].max(), df["closed"].max())
 
     # beginning to the end of time by the specified interval
     dates = pd.date_range(start=earliest, end=latest, freq="D", inclusive="both")

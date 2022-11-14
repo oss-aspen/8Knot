@@ -141,6 +141,7 @@ def create_commits_over_time_graph(repolist, timer_pings, interval):
     # variable to slice on to handle weekly period edge case
     period_slice = None
     if interval == "W":
+        # this is to slice the extra period information that comes with the weekly case
         period_slice = 10
 
     # get the count of commits in the desired interval in pandas period format, sort index to order entries

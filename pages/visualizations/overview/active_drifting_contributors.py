@@ -201,7 +201,7 @@ def active_drifting_contributors(repolist, timer_pings, interval, drift_interval
 
     # first and last elements of the dataframe are the
     # earliest and latest events respectively
-    earliest, latest = df.iloc[0]["created"], df.iloc[-1]["created"]
+    earliest, latest = df["created"].min(), df["created"].max()
 
     # beginning to the end of time by the specified interval
     dates = pd.date_range(start=earliest, end=latest, freq=interval, inclusive="both")

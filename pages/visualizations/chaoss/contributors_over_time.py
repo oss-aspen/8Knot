@@ -166,6 +166,7 @@ def create_graph(repolist, timer_pings, contribs, interval):
     # variable to slice on to handle weekly period edge case
     period_slice = None
     if interval == "W":
+        # this is to slice the extra period information that comes with the weekly case
         period_slice = 10
 
     # df for drive by contributros in time interval
