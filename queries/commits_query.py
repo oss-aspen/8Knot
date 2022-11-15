@@ -69,6 +69,8 @@ def commits_query(self, dbmc, repos):
 
     # store results in Redis
     cm_o = cm()
+
+    # 'ack' is a boolean of whether data was set correctly or not.
     ack = cm_o.setm(func=commits_query, repos=repos, datas=pic)
 
     logging.debug("COMMITS_DATA_QUERY - END")

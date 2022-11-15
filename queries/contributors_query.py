@@ -74,6 +74,8 @@ def contributors_query(self, dbmc, repos):
 
     # store results in Redis
     cm_o = cm()
+
+    # 'ack' is a boolean of whether data was set correctly or not.
     ack = cm_o.setm(func=contributors_query, repos=repos, datas=pic)
     logging.debug("CONTRIBUTIONS_DATA_QUERY - END")
 

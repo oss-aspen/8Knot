@@ -109,31 +109,16 @@ def toggle_popover_2(n, is_open):
 )
 def create_commits_over_time_graph(repolist, interval):
 
-    num_repos = len(repolist)
+    # wait for data to asynchronously download and become available.
     cache = cm()
-    ready = cache.existsm(func=cmq, repos=repolist) == num_repos
-
-    while not ready:
+    df = cache.grabm(func=cmq, repos=repolist)
+    while df is None:
         time.sleep(1.0)
-        ready = cache.existsm(func=cmq, repos=repolist) == num_repos
+        df = cache.grabm(func=cmq, repos=repolist)
 
+    # data ready.
     start = time.perf_counter()
     logging.debug("COMMITS_OVER_TIME_VIZ - START")
-
-    # get all results from cache
-    results = cache.getm(func=cmq, repos=repolist)
-
-    # deserialize results, create list of dfs
-    dfs = []
-    for r in results:
-        try:
-            dfs.append(pd.read_csv(io.StringIO(r), sep=","))
-        except:
-            # some json lists are empty and aren't deserializable
-            pass
-
-    # aggregate dataframe from list of dfs
-    df = pd.concat(dfs, ignore_index=True)
 
     # test if there is data
     if df.empty:
@@ -160,7 +145,9 @@ def create_commits_over_time_graph(repolist, interval):
 
     # converts date column to a datetime object, converts to string first to handle period information
     # the period slice is to handle weekly corner case
-    df_created["Date"] = pd.to_datetime(df_created["Date"].astype(str).str[:period_slice])
+    df_created["Date"] = pd.to_datetime(
+        df_created["Date"].astype(str).str[:period_slice]
+    )
 
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)

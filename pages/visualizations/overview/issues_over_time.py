@@ -98,84 +98,27 @@ def toggle_popover_3(n, is_open):
     return is_open
 
 
-columns = ["1", "2", "3"]
-
-# graph displayed if no data is available
-nodata_graph = go.Figure([go.Bar(x=columns, y=[20, 14, 23])])
-nodata_graph.update_traces(
-    marker_color="rgb(230,230,230)",
-    marker_line_color="rgb(200,200,300)",
-    marker_line_width=1.5,
-    opacity=0.6,
-)
-nodata_graph.update_layout(
-    title={
-        "text": "No Available Data",
-        "y": 0.9,
-        "x": 0.5,
-        "xanchor": "center",
-        "yanchor": "top",
-    },
-    font=dict(size=18, color="red"),
-)
-
-# graph displayed if a worker fails
-timeout_graph = go.Figure([go.Bar(x=columns, y=[20, 14, 23])])
-timeout_graph.update_traces(
-    marker_color="rgb(230,230,230)",
-    marker_line_color="rgb(200,200,300)",
-    marker_line_width=1.5,
-    opacity=0.6,
-)
-timeout_graph.update_layout(
-    title={
-        "text": "No Available Data",
-        "y": 0.9,
-        "x": 0.5,
-        "xanchor": "center",
-        "yanchor": "top",
-    },
-    font=dict(size=18, color="orange"),
-)
-
 # callback for issues over time graph
 @callback(
     Output("issues-over-time", "figure"),
-    # Output("issues-over-time-timer", "n_intervals"),
     [
         Input("repo-choices", "data"),
-        # Input("issues-over-time-timer", "n_intervals"),
         Input("issue-time-interval", "value"),
     ],
     background=True,
 )
 def issues_over_time_graph(repolist, interval):
 
-    num_repos = len(repolist)
+    # wait for data to asynchronously download and become available.
     cache = cm()
-    ready = cache.existsm(func=iq, repos=repolist) == num_repos
-
-    while not ready:
+    df = cache.grabm(func=iq, repos=repolist)
+    while df is None:
         time.sleep(1.0)
-        ready = cache.existsm(func=iq, repos=repolist) == num_repos
+        df = cache.grabm(func=iq, repos=repolist)
 
+    # data ready.
     start = time.perf_counter()
-    logging.debug("ISSUES_OVER_TIME_VIZ - START")
-
-    # get all results from cache
-    results = cache.getm(func=iq, repos=repolist)
-
-    # deserialize results, create list of dfs
-    dfs = []
-    for r in results:
-        try:
-            dfs.append(pd.read_csv(io.StringIO(r), sep=","))
-        except:
-            # some json lists are empty and aren't deserializable
-            pass
-
-    # aggregate dataframe from list of dfs
-    df = pd.concat(dfs, ignore_index=True)
+    logging.debug("ISSUES OVER TIME - START")
 
     # test if there is data
     if df.empty:
@@ -198,17 +141,25 @@ def issues_over_time_graph(repolist, interval):
     # data frames for issues created, merged, or closed. Detailed description applies for all 3.
 
     # get the count of created issues in the desired interval in pandas period format, sort index to order entries
-    created_range = pd.to_datetime(df["created"]).dt.to_period(interval).value_counts().sort_index()
+    created_range = (
+        pd.to_datetime(df["created"]).dt.to_period(interval).value_counts().sort_index()
+    )
 
     # converts to data frame object and creates date column from period values
-    df_created = created_range.to_frame().reset_index().rename(columns={"index": "Date"})
+    df_created = (
+        created_range.to_frame().reset_index().rename(columns={"index": "Date"})
+    )
 
     # converts date column to a datetime object, converts to string first to handle period information
     # the period slice is to handle weekly corner case
-    df_created["Date"] = pd.to_datetime(df_created["Date"].astype(str).str[:period_slice])
+    df_created["Date"] = pd.to_datetime(
+        df_created["Date"].astype(str).str[:period_slice]
+    )
 
     # df for merged issues in time interval
-    closed_range = pd.to_datetime(df["closed"]).dt.to_period(interval).value_counts().sort_index()
+    closed_range = (
+        pd.to_datetime(df["closed"]).dt.to_period(interval).value_counts().sort_index()
+    )
     df_closed = closed_range.to_frame().reset_index().rename(columns={"index": "Date"})
     df_closed["Date"] = pd.to_datetime(df_closed["Date"].astype(str).str[:period_slice])
 

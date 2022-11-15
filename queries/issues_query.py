@@ -81,6 +81,8 @@ def issues_query(self, dbmc, repos):
 
     # store results in Redis
     cm_o = cm()
+
+    # 'ack' is a boolean of whether data was set correctly or not.
     ack = cm_o.setm(func=issues_query, repos=repos, datas=pic)
 
     logging.debug("ISSUES_DATA_QUERY - END")

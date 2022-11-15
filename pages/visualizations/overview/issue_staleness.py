@@ -166,34 +166,15 @@ def new_staling_issues(repolist, interval, staling_interval, stale_interval):
     if staling_interval is None or stale_interval is None:
         return dash.no_update, dash.no_update, dash.no_update
 
-    num_repos = len(repolist)
+    # wait for data to asynchronously download and become available.
     cache = cm()
-    ready = cache.existsm(func=iq, repos=repolist) == num_repos
-
-    while not ready:
+    df = cache.grabm(func=iq, repos=repolist)
+    while df is None:
         time.sleep(1.0)
-        ready = cache.existsm(func=iq, repos=repolist) == num_repos
+        df = cache.grabm(func=iq, repos=repolist)
 
     start = time.perf_counter()
     logging.debug("ISSUES STALENESS - START")
-
-    # get all results from cache
-    results = cache.getm(func=iq, repos=repolist)
-
-    # deserialize results, create list of dfs
-    dfs = []
-    for r in results:
-        try:
-            dfs.append(pd.read_csv(io.StringIO(r), sep=","))
-        except:
-            # some json lists are empty and aren't deserializable
-            pass
-
-    # aggregate dataframe from list of dfs
-    df = pd.concat(dfs, ignore_index=True)
-
-    if df.empty:
-        return nodata_graph, False
 
     # test if there is data
     if df.empty:
@@ -220,7 +201,9 @@ def new_staling_issues(repolist, interval, staling_interval, stale_interval):
 
     df_status["New"], df_status["Staling"], df_status["Stale"] = zip(
         *df_status.apply(
-            lambda row: get_new_staling_stale_up_to(df, row.Date, staling_interval, stale_interval),
+            lambda row: get_new_staling_stale_up_to(
+                df, row.Date, staling_interval, stale_interval
+            ),
             axis=1,
         )
     )
@@ -271,7 +254,9 @@ def new_staling_issues(repolist, interval, staling_interval, stale_interval):
         )
 
         # edit hover values
-        fig.update_traces(hovertemplate=hover + "<br>Issues: %{y}<br>" + "<extra></extra>")
+        fig.update_traces(
+            hovertemplate=hover + "<br>Issues: %{y}<br>" + "<extra></extra>"
+        )
 
     fig.update_layout(xaxis_title="Time", yaxis_title="Issues", legend_title="Type")
 

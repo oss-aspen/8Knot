@@ -141,31 +141,15 @@ def graph_title(view):
 )
 def create_drive_by_graph(repolist, contribs, view):
 
-    num_repos = len(repolist)
+    # wait for data to asynchronously download and become available.
     cache = cm()
-    ready = cache.existsm(func=ctq, repos=repolist) == num_repos
-
-    while not ready:
+    df = cache.grabm(func=ctq, repos=repolist)
+    while df is None:
         time.sleep(1.0)
-        ready = cache.existsm(func=ctq, repos=repolist) == num_repos
+        df = cache.grabm(func=ctq, repos=repolist)
 
     start = time.perf_counter()
     logging.debug("CONTRIB_DRIVE_REPEAT_VIZ - START")
-
-    # get all results from cache
-    results = cache.getm(func=ctq, repos=repolist)
-
-    # deserialize results, create list of dfs
-    dfs = []
-    for r in results:
-        try:
-            dfs.append(pd.read_csv(io.StringIO(r), sep=","))
-        except:
-            # some json lists are empty and aren't deserializable
-            pass
-
-    # aggregate dataframe from list of dfs
-    df = pd.concat(dfs, ignore_index=True)
 
     # test if there is data
     if df.empty:
@@ -182,16 +166,22 @@ def create_drive_by_graph(repolist, contribs, view):
 
     # filtering data by view
     if view == "drive":
-        df_cont_subset = df_cont_subset.loc[~df_cont_subset["cntrb_id"].isin(contributors)]
+        df_cont_subset = df_cont_subset.loc[
+            ~df_cont_subset["cntrb_id"].isin(contributors)
+        ]
     else:
-        df_cont_subset = df_cont_subset.loc[df_cont_subset["cntrb_id"].isin(contributors)]
+        df_cont_subset = df_cont_subset.loc[
+            df_cont_subset["cntrb_id"].isin(contributors)
+        ]
 
     # reset index to be ready for plotly
     df_cont_subset = df_cont_subset.reset_index()
 
     # graph generation
     if df_cont_subset is not None:
-        fig = px.histogram(df_cont_subset, x="created", color="Action", template="minty")
+        fig = px.histogram(
+            df_cont_subset, x="created", color="Action", template="minty"
+        )
         fig.update_traces(
             xbins_size="M3",
             hovertemplate="Date: %{x}" + "<br>Amount: %{y}<br><extra></extra>",

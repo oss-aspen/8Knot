@@ -79,6 +79,8 @@ def prs_query(self, dbmc, repos):
 
     # store results in Redis
     cm_o = cm()
+
+    # 'ack' is a boolean of whether data was set correctly or not.
     ack = cm_o.setm(func=prs_query, repos=repos, datas=pic)
 
     logging.debug("PR_DATA_QUERY - END")

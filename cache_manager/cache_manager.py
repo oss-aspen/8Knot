@@ -1,6 +1,10 @@
 from redis import StrictRedis
 import os
 import hashlib
+import pandas as pd
+import io
+import sys
+import logging
 
 
 class CacheManager:
@@ -194,3 +198,37 @@ class CacheManager:
 
         # return results
         return n
+
+    def grabm(self, func, repos):
+        """Checks to see if data is ready using 'existsm'
+        and builds aggregate DataFrame to return to callback.
+
+        Args:
+            func (function): Query function used
+            repo (list[int]): list of repo_ids of repos
+
+        Returns:
+            pd.DataFrame | None: Data if all available.
+        """
+
+        num_repos = len(repos)
+        ready = self.existsm(func=func, repos=repos) == num_repos
+        if not ready:
+            return None
+
+        # get all results from cache
+        results = self.getm(func=func, repos=repos)
+
+        # deserialize results, create list of dfs
+        out_df = pd.DataFrame()
+        for r in results:
+            try:
+                out_df = pd.concat(
+                    [out_df, pd.read_csv(io.StringIO(r), sep=",")], ignore_index=True
+                )
+            except:
+                # some json lists are empty and aren't deserializable
+                e = sys.exc_info()[0]
+                logging.error(e)
+
+        return out_df

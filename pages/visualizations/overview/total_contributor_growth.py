@@ -121,31 +121,15 @@ def graph_title(view):
 )
 def create_total_contributor_growth_graph(repolist, bin_size):
 
-    num_repos = len(repolist)
+    # wait for data to asynchronously download and become available.
     cache = cm()
-    ready = cache.existsm(func=ctq, repos=repolist) == num_repos
-
-    while not ready:
+    df = cache.grabm(func=ctq, repos=repolist)
+    while df is None:
         time.sleep(1.0)
-        ready = cache.existsm(func=ctq, repos=repolist) == num_repos
+        df = cache.grabm(func=ctq, repos=repolist)
 
     logging.debug("TOTAL_CONTRIBUTOR_GROWTH_VIZ - START")
     start = time.perf_counter()
-
-    # get all results from cache
-    results = cache.getm(func=ctq, repos=repolist)
-
-    # deserialize results, create list of dfs
-    dfs = []
-    for r in results:
-        try:
-            dfs.append(pd.read_csv(io.StringIO(r), sep=","))
-        except:
-            # some json lists are empty and aren't deserializable
-            pass
-
-    # aggregate dataframe from list of dfs
-    df = pd.concat(dfs, ignore_index=True)
 
     # test if there is data
     if df.empty:
@@ -190,10 +174,16 @@ def contributor_growth_bar_graph(df, interval):
     """
 
     # get the count of new contributors in the desired interval in pandas period format, sort index to order entries
-    created_range = pd.to_datetime(df["created"]).dt.to_period(interval).value_counts().sort_index()
+    created_range = (
+        pd.to_datetime(df["created"]).dt.to_period(interval).value_counts().sort_index()
+    )
 
     # converts to data frame object and creates date column from period values
-    df_contribs = created_range.to_frame().reset_index().rename(columns={"index": "Date", "created": "contribs"})
+    df_contribs = (
+        created_range.to_frame()
+        .reset_index()
+        .rename(columns={"index": "Date", "created": "contribs"})
+    )
 
     # converts date column to a datetime object, converts to string first to handle period information
     df_contribs["Date"] = pd.to_datetime(df_contribs["Date"].astype(str))
@@ -264,7 +254,9 @@ def contributor_growth_line_bar(df):
     )
 
     # edit hover values
-    fig.update_traces(hovertemplate="Contributors: %{y}<br>%{x|%b %d, %Y} <extra></extra>")
+    fig.update_traces(
+        hovertemplate="Contributors: %{y}<br>%{x|%b %d, %Y} <extra></extra>"
+    )
 
     """
         Ref. for this awesome button thing:

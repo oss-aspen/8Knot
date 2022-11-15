@@ -168,39 +168,20 @@ def active_drifting_contributors(repolist, interval, drift_interval, away_interv
     if drift_interval > away_interval:
         return dash.no_update, True, dash.no_update
 
-    num_repos = len(repolist)
+    # wait for data to asynchronously download and become available.
     cache = cm()
-    ready = cache.existsm(func=ctq, repos=repolist) == num_repos
-
-    while not ready:
+    df = cache.grabm(func=ctq, repos=repolist)
+    while df is None:
         time.sleep(1.0)
-        ready = cache.existsm(func=ctq, repos=repolist) == num_repos
+        df = cache.grabm(func=ctq, repos=repolist)
 
     logging.debug(f"ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - START")
     start = time.perf_counter()
 
-    # get all results from cache
-    results = cache.getm(func=ctq, repos=repolist)
-
-    # deserialize results, create list of dfs
-    dfs = []
-    for r in results:
-        try:
-            dfs.append(pd.read_csv(io.StringIO(r), sep=","))
-        except:
-            # some json lists are empty and aren't deserializable
-            pass
-
-    # aggregate dataframe from list of dfs
-    df = pd.concat(dfs, ignore_index=True)
-
-    if df.empty:
-        return nodata_graph, False
-
     # test if there is data
     if df.empty:
         logging.debug("PULL REQUEST STALENESS - NO DATA AVAILABLE")
-        return nodata_graph, False, dash.no_update
+        return nodata_graph, False
 
     # convert to datetime objects with consistent column name
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
@@ -221,7 +202,9 @@ def active_drifting_contributors(repolist, interval, drift_interval, away_interv
 
     df_status["Active"], df_status["Drifting"], df_status["Away"] = zip(
         *df_status.apply(
-            lambda row: get_active_drifting_away_up_to(df, row.Date, drift_interval, away_interval),
+            lambda row: get_active_drifting_away_up_to(
+                df, row.Date, drift_interval, away_interval
+            ),
             axis=1,
         )
     )
@@ -268,11 +251,17 @@ def active_drifting_contributors(repolist, interval, drift_interval, away_interv
         fig = px.bar(df_status, x="Date", y=["Active", "Drifting", "Away"])
 
         # edit hover values
-        fig.update_traces(hovertemplate=hover + "<br>Contributors: %{y}<br>" + "<extra></extra>")
+        fig.update_traces(
+            hovertemplate=hover + "<br>Contributors: %{y}<br>" + "<extra></extra>"
+        )
 
-    fig.update_layout(xaxis_title="Time", yaxis_title="Number of Contributors", legend_title="Type")
+    fig.update_layout(
+        xaxis_title="Time", yaxis_title="Number of Contributors", legend_title="Type"
+    )
 
-    logging.debug(f"ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}")
+    logging.debug(
+        f"ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}"
+    )
     return fig, False
 
 

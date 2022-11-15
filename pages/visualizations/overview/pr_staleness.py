@@ -165,31 +165,15 @@ def new_staling_prs(repolist, interval, staling_interval, stale_interval):
     if staling_interval is None or stale_interval is None:
         return dash.no_update, dash.no_update
 
-    num_repos = len(repolist)
+    # wait for data to asynchronously download and become available.
     cache = cm()
-    ready = cache.existsm(func=prq, repos=repolist) == num_repos
-
-    while not ready:
+    df = cache.grabm(func=prq, repos=repolist)
+    while df is None:
         time.sleep(1.0)
-        ready = cache.existsm(func=prq, repos=repolist) == num_repos
+        df = cache.grabm(func=prq, repos=repolist)
 
     start = time.perf_counter()
     logging.debug("PULL REQUEST STALENESS - START")
-
-    # get all results from cache
-    results = cache.getm(func=prq, repos=repolist)
-
-    # deserialize results, create list of dfs
-    dfs = []
-    for r in results:
-        try:
-            dfs.append(pd.read_csv(io.StringIO(r), sep=","))
-        except:
-            # some json lists are empty and aren't deserializable
-            pass
-
-    # aggregate dataframe from list of dfs
-    df = pd.concat(dfs, ignore_index=True)
 
     # test if there is data
     if df.empty:
@@ -217,7 +201,9 @@ def new_staling_prs(repolist, interval, staling_interval, stale_interval):
 
     df_status["New"], df_status["Staling"], df_status["Stale"] = zip(
         *df_status.apply(
-            lambda row: get_new_staling_stale_up_to(df, row.Date, staling_interval, stale_interval),
+            lambda row: get_new_staling_stale_up_to(
+                df, row.Date, staling_interval, stale_interval
+            ),
             axis=1,
         )
     )
@@ -277,7 +263,9 @@ def new_staling_prs(repolist, interval, staling_interval, stale_interval):
         # edit hover values
         fig.update_traces(hovertemplate=hover + "<br>PRs: %{y}<br>" + "<extra></extra>")
 
-    fig.update_layout(xaxis_title="Time", yaxis_title="Pull Requests", legend_title="Type")
+    fig.update_layout(
+        xaxis_title="Time", yaxis_title="Pull Requests", legend_title="Type"
+    )
 
     logging.debug(f"PULL REQUEST STALENESS - END - {time.perf_counter() - start}")
     return fig, False

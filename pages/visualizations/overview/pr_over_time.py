@@ -108,33 +108,17 @@ def toggle_popover_7(n, is_open):
     ],
 )
 def prs_over_time_graph(repolist, interval):
-    logging.debug("IOT - PONG")
 
-    num_repos = len(repolist)
+    # wait for data to asynchronously download and become available.
     cache = cm()
-    ready = cache.existsm(func=prq, repos=repolist) == num_repos
-
-    while not ready:
+    df = cache.grabm(func=prq, repos=repolist)
+    while df is None:
         time.sleep(1.0)
-        ready = cache.existsm(func=prq, repos=repolist) == num_repos
+        df = cache.grabm(func=prq, repos=repolist)
 
+    # data ready.
     start = time.perf_counter()
-    logging.debug("PULL REQUEST STALENESS - START")
-
-    # get all results from cache
-    results = cache.getm(func=prq, repos=repolist)
-
-    # deserialize results, create list of dfs
-    dfs = []
-    for r in results:
-        try:
-            dfs.append(pd.read_csv(io.StringIO(r), sep=","))
-        except:
-            # some json lists are empty and aren't deserializable
-            pass
-
-    # aggregate dataframe from list of dfs
-    df = pd.concat(dfs, ignore_index=True)
+    logging.debug("PULL REQUESTS OVER TIME - START")
 
     # test if there is data
     if df.empty:
@@ -161,19 +145,27 @@ def prs_over_time_graph(repolist, interval):
     created_range = df["created"].dt.to_period(interval).value_counts().sort_index()
 
     # converts to data frame object and created date column from period values
-    df_created = created_range.to_frame().reset_index().rename(columns={"index": "Date"})
+    df_created = (
+        created_range.to_frame().reset_index().rename(columns={"index": "Date"})
+    )
 
     # converts date column to a datetime object, converts to string first to handle period information
     # the period slice is to handle weekly corner case
-    df_created["Date"] = pd.to_datetime(df_created["Date"].astype(str).str[:period_slice])
+    df_created["Date"] = pd.to_datetime(
+        df_created["Date"].astype(str).str[:period_slice]
+    )
 
     # df for merged prs in time interval
-    merged_range = pd.to_datetime(df["merged"]).dt.to_period(interval).value_counts().sort_index()
+    merged_range = (
+        pd.to_datetime(df["merged"]).dt.to_period(interval).value_counts().sort_index()
+    )
     df_merged = merged_range.to_frame().reset_index().rename(columns={"index": "Date"})
     df_merged["Date"] = pd.to_datetime(df_merged["Date"].astype(str).str[:period_slice])
 
     # df for closed prs in time interval
-    closed_range = pd.to_datetime(df["closed"]).dt.to_period(interval).value_counts().sort_index()
+    closed_range = (
+        pd.to_datetime(df["closed"]).dt.to_period(interval).value_counts().sort_index()
+    )
     df_closed = closed_range.to_frame().reset_index().rename(columns={"index": "Date"})
     df_closed["Date"] = pd.to_datetime(df_closed["Date"].astype(str).str[:period_slice])
 
@@ -228,7 +220,10 @@ def prs_over_time_graph(repolist, interval):
         x=df_closed_merged["Date"],
         y=df_closed_merged["closed"],
         opacity=0.6,
-        hovertemplate=[f"{hover}<br>Closed: {val}<br><extra></extra>" for val in df_closed_merged["closed"]],
+        hovertemplate=[
+            f"{hover}<br>Closed: {val}<br><extra></extra>"
+            for val in df_closed_merged["closed"]
+        ],
         offsetgroup=1,
         base=df_closed_merged["merged"],
         name="PRs Closed",

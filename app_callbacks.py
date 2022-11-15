@@ -128,6 +128,18 @@ def update_output(n_clicks, value):
     State("help-alert", "is_open"),
 )
 def show_help_alert(n_clicks, openness):
+    """Sets the 'open' state of a help message
+    for the search bar to encourage users to check
+    their spelling and to ask for data to be loaded
+    if not available.
+
+    Args:
+        n_clicks (int): number of times 'help' button clicked.
+        openness (boolean): whether help alert is currently open.
+
+    Returns:
+        dash.no_update | boolean: whether the help alert should be open.
+    """
     if n_clicks == 0:
         return dash.no_update
     # switch the openness parameter, allows button to also

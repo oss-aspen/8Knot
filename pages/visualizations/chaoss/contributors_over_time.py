@@ -130,31 +130,15 @@ def toggle_popover_3(n, is_open):
 )
 def create_graph(repolist, contribs, interval):
 
-    num_repos = len(repolist)
+    # wait for data to asynchronously download and become available.
     cache = cm()
-    ready = cache.existsm(func=ctq, repos=repolist) == num_repos
-
-    while not ready:
+    df = cache.grabm(func=ctq, repos=repolist)
+    while df is None:
         time.sleep(1.0)
-        ready = cache.existsm(func=ctq, repos=repolist) == num_repos
+        df = cache.grabm(func=ctq, repos=repolist)
 
     start = time.perf_counter()
     logging.debug("CONTRIB_DRIVE_REPEAT_VIZ - START")
-
-    # get all results from cache
-    results = cache.getm(func=ctq, repos=repolist)
-
-    # deserialize results, create list of dfs
-    dfs = []
-    for r in results:
-        try:
-            dfs.append(pd.read_csv(io.StringIO(r), sep=","))
-        except:
-            # some json lists are empty and aren't deserializable
-            pass
-
-    # aggregate dataframe from list of dfs
-    df = pd.concat(dfs, ignore_index=True)
 
     # test if there is data
     if df.empty:
@@ -186,7 +170,10 @@ def create_graph(repolist, contribs, interval):
 
     # df for drive by contributros in time interval
     df_drive = (
+        # disable and re-enable formatter
+        # fmt: off
         df_drive_temp.groupby(by=df_drive_temp.created.dt.to_period(interval))["cntrb_id"]
+        # fmt: on
         .nunique()
         .reset_index()
         .rename(columns={"cntrb_id": "Drive", "created": "Date"})
@@ -195,7 +182,10 @@ def create_graph(repolist, contribs, interval):
 
     # df for repeat contributors in time interval
     df_repeat = (
+        # disable and re-enable formatter
+        # fmt: off
         df_repeat_temp.groupby(by=df_repeat_temp.created.dt.to_period(interval))["cntrb_id"]
+        # fmt: on
         .nunique()
         .reset_index()
         .rename(columns={"cntrb_id": "Repeat", "created": "Date"})

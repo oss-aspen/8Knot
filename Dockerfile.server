@@ -4,7 +4,7 @@ FROM docker.io/python:3.10
 EXPOSE 8050
 
 # install pipenv
-RUN pip --no-cache-dir install pipenv
+# RUN pip --no-cache-dir install pipenv
 
 # create a working directory
 # RUN mkdir explorer
@@ -20,7 +20,7 @@ WORKDIR /explorer
 # RUN pipenv install --system --deploy
 
 COPY ./requirements.txt /explorer/
-RUN pip3 install -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 # copy the contents of current file into the
 # working directory.
