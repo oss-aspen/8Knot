@@ -1,6 +1,5 @@
 from dash import html, dcc
 import dash
-import plotly.express as px
 import dash_bootstrap_components as dbc
 import warnings
 

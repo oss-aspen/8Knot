@@ -3,10 +3,14 @@ import dash
 import dash_bootstrap_components as dbc
 
 # import the visualization cards
-from .visualizations.overview.total_contributor_growth import gc_total_contributor_growth
 from .visualizations.overview.commits_over_time import gc_commits_over_time
 from .visualizations.overview.issues_over_time import gc_issues_over_time
+
+# disable and re-enable formatter
+# fmt: off
 from .visualizations.overview.active_drifting_contributors import gc_active_drifting_contributors
+from .visualizations.overview.total_contributor_growth import gc_total_contributor_growth
+# fmt: on
 from .visualizations.overview.issue_staleness import gc_issue_staleness
 from .visualizations.overview.pr_staleness import gc_pr_staleness
 from .visualizations.overview.pr_over_time import gc_pr_over_time

@@ -20,12 +20,12 @@ WORKDIR /explorer
 # RUN pipenv install --system --deploy
 
 COPY ./requirements.txt /explorer/
-RUN pip3 install -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 # copy the contents of current file into the
 # working directory.
 COPY ./ /explorer/
 
 # run worker
-CMD [ "rq", "worker", "-c", "worker_settings" ]
-# CMD ["celery", "-A", "app:celery_app", "worker", "--loglevel=DEBUG", "--concurrency=6"]
+# CMD [ "rq", "worker", "-c", "worker_settings" ]
+CMD ["celery", "-A", "app:celery_app", "worker", "--loglevel=DEBUG", "--concurrency=15"]

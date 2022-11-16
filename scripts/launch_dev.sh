@@ -50,6 +50,7 @@ ${CONTAINER_CMD} run --rm -dit --name worker_pool \
                      --net eightknot-network \
                      --env REDIS_SERVICE_HOST=$REDIS_CONTAINER_URL \
                      --env REDIS_SERVICE_PORT=$REDIS_PORT_MAP \
+                     --env-file ./env.list \
                      worker_pool;
 
 # build and run the web server

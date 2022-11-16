@@ -1,9 +1,18 @@
 import logging
 import pandas as pd
 from db_manager.AugurInterface import AugurInterface
+from app_global import celery_app
+from cache_manager.cache_manager import CacheManager as cm
 
 
-def prs_query(dbmc, repo):
+@celery_app.task(
+    bind=True,
+    autoretry_for=(Exception,),
+    exponential_backoff=2,
+    retry_kwargs={"max_retries": 5},
+    retry_jitter=True,
+)
+def prs_query(self, dbmc, repos):
     """
     (Worker Query)
     Executes SQL query against Augur database for pull request data.
@@ -20,8 +29,12 @@ def prs_query(dbmc, repo):
     """
     logging.debug("PR_DATA_QUERY - START")
 
+    if len(repos) == 0:
+        return None
+
     query_string = f"""
                     SELECT
+                        r.repo_id as id,
                         r.repo_name,
                         pr.pull_request_id AS pull_request,
                         pr.pr_src_number,
@@ -33,7 +46,7 @@ def prs_query(dbmc, repo):
                         pull_requests pr
                     WHERE
                         r.repo_id = pr.repo_id AND
-                        r.repo_id = {repo}
+                        r.repo_id in ({str(repos)[1:-1]})
                     """
 
     # create database connection, load config, execute query above.
@@ -51,5 +64,24 @@ def prs_query(dbmc, repo):
     df_pr = df_pr.reset_index()
     df_pr.drop("index", axis=1, inplace=True)
 
+    # break apart returned data per repo
+    # and temporarily store in List to be
+    # stored in Redis.
+    pic = []
+    for i, r in enumerate(repos):
+        # convert series to a dataframe
+        c_df = pd.DataFrame(df_pr.loc[df_pr["id"] == r]).to_csv()
+
+        # add pickled dataframe to list of pickled objects
+        pic.append(c_df)
+
+    del df_pr
+
+    # store results in Redis
+    cm_o = cm()
+
+    # 'ack' is a boolean of whether data was set correctly or not.
+    ack = cm_o.setm(func=prs_query, repos=repos, datas=pic)
+
     logging.debug("PR_DATA_QUERY - END")
-    return df_pr.to_dict("records")
+    return ack

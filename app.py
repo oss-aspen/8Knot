@@ -14,18 +14,19 @@
 import pstats
 import cProfile
 from db_manager.AugurInterface import AugurInterface
-from job_manager.job_manager import JobManager
-import dash
 from dash import html, dcc
+import dash
 import dash_bootstrap_components as dbc
 from dash_bootstrap_templates import load_figure_template
 import numpy as np
 import sys
 import os
-
 import logging
+from app_global import celery_manager, celery_app
 
-logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.DEBUG)
+logging.basicConfig(
+    format="%(asctime)s %(levelname)-8s %(message)s", level=logging.DEBUG
+)
 
 # GLOBAL VARIABLE DECLARATIONS
 engine = None
@@ -35,7 +36,6 @@ entries = None
 augur_db = None
 repo_dict = None
 org_dict = None
-jm = JobManager()
 
 
 def _load_config():
@@ -74,7 +74,9 @@ def _project_list_query():
     df_search_bar = augur_db.run_query(pr_query)
 
     # handling case sensitive options for search bar
-    entries = np.concatenate((df_search_bar.rg_name.unique(), df_search_bar.repo_git.unique()), axis=None)
+    entries = np.concatenate(
+        (df_search_bar.rg_name.unique(), df_search_bar.repo_git.unique()), axis=None
+    )
     entries = entries.tolist()
     entries.sort(key=lambda item: (item, len(item)))
 
@@ -83,7 +85,11 @@ def _project_list_query():
     all_entries = list(zip(lower_entries, entries))
 
     # generating dictionary with the git urls as the key and the repo_id and name as a list as the value pair
-    repo_dict = df_search_bar[["repo_git", "repo_id", "repo_name"]].set_index("repo_git").T.to_dict("list")
+    repo_dict = (
+        df_search_bar[["repo_git", "repo_id", "repo_name"]]
+        .set_index("repo_git")
+        .T.to_dict("list")
+    )
 
     # generating dictionary with the org name as the key and the git repos of the org in a list as the value pair
     org_dict = df_search_bar.groupby("rg_name")["repo_git"].apply(list).to_dict()
@@ -101,11 +107,14 @@ _project_list_query()
 # can import this file once we've loaded relevant global variables.
 import app_callbacks
 
-
 # CREATE APP OBJECT
 load_figure_template(["sandstone", "minty"])
 app = dash.Dash(
-    __name__, use_pages=True, external_stylesheets=[dbc.themes.SANDSTONE], suppress_callback_exceptions=True
+    __name__,
+    use_pages=True,
+    external_stylesheets=[dbc.themes.SANDSTONE],
+    suppress_callback_exceptions=True,
+    background_callback_manager=celery_manager,
 )
 
 # expose the server variable so that gunicorn can use it.
@@ -203,10 +212,23 @@ app.layout = dbc.Container(
                             },
                         ),
                         dcc.Loading(
-                            children=[html.Div(id="results-output-container", className="mb-4")],
+                            children=[
+                                html.Div(
+                                    id="results-output-container", className="mb-4"
+                                )
+                            ],
                             color="#119DFF",
                             type="dot",
                             fullscreen=True,
+                        ),
+                        dcc.Loading(
+                            dbc.Badge(
+                                children="Data Loaded",
+                                id="data_badge",
+                                color="success",
+                                className="me-1",
+                            ),
+                            type="cube",
                         ),
                         # where our page will be rendered
                         dash.page_container,

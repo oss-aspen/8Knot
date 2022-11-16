@@ -3,30 +3,25 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import callback
 from dash.dependencies import Input, Output, State
-import plotly.graph_objects as go
 import pandas as pd
-import datetime as dt
 import logging
 import plotly.express as px
 
-from app import jm
-from pages.utils.job_utils import handle_job_state, nodata_graph
 from queries.contributors_query import contributors_query as ctq
-
+from cache_manager.cache_manager import CacheManager as cm
+import io
 import time
+from pages.utils.job_utils import nodata_graph
 
 gc_first_time_contributions = dbc.Card(
     [
         dbc.CardBody(
             [
-                dcc.Interval(
-                    id="first-time-contributors-timer",
-                    n_intervals=1,
-                    max_intervals=1,
-                    disabled=False,
-                    interval=800,
+                html.H4(
+                    "First Time Contributions Per Quarter",
+                    className="card-title",
+                    style={"text-align": "center"},
                 ),
-                html.H4("First Time Contributions Per Quarter", className="card-title", style={"text-align": "center"}),
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
@@ -37,9 +32,16 @@ gc_first_time_contributions = dbc.Card(
                     placement="top",
                     is_open=False,
                 ),
-                dcc.Graph(id="first-time-contributions"),
+                dcc.Loading(
+                    dcc.Graph(id="first-time-contributions"),
+                ),
                 dbc.Row(
-                    dbc.Button("About Graph", id="chaoss-popover-target-2", color="secondary", size="small"),
+                    dbc.Button(
+                        "About Graph",
+                        id="chaoss-popover-target-2",
+                        color="secondary",
+                        size="small",
+                    ),
                     style={"padding-top": ".5em"},
                 ),
             ]
@@ -62,26 +64,27 @@ def toggle_popover_2(n, is_open):
 
 @callback(
     Output("first-time-contributions", "figure"),
-    Output("first-time-contributors-timer", "n_intervals"),
-    [Input("repo-choices", "data"), Input("first-time-contributors-timer", "n_intervals")],
+    [
+        Input("repo-choices", "data"),
+    ],
+    background=True,
 )
-def create_first_time_contributors_graph(repolist, timer_pings):
-    logging.debug("1stC - PONG")
+def create_first_time_contributors_graph(repolist):
 
-    ready, results, graph_update, interval_update = handle_job_state(jm, ctq, repolist)
-    if not ready:
-        return graph_update, interval_update
+    # wait for data to asynchronously download and become available.
+    cache = cm()
+    df = cache.grabm(func=ctq, repos=repolist)
+    while df is None:
+        time.sleep(1.0)
+        df = cache.grabm(func=ctq, repos=repolist)
 
-    logging.debug("1ST_CONTRIBUTIONS_VIZ - START")
     start = time.perf_counter()
-
-    # create dataframe from record data
-    df = pd.DataFrame(results)
+    logging.debug("CONTRIB_DRIVE_REPEAT_VIZ - START")
 
     # test if there is data
     if df.empty:
         logging.debug("1ST CONTRIBUTIONS - NO DATA AVAILABLE")
-        return nodata_graph, False, dash.no_update
+        return nodata_graph, False
 
     # convert to datetime objects with consistent column name
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
@@ -106,4 +109,4 @@ def create_first_time_contributors_graph(repolist, timer_pings):
         margin_b=40,
     )
     logging.debug(f"1ST_CONTRIBUTIONS_VIZ - END - {time.perf_counter() - start}")
-    return fig, dash.no_update
+    return fig

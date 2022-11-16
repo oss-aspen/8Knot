@@ -7,26 +7,17 @@ import plotly.graph_objects as go
 import pandas as pd
 import datetime as dt
 import logging
-import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values
-
-from pages.utils.job_utils import handle_job_state, nodata_graph
+import io
+from pages.utils.job_utils import nodata_graph
 from queries.prs_query import prs_query as prq
-from app import jm
-
+from cache_manager.cache_manager import CacheManager as cm
 import time
 
 gc_pr_over_time = dbc.Card(
     [
         dbc.CardBody(
             [
-                dcc.Interval(
-                    id="prs-over-time-timer",
-                    disabled=False,
-                    n_intervals=1,
-                    max_intervals=1,
-                    interval=1500,
-                ),
                 html.H4(
                     "Pull Requests Over Time",
                     className="card-title",
@@ -42,7 +33,9 @@ gc_pr_over_time = dbc.Card(
                     placement="top",
                     is_open=False,
                 ),
-                dcc.Graph(id="prs-over-time"),
+                dcc.Loading(
+                    dcc.Graph(id="prs-over-time"),
+                ),
                 dbc.Form(
                     [
                         dbc.Row(
@@ -109,30 +102,28 @@ def toggle_popover_7(n, is_open):
 # callback for prs over time graph
 @callback(
     Output("prs-over-time", "figure"),
-    Output("prs-over-time-timer", "n_intervals"),
     [
         Input("repo-choices", "data"),
-        Input("prs-over-time-timer", "n_intervals"),
         Input("pr-time-interval", "value"),
     ],
 )
-def prs_over_time_graph(repolist, timer_pings, interval):
-    logging.debug("IOT - PONG")
+def prs_over_time_graph(repolist, interval):
 
-    ready, results, graph_update, interval_update = handle_job_state(jm, prq, repolist)
-    if not ready:
-        return graph_update, interval_update
+    # wait for data to asynchronously download and become available.
+    cache = cm()
+    df = cache.grabm(func=prq, repos=repolist)
+    while df is None:
+        time.sleep(1.0)
+        df = cache.grabm(func=prq, repos=repolist)
 
-    logging.debug("PRS_OVER_TIME_VIZ - START")
+    # data ready.
     start = time.perf_counter()
-
-    # create dataframe from record data
-    df = pd.DataFrame(results)
+    logging.debug("PULL REQUESTS OVER TIME - START")
 
     # test if there is data
     if df.empty:
         logging.debug("PULL REQUESTS OVER TIME - NO DATA AVAILABLE")
-        return nodata_graph, False, dash.no_update
+        return nodata_graph
 
     # convert dates to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
@@ -154,19 +145,27 @@ def prs_over_time_graph(repolist, timer_pings, interval):
     created_range = df["created"].dt.to_period(interval).value_counts().sort_index()
 
     # converts to data frame object and created date column from period values
-    df_created = created_range.to_frame().reset_index().rename(columns={"index": "Date"})
+    df_created = (
+        created_range.to_frame().reset_index().rename(columns={"index": "Date"})
+    )
 
     # converts date column to a datetime object, converts to string first to handle period information
     # the period slice is to handle weekly corner case
-    df_created["Date"] = pd.to_datetime(df_created["Date"].astype(str).str[:period_slice])
+    df_created["Date"] = pd.to_datetime(
+        df_created["Date"].astype(str).str[:period_slice]
+    )
 
     # df for merged prs in time interval
-    merged_range = pd.to_datetime(df["merged"]).dt.to_period(interval).value_counts().sort_index()
+    merged_range = (
+        pd.to_datetime(df["merged"]).dt.to_period(interval).value_counts().sort_index()
+    )
     df_merged = merged_range.to_frame().reset_index().rename(columns={"index": "Date"})
     df_merged["Date"] = pd.to_datetime(df_merged["Date"].astype(str).str[:period_slice])
 
     # df for closed prs in time interval
-    closed_range = pd.to_datetime(df["closed"]).dt.to_period(interval).value_counts().sort_index()
+    closed_range = (
+        pd.to_datetime(df["closed"]).dt.to_period(interval).value_counts().sort_index()
+    )
     df_closed = closed_range.to_frame().reset_index().rename(columns={"index": "Date"})
     df_closed["Date"] = pd.to_datetime(df_closed["Date"].astype(str).str[:period_slice])
 
@@ -221,7 +220,10 @@ def prs_over_time_graph(repolist, timer_pings, interval):
         x=df_closed_merged["Date"],
         y=df_closed_merged["closed"],
         opacity=0.6,
-        hovertemplate=[f"{hover}<br>Closed: {val}<br><extra></extra>" for val in df_closed_merged["closed"]],
+        hovertemplate=[
+            f"{hover}<br>Closed: {val}<br><extra></extra>"
+            for val in df_closed_merged["closed"]
+        ],
         offsetgroup=1,
         base=df_closed_merged["merged"],
         name="PRs Closed",
@@ -250,8 +252,7 @@ def prs_over_time_graph(repolist, timer_pings, interval):
     )
     logging.debug(f"PRS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
 
-    # return fig, diable timer.
-    return fig, dash.no_update
+    return fig
 
 
 # for each day, this function calculates the amount of open prs

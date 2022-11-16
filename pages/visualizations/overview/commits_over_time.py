@@ -3,29 +3,20 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import callback
 from dash.dependencies import Input, Output, State
-import plotly.graph_objects as go
 import pandas as pd
-import datetime as dt
 import logging
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values
-
-from pages.utils.job_utils import handle_job_state, nodata_graph
 from queries.commits_query import commits_query as cmq
-from app import jm
+from cache_manager.cache_manager import CacheManager as cm
+from pages.utils.job_utils import nodata_graph
+import io
 import time
 
 gc_commits_over_time = dbc.Card(
     [
         dbc.CardBody(
             [
-                dcc.Interval(
-                    id="commits-over-time-timer",
-                    disabled=False,
-                    n_intervals=1,
-                    max_intervals=1,
-                    interval=1500,
-                ),
                 html.H4(
                     "Commits Over Time",
                     className="card-title",
@@ -41,7 +32,9 @@ gc_commits_over_time = dbc.Card(
                     placement="top",
                     is_open=False,
                 ),
-                dcc.Graph(id="commits-over-time"),
+                dcc.Loading(
+                    dcc.Graph(id="commits-over-time"),
+                ),
                 dbc.Form(
                     [
                         dbc.Row(
@@ -108,31 +101,29 @@ def toggle_popover_2(n, is_open):
 # callback for commits over time graph
 @callback(
     Output("commits-over-time", "figure"),
-    Output("commits-over-time-timer", "n_intervals"),
     [
         Input("repo-choices", "data"),
-        Input("commits-over-time-timer", "n_intervals"),
         Input("commits-time-interval", "value"),
     ],
+    background=True,
 )
-def create_commits_over_time_graph(repolist, timer_pings, interval):
-    logging.debug("COT - PONG")
+def create_commits_over_time_graph(repolist, interval):
 
-    ready, results, graph_update, interval_update = handle_job_state(jm, cmq, repolist)
-    if not ready:
-        # set n_intervals to 0 so it'll fire again.
-        return graph_update, interval_update
+    # wait for data to asynchronously download and become available.
+    cache = cm()
+    df = cache.grabm(func=cmq, repos=repolist)
+    while df is None:
+        time.sleep(1.0)
+        df = cache.grabm(func=cmq, repos=repolist)
 
-    logging.debug("COMMITS_OVER_TIME_VIZ - START")
+    # data ready.
     start = time.perf_counter()
-
-    # create dataframe from record data
-    df = pd.DataFrame(results)
+    logging.debug("COMMITS_OVER_TIME_VIZ - START")
 
     # test if there is data
     if df.empty:
         logging.debug("COMMITS OVER TIME - NO DATA AVAILABLE")
-        return nodata_graph, False, dash.no_update
+        return nodata_graph
 
     # convert to datetime objects with consistent column name
     df["date"] = pd.to_datetime(df["date"], utc=True)
@@ -154,13 +145,21 @@ def create_commits_over_time_graph(repolist, timer_pings, interval):
 
     # converts date column to a datetime object, converts to string first to handle period information
     # the period slice is to handle weekly corner case
-    df_created["Date"] = pd.to_datetime(df_created["Date"].astype(str).str[:period_slice])
+    df_created["Date"] = pd.to_datetime(
+        df_created["Date"].astype(str).str[:period_slice]
+    )
 
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
     # graph geration
-    fig = px.bar(df_created, x="Date", y="commits", range_x=x_r, labels={"x": x_name, "y": "Commits"})
+    fig = px.bar(
+        df_created,
+        x="Date",
+        y="commits",
+        range_x=x_r,
+        labels={"x": x_name, "y": "Commits"},
+    )
     fig.update_traces(hovertemplate=hover + "<br>Commits: %{y}<br>")
     fig.update_xaxes(
         showgrid=True,
@@ -176,4 +175,4 @@ def create_commits_over_time_graph(repolist, timer_pings, interval):
         margin_r=20,
     )
     logging.debug(f"COMMITS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
-    return fig, dash.no_update
+    return fig

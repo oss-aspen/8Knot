@@ -5,28 +5,20 @@ from dash import callback
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
-import datetime as dt
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values
-
-from app import jm
-from pages.utils.job_utils import handle_job_state, nodata_graph
+from pages.utils.job_utils import nodata_graph
 from queries.prs_query import prs_query as prq
 import time
+import io
+from cache_manager.cache_manager import CacheManager as cm
 
 gc_pr_staleness = dbc.Card(
     [
         dbc.CardBody(
             [
-                dcc.Interval(
-                    id="pr-staleness-timer",
-                    disabled=False,
-                    n_intervals=1,
-                    max_intervals=1,
-                    interval=1500,
-                ),
                 html.H4(
                     "Pull Request Activity- Staleness",
                     className="card-title",
@@ -45,7 +37,9 @@ gc_pr_staleness = dbc.Card(
                     placement="top",
                     is_open=False,
                 ),
-                dcc.Graph(id="pr_staleness"),
+                dcc.Loading(
+                    dcc.Graph(id="pr_staleness"),
+                ),
                 dbc.Form(
                     [
                         dbc.Row(
@@ -155,38 +149,36 @@ def toggle_popover_prs(n, is_open):
 @callback(
     Output("pr_staleness", "figure"),
     Output("pr_staling_stale_check_alert", "is_open"),
-    Output("pr-staleness-timer", "n_intervals"),
     [
         Input("repo-choices", "data"),
-        Input("pr-staleness-timer", "n_intervals"),
         Input("pr-staleness-interval", "value"),
         Input("staling_days", "value"),
         Input("stale_days", "value"),
     ],
+    background=True,
 )
-def new_staling_prs(repolist, timer_pings, interval, staling_interval, stale_interval):
-    logging.debug("PRS - PONG")
+def new_staling_prs(repolist, interval, staling_interval, stale_interval):
 
     if staling_interval > stale_interval:
-        return dash.no_update, True, dash.no_update
+        return dash.no_update, True
 
     if staling_interval is None or stale_interval is None:
-        return dash.no_update, dash.no_update, dash.no_update
+        return dash.no_update, dash.no_update
 
-    ready, results, graph_update, interval_update = handle_job_state(jm, prq, repolist)
-    if not ready:
-        return graph_update, dash.no_update, interval_update
+    # wait for data to asynchronously download and become available.
+    cache = cm()
+    df = cache.grabm(func=prq, repos=repolist)
+    while df is None:
+        time.sleep(1.0)
+        df = cache.grabm(func=prq, repos=repolist)
 
-    logging.debug("PULL_REQUEST_STALENESS_VIZ - START")
     start = time.perf_counter()
-
-    # create dataframe from record data
-    df = pd.DataFrame(results)
+    logging.debug("PULL REQUEST STALENESS - START")
 
     # test if there is data
     if df.empty:
         logging.debug("PULL REQUEST STALENESS  - NO DATA AVAILABLE")
-        return nodata_graph, False, dash.no_update
+        return nodata_graph, False
 
     # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
@@ -209,7 +201,10 @@ def new_staling_prs(repolist, timer_pings, interval, staling_interval, stale_int
 
     df_status["New"], df_status["Staling"], df_status["Stale"] = zip(
         *df_status.apply(
-            lambda row: get_new_staling_stale_up_to(df, row.Date, staling_interval, stale_interval), axis=1
+            lambda row: get_new_staling_stale_up_to(
+                df, row.Date, staling_interval, stale_interval
+            ),
+            axis=1,
         )
     )
 
@@ -268,10 +263,12 @@ def new_staling_prs(repolist, timer_pings, interval, staling_interval, stale_int
         # edit hover values
         fig.update_traces(hovertemplate=hover + "<br>PRs: %{y}<br>" + "<extra></extra>")
 
-    fig.update_layout(xaxis_title="Time", yaxis_title="Pull Requests", legend_title="Type")
+    fig.update_layout(
+        xaxis_title="Time", yaxis_title="Pull Requests", legend_title="Type"
+    )
 
-    logging.debug(f"PULL_REQUEST_STALENESS_VIZ - END - {time.perf_counter() - start}")
-    return fig, False, dash.no_update
+    logging.debug(f"PULL REQUEST STALENESS - END - {time.perf_counter() - start}")
+    return fig, False
 
 
 def get_new_staling_stale_up_to(df, date, staling_interval, stale_interval):
