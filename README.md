@@ -3,14 +3,14 @@
 ![Pre-Commit](https://github.com/JamesKunstle/explorer/actions/workflows/pre-commit.yml/badge.svg)
 ![Build-Push](https://github.com/JamesKunstle/explorer/actions/workflows/build-push-quay.yml/badge.svg)
 
-Welcome to 8knot!
+Welcome to 8Knot!
 
 [Example of Application](https://eightknot.osci.io/)
 ---
 
 ## Introduction
 
-8knot is a [Dash](https://dash.plotly.com/) data web-app built by Red Hat's Open Source Program Office ([OSPO](https://www.redhat.com/en/blog/channel/red-hat-open-source-program-office)).
+8Knot is a [Dash](https://dash.plotly.com/) data web-app built by Red Hat's Open Source Program Office ([OSPO](https://www.redhat.com/en/blog/channel/red-hat-open-source-program-office)).
 
 The number of repositories and projects that GitHub hosts is staggering. Even more impressive is the rate at which this number is growing.
 Projects on GitHub range from student projects to technological monoliths like the
@@ -34,7 +34,7 @@ Quoting Augur's own README.md:
 >"Augur’s main focus is to measure the overall health and sustainability of open source projects, as these types of projects are system critical for nearly every software organization or company.
 >We do this by gathering data about project repositories and normalizing that into our data model to provide useful metrics about your project’s health."
 
-8knot's contribution to further closing this gap is to provide an interface to the data collected and organized by Augur as a data web-app with both essential statistical figures,
+8Knot's contribution to further closing this gap is to provide an interface to the data collected and organized by Augur as a data web-app with both essential statistical figures,
 and higher-order machine learning and data science-informed insights.
 
 ---
@@ -63,7 +63,7 @@ We would prefer any initial communication be through Matrix but if you would pre
 
 If you would like to see the current state of our application, we would love any user-stories or bug-reports from visiting our alpha-deployment!
 
-[8knot](https://eightknot.osci.io/)
+[8Knot](https://eightknot.osci.io/)
 
 If you would prefer to look at our most up-to-date work, please check out the following section.
 
@@ -75,55 +75,59 @@ We've tried to make it as easy as possible to go from fork/clone to a running in
 
 ### Credentials
 
-You will need credentials of the following form, named "env.list", at the top-level of the 8knot directory that you clone.
+You will need credentials of the following form, named "env.list", at the top-level of the 8Knot directory that you clone.
+The credentials below are valid, so you can copy and use them to access a development instance of Augur.
 
 ```
     connection_string=sqlite:///:memory:
-    database=<<Database>>
-    host=<<Host>>
-    password=<<Your Password>>
-    port=<<Port>>
+    database=astros
+    host=chaoss.tv
+    password=!xpk98T6?bKK
+    port=5432
     schema=augur_data
-    user=<<Your Username>>
+    user=eightknot
     user_type=read_only
 ```
-
-To get these credentials please contact one of the maintainers of this project or ping us in our Matrix channel!
 
 ### Runtime
 
 We use Docker containers to minimize the installation requirements for development. If you do not have Docker on your system, please follow the following guide: [Install Docker](https://docs.docker.com/engine/install/)
 
-### Scripts
+In addition to singular containers we also use Docker Compose. Please make sure you have Docker Compose installed on your system. You can find documentation on doing so here: [Docker Compose](https://docs.docker.com/compose/install/)
 
-All runtime environment installation and architecture is handled in Docker containers.
-
-Anything not handled by Docker itself (building/networking/parameterizing containers) has
-been handled by the script "scripts/launch\_dev.sh". Please take a moment to become familiar with the steps in this script and suggest any improvements.
-
-Please run the following to launch your app:
+If the following commands return sensible results then Docker and Docker Compose are installed:
 
 ```bash
-bash scripts/launch_dev.sh
+docker && docker compose || docker-compose
 ```
 
-If you encounter erroneous errors, such as if the Docker Daemon blocks connections, you'll need to run Docker
-in root mode. By default we don't recommend this, but some operating systems (Ubuntu, Fedora) require this.
+(above just runs docker and docker-compose and checks if both work)
 
-Please run the following if you have this problem:
+### Build and Run 
+
+8Knot is a multi-container application. 
+
+The webserver, worker-pool, and cache containers communicate with one another via docker network.
+
+All of the build/tear-down is done with docker-compose.
+
+To start the application, run at the top-level of the 8Knot directory:
 
 ```bash
-sudo bash scripts/launch_dev.sh
+docker compose up --build
 ```
 
-If you have further problems, make sure that no current Redis instance is running on port 6379- you can
-see if this is the case by running:
+To stop the application, run:
 
 ```bash
-ps aux | grep redis
+ctrl-c
 ```
 
-Kill any existing redis-server instance by ID and re-run 'launch_dev.sh'.
+To clean up the stopped containers, run:
+
+```bash
+docker compose down
+```
 
 ---
 
