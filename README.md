@@ -76,19 +76,18 @@ We've tried to make it as easy as possible to go from fork/clone to a running in
 ### Credentials
 
 You will need credentials of the following form, named "env.list", at the top-level of the 8Knot directory that you clone.
+The credentials below are valid, so you can copy and use them to access a development instance of Augur.
 
 ```
     connection_string=sqlite:///:memory:
-    database=<<Database>>
-    host=<<Host>>
-    password=<<Your Password>>
-    port=<<Port>>
+    database=astros
+    host=chaoss.tv
+    password=!xpk98T6?bKK
+    port=5432
     schema=augur_data
-    user=<<Your Username>>
+    user=eightknot
     user_type=read_only
 ```
-
-To get these credentials please contact one of the maintainers of this project or ping us in our Matrix channel!
 
 ### Runtime
 
