@@ -32,14 +32,17 @@ def commits_query(self, dbmc, repos):
     if len(repos) == 0:
         return None
 
+    # commenting-outunused query components. only need the repo_id and the
+    # authorship date for our current queries. remove the '--' to re-add
+    # the now-removed values.
     query_string = f"""
                     SELECT
                         r.repo_id AS id,
-                        r.repo_name,
+                        -- r.repo_name,
                         c.cmt_commit_hash AS commits,
-                        c.cmt_id AS file,
-                        c.cmt_added AS lines_added,
-                        c.cmt_removed AS lines_removed,
+                        -- c.cmt_id AS file,
+                        -- c.cmt_added AS lines_added,
+                        -- c.cmt_removed AS lines_removed,
                         c.cmt_author_date AS date
                     FROM
                         repo r
@@ -58,12 +61,19 @@ def commits_query(self, dbmc, repos):
     # and temporarily store in List to be
     # stored in Redis.
     pic = []
-    for i, r in enumerate(repos):
+    for r in repos:
         # convert series to a dataframe
-        c_df = pd.DataFrame(df_commits.loc[df_commits["id"] == r]).to_csv()
+        # once we've stored the data by ID we no longer need the column.
+        c_df = pd.DataFrame(df_commits.loc[df_commits["id"] == r].drop(columns=["id"]))
+
+        # try to convert dates in date-columns to posix timestamps
+        try:
+            c_df["date"] = pd.Timestamp(c_df["date"]).timestamp()
+        except:
+            pass
 
         # add pickled dataframe to list of pickled objects
-        pic.append(c_df)
+        pic.append(c_df.to_csv(index=False))
 
     del df_commits
 

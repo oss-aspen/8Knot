@@ -33,3 +33,19 @@ services:
     ports:
       - 6379:6379
     restart: always
+
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile.flower
+    depends_on:
+      - worker-pool
+      - cache
+      - web-server
+    env_file:
+      - ./env.list
+    environment:
+      REDIS_SERVICE_HOST: cache
+      REDIS_SERVICE_PORT: 6379
+    ports:
+      - 5555:5555

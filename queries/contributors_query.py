@@ -61,6 +61,7 @@ def contributors_query(self, dbmc, repos):
 
     df_cont = df_cont.reset_index()
     df_cont.drop("index", axis=1, inplace=True)
+
     pic = []
 
     for i, r in enumerate(repos):

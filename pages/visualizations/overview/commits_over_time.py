@@ -137,6 +137,7 @@ def commits_over_time_graph(repolist, interval):
 def process_data(df: pd.DataFrame, interval):
 
     # convert to datetime objects with consistent column name
+    # incoming value should be a posix integer.
     df["date"] = pd.to_datetime(df["date"], utc=True)
     df.rename(columns={"date": "created"}, inplace=True)
 
