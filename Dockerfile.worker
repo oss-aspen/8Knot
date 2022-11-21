@@ -28,4 +28,4 @@ COPY ./ /explorer/
 
 # run worker
 # CMD [ "rq", "worker", "-c", "worker_settings" ]
-CMD ["celery", "-A", "app:celery_app", "worker", "--loglevel=DEBUG", "--concurrency=15"]
+CMD ["celery", "-A", "app:celery_app", "worker", "--loglevel=DEBUG", "--concurrency=2"]
