@@ -125,6 +125,17 @@ def issues_over_time_graph(repolist, interval):
         logging.debug("ISSUES OVER TIME - NO DATA AVAILABLE")
         return nodata_graph
 
+    #function for all data pre processing
+    df_created, df_closed, df_open = process_data(df, interval)
+
+    fig = create_figure(df_created, df_closed, df_open, interval)
+
+    logging.debug(f"ISSUES_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
+
+    return fig
+
+def process_data(df: pd.DataFrame, interval):
+
     # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
     df["closed"] = pd.to_datetime(df["closed"], utc=True)
@@ -138,7 +149,7 @@ def issues_over_time_graph(repolist, interval):
         # this is to slice the extra period information that comes with the weekly case
         period_slice = 10
 
-    # data frames for issues created, merged, or closed. Detailed description applies for all 3.
+    # data frames for issues created or closed. Detailed description applies for all 3.
 
     # get the count of created issues in the desired interval in pandas period format, sort index to order entries
     created_range = (
@@ -156,7 +167,7 @@ def issues_over_time_graph(repolist, interval):
         df_created["Date"].astype(str).str[:period_slice]
     )
 
-    # df for merged issues in time interval
+    # df for closed issues in time interval
     closed_range = (
         pd.to_datetime(df["closed"]).dt.to_period(interval).value_counts().sort_index()
     )
@@ -185,6 +196,11 @@ def issues_over_time_graph(repolist, interval):
     df_open["Open"] = df_open.apply(lambda row: get_open(df, row.Date), axis=1)
 
     df_open["Date"] = df_open["Date"].dt.strftime("%Y-%m-%d")
+
+
+    return df_created, df_closed, df_open
+
+def create_figure(df_created: pd.DataFrame, df_closed: pd.DataFrame, df_open: pd.DataFrame, interval):
 
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
@@ -229,10 +245,6 @@ def issues_over_time_graph(repolist, interval):
             hovertemplate="Issues Open: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
         )
     )
-    logging.debug(f"ISSUES_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
-
-    # df = px.data.iris()  # iris is a pandas DataFrame
-    # fig = px.scatter(df, x="sepal_width", y="sepal_length")
 
     return fig
 

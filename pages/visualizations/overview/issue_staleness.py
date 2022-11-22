@@ -158,7 +158,7 @@ def toggle_popover_issues(n, is_open):
     ],
     background=True,
 )
-def new_staling_issues(repolist, interval, staling_interval, stale_interval):
+def new_staling_issues_graph(repolist, interval, staling_interval, stale_interval):
 
     if staling_interval > stale_interval:
         return dash.no_update, True, dash.no_update
@@ -180,6 +180,16 @@ def new_staling_issues(repolist, interval, staling_interval, stale_interval):
     if df.empty:
         logging.debug("ISSUE STALENESS - NO DATA AVAILABLE")
         return nodata_graph, False
+
+    #function for all data pre processing
+    df_status = process_data(df, interval, staling_interval, stale_interval)
+
+    fig = create_figure(df_status, interval)
+
+    logging.debug(f"ISSUE STALENESS - END - {time.perf_counter() - start}")
+    return fig, False
+
+def process_data(df: pd.DataFrame, interval, staling_interval, stale_interval):
 
     # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
@@ -212,6 +222,10 @@ def new_staling_issues(repolist, interval, staling_interval, stale_interval):
         df_status["Date"] = df_status["Date"].dt.strftime("%Y-%m")
     elif interval == "Y":
         df_status["Date"] = df_status["Date"].dt.year
+
+    return df_status
+
+def create_figure(df_status: pd.DataFrame, interval):
 
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
@@ -260,9 +274,7 @@ def new_staling_issues(repolist, interval, staling_interval, stale_interval):
 
     fig.update_layout(xaxis_title="Time", yaxis_title="Issues", legend_title="Type")
 
-    logging.debug(f"ISSUE STALENESS - END - {time.perf_counter() - start}")
-    return fig, False
-
+    return fig
 
 def get_new_staling_stale_up_to(df, date, staling_interval, stale_interval):
 

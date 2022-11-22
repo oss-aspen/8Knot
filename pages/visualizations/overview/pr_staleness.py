@@ -157,7 +157,7 @@ def toggle_popover_prs(n, is_open):
     ],
     background=True,
 )
-def new_staling_prs(repolist, interval, staling_interval, stale_interval):
+def new_staling_prs_graph(repolist, interval, staling_interval, stale_interval):
 
     if staling_interval > stale_interval:
         return dash.no_update, True
@@ -179,6 +179,16 @@ def new_staling_prs(repolist, interval, staling_interval, stale_interval):
     if df.empty:
         logging.debug("PULL REQUEST STALENESS  - NO DATA AVAILABLE")
         return nodata_graph, False
+
+    #function for all data pre processing
+    df_status = process_data(df, interval, staling_interval, stale_interval)
+
+    fig = create_figure(df_status, interval)
+
+    logging.debug(f"PULL REQUEST STALENESS - END - {time.perf_counter() - start}")
+    return fig, False
+
+def process_data(df: pd.DataFrame, interval, staling_interval, stale_interval):
 
     # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
@@ -213,13 +223,10 @@ def new_staling_prs(repolist, interval, staling_interval, stale_interval):
     elif interval == "Y":
         df_status["Date"] = df_status["Date"].dt.year
 
-        """base = [["Date", "New", "Staling", "Stale"]]
-        for date in dates:
-            counts = get_new_staling_stale_up_to(df, date, staling_interval, stale_interval)
-            base.append(counts)
+    return df_status
 
-        df_status = pd.DataFrame(base[1:], columns=base[0])
-    """
+def create_figure(df_status: pd.DataFrame, interval):
+
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
@@ -259,7 +266,7 @@ def new_staling_prs(repolist, interval, staling_interval, stale_interval):
             x="Date",
             y=["New", "Staling", "Stale"],
         )
-
+        
         # edit hover values
         fig.update_traces(hovertemplate=hover + "<br>PRs: %{y}<br>" + "<extra></extra>")
 
@@ -267,9 +274,7 @@ def new_staling_prs(repolist, interval, staling_interval, stale_interval):
         xaxis_title="Time", yaxis_title="Pull Requests", legend_title="Type"
     )
 
-    logging.debug(f"PULL REQUEST STALENESS - END - {time.perf_counter() - start}")
-    return fig, False
-
+    return fig
 
 def get_new_staling_stale_up_to(df, date, staling_interval, stale_interval):
 
