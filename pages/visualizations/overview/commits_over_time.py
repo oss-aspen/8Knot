@@ -6,7 +6,7 @@ from dash.dependencies import Input, Output, State
 import pandas as pd
 import logging
 import plotly.express as px
-from pages.utils.graph_utils import get_graph_time_values
+from pages.utils.graph_utils import get_graph_time_values, color_seq
 from queries.commits_query import commits_query as cmq
 from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
@@ -125,13 +125,14 @@ def commits_over_time_graph(repolist, interval):
         logging.debug("COMMITS OVER TIME - NO DATA AVAILABLE")
         return nodata_graph
 
-    #function for all data pre processing
+    # function for all data pre processing
     df_created = process_data(df, interval)
 
     fig = create_figure(df_created, interval)
-    
+
     logging.debug(f"COMMITS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
     return fig
+
 
 def process_data(df: pd.DataFrame, interval):
 
@@ -155,11 +156,10 @@ def process_data(df: pd.DataFrame, interval):
 
     # converts date column to a datetime object, converts to string first to handle period information
     # the period slice is to handle weekly corner case
-    df_created["Date"] = pd.to_datetime(
-        df_created["Date"].astype(str).str[:period_slice]
-    )
+    df_created["Date"] = pd.to_datetime(df_created["Date"].astype(str).str[:period_slice])
 
     return df_created
+
 
 def create_figure(df_created: pd.DataFrame, interval):
 
@@ -173,6 +173,7 @@ def create_figure(df_created: pd.DataFrame, interval):
         y="commits",
         range_x=x_r,
         labels={"x": x_name, "y": "Commits"},
+        color_discrete_sequence=[color_seq[3]],
     )
     fig.update_traces(hovertemplate=hover + "<br>Commits: %{y}<br>")
     fig.update_xaxes(

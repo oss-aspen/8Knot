@@ -6,7 +6,7 @@ from dash.dependencies import Input, Output, State
 import pandas as pd
 import logging
 import plotly.express as px
-
+from pages.utils.graph_utils import color_seq
 from pages.utils.job_utils import nodata_graph
 from queries.contributors_query import contributors_query as ctq
 import time
@@ -157,7 +157,7 @@ def repeat_drive_by_graph(repolist, contribs, view):
         logging.debug("CONTRIB DRIVE REPEAT - NO DATA AVAILABLE")
         return nodata_graph
 
-    #function for all data pre processing
+    # function for all data pre processing
     df_cont_subset = process_data(df, view, contribs)
 
     # test if there is data
@@ -171,8 +171,9 @@ def repeat_drive_by_graph(repolist, contribs, view):
 
     return fig
 
+
 def process_data(df, view, contribs):
-    
+
     # convert to datetime objects with consistent column name
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
     df.rename(columns={"created_at": "created"}, inplace=True)
@@ -183,31 +184,26 @@ def process_data(df, view, contribs):
 
     # filtering data by view
     if view == "drive":
-        df_cont_subset = df_cont_subset.loc[
-            ~df_cont_subset["cntrb_id"].isin(contributors)
-        ]
+        df_cont_subset = df_cont_subset.loc[~df_cont_subset["cntrb_id"].isin(contributors)]
     else:
-        df_cont_subset = df_cont_subset.loc[
-            df_cont_subset["cntrb_id"].isin(contributors)
-        ]
+        df_cont_subset = df_cont_subset.loc[df_cont_subset["cntrb_id"].isin(contributors)]
 
     # reset index to be ready for plotly
     df_cont_subset = df_cont_subset.reset_index()
 
     return df_cont_subset
 
+
 def create_figure(df_cont_subset):
-    fig = px.histogram(
-        df_cont_subset, x="created", color="Action", template="minty"
-        )
+    fig = px.histogram(df_cont_subset, x="created", color="Action", color_discrete_sequence=color_seq)
     fig.update_traces(
         xbins_size="M3",
         hovertemplate="Date: %{x}" + "<br>Amount: %{y}<br><extra></extra>",
-        )
+    )
     fig.update_xaxes(showgrid=True, ticklabelmode="period", dtick="M3")
     fig.update_layout(
         xaxis_title="Quarter",
         yaxis_title="Contributions",
         margin_b=40,
-        )
+    )
     return fig
