@@ -128,7 +128,7 @@ def toggle_popover_3(n, is_open):
     ],
     background=True,
 )
-def create_graph(repolist, contribs, interval):
+def create_contrib_over_time_graph(repolist, contribs, interval):
 
     # wait for data to asynchronously download and become available.
     cache = cm()
@@ -145,13 +145,14 @@ def create_graph(repolist, contribs, interval):
         logging.debug("PULL REQUESTS OVER TIME - NO DATA AVAILABLE")
         return nodata_graph
 
-    #function for all data pre processing
+    # function for all data pre processing
     df_drive_repeat = process_data(df, interval, contribs)
 
     fig = create_figure(df_drive_repeat, interval)
 
     logging.debug(f"CONTRIBUTIONS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
     return fig
+
 
 def process_data(df, interval, contribs):
     # convert to datetime objects with consistent column name
@@ -211,6 +212,7 @@ def process_data(df, interval, contribs):
         df_drive_repeat["Date"] = df_drive_repeat["Date"].dt.strftime("%Y-01-01")
 
     return df_drive_repeat
+
 
 def create_figure(df_drive_repeat, interval):
     # time values for graph
