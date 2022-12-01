@@ -119,7 +119,7 @@ def graph_title(view):
     ],
     background=True,
 )
-def create_total_contributor_growth_graph(repolist, bin_size):
+def total_contributor_growth_graph(repolist, interval):
 
     # wait for data to asynchronously download and become available.
     cache = cm()
@@ -135,6 +135,16 @@ def create_total_contributor_growth_graph(repolist, bin_size):
     if df.empty:
         logging.debug("TOTAL_CONTRIBUTOR_GROWTH_VIZ - NO DATA AVAILABLE")
         return nodata_graph
+
+    #function for all data pre processing
+    df, df_contribs = process_data(df, interval)
+
+    fig = create_figure(df,df_contribs, interval)
+
+    logging.debug(f"TOTAL_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}")
+    return fig
+
+def process_data(df, interval):
 
     # convert to datetime objects with consistent column name
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
@@ -153,25 +163,11 @@ def create_total_contributor_growth_graph(repolist, bin_size):
     df = df[df["rank"] == 1]
 
     # get all of the unique entries by contributor ID
-    df = df.drop_duplicates(subset=["cntrb_id"])
+    df.drop_duplicates(subset=["cntrb_id"], inplace = True)
+    df.reset_index(inplace=True)
 
-    if bin_size == -1:
-        fig = contributor_growth_line_bar(df)
-    else:
-        fig = contributor_growth_bar_graph(df, bin_size)
-
-    logging.debug(f"TOTAL_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}")
-    # return the simple line graph
-    return fig
-
-
-def contributor_growth_bar_graph(df, interval):
-
-    """
-    Group-by determined by the radio button options.
-    Aggregation is the number of rows per time bin.
-    Months and Years are  options.
-    """
+    if interval == -1:
+        return df, None
 
     # get the count of new contributors in the desired interval in pandas period format, sort index to order entries
     created_range = (
@@ -192,71 +188,34 @@ def contributor_growth_bar_graph(df, interval):
     # rounded up to next year so this is a simple patch
     if interval == "Y":
         df_contribs["Date"] = df_contribs["Date"].dt.year
-
-    if interval == "M":
+    elif interval == "M":
         df_contribs["Date"] = df_contribs["Date"].dt.strftime("%Y-%m")
+
+    return df, df_contribs
+
+def create_figure(df,df_contribs, interval):
 
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
-    # create the graph
-    fig = px.bar(
-        df_contribs,
-        x="Date",
-        y="contribs",
-        range_x=x_r,
-        labels={"x": x_name, "y": "Contributors"},
-    )
-
-    # edit hover values
-    fig.update_traces(hovertemplate=hover + "<br>Contributors: %{y}<br>")
-
-    # add the date-range selector
-    fig.update_layout(
-        xaxis=dict(
-            rangeselector=dict(
-                buttons=list(
-                    [
-                        dict(count=1, label="1m", step="month", stepmode="backward"),
-                        dict(count=6, label="6m", step="month", stepmode="backward"),
-                        dict(count=1, label="YTD", step="year", stepmode="todate"),
-                        dict(count=1, label="1y", step="year", stepmode="backward"),
-                        dict(step="all"),
-                    ]
-                )
-            ),
-            rangeslider=dict(visible=True),
-            type="date",
+    if interval == -1:
+        fig = px.line(
+            df,
+            x="created",
+            y=df.index,
         )
-    )
-
-    # label the figure correctly.
-    fig.update_layout(
-        xaxis_title="Time",
-        yaxis_title="Number of Contributors",
-        margin_r=20,
-    )
-    return fig
-
-
-def contributor_growth_line_bar(df):
-
-    # reset index to enumerate contributions
-    df = df.reset_index()
-    df = df.drop(["index"], axis=1)
-    df = df.reset_index()
-
-    # create the figure
-    fig = px.line(
-        df,
-        x="created",
-        y="index",
-    )
-
-    # edit hover values
-    fig.update_traces(
+        fig.update_traces(
         hovertemplate="Contributors: %{y}<br>%{x|%b %d, %Y} <extra></extra>"
-    )
+        )
+    else:
+        fig = px.bar(
+            df_contribs,
+            x="Date",
+            y="contribs",
+            range_x=x_r,
+            labels={"x": x_name, "y": "Contributors"},
+        )
+        fig.update_traces(hovertemplate=hover + "<br>Contributors: %{y}<br>")
 
     """
         Ref. for this awesome button thing:
@@ -280,7 +239,6 @@ def contributor_growth_line_bar(df):
             type="date",
         )
     )
-
     # label the figure correctly
     fig.update_layout(
         xaxis_title="Time",

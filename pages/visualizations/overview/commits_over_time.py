@@ -107,7 +107,7 @@ def toggle_popover_2(n, is_open):
     ],
     background=True,
 )
-def create_commits_over_time_graph(repolist, interval):
+def commits_over_time_graph(repolist, interval):
 
     # wait for data to asynchronously download and become available.
     cache = cm()
@@ -124,6 +124,16 @@ def create_commits_over_time_graph(repolist, interval):
     if df.empty:
         logging.debug("COMMITS OVER TIME - NO DATA AVAILABLE")
         return nodata_graph
+
+    #function for all data pre processing
+    df_created = process_data(df, interval)
+
+    fig = create_figure(df_created, interval)
+    
+    logging.debug(f"COMMITS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
+    return fig
+
+def process_data(df: pd.DataFrame, interval):
 
     # convert to datetime objects with consistent column name
     df["date"] = pd.to_datetime(df["date"], utc=True)
@@ -148,6 +158,10 @@ def create_commits_over_time_graph(repolist, interval):
     df_created["Date"] = pd.to_datetime(
         df_created["Date"].astype(str).str[:period_slice]
     )
+
+    return df_created
+
+def create_figure(df_created: pd.DataFrame, interval):
 
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
@@ -174,5 +188,5 @@ def create_commits_over_time_graph(repolist, interval):
         margin_b=40,
         margin_r=20,
     )
-    logging.debug(f"COMMITS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
+
     return fig

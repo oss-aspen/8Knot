@@ -125,6 +125,17 @@ def prs_over_time_graph(repolist, interval):
         logging.debug("PULL REQUESTS OVER TIME - NO DATA AVAILABLE")
         return nodata_graph
 
+    #function for all data pre processing
+    df_created, df_closed_merged, df_open = process_data(df, interval)
+
+    fig = create_figure(df_created, df_closed_merged, df_open, interval)
+
+    logging.debug(f"PRS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
+
+    return fig
+
+def process_data(df: pd.DataFrame, interval):
+
     # convert dates to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
     df["merged"] = pd.to_datetime(df["merged"], utc=True)
@@ -139,7 +150,7 @@ def prs_over_time_graph(repolist, interval):
         # this is to slice the extra period information that comes with the weekly case
         period_slice = 10
 
-    # data frames for PR created, merged, or closed. Detailed description applies for all 3.
+    # --data frames for PR created, merged, or closed. Detailed description applies for all 3.--
 
     # get the count of created prs in the desired interval in pandas period format, sort index to order entries
     created_range = df["created"].dt.to_period(interval).value_counts().sort_index()
@@ -179,6 +190,8 @@ def prs_over_time_graph(repolist, interval):
         df_created["Date"] = df_created["Date"].dt.strftime("%Y-01-01")
         df_closed_merged["Date"] = df_closed_merged["Date"].dt.strftime("%Y-01-01")
 
+    #----- Open PR processinging starts here ----
+
     # first and last elements of the dataframe are the
     # earliest and latest events respectively
     earliest = df["created"].min()
@@ -194,6 +207,10 @@ def prs_over_time_graph(repolist, interval):
     df_open["Open"] = df_open.apply(lambda row: get_open(df, row.Date), axis=1)
 
     df_open["Date"] = df_open["Date"].dt.strftime("%Y-%m-%d")
+
+    return df_created, df_closed_merged, df_open
+
+def create_figure(df_created: pd.DataFrame, df_closed_merged: pd.DataFrame, df_open: pd.DataFrame, interval):
 
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
@@ -250,7 +267,6 @@ def prs_over_time_graph(repolist, interval):
             hovertemplate="PRs Open: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
         )
     )
-    logging.debug(f"PRS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
 
     return fig
 

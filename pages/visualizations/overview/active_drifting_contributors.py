@@ -1,7 +1,6 @@
-from dash import html, dcc
+from dash import html, dcc, callback
 import dash
 import dash_bootstrap_components as dbc
-from dash import callback
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
@@ -160,7 +159,7 @@ def toggle_popover_4(n, is_open):
     ],
     background=True,
 )
-def active_drifting_contributors(repolist, interval, drift_interval, away_interval):
+def active_drifting_contributors_graph(repolist, interval, drift_interval, away_interval):
 
     if drift_interval is None or away_interval is None:
         return dash.no_update, dash.no_update, dash.no_update
@@ -182,6 +181,18 @@ def active_drifting_contributors(repolist, interval, drift_interval, away_interv
     if df.empty:
         logging.debug("PULL REQUEST STALENESS - NO DATA AVAILABLE")
         return nodata_graph, False
+    
+    #function for all data pre processing
+    df_status = process_data(df, interval, drift_interval, away_interval)
+
+    fig = create_figure(df_status, interval)
+
+    logging.debug(
+        f"ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}"
+    )
+    return fig, False
+
+def process_data(df: pd.DataFrame, interval, drift_interval, away_interval):
 
     # convert to datetime objects with consistent column name
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
@@ -209,13 +220,17 @@ def active_drifting_contributors(repolist, interval, drift_interval, away_interv
         )
     )
 
-    # time values for graph
-    x_r, x_name, hover, period = get_graph_time_values(interval)
-
     if interval == "M":
         df_status["Date"] = df_status["Date"].dt.strftime("%Y-%m")
     elif interval == "Y":
         df_status["Date"] = df_status["Date"].dt.year
+
+    return df_status
+
+def create_figure(df_status: pd.DataFrame, interval):
+
+    # time values for graph
+    x_r, x_name, hover, period = get_graph_time_values(interval)
 
     # making a line graph if the bin-size is small enough.
     if interval == "D":
@@ -259,10 +274,7 @@ def active_drifting_contributors(repolist, interval, drift_interval, away_interv
         xaxis_title="Time", yaxis_title="Number of Contributors", legend_title="Type"
     )
 
-    logging.debug(
-        f"ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}"
-    )
-    return fig, False
+    return fig
 
 
 def get_active_drifting_away_up_to(df, date, drift_interval, away_interval):

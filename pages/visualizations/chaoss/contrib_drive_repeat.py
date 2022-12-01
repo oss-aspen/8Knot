@@ -139,7 +139,7 @@ def graph_title(view):
     ],
     background=True,
 )
-def create_drive_by_graph(repolist, contribs, view):
+def repeat_drive_by_graph(repolist, contribs, view):
 
     # wait for data to asynchronously download and become available.
     cache = cm()
@@ -148,14 +148,31 @@ def create_drive_by_graph(repolist, contribs, view):
         time.sleep(1.0)
         df = cache.grabm(func=ctq, repos=repolist)
 
+    # data ready.
     start = time.perf_counter()
     logging.debug("CONTRIB_DRIVE_REPEAT_VIZ - START")
 
     # test if there is data
     if df.empty:
         logging.debug("CONTRIB DRIVE REPEAT - NO DATA AVAILABLE")
-        return nodata_graph, False, dash.no_update
+        return nodata_graph
 
+    #function for all data pre processing
+    df_cont_subset = process_data(df, view, contribs)
+
+    # test if there is data
+    if df_cont_subset.empty:
+        logging.debug("CONTRIB DRIVE REPEAT - NO DRIVE OR REPEAT DATA")
+        return nodata_graph
+
+    fig = create_figure(df_cont_subset)
+
+    logging.debug(f"CONTRIB_DRIVE_REPEAT_VIZ - END - {time.perf_counter() - start}")
+
+    return fig
+
+def process_data(df, view, contribs):
+    
     # convert to datetime objects with consistent column name
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
     df.rename(columns={"created_at": "created"}, inplace=True)
@@ -177,22 +194,20 @@ def create_drive_by_graph(repolist, contribs, view):
     # reset index to be ready for plotly
     df_cont_subset = df_cont_subset.reset_index()
 
-    # graph generation
-    if df_cont_subset is not None:
-        fig = px.histogram(
-            df_cont_subset, x="created", color="Action", template="minty"
+    return df_cont_subset
+
+def create_figure(df_cont_subset):
+    fig = px.histogram(
+        df_cont_subset, x="created", color="Action", template="minty"
         )
-        fig.update_traces(
-            xbins_size="M3",
-            hovertemplate="Date: %{x}" + "<br>Amount: %{y}<br><extra></extra>",
+    fig.update_traces(
+        xbins_size="M3",
+        hovertemplate="Date: %{x}" + "<br>Amount: %{y}<br><extra></extra>",
         )
-        fig.update_xaxes(showgrid=True, ticklabelmode="period", dtick="M3")
-        fig.update_layout(
-            xaxis_title="Quarter",
-            yaxis_title="Contributions",
-            margin_b=40,
+    fig.update_xaxes(showgrid=True, ticklabelmode="period", dtick="M3")
+    fig.update_layout(
+        xaxis_title="Quarter",
+        yaxis_title="Contributions",
+        margin_b=40,
         )
-        logging.debug(f"CONTRIB_DRIVE_REPEAT_VIZ - END - {time.perf_counter() - start}")
-        return fig
-    else:
-        return nodata_graph
+    return fig

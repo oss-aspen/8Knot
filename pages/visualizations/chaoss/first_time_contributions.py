@@ -86,6 +86,17 @@ def create_first_time_contributors_graph(repolist):
         logging.debug("1ST CONTRIBUTIONS - NO DATA AVAILABLE")
         return nodata_graph, False
 
+    # function for all data pre processing
+    df = process_data(df)
+
+    fig = create_figure(df)
+
+    logging.debug(f"1ST_CONTRIBUTIONS_VIZ - END - {time.perf_counter() - start}")
+    return fig
+
+
+def process_data(df):
+
     # convert to datetime objects with consistent column name
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
     df.rename(columns={"created_at": "created"}, inplace=True)
@@ -95,6 +106,11 @@ def create_first_time_contributors_graph(repolist):
 
     # reset index to be ready for plotly
     df = df.reset_index()
+
+    return df
+
+
+def create_figure(df):
 
     # Graph generation
     fig = px.histogram(df, x="created", color="Action", template="minty")
@@ -108,5 +124,5 @@ def create_first_time_contributors_graph(repolist):
         yaxis_title="Contributions",
         margin_b=40,
     )
-    logging.debug(f"1ST_CONTRIBUTIONS_VIZ - END - {time.perf_counter() - start}")
+
     return fig
