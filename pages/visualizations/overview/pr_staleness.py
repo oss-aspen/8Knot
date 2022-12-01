@@ -8,7 +8,7 @@ import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
-from pages.utils.graph_utils import get_graph_time_values
+from pages.utils.graph_utils import get_graph_time_values, color_seq
 from pages.utils.job_utils import nodata_graph
 from queries.prs_query import prs_query as prq
 import time
@@ -180,13 +180,14 @@ def new_staling_prs_graph(repolist, interval, staling_interval, stale_interval):
         logging.debug("PULL REQUEST STALENESS  - NO DATA AVAILABLE")
         return nodata_graph, False
 
-    #function for all data pre processing
+    # function for all data pre processing
     df_status = process_data(df, interval, staling_interval, stale_interval)
 
     fig = create_figure(df_status, interval)
 
     logging.debug(f"PULL REQUEST STALENESS - END - {time.perf_counter() - start}")
     return fig, False
+
 
 def process_data(df: pd.DataFrame, interval, staling_interval, stale_interval):
 
@@ -211,9 +212,7 @@ def process_data(df: pd.DataFrame, interval, staling_interval, stale_interval):
 
     df_status["New"], df_status["Staling"], df_status["Stale"] = zip(
         *df_status.apply(
-            lambda row: get_new_staling_stale_up_to(
-                df, row.Date, staling_interval, stale_interval
-            ),
+            lambda row: get_new_staling_stale_up_to(df, row.Date, staling_interval, stale_interval),
             axis=1,
         )
     )
@@ -224,6 +223,7 @@ def process_data(df: pd.DataFrame, interval, staling_interval, stale_interval):
         df_status["Date"] = df_status["Date"].dt.year
 
     return df_status
+
 
 def create_figure(df_status: pd.DataFrame, interval):
 
@@ -241,6 +241,7 @@ def create_figure(df_status: pd.DataFrame, interval):
                     mode="lines",
                     showlegend=True,
                     hovertemplate="PRs New: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
+                    marker=dict(color=color_seq[0]),
                 ),
                 go.Scatter(
                     name="Staling",
@@ -249,6 +250,7 @@ def create_figure(df_status: pd.DataFrame, interval):
                     mode="lines",
                     showlegend=True,
                     hovertemplate="PRs Staling: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
+                    marker=dict(color=color_seq[3]),
                 ),
                 go.Scatter(
                     name="Stale",
@@ -257,24 +259,20 @@ def create_figure(df_status: pd.DataFrame, interval):
                     mode="lines",
                     showlegend=True,
                     hovertemplate="PRs Stale: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
+                    marker=dict(color=color_seq[5]),
                 ),
             ]
         )
     else:
-        fig = px.bar(
-            df_status,
-            x="Date",
-            y=["New", "Staling", "Stale"],
-        )
-        
+        fig = px.bar(df_status, x="Date", y=["New", "Staling", "Stale"], color_discrete_sequence=color_seq)
+
         # edit hover values
         fig.update_traces(hovertemplate=hover + "<br>PRs: %{y}<br>" + "<extra></extra>")
 
-    fig.update_layout(
-        xaxis_title="Time", yaxis_title="Pull Requests", legend_title="Type"
-    )
+    fig.update_layout(xaxis_title="Time", yaxis_title="Pull Requests", legend_title="Type")
 
     return fig
+
 
 def get_new_staling_stale_up_to(df, date, staling_interval, stale_interval):
 

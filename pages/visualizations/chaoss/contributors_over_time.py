@@ -7,7 +7,7 @@ import pandas as pd
 import logging
 import numpy as np
 import plotly.express as px
-from pages.utils.graph_utils import get_graph_time_values
+from pages.utils.graph_utils import get_graph_time_values, color_seq
 
 from pages.utils.job_utils import nodata_graph
 from queries.contributors_query import contributors_query as ctq
@@ -223,7 +223,7 @@ def create_figure(df_drive_repeat, interval):
         x="Date",
         y=["Repeat", "Drive"],
         labels={"x": x_name, "y": "Contributors"},
-        template="minty",
+        color_discrete_sequence=[color_seq[1], color_seq[4]],
     )
     fig.update_traces(
         hovertemplate=hover + "<br>Contributors: %{y}<br><extra></extra>",

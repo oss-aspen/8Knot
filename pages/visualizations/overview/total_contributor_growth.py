@@ -6,7 +6,7 @@ from dash.dependencies import Input, Output, State
 import pandas as pd
 import logging
 import plotly.express as px
-from pages.utils.graph_utils import get_graph_time_values
+from pages.utils.graph_utils import get_graph_time_values, color_seq
 from queries.contributors_query import contributors_query as ctq
 import io
 from cache_manager.cache_manager import CacheManager as cm
@@ -136,13 +136,14 @@ def total_contributor_growth_graph(repolist, interval):
         logging.debug("TOTAL_CONTRIBUTOR_GROWTH_VIZ - NO DATA AVAILABLE")
         return nodata_graph
 
-    #function for all data pre processing
+    # function for all data pre processing
     df, df_contribs = process_data(df, interval)
 
-    fig = create_figure(df,df_contribs, interval)
+    fig = create_figure(df, df_contribs, interval)
 
     logging.debug(f"TOTAL_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}")
     return fig
+
 
 def process_data(df, interval):
 
@@ -163,23 +164,17 @@ def process_data(df, interval):
     df = df[df["rank"] == 1]
 
     # get all of the unique entries by contributor ID
-    df.drop_duplicates(subset=["cntrb_id"], inplace = True)
+    df.drop_duplicates(subset=["cntrb_id"], inplace=True)
     df.reset_index(inplace=True)
 
     if interval == -1:
         return df, None
 
     # get the count of new contributors in the desired interval in pandas period format, sort index to order entries
-    created_range = (
-        pd.to_datetime(df["created"]).dt.to_period(interval).value_counts().sort_index()
-    )
+    created_range = pd.to_datetime(df["created"]).dt.to_period(interval).value_counts().sort_index()
 
     # converts to data frame object and creates date column from period values
-    df_contribs = (
-        created_range.to_frame()
-        .reset_index()
-        .rename(columns={"index": "Date", "created": "contribs"})
-    )
+    df_contribs = created_range.to_frame().reset_index().rename(columns={"index": "Date", "created": "contribs"})
 
     # converts date column to a datetime object, converts to string first to handle period information
     df_contribs["Date"] = pd.to_datetime(df_contribs["Date"].astype(str))
@@ -193,20 +188,15 @@ def process_data(df, interval):
 
     return df, df_contribs
 
-def create_figure(df,df_contribs, interval):
+
+def create_figure(df, df_contribs, interval):
 
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
     if interval == -1:
-        fig = px.line(
-            df,
-            x="created",
-            y=df.index,
-        )
-        fig.update_traces(
-        hovertemplate="Contributors: %{y}<br>%{x|%b %d, %Y} <extra></extra>"
-        )
+        fig = px.line(df, x="created", y=df.index, color_discrete_sequence=[color_seq[3]])
+        fig.update_traces(hovertemplate="Contributors: %{y}<br>%{x|%b %d, %Y} <extra></extra>")
     else:
         fig = px.bar(
             df_contribs,
@@ -214,6 +204,7 @@ def create_figure(df,df_contribs, interval):
             y="contribs",
             range_x=x_r,
             labels={"x": x_name, "y": "Contributors"},
+            color_discrete_sequence=[color_seq[3]],
         )
         fig.update_traces(hovertemplate=hover + "<br>Contributors: %{y}<br>")
 

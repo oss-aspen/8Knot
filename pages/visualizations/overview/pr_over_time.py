@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 import pandas as pd
 import datetime as dt
 import logging
-from pages.utils.graph_utils import get_graph_time_values
+from pages.utils.graph_utils import get_graph_time_values, color_seq
 import io
 from pages.utils.job_utils import nodata_graph
 from queries.prs_query import prs_query as prq
@@ -125,7 +125,7 @@ def prs_over_time_graph(repolist, interval):
         logging.debug("PULL REQUESTS OVER TIME - NO DATA AVAILABLE")
         return nodata_graph
 
-    #function for all data pre processing
+    # function for all data pre processing
     df_created, df_closed_merged, df_open = process_data(df, interval)
 
     fig = create_figure(df_created, df_closed_merged, df_open, interval)
@@ -133,6 +133,7 @@ def prs_over_time_graph(repolist, interval):
     logging.debug(f"PRS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
 
     return fig
+
 
 def process_data(df: pd.DataFrame, interval):
 
@@ -156,27 +157,19 @@ def process_data(df: pd.DataFrame, interval):
     created_range = df["created"].dt.to_period(interval).value_counts().sort_index()
 
     # converts to data frame object and created date column from period values
-    df_created = (
-        created_range.to_frame().reset_index().rename(columns={"index": "Date"})
-    )
+    df_created = created_range.to_frame().reset_index().rename(columns={"index": "Date"})
 
     # converts date column to a datetime object, converts to string first to handle period information
     # the period slice is to handle weekly corner case
-    df_created["Date"] = pd.to_datetime(
-        df_created["Date"].astype(str).str[:period_slice]
-    )
+    df_created["Date"] = pd.to_datetime(df_created["Date"].astype(str).str[:period_slice])
 
     # df for merged prs in time interval
-    merged_range = (
-        pd.to_datetime(df["merged"]).dt.to_period(interval).value_counts().sort_index()
-    )
+    merged_range = pd.to_datetime(df["merged"]).dt.to_period(interval).value_counts().sort_index()
     df_merged = merged_range.to_frame().reset_index().rename(columns={"index": "Date"})
     df_merged["Date"] = pd.to_datetime(df_merged["Date"].astype(str).str[:period_slice])
 
     # df for closed prs in time interval
-    closed_range = (
-        pd.to_datetime(df["closed"]).dt.to_period(interval).value_counts().sort_index()
-    )
+    closed_range = pd.to_datetime(df["closed"]).dt.to_period(interval).value_counts().sort_index()
     df_closed = closed_range.to_frame().reset_index().rename(columns={"index": "Date"})
     df_closed["Date"] = pd.to_datetime(df_closed["Date"].astype(str).str[:period_slice])
 
@@ -190,7 +183,7 @@ def process_data(df: pd.DataFrame, interval):
         df_created["Date"] = df_created["Date"].dt.strftime("%Y-01-01")
         df_closed_merged["Date"] = df_closed_merged["Date"].dt.strftime("%Y-01-01")
 
-    #----- Open PR processinging starts here ----
+    # ----- Open PR processinging starts here ----
 
     # first and last elements of the dataframe are the
     # earliest and latest events respectively
@@ -210,6 +203,7 @@ def process_data(df: pd.DataFrame, interval):
 
     return df_created, df_closed_merged, df_open
 
+
 def create_figure(df_created: pd.DataFrame, df_closed_merged: pd.DataFrame, df_open: pd.DataFrame, interval):
 
     # time values for graph
@@ -220,29 +214,29 @@ def create_figure(df_created: pd.DataFrame, df_closed_merged: pd.DataFrame, df_o
     fig.add_bar(
         x=df_created["Date"],
         y=df_created["created"],
-        opacity=0.75,
+        opacity=0.9,
         hovertemplate=hover + "<br>Created: %{y}<br>" + "<extra></extra>",
         offsetgroup=0,
+        marker=dict(color=color_seq[0]),
         name="PRs Created",
     )
     fig.add_bar(
         x=df_closed_merged["Date"],
         y=df_closed_merged["merged"],
-        opacity=0.6,
+        opacity=0.9,
         hovertemplate=hover + "<br>Merged: %{y}<br>" + "<extra></extra>",
         offsetgroup=1,
+        marker=dict(color=color_seq[4]),
         name="PRs Merged",
     )
     fig.add_bar(
         x=df_closed_merged["Date"],
         y=df_closed_merged["closed"],
-        opacity=0.6,
-        hovertemplate=[
-            f"{hover}<br>Closed: {val}<br><extra></extra>"
-            for val in df_closed_merged["closed"]
-        ],
+        opacity=0.9,
+        hovertemplate=[f"{hover}<br>Closed: {val}<br><extra></extra>" for val in df_closed_merged["closed"]],
         offsetgroup=1,
         base=df_closed_merged["merged"],
+        marker=dict(color=color_seq[3]),
         name="PRs Closed",
     )
     fig.update_xaxes(
@@ -263,6 +257,7 @@ def create_figure(df_created: pd.DataFrame, df_closed_merged: pd.DataFrame, df_o
             x=df_open["Date"],
             y=df_open["Open"],
             mode="lines",
+            marker=dict(color=color_seq[5]),
             name="PRs Actively Open",
             hovertemplate="PRs Open: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
         )

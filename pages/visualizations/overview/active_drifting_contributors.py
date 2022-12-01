@@ -7,7 +7,7 @@ import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
-from pages.utils.graph_utils import get_graph_time_values
+from pages.utils.graph_utils import get_graph_time_values, color_seq
 from queries.contributors_query import contributors_query as ctq
 import io
 from cache_manager.cache_manager import CacheManager as cm
@@ -181,16 +181,15 @@ def active_drifting_contributors_graph(repolist, interval, drift_interval, away_
     if df.empty:
         logging.debug("PULL REQUEST STALENESS - NO DATA AVAILABLE")
         return nodata_graph, False
-    
-    #function for all data pre processing
+
+    # function for all data pre processing
     df_status = process_data(df, interval, drift_interval, away_interval)
 
     fig = create_figure(df_status, interval)
 
-    logging.debug(
-        f"ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}"
-    )
+    logging.debug(f"ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}")
     return fig, False
+
 
 def process_data(df: pd.DataFrame, interval, drift_interval, away_interval):
 
@@ -213,9 +212,7 @@ def process_data(df: pd.DataFrame, interval, drift_interval, away_interval):
 
     df_status["Active"], df_status["Drifting"], df_status["Away"] = zip(
         *df_status.apply(
-            lambda row: get_active_drifting_away_up_to(
-                df, row.Date, drift_interval, away_interval
-            ),
+            lambda row: get_active_drifting_away_up_to(df, row.Date, drift_interval, away_interval),
             axis=1,
         )
     )
@@ -226,6 +223,7 @@ def process_data(df: pd.DataFrame, interval, drift_interval, away_interval):
         df_status["Date"] = df_status["Date"].dt.year
 
     return df_status
+
 
 def create_figure(df_status: pd.DataFrame, interval):
 
@@ -243,6 +241,7 @@ def create_figure(df_status: pd.DataFrame, interval):
                     mode="lines",
                     showlegend=True,
                     hovertemplate="Contributors Active: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
+                    marker=dict(color=color_seq[0]),
                 ),
                 go.Scatter(
                     name="Drifting",
@@ -251,6 +250,7 @@ def create_figure(df_status: pd.DataFrame, interval):
                     mode="lines",
                     showlegend=True,
                     hovertemplate="Contributors Drifting: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
+                    marker=dict(color=color_seq[3]),
                 ),
                 go.Scatter(
                     name="Away",
@@ -259,20 +259,17 @@ def create_figure(df_status: pd.DataFrame, interval):
                     mode="lines",
                     showlegend=True,
                     hovertemplate="Contributors Away: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
+                    marker=dict(color=color_seq[5]),
                 ),
             ]
         )
     else:
-        fig = px.bar(df_status, x="Date", y=["Active", "Drifting", "Away"])
+        fig = px.bar(df_status, x="Date", y=["Active", "Drifting", "Away"], color_discrete_sequence=color_seq)
 
         # edit hover values
-        fig.update_traces(
-            hovertemplate=hover + "<br>Contributors: %{y}<br>" + "<extra></extra>"
-        )
+        fig.update_traces(hovertemplate=hover + "<br>Contributors: %{y}<br>" + "<extra></extra>")
 
-    fig.update_layout(
-        xaxis_title="Time", yaxis_title="Number of Contributors", legend_title="Type"
-    )
+    fig.update_layout(xaxis_title="Time", yaxis_title="Number of Contributors", legend_title="Type")
 
     return fig
 

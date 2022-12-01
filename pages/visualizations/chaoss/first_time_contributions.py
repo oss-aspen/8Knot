@@ -6,7 +6,7 @@ from dash.dependencies import Input, Output, State
 import pandas as pd
 import logging
 import plotly.express as px
-
+from pages.utils.graph_utils import color_seq
 from queries.contributors_query import contributors_query as ctq
 from cache_manager.cache_manager import CacheManager as cm
 import io
@@ -113,7 +113,7 @@ def process_data(df):
 def create_figure(df):
 
     # Graph generation
-    fig = px.histogram(df, x="created", color="Action", template="minty")
+    fig = px.histogram(df, x="created", color="Action", color_discrete_sequence=color_seq)
     fig.update_traces(
         xbins_size="M3",
         hovertemplate="Date: %{x}" + "<br>Amount: %{y}<br><extra></extra>",
