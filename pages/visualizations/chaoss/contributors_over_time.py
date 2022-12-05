@@ -104,7 +104,7 @@ gc_contributors_over_time = dbc.Card(
             ]
         ),
     ],
-    color="light",
+    # color="light",
 )
 
 

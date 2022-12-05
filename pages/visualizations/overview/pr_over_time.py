@@ -84,7 +84,7 @@ gc_pr_over_time = dbc.Card(
             ]
         ),
     ],
-    color="light",
+    # color="light",
 )
 
 # call backs for card graph 7 - Pull Request Over Time

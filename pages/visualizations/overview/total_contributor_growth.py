@@ -80,7 +80,7 @@ gc_total_contributor_growth = dbc.Card(
             ]
         ),
     ],
-    color="light",
+    # color="light",
 )
 
 

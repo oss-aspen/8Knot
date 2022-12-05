@@ -1,0 +1,164 @@
+from dash import html, dcc
+import dash
+import dash_bootstrap_components as dbc
+from app import search_input
+
+sidebar = html.Div(
+    [
+        html.H2("Pages", className="display-10"),
+        html.Hr(),
+        dbc.Nav(
+            [
+                dbc.NavLink(page["name"], href=page["path"])
+                for page in dash.page_registry.values()
+                if page["module"] != "pages.not_found_404"
+            ],
+            vertical=True,
+            pills=True,
+        ),
+    ]
+)
+
+layout = dbc.Container(
+    [
+        # componets to store data from queries
+        dcc.Store(id="repo-choices", storage_type="session", data=[]),
+        dcc.Location(id="url"),
+        dbc.Row(
+            [
+                # from above definition
+                dbc.Col(sidebar, width=1),
+                dbc.Col(
+                    [
+                        html.H1("8Knot Community Data", className="text-center"),
+                        # search bar with buttons
+                        html.Label(
+                            ["Select Github repos or orgs:"],
+                            style={"font-weight": "bold"},
+                        ),
+                        html.Div(
+                            [
+                                html.Div(
+                                    [
+                                        dcc.Dropdown(
+                                            id="projects",
+                                            multi=True,
+                                            options=[search_input],
+                                            value=[search_input],
+                                        ),
+                                        dbc.Alert(
+                                            children='Please ensure that your spelling is correct. \
+                                                If your selection definitely isn\'t present, please request that \
+                                                it be loaded using the help button "REPO/ORG Request" \
+                                                in the bottom right corner of the screen.',
+                                            id="help-alert",
+                                            dismissable=True,
+                                            fade=True,
+                                            is_open=False,
+                                            color="info",
+                                        ),
+                                    ],
+                                    style={
+                                        "width": "50%",
+                                        "display": "table-cell",
+                                        "verticalAlign": "middle",
+                                        "padding-right": "10px",
+                                    },
+                                ),
+                                dbc.Button(
+                                    "Search",
+                                    id="search",
+                                    n_clicks=0,
+                                    class_name="btn btn-primary",
+                                    style={
+                                        "verticalAlign": "top",
+                                        "display": "table-cell",
+                                    },
+                                ),
+                                dbc.Button(
+                                    "Help",
+                                    id="search-help",
+                                    n_clicks=0,
+                                    class_name="btn btn-light",
+                                    style={
+                                        "verticalAlign": "top",
+                                        "display": "table-cell",
+                                    },
+                                ),
+                            ],
+                            style={
+                                "align": "right",
+                                "display": "table",
+                                "width": "60%",
+                            },
+                        ),
+                        dcc.Loading(
+                            children=[html.Div(id="results-output-container", className="mb-4")],
+                            color="#119DFF",
+                            type="dot",
+                            fullscreen=True,
+                        ),
+                        dcc.Loading(
+                            dbc.Badge(
+                                children="Data Loaded",
+                                id="data_badge",
+                                color="#436755",
+                                className="me-1",
+                            ),
+                            type="cube",
+                            color="#436755",
+                        ),
+                        # where our page will be rendered
+                        dash.page_container,
+                    ],
+                    width={"size": 11},
+                ),
+            ],
+            justify="start",
+        ),
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        html.H5(
+                            "Have a bug or feature request?",
+                            className="mb-2"
+                            # style={"textDecoration": "underline"},
+                        ),
+                        html.Div(
+                            [
+                                dbc.Button(
+                                    "Visualization request",
+                                    color="primary",
+                                    className="me-1",
+                                    external_link=True,
+                                    target="_blank",
+                                    href="https://github.com/sandiego-rh/explorer/issues/new?assignees=&labels=enhancement%2Cvisualization&template=visualizations.md",
+                                ),
+                                dbc.Button(
+                                    "Bug",
+                                    color="primary",
+                                    className="me-1",
+                                    external_link=True,
+                                    target="_blank",
+                                    href="https://github.com/sandiego-rh/explorer/issues/new?assignees=&labels=bug&template=bug_report.md",
+                                ),
+                                dbc.Button(
+                                    "Repo/Org Request",
+                                    color="primary",
+                                    external_link=True,
+                                    target="_blank",
+                                    href="https://github.com/sandiego-rh/explorer/issues/new?assignees=&labels=augur&template=augur_load.md",
+                                ),
+                            ]
+                        ),
+                    ],
+                    width={"offset": 10},
+                )
+            ],
+        ),
+    ],
+    fluid=True,
+    className="dbc",
+    style={"padding-top": "1em"},
+)

@@ -133,7 +133,7 @@ gc_active_drifting_contributors = dbc.Card(
             ]
         )
     ],
-    color="light",
+    # color="light",
 )
 
 # call backs for card graph 4 - Active Drifting Away Over Time

@@ -104,7 +104,7 @@ gc_contrib_drive_repeat = dbc.Card(
             ]
         ),
     ],
-    color="light",
+    # color="light",
 )
 
 

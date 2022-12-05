@@ -131,7 +131,7 @@ gc_pr_staleness = dbc.Card(
             ]
         )
     ],
-    color="light",
+    # color="light",
 )
 
 

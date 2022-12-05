@@ -47,7 +47,7 @@ gc_first_time_contributions = dbc.Card(
             ]
         ),
     ],
-    color="light",
+    # color="light",
 )
 
 

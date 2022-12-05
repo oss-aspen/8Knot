@@ -132,7 +132,7 @@ gc_issue_staleness = dbc.Card(
             ]
         )
     ],
-    color="light",
+    # color="light",
 )
 
 
