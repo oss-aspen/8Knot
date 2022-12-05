@@ -83,7 +83,7 @@ gc_issues_over_time = dbc.Card(
             ]
         ),
     ],
-    color="light",
+    # color="light",
 )
 
 # call backs for card graph 3 - Issue Over Time
@@ -207,7 +207,7 @@ def create_figure(df_created: pd.DataFrame, df_closed: pd.DataFrame, df_open: pd
         hovertemplate=hover + "<br>Created: %{y}<br>" + "<extra></extra>",
         offsetgroup=0,
         marker=dict(color=color_seq[0]),
-        name="Issues Created",
+        name="Created",
     )
     fig.add_bar(
         x=df_closed["Date"],
@@ -216,7 +216,7 @@ def create_figure(df_created: pd.DataFrame, df_closed: pd.DataFrame, df_open: pd
         hovertemplate=hover + "<br>Closed: %{y}<br>" + "<extra></extra>",
         offsetgroup=1,
         marker=dict(color=color_seq[3]),
-        name="Issues Closed",
+        name="Closed",
     )
     fig.update_xaxes(
         showgrid=True,
@@ -237,7 +237,7 @@ def create_figure(df_created: pd.DataFrame, df_closed: pd.DataFrame, df_open: pd
             y=df_open["Open"],
             mode="lines",
             marker=dict(color=color_seq[5]),
-            name="Issues Actively Open",
+            name="Open",
             hovertemplate="Issues Open: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
         )
     )

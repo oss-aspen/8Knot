@@ -83,7 +83,7 @@ gc_commits_over_time = dbc.Card(
             ]
         ),
     ],
-    color="light",
+    # color="light",
 )
 
 # call backs for card graph 2 - Commits Over Time
