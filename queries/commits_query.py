@@ -37,6 +37,7 @@ def commits_query(self, dbmc, repos):
     # the now-removed values.
     query_string = f"""
                     SELECT
+                        distinct
                         r.repo_id AS id,
                         -- r.repo_name,
                         c.cmt_commit_hash AS commits,
