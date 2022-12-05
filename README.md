@@ -82,7 +82,7 @@ The credentials below are valid, so you can copy and use them to access a develo
     connection_string=sqlite:///:memory:
     database=astros
     host=chaoss.tv
-    password=!xpk98T6?bKK
+    password=!xpk98T6?bK
     port=5432
     schema=augur_data
     user=eightknot
