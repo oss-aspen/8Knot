@@ -2,7 +2,7 @@ services:
   web-server:
     build:
       context: .
-      dockerfile: Dockerfile.server
+      dockerfile: ./docker/Dockerfile.server
     ports:
       - 8050:8050
     depends_on:
@@ -18,8 +18,8 @@ services:
 
   callback-worker:
     build:
-      context: .
-      dockerfile: Dockerfile.worker
+      context: . 
+      dockerfile: ./docker/Dockerfile.worker
     depends_on:
       - cache
     env_file:
@@ -32,7 +32,8 @@ services:
   query-worker:
     build:
       context: .
-      dockerfile: Dockerfile.data_worker
+      dockerfile: ./docker/Dockerfile.worker
+    command: ["celery", "-A", "app:celery_app", "worker", "--loglevel=INFO", "-Q", "data"]
     depends_on:
       - cache
     env_file:
@@ -51,7 +52,7 @@ services:
   flower:
     build:
       context: .
-      dockerfile: Dockerfile.flower
+      dockerfile: ./docker/Dockerfile.flower
     depends_on:
       - callback-worker
       - query-worker
