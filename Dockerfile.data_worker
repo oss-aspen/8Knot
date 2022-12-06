@@ -28,4 +28,4 @@ COPY ./ /explorer/
 
 # run worker
 # CMD [ "rq", "worker", "-c", "worker_settings" ]
-CMD ["celery", "-A", "app:celery_app", "worker", "--loglevel=INFO"]
+CMD ["celery", "-A", "app:celery_app", "worker", "--loglevel=INFO", "-Q", "data"]

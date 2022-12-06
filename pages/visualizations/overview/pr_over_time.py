@@ -106,6 +106,7 @@ def toggle_popover_7(n, is_open):
         Input("repo-choices", "data"),
         Input("pr-time-interval", "value"),
     ],
+    background=True,
 )
 def prs_over_time_graph(repolist, interval):
 
