@@ -103,9 +103,9 @@ docker && docker compose || docker-compose
 
 (above just runs docker and docker-compose and checks if both work)
 
-### Build and Run 
+### Build and Run
 
-8Knot is a multi-container application. 
+8Knot is a multi-container application.
 
 The webserver, worker-pool, and cache containers communicate with one another via docker network.
 

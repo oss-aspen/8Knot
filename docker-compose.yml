@@ -6,8 +6,8 @@ services:
     ports:
       - 8050:8050
     depends_on:
-      - callback-worker 
-      - query-worker 
+      - callback-worker
+      - query-worker
       - cache
     env_file:
       - ./env.list
