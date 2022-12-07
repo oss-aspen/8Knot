@@ -28,24 +28,32 @@ layout = dbc.Container(
             [
                 dbc.Col(gc_issues_over_time, width=6),
                 dbc.Col(gc_commits_over_time, width=6),
-            ]
+            ],
+            align="center",
+            style={"margin-bottom": ".5%"},
         ),
         dbc.Row(
             [
                 dbc.Col(gc_total_contributor_growth, width=6),
                 dbc.Col(gc_active_drifting_contributors, width=6),
-            ]
+            ],
+            align="center",
+            style={"margin-bottom": ".5%"},
         ),
         dbc.Row(
             [
                 dbc.Col(gc_issue_staleness, width=6),
                 dbc.Col(gc_pr_staleness, width=6),
-            ]
+            ],
+            align="center",
+            style={"margin-bottom": ".5%"},
         ),
         dbc.Row(
             [
                 dbc.Col(gc_pr_over_time, width=6),
-            ]
+            ],
+            align="center",
+            style={"margin-bottom": ".5%"},
         ),
     ],
     fluid=True,

@@ -19,7 +19,7 @@ gc_contributors_over_time = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H4(
+                html.H3(
                     "Contributor Types Over Time",
                     className="card-title",
                     style={"text-align": "center"},
@@ -42,10 +42,32 @@ gc_contributors_over_time = dbc.Card(
                         dbc.Row(
                             [
                                 dbc.Label(
+                                    "Contributions Required:",
+                                    html_for="num_contribs_req",
+                                    width={"size": "auto"},
+                                ),
+                                dbc.Col(
+                                    dbc.Input(
+                                        id="num_contribs_req",
+                                        type="number",
+                                        min=1,
+                                        max=15,
+                                        step=1,
+                                        value=4,
+                                        size="sm",
+                                    ),
+                                    className="me-2",
+                                    width=1,
+                                ),
+                            ],
+                            align="center",
+                        ),
+                        dbc.Row(
+                            [
+                                dbc.Label(
                                     "Date Interval:",
                                     html_for="contrib-time-interval",
                                     width="auto",
-                                    style={"font-weight": "bold"},
                                 ),
                                 dbc.Col(
                                     dbc.RadioItems(
@@ -72,29 +94,6 @@ gc_contributors_over_time = dbc.Card(
                                     ),
                                     width="auto",
                                     style={"padding-top": ".5em"},
-                                ),
-                            ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Contributions Required:",
-                                    html_for="num_contribs_req",
-                                    width={"size": "auto"},
-                                    style={"font-weight": "bold"},
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id="num_contribs_req",
-                                        type="number",
-                                        min=1,
-                                        max=15,
-                                        step=1,
-                                        value=4,
-                                    ),
-                                    className="me-2",
-                                    width=2,
                                 ),
                             ],
                             align="center",
@@ -240,6 +239,7 @@ def create_figure(df_drive_repeat, interval):
         legend_title_text="Type",
         yaxis_title="Number of Contributors",
         margin_b=40,
+        font=dict(size=14),
     )
 
     return fig

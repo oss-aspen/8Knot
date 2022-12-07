@@ -17,7 +17,7 @@ gc_commits_over_time = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H4(
+                html.H3(
                     "Commits Over Time",
                     className="card-title",
                     style={"text-align": "center"},
@@ -43,7 +43,6 @@ gc_commits_over_time = dbc.Card(
                                     "Date Interval:",
                                     html_for="commits-time-interval",
                                     width="auto",
-                                    style={"font-weight": "bold"},
                                 ),
                                 dbc.Col(
                                     dbc.RadioItems(
@@ -189,6 +188,7 @@ def create_figure(df_created: pd.DataFrame, interval):
         yaxis_title="Number of Commits",
         margin_b=40,
         margin_r=20,
+        font=dict(size=14),
     )
 
     return fig
