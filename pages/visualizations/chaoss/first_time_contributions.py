@@ -17,7 +17,7 @@ gc_first_time_contributions = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H4(
+                html.H3(
                     "First Time Contributions Per Quarter",
                     className="card-title",
                     style={"text-align": "center"},
@@ -123,6 +123,7 @@ def create_figure(df):
         xaxis_title="Quarter",
         yaxis_title="Contributions",
         margin_b=40,
+        font=dict(size=14),
     )
 
     return fig

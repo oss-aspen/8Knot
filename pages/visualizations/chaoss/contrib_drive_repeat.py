@@ -17,7 +17,7 @@ gc_contrib_drive_repeat = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H4(
+                html.H3(
                     id="chaoss-graph-title-1",
                     className="card-title",
                     style={"text-align": "center"},
@@ -40,10 +40,32 @@ gc_contrib_drive_repeat = dbc.Card(
                         dbc.Row(
                             [
                                 dbc.Label(
+                                    "Contributions Required:",
+                                    html_for="num_contributions",
+                                    width={"size": "auto"},
+                                ),
+                                dbc.Col(
+                                    dbc.Input(
+                                        id="num_contributions",
+                                        type="number",
+                                        min=1,
+                                        max=15,
+                                        step=1,
+                                        value=4,
+                                        size="sm",
+                                    ),
+                                    className="me-2",
+                                    width=1,
+                                ),
+                            ],
+                            align="center",
+                        ),
+                        dbc.Row(
+                            [
+                                dbc.Label(
                                     "Graph View:",
                                     html_for="drive-repeat",
                                     width="auto",
-                                    style={"font-weight": "bold"},
                                 ),
                                 dbc.Col(
                                     dbc.RadioItems(
@@ -72,29 +94,6 @@ gc_contrib_drive_repeat = dbc.Card(
                                     ),
                                     width="auto",
                                     style={"padding-top": ".5em"},
-                                ),
-                            ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Contributions Required:",
-                                    html_for="num_contributions",
-                                    width={"size": "auto"},
-                                    style={"font-weight": "bold"},
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id="num_contributions",
-                                        type="number",
-                                        min=1,
-                                        max=15,
-                                        step=1,
-                                        value=4,
-                                    ),
-                                    className="me-2",
-                                    width=2,
                                 ),
                             ],
                             align="center",
@@ -205,5 +204,6 @@ def create_figure(df_cont_subset):
         xaxis_title="Quarter",
         yaxis_title="Contributions",
         margin_b=40,
+        font=dict(size=14),
     )
     return fig

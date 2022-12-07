@@ -19,7 +19,7 @@ gc_active_drifting_contributors = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H4(
+                html.H3(
                     "Contributor Growth by Engagement",
                     className="card-title",
                     style={"text-align": "center"},
@@ -47,10 +47,46 @@ gc_active_drifting_contributors = dbc.Card(
                         dbc.Row(
                             [
                                 dbc.Label(
+                                    "Months Until Drifting:",
+                                    html_for="drifting_months",
+                                    width={"size": "auto"},
+                                ),
+                                dbc.Col(
+                                    dbc.Input(
+                                        id="drifting_months", type="number", min=1, max=120, step=1, value=6, size="sm"
+                                    ),
+                                    className="me-2",
+                                    width=1,
+                                ),
+                                dbc.Label(
+                                    "Months Until Away:",
+                                    html_for="away_months",
+                                    width={"size": "auto"},
+                                ),
+                                dbc.Col(
+                                    dbc.Input(
+                                        id="away_months", type="number", min=1, max=120, step=1, value=12, size="sm"
+                                    ),
+                                    className="me-2",
+                                    width=1,
+                                ),
+                                dbc.Alert(
+                                    children="Please ensure that 'Months Until Drifting' is less than 'Months Until Away'",
+                                    id="drifting_away_check_alert",
+                                    dismissable=True,
+                                    fade=False,
+                                    is_open=False,
+                                    color="warning",
+                                ),
+                            ],
+                            align="center",
+                        ),
+                        dbc.Row(
+                            [
+                                dbc.Label(
                                     "Date Interval:",
                                     html_for="active-drifting-interval",
                                     width="auto",
-                                    style={"font-weight": "bold"},
                                 ),
                                 dbc.Col(
                                     [
@@ -78,55 +114,6 @@ gc_active_drifting_contributors = dbc.Card(
                                 ),
                             ],
                             align="center",
-                        ),
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Months Until Drifting:",
-                                    html_for="drifting_months",
-                                    width={"size": "auto"},
-                                    style={"font-weight": "bold"},
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id="drifting_months",
-                                        type="number",
-                                        min=1,
-                                        max=120,
-                                        step=1,
-                                        value=6,
-                                    ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                                dbc.Label(
-                                    "Months Until Away:",
-                                    html_for="away_months",
-                                    width={"size": "auto"},
-                                    style={"font-weight": "bold"},
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id="away_months",
-                                        type="number",
-                                        min=1,
-                                        max=120,
-                                        step=1,
-                                        value=12,
-                                    ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                            ],
-                            align="center",
-                        ),
-                        dbc.Alert(
-                            children="Please ensure that 'Months Until Drifting' is less than 'Months Until Away'",
-                            id="drifting_away_check_alert",
-                            dismissable=True,
-                            fade=False,
-                            is_open=False,
-                            color="warning",
                         ),
                     ]
                 ),
@@ -162,10 +149,10 @@ def toggle_popover_4(n, is_open):
 def active_drifting_contributors_graph(repolist, interval, drift_interval, away_interval):
 
     if drift_interval is None or away_interval is None:
-        return dash.no_update, dash.no_update, dash.no_update
+        return dash.no_update, dash.no_update
 
     if drift_interval > away_interval:
-        return dash.no_update, True, dash.no_update
+        return dash.no_update, True
 
     # wait for data to asynchronously download and become available.
     cache = cm()
@@ -269,7 +256,12 @@ def create_figure(df_status: pd.DataFrame, interval):
         # edit hover values
         fig.update_traces(hovertemplate=hover + "<br>Contributors: %{y}<br>" + "<extra></extra>")
 
-    fig.update_layout(xaxis_title="Time", yaxis_title="Number of Contributors", legend_title="Type")
+    fig.update_layout(
+        xaxis_title="Time",
+        yaxis_title="Number of Contributors",
+        legend_title="Type",
+        font=dict(size=14),
+    )
 
     return fig
 

@@ -32,10 +32,7 @@ layout = dbc.Container(
                     [
                         html.H1("8Knot Community Data", className="text-center"),
                         # search bar with buttons
-                        html.Label(
-                            ["Select Github repos or orgs:"],
-                            style={"font-weight": "bold"},
-                        ),
+                        dbc.Label("Select Github repos or orgs:", html_for="projects", width="auto", size="lg"),
                         html.Div(
                             [
                                 html.Div(
@@ -45,6 +42,7 @@ layout = dbc.Container(
                                             multi=True,
                                             options=[search_input],
                                             value=[search_input],
+                                            style={"font-size": 16},
                                         ),
                                         dbc.Alert(
                                             children='Please ensure that your spelling is correct. \
@@ -69,17 +67,13 @@ layout = dbc.Container(
                                     "Search",
                                     id="search",
                                     n_clicks=0,
-                                    class_name="btn btn-primary",
-                                    style={
-                                        "verticalAlign": "top",
-                                        "display": "table-cell",
-                                    },
+                                    size="md",
                                 ),
                                 dbc.Button(
                                     "Help",
                                     id="search-help",
                                     n_clicks=0,
-                                    class_name="btn btn-light",
+                                    size="md",
                                     style={
                                         "verticalAlign": "top",
                                         "display": "table-cell",
@@ -130,6 +124,7 @@ layout = dbc.Container(
                                 dbc.Button(
                                     "Visualization request",
                                     color="primary",
+                                    size="sm",
                                     className="me-1",
                                     external_link=True,
                                     target="_blank",
@@ -138,6 +133,7 @@ layout = dbc.Container(
                                 dbc.Button(
                                     "Bug",
                                     color="primary",
+                                    size="sm",
                                     className="me-1",
                                     external_link=True,
                                     target="_blank",
@@ -145,7 +141,9 @@ layout = dbc.Container(
                                 ),
                                 dbc.Button(
                                     "Repo/Org Request",
+                                    size="sm",
                                     color="primary",
+                                    className="me-1",
                                     external_link=True,
                                     target="_blank",
                                     href="https://github.com/sandiego-rh/explorer/issues/new?assignees=&labels=augur&template=augur_load.md",
@@ -154,6 +152,7 @@ layout = dbc.Container(
                         ),
                     ],
                     width={"offset": 10},
+                    style={"margin-bottom": ".5%"},
                 )
             ],
         ),

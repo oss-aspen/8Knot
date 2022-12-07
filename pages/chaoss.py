@@ -21,12 +21,16 @@ layout = dbc.Container(
             [
                 dbc.Col(gc_contrib_drive_repeat, width=6),
                 dbc.Col(gc_first_time_contributions, width=6),
-            ]
+            ],
+            align="center",
+            style={"margin-bottom": ".5%"},
         ),
         dbc.Row(
             [
                 dbc.Col(gc_contributors_over_time, width=6),
-            ]
+            ],
+            align="center",
+            style={"margin-bottom": ".5%"},
         ),
     ],
     fluid=True,

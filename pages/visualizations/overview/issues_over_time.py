@@ -17,7 +17,7 @@ gc_issues_over_time = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H4(
+                html.H3(
                     "Issues Over Time",
                     className="card-title",
                     style={"text-align": "center"},
@@ -43,7 +43,7 @@ gc_issues_over_time = dbc.Card(
                                     "Date Interval:",
                                     html_for="issue-time-interval",
                                     width="auto",
-                                    style={"font-weight": "bold"},
+                                    # size = "lg"
                                 ),
                                 dbc.Col(
                                     dbc.RadioItems(
@@ -230,6 +230,7 @@ def create_figure(df_created: pd.DataFrame, df_closed: pd.DataFrame, df_open: pd
         yaxis_title="Number of Issues",
         bargroupgap=0.1,
         margin_b=40,
+        font=dict(size=14),
     )
     fig.add_trace(
         go.Scatter(

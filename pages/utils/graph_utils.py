@@ -1,7 +1,7 @@
 import datetime as dt
 
 # list of graph color hex
-color_seq = ["#B5B682", "#c0bc5d", "#6C8975", "#485B4E", "#3c582d", "#1c381d"]
+color_seq = ["#B5B682", "#c0bc5d", "#6C8975", "#485B4E", "#3c582d", "#376D39"]
 
 
 def get_graph_time_values(interval):
