@@ -36,4 +36,4 @@ jobs:
       - name: Run Hadolint
         uses: jbergstroem/hadolint-gh-action@v1
         with:
-          dockerfile: "Dockerfile*"
+          dockerfile: "./docker/Dockerfile*"

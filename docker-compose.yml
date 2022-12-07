@@ -18,7 +18,7 @@ services:
 
   callback-worker:
     build:
-      context: . 
+      context: .
       dockerfile: ./docker/Dockerfile.worker
     depends_on:
       - cache
