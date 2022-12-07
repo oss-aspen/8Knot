@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi9/python-39 
+FROM registry.access.redhat.com/ubi9/python-39
 
 # need this for the Dash app
 EXPOSE 8050

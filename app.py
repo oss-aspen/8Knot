@@ -24,9 +24,7 @@ import os
 import logging
 from app_global import celery_manager, celery_app
 
-logging.basicConfig(
-    format="%(asctime)s %(levelname)-8s %(message)s", level=logging.DEBUG
-)
+logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.DEBUG)
 
 # GLOBAL VARIABLE DECLARATIONS
 engine = None
@@ -74,9 +72,7 @@ def _project_list_query():
     df_search_bar = augur_db.run_query(pr_query)
 
     # handling case sensitive options for search bar
-    entries = np.concatenate(
-        (df_search_bar.rg_name.unique(), df_search_bar.repo_git.unique()), axis=None
-    )
+    entries = np.concatenate((df_search_bar.rg_name.unique(), df_search_bar.repo_git.unique()), axis=None)
     entries = entries.tolist()
     entries.sort(key=lambda item: (item, len(item)))
 
@@ -85,11 +81,7 @@ def _project_list_query():
     all_entries = list(zip(lower_entries, entries))
 
     # generating dictionary with the git urls as the key and the repo_id and name as a list as the value pair
-    repo_dict = (
-        df_search_bar[["repo_git", "repo_id", "repo_name"]]
-        .set_index("repo_git")
-        .T.to_dict("list")
-    )
+    repo_dict = df_search_bar[["repo_git", "repo_id", "repo_name"]].set_index("repo_git").T.to_dict("list")
 
     # generating dictionary with the org name as the key and the git repos of the org in a list as the value pair
     org_dict = df_search_bar.groupby("rg_name")["repo_git"].apply(list).to_dict()
@@ -212,11 +204,7 @@ app.layout = dbc.Container(
                             },
                         ),
                         dcc.Loading(
-                            children=[
-                                html.Div(
-                                    id="results-output-container", className="mb-4"
-                                )
-                            ],
+                            children=[html.Div(id="results-output-container", className="mb-4")],
                             color="#119DFF",
                             type="dot",
                             fullscreen=True,
