@@ -37,7 +37,7 @@ PAGE = "overview"  # EDIT FOR PAGE USED
 VIZ_ID = "shortname-of-viz"  # UNIQUE IDENTIFIER FOR CALLBAKCS, MUST BE UNIQUE
 
 """
-ADDITIONAL INPUT/OUTPUT PARAMETER NAMES FOR DASH CALLBACKS 
+ADDITIONAL INPUT/OUTPUT PARAMETER NAMES FOR DASH CALLBACKS
 If you add a new Input() or Output() to your visualization, name them here
 
 paramter_1 = "name-of-additional-graph-input"
@@ -215,8 +215,8 @@ def NAME_OF_VISUALIZATION_graph(repolist, interval):
 
 
 def process_data(df: pd.DataFrame, interval):
-    """Implement your custom data-processing logic in this function. 
-    The output of this function is the data you intend to create a visualization with, 
+    """Implement your custom data-processing logic in this function.
+    The output of this function is the data you intend to create a visualization with,
     requiring no further processing."""
 
     # convert to datetime objects rather than strings
