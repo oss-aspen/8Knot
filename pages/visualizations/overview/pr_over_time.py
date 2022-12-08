@@ -218,7 +218,7 @@ def create_figure(df_created: pd.DataFrame, df_closed_merged: pd.DataFrame, df_o
         hovertemplate=hover + "<br>Created: %{y}<br>" + "<extra></extra>",
         offsetgroup=0,
         marker=dict(color=color_seq[0]),
-        name="PRs Created",
+        name="Created",
     )
     fig.add_bar(
         x=df_closed_merged["Date"],
