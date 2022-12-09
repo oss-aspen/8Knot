@@ -103,18 +103,19 @@ import app_callbacks
 # CREATE APP OBJECT
 load_figure_template(["sandstone", "minty", "slate"])
 
-# stylesheet with the .dbc class
+# stylesheet with the .dbc class, this is a complement to the dash bootstrap templates, credit AnnMarieW
 dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css"
 
+# making custom plotly template with custom colors on top of the slate design template
 plt_io.templates["custom_dark"] = plt_io.templates["slate"]
 plt_io.templates["custom_dark"]["layout"]["colorway"] = [
-    "#f8dd70",
-    "#c0bc5d",
-    "#8e9b4c",
-    "#62793d",
-    "#3c582d",
-    "#1c381d",
-]
+    "#B5B682",  # sage
+    "#c0bc5d",  # olive green
+    "#6C8975",  # xanadu
+    "#485B4E",  # feldgrau (dark green)
+    "#3c582d",  # hunter green
+    "#376D39",
+]  # dartmouth green
 plt_io.templates.default = "custom_dark"
 
 app = dash.Dash(
