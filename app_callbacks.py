@@ -187,7 +187,7 @@ def run_queries(repos):
         # jobs are either all ready
         if all([j.successful() for j in jobs]):
             logging.info([j.status for j in jobs])
-            return "Data Ready", "#B5B682"
+            return "Data Ready", "#B5B682"  # sage
 
         # or one of them has failed
         # TODO only fail if all retries fail
