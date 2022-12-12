@@ -9,6 +9,7 @@ from queries.commits_query import commits_query as cq
 from queries.contributors_query import contributors_query as cnq
 from queries.prs_query import prs_query as prq
 import time
+from celery.result import AsyncResult
 
 # list of queries to be run
 QUERIES = [iq, cq, cnq, prq]
@@ -148,9 +149,58 @@ def show_help_alert(n_clicks, openness):
 
 
 @callback(
-    [Output("data_badge", "children"), Output("data_badge", "color")],
-    Input("repo-choices", "data"),
+    [Output("data-badge", "children"), Output("data-badge", "color")],
+    Input("job-ids", "data"),
     background=True,
+)
+def wait_queries(job_ids):
+    # TODO add docstring to function
+
+    jobs = [AsyncResult(j_id) for j_id in job_ids]
+
+    # default 'result_expires' for celery config is 86400 seconds.
+    # so we don't have to check if the jobs exist. if this tasks
+    # is enqueued 24 hours after the query-worker tasks finish
+    # then we have a big problem. However, we should 'forget' all
+    # results before we exit.
+
+    while True:
+        logging.info([j.status for j in jobs])
+
+        # jobs are either all ready
+        if all(j.successful() for j in jobs):
+            logging.info([j.status for j in jobs])
+            jobs = [j.forget() for j in jobs]
+            return "Data Ready", "success"
+
+        # or one of them has failed
+        if any(j.failed() for j in jobs):
+
+            # if a job fails, we need to wait for the others to finish before
+            # we can 'forget' them. otherwise to-be-successful jobs will always
+            # be forgotten if one fails.
+
+            # tasks need to have either failed or succeeded before being forgotten.
+            while True:
+                num_succeeded = [j.successful() for j in jobs].count(True)
+                num_failed = [j.failed() for j in jobs].count(True)
+                num_total = num_failed + num_succeeded
+
+                if num_total == len(jobs):
+                    break
+
+                time.sleep(4.0)
+
+            jobs = [j.forget() for j in jobs]
+            return "Data Incomplete- Retry", "danger"
+
+        # pause to let something change
+        time.sleep(2.0)
+
+
+@callback(
+    Output("job-ids", "data"),
+    Input("repo-choices", "data"),
 )
 def run_queries(repos):
     """
@@ -182,17 +232,4 @@ def run_queries(repos):
         # add job promise to local promise list
         jobs.append(j)
 
-    while True:
-        logging.info([j.status for j in jobs])
-        # jobs are either all ready
-        if all([j.successful() for j in jobs]):
-            logging.info([j.status for j in jobs])
-            return "Data Ready", "#B5B682"  # sage
-
-        # or one of them has failed
-        # TODO only fail if all retries fail
-        if any(j.failed() for j in jobs):
-            return "Data Incomplete- Retry", "danger"
-
-        # pause to let something change
-        time.sleep(2.0)
+    return [j.id for j in jobs]
