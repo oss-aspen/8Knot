@@ -23,6 +23,7 @@ layout = dbc.Container(
     [
         # componets to store data from queries
         dcc.Store(id="repo-choices", storage_type="session", data=[]),
+        dcc.Store(id="job-ids", storage_type="session", data=[]),
         dcc.Location(id="url"),
         dbc.Row(
             [
@@ -32,7 +33,12 @@ layout = dbc.Container(
                     [
                         html.H1("8Knot Community Data", className="text-center"),
                         # search bar with buttons
-                        dbc.Label("Select Github repos or orgs:", html_for="projects", width="auto", size="lg"),
+                        dbc.Label(
+                            "Select Github repos or orgs:",
+                            html_for="projects",
+                            width="auto",
+                            size="lg",
+                        ),
                         html.Div(
                             [
                                 html.Div(
