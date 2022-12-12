@@ -17,7 +17,7 @@
 # if you want more/fewer worker processes in the workerpool, please edit the 'numprocs' field in supervisord.conf
 
 # Pick podman if available
-CONTAINER_CMD=podman
+CONTAINER_CMD=docker
 which podman || CONTAINER_CMD=docker
 
 # TODO redis doesn't currently like this and I'm not sure why

@@ -82,7 +82,7 @@ The credentials below are valid, so you can copy and use them to access a develo
     connection_string=sqlite:///:memory:
     database=astros
     host=chaoss.tv
-    password=!xpk98T6?bKK
+    password=!xpk98T6?bK
     port=5432
     schema=augur_data
     user=eightknot
@@ -103,9 +103,9 @@ docker && docker compose || docker-compose
 
 (above just runs docker and docker-compose and checks if both work)
 
-### Build and Run 
+### Build and Run
 
-8Knot is a multi-container application. 
+8Knot is a multi-container application.
 
 The webserver, worker-pool, and cache containers communicate with one another via docker network.
 
@@ -115,6 +115,17 @@ To start the application, run at the top-level of the 8Knot directory:
 
 ```bash
 docker compose up --build
+```
+
+Due to a known deadlock, we recommend scaling-up the number of worker-pool pods deployed.
+There need to be (#visualizations + 1) celery threads available for the callback_worker pool.
+
+A concrete example: I have 6 CPU's allocated to my Docker runtime, so Celery workers will default to a concurrency of 6 processes.
+However, there are 7 visualizations on the Overview page. Therefore, I will scale the 'callback_worker' pod to 2 instances,
+guaranteeing that there are (2 * #CPUs = 12) available processing celery threads, ensuring that the known deadlock will be avoided.
+
+```bash
+docker compose up --build --scale query-worker=2 --scale callback-worker=2
 ```
 
 To stop the application, run:

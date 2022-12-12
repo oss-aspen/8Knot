@@ -20,7 +20,7 @@ gc_issue_staleness = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H4(
+                html.H3(
                     "Issue Activity- Staleness",
                     className="card-title",
                     style={"text-align": "center"},
@@ -46,10 +46,46 @@ gc_issue_staleness = dbc.Card(
                         dbc.Row(
                             [
                                 dbc.Label(
+                                    "Days Until Staling:",
+                                    html_for="i_staling_days",
+                                    width={"size": "auto"},
+                                ),
+                                dbc.Col(
+                                    dbc.Input(
+                                        id="i_staling_days", type="number", min=1, max=120, step=1, value=7, size="sm"
+                                    ),
+                                    className="me-2",
+                                    width=1,
+                                ),
+                                dbc.Label(
+                                    "Days Until Stale:",
+                                    html_for="i_stale_days",
+                                    width={"size": "auto"},
+                                ),
+                                dbc.Col(
+                                    dbc.Input(
+                                        id="i_stale_days", type="number", min=1, max=120, step=1, value=30, size="sm"
+                                    ),
+                                    className="me-2",
+                                    width=1,
+                                ),
+                                dbc.Alert(
+                                    children="Please ensure that 'Days Until Staling' is less than 'Days Until Stale'",
+                                    id="issue_staling_stale_check_alert",
+                                    dismissable=True,
+                                    fade=False,
+                                    is_open=False,
+                                    color="warning",
+                                ),
+                            ],
+                            align="center",
+                        ),
+                        dbc.Row(
+                            [
+                                dbc.Label(
                                     "Date Interval:",
                                     html_for="issue-staleness-interval",
                                     width="auto",
-                                    style={"font-weight": "bold"},
                                 ),
                                 dbc.Col(
                                     [
@@ -78,61 +114,12 @@ gc_issue_staleness = dbc.Card(
                             ],
                             align="center",
                         ),
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Days Until Staling:",
-                                    html_for="i_staling_days",
-                                    width={"size": "auto"},
-                                    style={"font-weight": "bold"},
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id="i_staling_days",
-                                        type="number",
-                                        min=1,
-                                        max=120,
-                                        step=1,
-                                        value=7,
-                                    ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                                dbc.Label(
-                                    "Days Until Stale:",
-                                    html_for="i_stale_days",
-                                    width={"size": "auto"},
-                                    style={"font-weight": "bold"},
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id="i_stale_days",
-                                        type="number",
-                                        min=1,
-                                        max=120,
-                                        step=1,
-                                        value=30,
-                                    ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                            ],
-                            align="center",
-                        ),
-                        dbc.Alert(
-                            children="Please ensure that 'Days Until Staling' is less than 'Days Until Stale'",
-                            id="issue_staling_stale_check_alert",
-                            dismissable=True,
-                            fade=False,
-                            is_open=False,
-                            color="warning",
-                        ),
                     ]
                 ),
             ]
         )
     ],
-    color="light",
+    # color="light",
 )
 
 
@@ -161,10 +148,10 @@ def toggle_popover_issues(n, is_open):
 def new_staling_issues_graph(repolist, interval, staling_interval, stale_interval):
 
     if staling_interval > stale_interval:
-        return dash.no_update, True, dash.no_update
+        return dash.no_update, True
 
     if staling_interval is None or stale_interval is None:
-        return dash.no_update, dash.no_update, dash.no_update
+        return dash.no_update, dash.no_update
 
     # wait for data to asynchronously download and become available.
     cache = cm()
@@ -269,7 +256,12 @@ def create_figure(df_status: pd.DataFrame, interval):
         # edit hover values
         fig.update_traces(hovertemplate=hover + "<br>Issues: %{y}<br>" + "<extra></extra>")
 
-    fig.update_layout(xaxis_title="Time", yaxis_title="Issues", legend_title="Type")
+    fig.update_layout(
+        xaxis_title="Time",
+        yaxis_title="Issues",
+        legend_title="Type",
+        font=dict(size=14),
+    )
 
     return fig
 

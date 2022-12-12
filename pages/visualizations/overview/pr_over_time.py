@@ -18,7 +18,7 @@ gc_pr_over_time = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H4(
+                html.H3(
                     "Pull Requests Over Time",
                     className="card-title",
                     style={"text-align": "center"},
@@ -44,7 +44,6 @@ gc_pr_over_time = dbc.Card(
                                     "Date Interval:",
                                     html_for="pr-time-interval",
                                     width="auto",
-                                    style={"font-weight": "bold"},
                                 ),
                                 dbc.Col(
                                     dbc.RadioItems(
@@ -84,7 +83,7 @@ gc_pr_over_time = dbc.Card(
             ]
         ),
     ],
-    color="light",
+    # color="light",
 )
 
 # call backs for card graph 7 - Pull Request Over Time
@@ -106,6 +105,7 @@ def toggle_popover_7(n, is_open):
         Input("repo-choices", "data"),
         Input("pr-time-interval", "value"),
     ],
+    background=True,
 )
 def prs_over_time_graph(repolist, interval):
 
@@ -218,7 +218,7 @@ def create_figure(df_created: pd.DataFrame, df_closed_merged: pd.DataFrame, df_o
         hovertemplate=hover + "<br>Created: %{y}<br>" + "<extra></extra>",
         offsetgroup=0,
         marker=dict(color=color_seq[0]),
-        name="PRs Created",
+        name="Created",
     )
     fig.add_bar(
         x=df_closed_merged["Date"],
@@ -227,7 +227,7 @@ def create_figure(df_created: pd.DataFrame, df_closed_merged: pd.DataFrame, df_o
         hovertemplate=hover + "<br>Merged: %{y}<br>" + "<extra></extra>",
         offsetgroup=1,
         marker=dict(color=color_seq[4]),
-        name="PRs Merged",
+        name="Merged",
     )
     fig.add_bar(
         x=df_closed_merged["Date"],
@@ -237,7 +237,7 @@ def create_figure(df_created: pd.DataFrame, df_closed_merged: pd.DataFrame, df_o
         offsetgroup=1,
         base=df_closed_merged["merged"],
         marker=dict(color=color_seq[3]),
-        name="PRs Closed",
+        name="Closed",
     )
     fig.update_xaxes(
         showgrid=True,
@@ -251,6 +251,7 @@ def create_figure(df_created: pd.DataFrame, df_closed_merged: pd.DataFrame, df_o
         yaxis_title="Number of PRs",
         bargroupgap=0.1,
         margin_b=40,
+        font=dict(size=14),
     )
     fig.add_trace(
         go.Scatter(
@@ -258,7 +259,7 @@ def create_figure(df_created: pd.DataFrame, df_closed_merged: pd.DataFrame, df_o
             y=df_open["Open"],
             mode="lines",
             marker=dict(color=color_seq[5]),
-            name="PRs Actively Open",
+            name="Open",
             hovertemplate="PRs Open: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
         )
     )

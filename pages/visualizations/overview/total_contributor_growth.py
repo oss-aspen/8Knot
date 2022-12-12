@@ -18,7 +18,7 @@ gc_total_contributor_growth = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H4(
+                html.H3(
                     id="overview-graph-title-1",
                     className="card-title",
                     style={"text-align": "center"},
@@ -44,7 +44,6 @@ gc_total_contributor_growth = dbc.Card(
                                     "Date Interval",
                                     html_for="contributor-growth-time-interval",
                                     width="auto",
-                                    style={"font-weight": "bold"},
                                 ),
                                 dbc.Col(
                                     dbc.RadioItems(
@@ -80,7 +79,7 @@ gc_total_contributor_growth = dbc.Card(
             ]
         ),
     ],
-    color="light",
+    # color="light",
 )
 
 
@@ -236,5 +235,6 @@ def create_figure(df, df_contribs, interval):
         yaxis_title="Number of Contributors",
         margin_b=40,
         margin_r=20,
+        font=dict(size=14),
     )
     return fig

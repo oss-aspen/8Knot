@@ -2,11 +2,12 @@ services:
   web-server:
     build:
       context: .
-      dockerfile: Dockerfile.server
+      dockerfile: ./docker/Dockerfile.server
     ports:
       - 8050:8050
     depends_on:
-      - worker-pool
+      - callback-worker
+      - query-worker
       - cache
     env_file:
       - ./env.list
@@ -15,10 +16,24 @@ services:
       REDIS_SERVICE_PORT: 6379
     restart: always
 
-  worker-pool:
+  callback-worker:
     build:
       context: .
-      dockerfile: Dockerfile.supervisor_workers
+      dockerfile: ./docker/Dockerfile.worker
+    depends_on:
+      - cache
+    env_file:
+      - ./env.list
+    environment:
+      REDIS_SERVICE_HOST: cache
+      REDIS_SERVICE_PORT: 6379
+    restart: always
+
+  query-worker:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.worker
+    command: ["celery", "-A", "app:celery_app", "worker", "--loglevel=INFO", "-Q", "data"]
     depends_on:
       - cache
     env_file:
@@ -33,3 +48,20 @@ services:
     ports:
       - 6379:6379
     restart: always
+
+  flower:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.flower
+    depends_on:
+      - callback-worker
+      - query-worker
+      - cache
+      - web-server
+    env_file:
+      - ./env.list
+    environment:
+      REDIS_SERVICE_HOST: cache
+      REDIS_SERVICE_PORT: 6379
+    ports:
+      - 5555:5555

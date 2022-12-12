@@ -17,7 +17,7 @@ gc_commits_over_time = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H4(
+                html.H3(
                     "Commits Over Time",
                     className="card-title",
                     style={"text-align": "center"},
@@ -43,7 +43,6 @@ gc_commits_over_time = dbc.Card(
                                     "Date Interval:",
                                     html_for="commits-time-interval",
                                     width="auto",
-                                    style={"font-weight": "bold"},
                                 ),
                                 dbc.Col(
                                     dbc.RadioItems(
@@ -83,7 +82,7 @@ gc_commits_over_time = dbc.Card(
             ]
         ),
     ],
-    color="light",
+    # color="light",
 )
 
 # call backs for card graph 2 - Commits Over Time
@@ -137,6 +136,7 @@ def commits_over_time_graph(repolist, interval):
 def process_data(df: pd.DataFrame, interval):
 
     # convert to datetime objects with consistent column name
+    # incoming value should be a posix integer.
     df["date"] = pd.to_datetime(df["date"], utc=True)
     df.rename(columns={"date": "created"}, inplace=True)
 
@@ -188,6 +188,7 @@ def create_figure(df_created: pd.DataFrame, interval):
         yaxis_title="Number of Commits",
         margin_b=40,
         margin_r=20,
+        font=dict(size=14),
     )
 
     return fig

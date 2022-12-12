@@ -23,10 +23,9 @@ import sys
 import os
 import logging
 from app_global import celery_manager, celery_app
+import plotly.io as plt_io
 
-logging.basicConfig(
-    format="%(asctime)s %(levelname)-8s %(message)s", level=logging.DEBUG
-)
+logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.DEBUG)
 
 # GLOBAL VARIABLE DECLARATIONS
 engine = None
@@ -74,9 +73,7 @@ def _project_list_query():
     df_search_bar = augur_db.run_query(pr_query)
 
     # handling case sensitive options for search bar
-    entries = np.concatenate(
-        (df_search_bar.rg_name.unique(), df_search_bar.repo_git.unique()), axis=None
-    )
+    entries = np.concatenate((df_search_bar.rg_name.unique(), df_search_bar.repo_git.unique()), axis=None)
     entries = entries.tolist()
     entries.sort(key=lambda item: (item, len(item)))
 
@@ -85,11 +82,7 @@ def _project_list_query():
     all_entries = list(zip(lower_entries, entries))
 
     # generating dictionary with the git urls as the key and the repo_id and name as a list as the value pair
-    repo_dict = (
-        df_search_bar[["repo_git", "repo_id", "repo_name"]]
-        .set_index("repo_git")
-        .T.to_dict("list")
-    )
+    repo_dict = df_search_bar[["repo_git", "repo_id", "repo_name"]].set_index("repo_git").T.to_dict("list")
 
     # generating dictionary with the org name as the key and the git repos of the org in a list as the value pair
     org_dict = df_search_bar.groupby("rg_name")["repo_git"].apply(list).to_dict()
@@ -108,11 +101,27 @@ _project_list_query()
 import app_callbacks
 
 # CREATE APP OBJECT
-load_figure_template(["sandstone", "minty"])
+load_figure_template(["sandstone", "minty", "slate"])
+
+# stylesheet with the .dbc class, this is a complement to the dash bootstrap templates, credit AnnMarieW
+dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css"
+
+# making custom plotly template with custom colors on top of the slate design template
+plt_io.templates["custom_dark"] = plt_io.templates["slate"]
+plt_io.templates["custom_dark"]["layout"]["colorway"] = [
+    "#B5B682",  # sage
+    "#c0bc5d",  # olive green
+    "#6C8975",  # xanadu
+    "#485B4E",  # feldgrau (dark green)
+    "#3c582d",  # hunter green
+    "#376D39",
+]  # dartmouth green
+plt_io.templates.default = "custom_dark"
+
 app = dash.Dash(
     __name__,
     use_pages=True,
-    external_stylesheets=[dbc.themes.SANDSTONE],
+    external_stylesheets=[dbc.themes.SLATE, dbc_css],
     suppress_callback_exceptions=True,
     background_callback_manager=celery_manager,
 )
@@ -120,170 +129,10 @@ app = dash.Dash(
 # expose the server variable so that gunicorn can use it.
 server = app.server
 
-# side bar code for page navigation
-sidebar = html.Div(
-    [
-        html.H2("Pages", className="display-10"),
-        html.Hr(),
-        dbc.Nav(
-            [
-                dbc.NavLink(page["name"], href=page["path"])
-                for page in dash.page_registry.values()
-                if page["module"] != "pages.not_found_404"
-            ],
-            vertical=True,
-            pills=True,
-        ),
-    ]
-)
+# layout of the app stored in the app_layout file, must be imported after the app is initiated
+from app_layout import layout
 
-# summary layout of the page
-app.layout = dbc.Container(
-    [
-        # componets to store data from queries
-        dcc.Store(id="repo-choices", storage_type="session", data=[]),
-        dcc.Location(id="url"),
-        dbc.Row(
-            [
-                # from above definition
-                dbc.Col(sidebar, width=1),
-                dbc.Col(
-                    [
-                        html.H1("8Knot Community Data", className="text-center"),
-                        # search bar with buttons
-                        html.Label(
-                            ["Select Github repos or orgs:"],
-                            style={"font-weight": "bold"},
-                        ),
-                        html.Div(
-                            [
-                                html.Div(
-                                    [
-                                        dcc.Dropdown(
-                                            id="projects",
-                                            multi=True,
-                                            options=[search_input],
-                                            value=[search_input],
-                                        ),
-                                        dbc.Alert(
-                                            children='Please ensure that your spelling is correct. \
-                                                If your selection definitely isn\'t present, please request that \
-                                                it be loaded using the help button "REPO/ORG Request" \
-                                                in the bottom right corner of the screen.',
-                                            id="help-alert",
-                                            dismissable=True,
-                                            fade=True,
-                                            is_open=False,
-                                            color="info",
-                                        ),
-                                    ],
-                                    style={
-                                        "width": "50%",
-                                        "display": "table-cell",
-                                        "verticalAlign": "middle",
-                                        "padding-right": "10px",
-                                    },
-                                ),
-                                dbc.Button(
-                                    "Search",
-                                    id="search",
-                                    n_clicks=0,
-                                    class_name="btn btn-primary",
-                                    style={
-                                        "verticalAlign": "top",
-                                        "display": "table-cell",
-                                    },
-                                ),
-                                dbc.Button(
-                                    "Help",
-                                    id="search-help",
-                                    n_clicks=0,
-                                    class_name="btn btn-light",
-                                    style={
-                                        "verticalAlign": "top",
-                                        "display": "table-cell",
-                                    },
-                                ),
-                            ],
-                            style={
-                                "align": "right",
-                                "display": "table",
-                                "width": "60%",
-                            },
-                        ),
-                        dcc.Loading(
-                            children=[
-                                html.Div(
-                                    id="results-output-container", className="mb-4"
-                                )
-                            ],
-                            color="#119DFF",
-                            type="dot",
-                            fullscreen=True,
-                        ),
-                        dcc.Loading(
-                            dbc.Badge(
-                                children="Data Loaded",
-                                id="data_badge",
-                                color="success",
-                                className="me-1",
-                            ),
-                            type="cube",
-                        ),
-                        # where our page will be rendered
-                        dash.page_container,
-                    ],
-                    width={"size": 11},
-                ),
-            ],
-            justify="start",
-        ),
-        dbc.Row(
-            [
-                dbc.Col(
-                    [
-                        html.H5(
-                            "Have a bug or feature request?",
-                            className="mb-2"
-                            # style={"textDecoration": "underline"},
-                        ),
-                        html.Div(
-                            [
-                                dbc.Button(
-                                    "Visualization request",
-                                    color="primary",
-                                    className="me-1",
-                                    external_link=True,
-                                    target="_blank",
-                                    href="https://github.com/sandiego-rh/explorer/issues/new?assignees=&labels=enhancement%2Cvisualization&template=visualizations.md",
-                                ),
-                                dbc.Button(
-                                    "Bug",
-                                    color="primary",
-                                    className="me-1",
-                                    external_link=True,
-                                    target="_blank",
-                                    href="https://github.com/sandiego-rh/explorer/issues/new?assignees=&labels=bug&template=bug_report.md",
-                                ),
-                                dbc.Button(
-                                    "Repo/Org Request",
-                                    color="primary",
-                                    external_link=True,
-                                    target="_blank",
-                                    href="https://github.com/sandiego-rh/explorer/issues/new?assignees=&labels=augur&template=augur_load.md",
-                                ),
-                            ]
-                        ),
-                    ],
-                    width={"offset": 10},
-                )
-            ],
-        ),
-    ],
-    fluid=True,
-    className="dbc",
-    style={"padding-top": "1em"},
-)
+app.layout = layout
 
 
 def main():

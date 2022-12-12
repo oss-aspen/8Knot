@@ -1,10 +1,10 @@
-FROM registry.access.redhat.com/ubi9/python-39 
+FROM registry.access.redhat.com/ubi9/python-39
 
 # need this for the Dash app
 EXPOSE 8050
 
 # install pipenv
-# RUN pip --no-cache-dir install pipenv
+RUN pip --no-cache-dir install pipenv
 
 # create a working directory
 # RUN mkdir explorer
@@ -26,8 +26,6 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 # working directory.
 COPY ./ /explorer/
 
-# run app
-# Description of how to choose the number of workers and threads.
-# common wisdom is (2*CPU)+1 workers:
-# https://medium.com/building-the-system/gunicorn-3-means-of-concurrency-efbb547674b7
-CMD [ "gunicorn", "--bind", ":8050", "app:server", "--workers", "4", "--threads", "2" ]
+# run worker
+# CMD [ "rq", "worker", "-c", "worker_settings" ]
+CMD ["celery", "-A", "app:celery_app", "worker", "--loglevel=INFO"]
