@@ -103,6 +103,10 @@ docker && docker compose || docker-compose
 
 (above just runs docker and docker-compose and checks if both work)
 
+NOTE: podman-compose has been generally verified to work as well, but our preference is 'docker compose'
+    podman-compose doesn't support the '--scale' flag as we would expect so we don't use it for our own
+    development applications, but the application is built to work with the minimum number of containers. YMMV.
+
 ### Build and Run
 
 8Knot is a multi-container application.
