@@ -2,12 +2,14 @@
     Imports
 """
 import pandas as pd
+import numpy as np
 import sqlalchemy as salc
 import os
 import logging
+import sys
 
 
-class AugurInterface:
+class AugurManager:
     """
     Handles connection and queries to Augur database.
 
@@ -59,7 +61,7 @@ class AugurInterface:
             passed as parameters to workers via Queue objects.
 
         load_pconfig():
-            Loads credentials for AugurInterface object from a pconfig.
+            Loads credentials for AugurManager object from a pconfig.
             We need to do this because _engine.Engine objects can't be pickled and
             passed as parameters to workers via Queue objects.
     """
@@ -74,6 +76,11 @@ class AugurInterface:
         self.database = None
         self.schema = None
         self.config_loaded = False
+        self.entries = None
+        self.all_entries = None
+        self.search_input = None
+        self.repo_dict = None
+        self.org_dict = None
 
     def get_engine(self):
         """
@@ -89,7 +96,14 @@ class AugurInterface:
         if self.config_loaded is False and not self.pconfig:
 
             # make sure all of the environment variables are available
-            env_values = ["user", "password", "host", "port", "database", "schema"]
+            env_values = [
+                "AUGUR_USERNAME",
+                "AUGUR_PASSWORD",
+                "AUGUR_HOST",
+                "AUGUR_PORT",
+                "AUGUR_DATABASE",
+                "AUGUR_SCHEMA",
+            ]
             for v in env_values:
 
                 if v not in os.environ:
@@ -101,12 +115,12 @@ class AugurInterface:
                     return None
 
             # have confirmed that necessary environment variables exist- proceed.
-            self.user = os.getenv("user")
-            self.password = os.getenv("password")
-            self.host = os.getenv("host")
-            self.port = os.getenv("port")
-            self.database = os.getenv("database")
-            self.schema = os.getenv("schema")
+            self.user = os.getenv("AUGUR_USERNAME")
+            self.password = os.getenv("AUGUR_PASSWORD")
+            self.host = os.getenv("AUGUR_HOST")
+            self.port = os.getenv("AUGUR_PORT")
+            self.database = os.getenv("AUGUR_DATABASE")
+            self.schema = os.getenv("AUGUR_SCHEMA")
             self.config_loaded = True
 
         database_connection_string = "postgresql+psycopg2://{}:{}@{}:{}/{}".format(
@@ -184,13 +198,13 @@ class AugurInterface:
 
     def load_pconfig(self, pconfig: list):
         """
-        Loads credentials for AugurInterface object from a pconfig.
+        Loads credentials for AugurManager object from a pconfig.
         We need to do this because _engine.Engine objects can't be pickled and
         passed as parameters to workers via Queue objects.
 
         Args:
         -----
-            pconfig (list): Credentials to create AugurInterface object in RQ Workers.
+            pconfig (list): Credentials to create AugurManager object in RQ Workers.
         """
         self.pconfig = True
         self.engine = None
@@ -202,3 +216,67 @@ class AugurInterface:
         self.schema = pconfig[5]
         self.config_loaded = False
         self.get_engine()
+
+    def project_list_query(self):
+
+        pr_query = f"""SELECT DISTINCT
+                            r.repo_git,
+                            r.repo_id,
+                            r.repo_name,
+                            rg.rg_name
+                        FROM
+                            repo r
+                        JOIN repo_groups rg
+                        ON rg.repo_group_id = r.repo_group_id
+                        ORDER BY rg.rg_name"""
+
+        # query for search bar entry generation
+        df_search_bar = self.run_query(pr_query)
+
+        # handling case sensitive options for search bar
+        self.entries = np.concatenate((df_search_bar.rg_name.unique(), df_search_bar.repo_git.unique()), axis=None)
+        self.entries = self.entries.tolist()
+        self.entries.sort(key=lambda item: (item, len(item)))
+
+        # generating search bar entries
+        lower_entries = [i.lower() for i in self.entries]
+        self.all_entries = list(zip(lower_entries, self.entries))
+
+        # generating dictionary with the git urls as the key and the repo_id and name as a list as the value pair
+        self.repo_dict = df_search_bar[["repo_git", "repo_id", "repo_name"]].set_index("repo_git").T.to_dict("list")
+
+        # generating dictionary with the org name as the key and the git repos of the org in a list as the value pair
+        self.org_dict = df_search_bar.groupby("rg_name")["repo_git"].apply(list).to_dict()
+
+        # making first selection for the search bar
+        self.search_input = self.entries[0]
+
+        logging.debug("Search lists returned and set")
+
+    def get_search_input(self):
+        if self.search_input is not None:
+            return self.search_input
+        else:
+            r = self.project_list_query()
+            return self.search_input
+
+    def get_all_entries(self):
+        if self.all_entries is not None:
+            return self.all_entries
+        else:
+            r = self.project_list_query()
+            return self.all_entries
+
+    def get_org_dict(self):
+        if self.org_dict is not None:
+            return self.org_dict
+        else:
+            r = self.project_list_query()
+            return self.org_dict
+
+    def get_repo_dict(self):
+        if self.repo_dict is not None:
+            return self.repo_dict
+        else:
+            r = self.project_list_query()
+            return self.repo_dict

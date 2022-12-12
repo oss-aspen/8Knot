@@ -1,7 +1,7 @@
 from dash import html, dcc
 import dash
 import dash_bootstrap_components as dbc
-from app import search_input
+from app import augur
 
 sidebar = html.Div(
     [
@@ -46,8 +46,8 @@ layout = dbc.Container(
                                         dcc.Dropdown(
                                             id="projects",
                                             multi=True,
-                                            options=[search_input],
-                                            value=[search_input],
+                                            options=[augur.get_search_input()],
+                                            value=[augur.get_search_input()],
                                             style={"font-size": 16},
                                         ),
                                         dbc.Alert(

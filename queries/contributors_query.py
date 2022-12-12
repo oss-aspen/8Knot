@@ -1,7 +1,7 @@
 import logging
 import pandas as pd
-from db_manager.AugurInterface import AugurInterface
-from app_global import celery_app
+from db_manager.augur_manager import AugurManager
+from app import celery_app
 from cache_manager.cache_manager import CacheManager as cm
 
 
@@ -19,7 +19,7 @@ def contributors_query(self, dbmc, repos):
 
     Args:
     -----
-        dbmc (AugurInterface): Handles connection to Augur database, executes queries and returns results.
+        dbmc (AugurManager): Handles connection to Augur database, executes queries and returns results.
 
         repo_ids ([str]): repos that SQL query is executed on.
 
@@ -47,7 +47,7 @@ def contributors_query(self, dbmc, repos):
                 """
 
     # create database connection, load config, execute query above.
-    dbm = AugurInterface()
+    dbm = AugurManager()
     dbm.load_pconfig(dbmc)
     df_cont = dbm.run_query(query_string)
 

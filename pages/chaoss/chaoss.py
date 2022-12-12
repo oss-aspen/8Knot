@@ -4,9 +4,9 @@ import dash_bootstrap_components as dbc
 import warnings
 
 # import visualization cards
-from .visualizations.chaoss.contrib_drive_repeat import gc_contrib_drive_repeat
-from .visualizations.chaoss.first_time_contributions import gc_first_time_contributions
-from .visualizations.chaoss.contributors_over_time import gc_contributors_over_time
+from .visualizations.contrib_drive_repeat import gc_contrib_drive_repeat
+from .visualizations.first_time_contributions import gc_first_time_contributions
+from .visualizations.contributors_over_time import gc_contributors_over_time
 
 warnings.filterwarnings("ignore")
 

@@ -1,6 +1,6 @@
 from dash import callback
 from dash.dependencies import Input, Output, State
-from app import repo_dict, org_dict, all_entries, augur_db
+from app import augur
 import dash
 import logging
 from cache_manager.cache_manager import CacheManager as cm
@@ -17,6 +17,7 @@ QUERIES = [iq, cq, cnq, prq]
 # helper function for repos to get repo_ids
 def _parse_repo_choices(repo_git_set):
     # get repo values from repo dictionary
+    repo_dict = augur.get_repo_dict()
     repo_values = [repo_dict[x] for x in repo_git_set]
     # values for the repo_ids and names
     repo_ids = [row[0] for row in repo_values]
@@ -27,6 +28,9 @@ def _parse_repo_choices(repo_git_set):
 
 # helper function for orgs to get repo_ids
 def _parse_org_choices(org_name_set):
+
+    org_dict = augur.get_org_dict()
+    repo_dict = augur.get_repo_dict()
 
     # get git urls for the repos in the organization, sum operater is used to flatten the 2D list to 1D
     org_repos = sum([org_dict[x] for x in org_name_set], [])
@@ -54,6 +58,8 @@ def dropdown_dynamic_callback(user_in, selections):
     in the current list of states selected. Add it to the list if it matches
     either of the options.
     """
+
+    all_entries = augur.get_all_entries()
 
     if selections is None:
         selections = []
@@ -227,7 +233,7 @@ def run_queries(repos):
         not_ready = [r for r in repos if cache.exists(f, r) != 1]
 
         # add job to queue
-        j = f.apply_async(args=(augur_db.package_config(), not_ready), queue="data")
+        j = f.apply_async(args=(augur.package_config(), not_ready), queue="data")
 
         # add job promise to local promise list
         jobs.append(j)
