@@ -14,7 +14,7 @@ from .visualizations.total_contributor_growth import gc_total_contributor_growth
 from .visualizations.issue_staleness import gc_issue_staleness
 from .visualizations.pr_staleness import gc_pr_staleness
 from .visualizations.pr_over_time import gc_pr_over_time
-
+from .visualizations.bug_response_rate import gc_bug_response_rate
 
 # register the page
 dash.register_page(__name__, order=2)
@@ -51,6 +51,7 @@ layout = dbc.Container(
         dbc.Row(
             [
                 dbc.Col(gc_pr_over_time, width=6),
+                dbc.Col(gc_bug_response_rate, width=6),
             ],
             align="center",
             style={"margin-bottom": ".5%"},

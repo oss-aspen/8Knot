@@ -8,11 +8,12 @@ from queries.issues_query import issues_query as iq
 from queries.commits_query import commits_query as cq
 from queries.contributors_query import contributors_query as cnq
 from queries.prs_query import prs_query as prq
+from queries.issues_bugs_query import issues_bugs_query as ibq
 import time
 from celery.result import AsyncResult
 
 # list of queries to be run
-QUERIES = [iq, cq, cnq, prq]
+QUERIES = [iq, cq, cnq, prq, ibq]
 
 # helper function for repos to get repo_ids
 def _parse_repo_choices(repo_git_set):
