@@ -11,96 +11,47 @@
     Having laid out the HTML-like organization of this page, we write the callbacks for this page in
     the neighbor 'app_callbacks.py' file.
 """
-import pstats
-import cProfile
-from db_manager.AugurInterface import AugurInterface
-from dash import html, dcc
+from db_manager.augur_manager import AugurManager
 import dash
 import dash_bootstrap_components as dbc
 from dash_bootstrap_templates import load_figure_template
-import numpy as np
 import sys
-import os
 import logging
-from app_global import celery_manager, celery_app
 import plotly.io as plt_io
+from celery import Celery
+from dash import CeleryManager
+import worker_settings
 
 logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.DEBUG)
 
-# GLOBAL VARIABLE DECLARATIONS
-engine = None
-search_input = None
-all_entries = None
-entries = None
-augur_db = None
-repo_dict = None
-org_dict = None
+"""CREATE CELERY TASK QUEUE AND MANAGER"""
+celery_app = Celery(
+    __name__,
+    broker=worker_settings.REDIS_URL,
+    backend=worker_settings.REDIS_URL,
+)
+
+celery_app.conf.update(task_time_limit=84600, task_acks_late=True, task_track_started=True)
+
+celery_manager = CeleryManager(celery_app=celery_app)
 
 
-def _load_config():
-    global engine
-    global augur_db
-    # Get config details
-    augur_db = AugurInterface()
-    engine = augur_db.get_engine()
-    if engine is None:
-        logging.critical("Could not get engine; check config or try later")
-        sys.exit(1)
+"""CREATE DATABASE ACCESS OBJECT AND CACHE SEARCH OPTIONS"""
+augur = AugurManager()
+engine = augur.get_engine()
+if engine is None:
+    logging.critical("Could not get engine; check config or try later")
+    sys.exit(1)
+
+# grab list of projects and orgs from Augur database.
+augur.get_search_input()
 
 
-def _project_list_query():
-    global entries
-    global all_entries
-    global search_input
-    global augur_db
-    global repo_dict
-    global org_dict
-
-    # query of available orgs / repos
-    logging.debug("AUGUR_ENTRY_LIST - START")
-    pr_query = f"""SELECT DISTINCT
-                        r.repo_git,
-                        r.repo_id,
-                        r.repo_name,
-                        rg.rg_name
-                    FROM
-                        repo r
-                    JOIN repo_groups rg
-                    ON rg.repo_group_id = r.repo_group_id
-                    ORDER BY rg.rg_name"""
-
-    # query for search bar entry generation
-    df_search_bar = augur_db.run_query(pr_query)
-
-    # handling case sensitive options for search bar
-    entries = np.concatenate((df_search_bar.rg_name.unique(), df_search_bar.repo_git.unique()), axis=None)
-    entries = entries.tolist()
-    entries.sort(key=lambda item: (item, len(item)))
-
-    # generating search bar entries
-    lower_entries = [i.lower() for i in entries]
-    all_entries = list(zip(lower_entries, entries))
-
-    # generating dictionary with the git urls as the key and the repo_id and name as a list as the value pair
-    repo_dict = df_search_bar[["repo_git", "repo_id", "repo_name"]].set_index("repo_git").T.to_dict("list")
-
-    # generating dictionary with the org name as the key and the git repos of the org in a list as the value pair
-    org_dict = df_search_bar.groupby("rg_name")["repo_git"].apply(list).to_dict()
-
-    # making first selection for the search bar
-    search_input = entries[0]
-
-    logging.debug("AUGUR_ENTRY_LIST - END")
+"""IMPORT AFTER GLOBAL VARIABLES SET"""
+import pages.index.index_callbacks as index_callbacks
 
 
-# RUN SETUP FUNCTIONS DEFINED ABOVE
-_load_config()
-_project_list_query()
-
-# can import this file once we've loaded relevant global variables.
-import app_callbacks
-
-# CREATE APP OBJECT
+"""SET STYLING FOR APPLICATION"""
 load_figure_template(["sandstone", "minty", "slate"])
 
 # stylesheet with the .dbc class, this is a complement to the dash bootstrap templates, credit AnnMarieW
@@ -118,6 +69,8 @@ plt_io.templates["custom_dark"]["layout"]["colorway"] = [
 ]  # dartmouth green
 plt_io.templates.default = "custom_dark"
 
+
+"""CREATE APPLICATION"""
 app = dash.Dash(
     __name__,
     use_pages=True,
@@ -126,50 +79,16 @@ app = dash.Dash(
     background_callback_manager=celery_manager,
 )
 
-# expose the server variable so that gunicorn can use it.
+# expose the application object's server variable so that the wsgi server can use it.
 server = app.server
 
 # layout of the app stored in the app_layout file, must be imported after the app is initiated
-from app_layout import layout
+from pages.index.index_layout import layout
 
 app.layout = layout
 
-
-def main():
-    # shouldn't run server in debug mode if we're in a production setting
-    debug_mode = True
-    try:
-        if os.environ["running_on"] == "prod":
-            debug_mode = False
-        else:
-            debug_mode = True
-    except:
-        debug_mode = True
-
-    app.run(host="0.0.0.0", port=8050, debug=False, process=4, threading=False)
-
-
 if __name__ == "__main__":
-
-    try:
-        if os.environ["profiling"] == "True":
-            """
-            Ref for how to do this:
-            https://www.youtube.com/watch?v=dmnA3axZ3FY
-
-            Credit to IDG TECHTALK
-            """
-            logging.debug("Profiling")
-
-            cProfile.run("main()", "output.dat")
-
-            with open("output_time.txt", "w") as f:
-                p = pstats.Stats("output.dat", stream=f)
-                p.sort_stats("time").print_stats()
-
-            with open("output_calls.txt", "w") as f:
-                p = pstats.Stats("output.dat", stream=f)
-                p.sort_stats("calls").print_stats()
-    except KeyError:
-        logging.debug("---------PROFILING OFF---------")
-        main()
+    print(
+        "We've deprecated the Flask/Dash debug webserver.\
+         Please use gunicorn to run application or docker/podman compose."
+    )
