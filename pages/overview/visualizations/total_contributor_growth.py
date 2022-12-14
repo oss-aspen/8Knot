@@ -79,11 +79,10 @@ gc_total_contributor_growth = dbc.Card(
             ]
         ),
     ],
-    # color="light",
 )
 
 
-# call backs for card graph 1 - total contributor growth
+# callback for graph info popover
 @callback(
     Output("overview-popover-1", "is_open"),
     [Input("overview-popover-target-1", "n_clicks")],
@@ -95,6 +94,7 @@ def toggle_popover_1(n, is_open):
     return is_open
 
 
+# callback to dynamically change the graph title
 @callback(
     Output("overview-graph-title-1", "children"),
     Input("contributor-growth-time-interval", "value"),

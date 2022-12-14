@@ -83,10 +83,9 @@ gc_pr_over_time = dbc.Card(
             ]
         ),
     ],
-    # color="light",
 )
 
-# call backs for card graph 7 - Pull Request Over Time
+# formatting for graph generation
 @callback(
     Output("overview-popover-7", "is_open"),
     [Input("overview-popover-target-7", "n_clicks")],
@@ -176,6 +175,7 @@ def process_data(df: pd.DataFrame, interval):
     # A single df created for plotting merged and closed as stacked bar chart
     df_closed_merged = pd.merge(df_merged, df_closed, on="Date", how="outer")
 
+    # formatting for graph generation
     if interval == "M":
         df_created["Date"] = df_created["Date"].dt.strftime("%Y-%m-01")
         df_closed_merged["Date"] = df_closed_merged["Date"].dt.strftime("%Y-%m-01")

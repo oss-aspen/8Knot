@@ -103,10 +103,9 @@ gc_contributors_over_time = dbc.Card(
             ]
         ),
     ],
-    # color="light",
 )
 
-
+# callback for graph info popover
 @callback(
     Output("chaoss-popover-3", "is_open"),
     [Input("chaoss-popover-target-3", "n_clicks")],

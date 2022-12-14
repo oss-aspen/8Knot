@@ -83,10 +83,9 @@ gc_issues_over_time = dbc.Card(
             ]
         ),
     ],
-    # color="light",
 )
 
-# call backs for card graph 3 - Issue Over Time
+# callback for graph info popover
 @callback(
     Output("overview-popover-3", "is_open"),
     [Input("overview-popover-target-3", "n_clicks")],
@@ -167,6 +166,7 @@ def process_data(df: pd.DataFrame, interval):
     df_closed = closed_range.to_frame().reset_index().rename(columns={"index": "Date"})
     df_closed["Date"] = pd.to_datetime(df_closed["Date"].astype(str).str[:period_slice])
 
+    # formatting for graph generation
     if interval == "M":
         df_created["Date"] = df_created["Date"].dt.strftime("%Y-%m-01")
         df_closed["Date"] = df_closed["Date"].dt.strftime("%Y-%m-01")

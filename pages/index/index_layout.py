@@ -23,6 +23,7 @@ layout = dbc.Container(
     [
         # componets to store data from queries
         dcc.Store(id="repo-choices", storage_type="session", data=[]),
+        # components to store job-ids for the worker queue
         dcc.Store(id="job-ids", storage_type="session", data=[]),
         dcc.Location(id="url"),
         dbc.Row(

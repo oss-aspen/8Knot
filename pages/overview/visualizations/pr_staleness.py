@@ -133,10 +133,9 @@ gc_pr_staleness = dbc.Card(
             ]
         )
     ],
-    # color="light",
 )
 
-
+# callback for graph info popover
 @callback(
     Output("overview-popover-prs", "is_open"),
     [Input("overview-popover-target-prs", "n_clicks")],
@@ -161,6 +160,7 @@ def toggle_popover_prs(n, is_open):
 )
 def new_staling_prs_graph(repolist, interval, staling_interval, stale_interval):
 
+    # conditional for the intervals to be valid options
     if staling_interval > stale_interval:
         return dash.no_update, True
 
@@ -212,6 +212,7 @@ def process_data(df: pd.DataFrame, interval, staling_interval, stale_interval):
     # df for new, staling, and stale prs for time interval
     df_status = dates.to_frame(index=False, name="Date")
 
+    # dynamically apply the function to all dates defined in the date_range to create df_status
     df_status["New"], df_status["Staling"], df_status["Stale"] = zip(
         *df_status.apply(
             lambda row: get_new_staling_stale_up_to(df, row.Date, staling_interval, stale_interval),
@@ -219,6 +220,7 @@ def process_data(df: pd.DataFrame, interval, staling_interval, stale_interval):
         )
     )
 
+    # formatting for graph generation
     if interval == "M":
         df_status["Date"] = df_status["Date"].dt.strftime("%Y-%m")
     elif interval == "Y":

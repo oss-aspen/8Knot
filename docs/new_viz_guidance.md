@@ -16,12 +16,16 @@ to get up-and-running quickly.
 
 Please try to understand the architecture by reading the code before you begin
 any of your own development work. There are few "gotchas" but some are unavoidable.
-A recommended way of doing this is to start by looking at /pages/overview.py.
+A recommended way of doing this is to start by looking at /pages/overview/overview.py.
 This file sketches the markup of the Overview page. You'll see that we import
 the files that have the appropriate callback functions for the pages' figures from
-/pages/visualizations/overview/. In this respect, we aim to isolate larger logical
+/pages/overview/visualizations. In this respect, we aim to isolate larger logical
 "chunks" of our application- the page's structure is higher in the hierarchy, and
 individual visualizations are imported and further organized below.
+
+### Visualization Template
+
+[Visualization Template](https://github.com/oss-aspen/8Knot/blob/dev/pages/visualization_template/viz_template.py) gives you the outline to making your next visualization.
 
 ### Data and Queries
 
