@@ -106,7 +106,7 @@ gc_contrib_drive_repeat = dbc.Card(
     # color="light",
 )
 
-
+# callback for graph info popover
 @callback(
     Output("chaoss-popover-1", "is_open"),
     [Input("chaoss-popover-target-1", "n_clicks")],
@@ -118,6 +118,7 @@ def toggle_popover_1(n, is_open):
     return is_open
 
 
+# callback for dynamically changing the graph title
 @callback(Output("chaoss-graph-title-1", "children"), Input("drive-repeat", "value"))
 def graph_title(view):
     title = ""
@@ -194,12 +195,19 @@ def process_data(df, view, contribs):
 
 
 def create_figure(df_cont_subset):
+    # create plotly express histogram
     fig = px.histogram(df_cont_subset, x="created", color="Action", color_discrete_sequence=color_seq)
+
+    # creates bins with 3 month size and customizes the hover value for the bars
     fig.update_traces(
         xbins_size="M3",
         hovertemplate="Date: %{x}" + "<br>Amount: %{y}<br><extra></extra>",
     )
+
+    # update xaxes to align for the 3 month bin size
     fig.update_xaxes(showgrid=True, ticklabelmode="period", dtick="M3")
+
+    # layout styling
     fig.update_layout(
         xaxis_title="Quarter",
         yaxis_title="Contributions",

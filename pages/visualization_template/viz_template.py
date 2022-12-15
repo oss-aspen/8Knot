@@ -160,7 +160,7 @@ gc_VISUALIZATION_NAME_HERE = dbc.Card(
     ],
 )
 
-# call backs for card graph NUMER - VIZ TITLE
+# callback for graph info popover
 @callback(
     Output(f"{PAGE}-popover-{VIZ_ID}", "is_open"),
     [Input(f"{PAGE}-popover-target-{VIZ_ID}", "n_clicks")],

@@ -4,6 +4,7 @@ h2, h3, h4, h5, h6 {
 h1{
     color: #436755 !important;
 }
+/* this is to change the color for the spinner, cant be changed directly */
 .dash-spinner.dash-default-spinner {
     filter:  contrast(1.2) hue-rotate(308deg) grayscale(0.76) !important;
 }

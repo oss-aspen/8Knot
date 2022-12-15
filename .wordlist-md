@@ -50,4 +50,5 @@ sandiego
 utils
 webserver
 CPUs
+oss
 WSGI

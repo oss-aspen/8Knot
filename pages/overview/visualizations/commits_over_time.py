@@ -85,7 +85,7 @@ gc_commits_over_time = dbc.Card(
     # color="light",
 )
 
-# call backs for card graph 2 - Commits Over Time
+# callback for graph info popover
 @callback(
     Output("overview-popover-2", "is_open"),
     [Input("overview-popover-target-2", "n_clicks")],
