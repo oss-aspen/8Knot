@@ -23,6 +23,59 @@ providing an insightful and convenient interface to the Open Source project data
 
 ---
 
+## Contributing
+
+Please see our guide to contributing to this project at the following site: [CONTRIBUTORS.md](https://github.com/oss-aspen/8Knot/blob/dev/docs/CONTRIBUTORS.md)
+
+Once you've read that, please follow our guidance on how to add additional figures and pages to the application: [new_fig_guidance.md](https://github.com/oss-aspen/8Knot/blob/dev/docs/new_fig_guidance.md)
+
+---
+
+## Application File Structure
+
+The file-structure of our application is intuitive. Non-application files are omitted from this overview:
+
+<pre>
+8Knot
++-- pages/
+    |   +-- index/
+               |     +-- index_callbacks.py
+               |     +-- index_layout.py
+        +-- overview/
+               |     +-- overview.py
+               |     +-- visualizations/
+                            |     +-- name_of_visualization_1.py
+                            |     ...
+                            |     +-- name_of_visualization_n.py
+        +-- chaoss/
+               |     +-- chaoss.py
+               |     +-- visualizations/
+                            |     +-- name_of_visualization_1.py
+                            |     ...
+                            |     +-- name_of_visualization_n.py
+        +-- home/
+               |     +-- home.py
+        +-- visualization_template/
+               |     +-- viz_template.py
+        +-- utils/
++-- app.py
+.
+.
+.
++-- ~other files~
+</pre>
+
+
+The application 'Dash' instance is defined in the 'app.py' file, as is the app.server object that our WSGI server uses, and the manager for the task-queue.
+
+The 'Dash' application instance imports the application's base layout from the '/pages/index/index_layout.py' file. The logic to process user input to components laid out in this file (search bar, page selectors) is defined in '/pages/index/index_callbacks.py.'
+
+Each page of the application is in its own 'pages' folder. On each page a variety of metrics and figures are rendered. These, for each page, are in the 'page_name/visualizations/' folder, and are imported into the file 'page_name.py.'
+
+If one were to add a figure or a metric to a page, they would add it to that page's 'visualizations' folder and import the visualization into the page's respective 'page_name.py' file.
+
+---
+
 ## Motivations and Augur
 
 Open Source software is everywhere, yet it is difficult to find data about Open Source projects. Project community managers, advocates, contributors, and enthusiasts ought to be able to see high-level behavioral, health, and growth trends in their repository that assist their own intuition.
