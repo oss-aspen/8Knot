@@ -28,8 +28,9 @@ gc_pr_staleness = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "This visualization shows how many PRs have been open different buckets of time.\n\
-                            It can tell you if there are PRS that are staying idly open."
+                            "This visualization shows how many pull requests have been open different buckets of time.\n\
+                            By using the number selections for staling and stale, you can see if there are \n\
+                            pull requests staying idly open compared to your communities normal activity standards."
                         ),
                     ],
                     id="overview-popover-prs",

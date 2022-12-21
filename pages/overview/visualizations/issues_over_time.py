@@ -25,7 +25,9 @@ gc_issues_over_time = dbc.Card(
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody("Information on overview graph 3"),
+                        dbc.PopoverBody(
+                            "This graph takes the open and close times on the issues in the selected repositories."
+                        ),
                     ],
                     id="overview-popover-3",
                     target="overview-popover-target-3",  # needs to be the same as dbc.Button id

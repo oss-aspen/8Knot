@@ -25,7 +25,10 @@ gc_first_time_contributions = dbc.Card(
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody("Information on graph 2"),
+                        dbc.PopoverBody(
+                            "This graph displays how many new contributors in a repository set by quarter\n\
+                            and what activity was their first in the community."
+                        ),
                     ],
                     id="chaoss-popover-2",
                     target="chaoss-popover-target-2",  # needs to be the same as dbc.Button id
