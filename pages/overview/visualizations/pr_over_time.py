@@ -26,7 +26,9 @@ gc_pr_over_time = dbc.Card(
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody("Information on overview graph 7"),
+                        dbc.PopoverBody(
+                            "This graph takes the open, close, and merge times on the pull requests in the selected repositories."
+                        ),
                     ],
                     id="overview-popover-7",
                     target="overview-popover-target-7",  # needs to be the same as dbc.Button id

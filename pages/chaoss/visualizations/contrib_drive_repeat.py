@@ -25,7 +25,11 @@ gc_contrib_drive_repeat = dbc.Card(
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody("Information on graph 1"),
+                        dbc.PopoverBody(
+                            "This graph gives a break down of how many and what type of contributions\n\
+                            different types of contributors in your community make. By your community standard you can\n\
+                            have the critera of how many contributions it takes for a member to be a repeat contributor."
+                        ),
                     ],
                     id="chaoss-popover-1",
                     target="chaoss-popover-target-1",  # needs to be the same as dbc.Button id

@@ -26,7 +26,11 @@ gc_total_contributor_growth = dbc.Card(
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody("Information on graph 1"),
+                        dbc.PopoverBody(
+                            "This graph allows you to see two different views on your contributor base.\n\
+                            Trend: This view is the total growth of contributors over time \n\
+                            Month/Year: This view looks specifically at the new contributors by selected time bucket."
+                        ),
                     ],
                     id="overview-popover-1",
                     target="overview-popover-target-1",  # needs to be the same as dbc.Button id

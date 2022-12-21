@@ -27,7 +27,10 @@ gc_contributors_over_time = dbc.Card(
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody("Information on graph 3"),
+                        dbc.PopoverBody(
+                            "This graph breaks down your contributors by time interval into active or repeat contributors.\n\
+                            This criteria can be selected to cater to your specfic community."
+                        ),
                     ],
                     id="chaoss-popover-3",
                     target="chaoss-popover-target-3",  # needs to be the same as dbc.Button id

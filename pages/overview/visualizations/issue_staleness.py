@@ -30,7 +30,8 @@ gc_issue_staleness = dbc.Card(
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
                             "This visualization shows how many issues have been open different buckets of time.\n\
-                            It can tell you if there are issues that are staying idly open."
+                            By using the number selections for staling and stale, you can see if there are issues \n\
+                            staying idly open compared to your communities normal activity standards."
                         ),
                     ],
                     id="overview-popover-is",
