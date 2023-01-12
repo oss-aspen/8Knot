@@ -44,6 +44,7 @@ celery_manager = CeleryManager(celery_app=celery_app)
 """CREATE DATABASE ACCESS OBJECT AND CACHE SEARCH OPTIONS"""
 augur = AugurManager()
 augur.set_api_key(os.getenv("AUGUR_API_KEY", "fake_api_key"))
+augur.set_app_id(os.getenv("AUGUR_APP_ID", "fake_app_id"))
 engine = augur.get_engine()
 if engine is None:
     logging.critical("Could not get engine; check config or try later")

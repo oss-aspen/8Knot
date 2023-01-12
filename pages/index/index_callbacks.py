@@ -11,6 +11,10 @@ from queries.contributors_query import contributors_query as cnq
 from queries.prs_query import prs_query as prq
 import time
 from celery.result import AsyncResult
+import dash_bootstrap_components as dbc
+from dash import html
+import re
+
 
 # list of queries to be run
 QUERIES = [iq, cq, cnq, prq]
@@ -46,48 +50,56 @@ def _parse_org_choices(org_name_set):
 
 @callback(
     [
-        Output("projects", "options"),
-        Output("projects", "value"),
+        # Output("projects", "options"),
+        # Output("projects", "value"),
         Output("users_augur_groups", "data"),
+        Output("augur_username", "data"),
         Output("user_bearer_token", "data"),
     ],
     [
         Input("url", "href"),
+        State("url", "search"),
         State("user_bearer_token", "data"),
         State("users_augur_groups", "data"),
     ],
 )
-def dropdown_startup(this_url, user_token, users_groups):
+def dropdown_startup(this_url, search_val, user_token, users_groups):
 
-    if request.args.get("auth") is None:
-        logging.debug("no auth in url")
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+    code_pattern = re.compile(r"\?code=([0-9A-z]+)", re.IGNORECASE)
+
+    code_val = re.search(code_pattern, search_val)
+    if code_val is None:
+        logging.critical("NO AUTH FOUND IN URL")
+        return dash.no_update, dash.no_update, dash.no_update
+    else:
+        auth = code_val.groups()[0]
+        logging.debug(f"AUTH IN URL: {auth}")
 
     # check if there user-defined groups already in cache
     # TODO: check if there's an update to the groups from last time
-
-    # this won't be None (would have failed)
-    auth = request.args.get("code")
 
     # use the auth token to get the bearer token
     username, bearer_token = augur.auth_to_bearer_token(auth)
 
     if username is not None:
         logging.debug(f"Logged in as: {username}")
-        augur_users_groups = augur.make_user_request(bearer_token)
-        logging.debug(augur_users_groups)
+        logging.debug(f"Got Bearer Token: {bearer_token}")
+        augur_users_groups = augur.make_user_request(access_token=bearer_token)
+
+        logging.critical(f"Status: {augur_users_groups.get('status')}")
+        logging.error(f"Groups in augur for user: {augur_users_groups}")
     else:
         logging.error("Login to Augur failed")
 
     # assume that response from augur w/ bearer_token is json w/ format
     # {group_name: [repo_list]}
 
-    entries = augur.get_all_entries()
+    # entries = augur.get_all_entries()
     # concat_values = entries + augur_user_groups
     # return concat_values, concat_values, augur_user_groups
 
     # TODO: update return to handle concat
-    return [entries], [entries], dash.no_update, dash.no_update
+    return [], username, bearer_token
 
 
 @callback(
@@ -286,3 +298,28 @@ def run_queries(repos):
         jobs.append(j)
 
     return [j.id for j in jobs]
+
+
+@callback(
+    Output("login-container", "children"),
+    Input("augur_username", "data"),
+)
+def button(username):
+    if not username:
+        child = (
+            dbc.Button(
+                dbc.NavLink(
+                    "Augur log in/sign up",
+                    href=f"http://chaoss.tv:5038/user/authorize?client_id={augur.app_id}&response_type=code",
+                    active=True,
+                ),
+                size="sm",
+                color="primary",
+            ),
+        )
+    else:
+        child = [
+            html.P(f"Welcome {username}! Need to go back to your augur account?"),
+            dbc.NavLink("Click here!", href="http://chaoss.tv:5038/account/settings"),
+        ]
+    return child

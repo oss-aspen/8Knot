@@ -45,7 +45,7 @@ REDIS_CONTAINER_URL=$(${CONTAINER_CMD} inspect -f '{{range.NetworkSettings.Netwo
 printf "\nRedis URL is: ${REDIS_CONTAINER_URL}:${REDIS_PORT_MAP}\n";
 
 # build and run the worker pool
-${CONTAINER_CMD} build -f Dockerfile.supervisor_workers -t worker_pool .;
+${CONTAINER_CMD} build -f ./Docker/Dockerfile.worker -t worker_pool .;
 ${CONTAINER_CMD} run --rm -dit --name worker_pool \
                      --net eightknot-network \
                      --env REDIS_SERVICE_HOST=$REDIS_CONTAINER_URL \
@@ -54,7 +54,7 @@ ${CONTAINER_CMD} run --rm -dit --name worker_pool \
                      worker_pool;
 
 # build and run the web server
-${CONTAINER_CMD} build -f Dockerfile.server -t eightknot_server .;
+${CONTAINER_CMD} build -f ./Docker/Dockerfile.server -t eightknot_server .;
 ${CONTAINER_CMD} run --rm -it --name eightknot_server \
                          --net eightknot-network \
                          --env REDIS_SERVICE_HOST=$REDIS_CONTAINER_URL \

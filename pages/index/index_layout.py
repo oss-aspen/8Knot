@@ -26,7 +26,8 @@ layout = dbc.Container(
         # components to store job-ids for the worker queue
         dcc.Store(id="job-ids", storage_type="session", data=[]),
         dcc.Store(id="users_augur_groups", storage_type="memory", data=[]),
-        dcc.Store(id="user_bearer_token", storage_type="session", data=[]),
+        dcc.Store(id="user_bearer_token", storage_type="session", data=""),
+        dcc.Store(id="augur_username", storage_type="session", data=""),
         dcc.Location(id="url"),
         dbc.Row(
             [
@@ -118,7 +119,10 @@ layout = dbc.Container(
                         # where our page will be rendered
                         dash.page_container,
                     ],
-                    width={"size": 11},
+                    width={"size": 9},
+                ),
+                dbc.Col(
+                    [html.Div(id="login-container", children=[])], width={"size": 2}
                 ),
             ],
             justify="start",

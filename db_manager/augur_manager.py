@@ -75,7 +75,7 @@ class AugurManager:
 
         # group names of a user
         self.user_groups_endpoint = (
-            "http://chaoss.tv:5038/api/unstable/user/groups/names"
+            "http://chaoss.tv:5038/api/unstable/user/groups/repos/ids"
         )
         self.engine = None
         self.user = None
@@ -90,6 +90,7 @@ class AugurManager:
         self.search_input = None
         self.repo_dict = None
         self.org_dict = None
+        self.app_id = None
 
     def get_engine(self):
         """
@@ -313,19 +314,22 @@ class AugurManager:
 
         auth_params = {"code": auth_token, "grant_type": "code"}
 
-        response = self.make_authenticated_request(self.endpoint, params=auth_params)
+        response = self.make_authenticated_request(params=auth_params)
 
         if response.status_code == 200:
             data = response.json()
             if data.get("status") == "Validated":
                 return data["username"], data["access_token"]
             else:
-                logging.error(f"Couldn't get bearer token from Augur")
+                logging.error(
+                    f"Couldn't get bearer token from Augur: {data.get('status')}"
+                )
                 return None, None
         else:
             logging.error(
-                f"Authenticated request from augur failed: {response.status_code()}"
+                f"Authenticated request from augur failed: {response.status_code}"
             )
+            return None, None
 
     def make_authenticated_request(self, headers={}, params={}):
         """Large parts of code written by John McGinness, University of Missouri
@@ -345,10 +349,12 @@ class AugurManager:
         """
         headers["Authorization"] = f"Client {self.api_key}, Bearer {access_token}"
 
+        logging.error(f"Headers-Authorization: {headers['Authorization']}")
         result = requests.post(
             self.user_groups_endpoint, headers=headers, params=params
         )
 
+        logging.error(f"RESULT STATUS: {result.json().get('status')}")
         if result.status_code == 200:
             return result.json()
 
@@ -357,3 +363,6 @@ class AugurManager:
 
     def set_endpoint(self, endpoint):
         self.endpoint = endpoint
+
+    def set_app_id(self, id):
+        self.app_id = id
