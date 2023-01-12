@@ -21,8 +21,11 @@ import plotly.io as plt_io
 from celery import Celery
 from dash import CeleryManager
 import worker_settings
+import os
 
-logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.DEBUG)
+logging.basicConfig(
+    format="%(asctime)s %(levelname)-8s %(message)s", level=logging.DEBUG
+)
 
 """CREATE CELERY TASK QUEUE AND MANAGER"""
 celery_app = Celery(
@@ -31,13 +34,16 @@ celery_app = Celery(
     backend=worker_settings.REDIS_URL,
 )
 
-celery_app.conf.update(task_time_limit=84600, task_acks_late=True, task_track_started=True)
+celery_app.conf.update(
+    task_time_limit=84600, task_acks_late=True, task_track_started=True
+)
 
 celery_manager = CeleryManager(celery_app=celery_app)
 
 
 """CREATE DATABASE ACCESS OBJECT AND CACHE SEARCH OPTIONS"""
 augur = AugurManager()
+augur.set_api_key(os.getenv("AUGUR_API_KEY", "fake_api_key"))
 engine = augur.get_engine()
 if engine is None:
     logging.critical("Could not get engine; check config or try later")

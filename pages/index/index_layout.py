@@ -25,6 +25,8 @@ layout = dbc.Container(
         dcc.Store(id="repo-choices", storage_type="session", data=[]),
         # components to store job-ids for the worker queue
         dcc.Store(id="job-ids", storage_type="session", data=[]),
+        dcc.Store(id="users_augur_groups", storage_type="memory", data=[]),
+        dcc.Store(id="user_bearer_token", storage_type="session", data=[]),
         dcc.Location(id="url"),
         dbc.Row(
             [
@@ -94,7 +96,11 @@ layout = dbc.Container(
                             },
                         ),
                         dcc.Loading(
-                            children=[html.Div(id="results-output-container", className="mb-4")],
+                            children=[
+                                html.Div(
+                                    id="results-output-container", className="mb-4"
+                                )
+                            ],
                             color="#119DFF",
                             type="dot",
                             fullscreen=True,

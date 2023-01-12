@@ -7,6 +7,7 @@ import sqlalchemy as salc
 import os
 import logging
 import sys
+import requests
 
 
 class AugurManager:
@@ -68,6 +69,14 @@ class AugurManager:
 
     def __init__(self):
         self.pconfig = False
+        # TODO: grab from environment
+        self.api_key = None
+        self.endpoint = "http://chaoss.tv:5038/api/unstable/user/session/generate"
+
+        # group names of a user
+        self.user_groups_endpoint = (
+            "http://chaoss.tv:5038/api/unstable/user/groups/names"
+        )
         self.engine = None
         self.user = None
         self.password = None
@@ -107,11 +116,15 @@ class AugurManager:
             for v in env_values:
 
                 if v not in os.environ:
-                    logging.critical(f'Required environment variable "{v}" not available.')
+                    logging.critical(
+                        f'Required environment variable "{v}" not available.'
+                    )
                     return None
 
                 if os.getenv(v) is None:
-                    logging.critical(f'Required environment variable: "{v}" available but none.')
+                    logging.critical(
+                        f'Required environment variable: "{v}" available but none.'
+                    )
                     return None
 
             # have confirmed that necessary environment variables exist- proceed.
@@ -155,7 +168,9 @@ class AugurManager:
             pd.DataFrame: Results from SQL query.
         """
         if self.engine is None:
-            logging.critical("No engine- please use 'get_engine' method to create engine.")
+            logging.critical(
+                "No engine- please use 'get_engine' method to create engine."
+            )
             return None
 
         result_df = pd.DataFrame()
@@ -234,7 +249,9 @@ class AugurManager:
         df_search_bar = self.run_query(pr_query)
 
         # handling case sensitive options for search bar
-        self.entries = np.concatenate((df_search_bar.rg_name.unique(), df_search_bar.repo_git.unique()), axis=None)
+        self.entries = np.concatenate(
+            (df_search_bar.rg_name.unique(), df_search_bar.repo_git.unique()), axis=None
+        )
         self.entries = self.entries.tolist()
         self.entries.sort(key=lambda item: (item, len(item)))
 
@@ -243,10 +260,16 @@ class AugurManager:
         self.all_entries = list(zip(lower_entries, self.entries))
 
         # generating dictionary with the git urls as the key and the repo_id and name as a list as the value pair
-        self.repo_dict = df_search_bar[["repo_git", "repo_id", "repo_name"]].set_index("repo_git").T.to_dict("list")
+        self.repo_dict = (
+            df_search_bar[["repo_git", "repo_id", "repo_name"]]
+            .set_index("repo_git")
+            .T.to_dict("list")
+        )
 
         # generating dictionary with the org name as the key and the git repos of the org in a list as the value pair
-        self.org_dict = df_search_bar.groupby("rg_name")["repo_git"].apply(list).to_dict()
+        self.org_dict = (
+            df_search_bar.groupby("rg_name")["repo_git"].apply(list).to_dict()
+        )
 
         # making first selection for the search bar
         self.search_input = self.entries[0]
@@ -280,3 +303,57 @@ class AugurManager:
         else:
             r = self.project_list_query()
             return self.repo_dict
+
+    def auth_to_bearer_token(self, auth_token):
+        """Large parts of code written by John McGinness, University of Missouri
+
+        Returns:
+            _type_: _description_
+        """
+
+        auth_params = {"code": auth_token, "grant_type": "code"}
+
+        response = self.make_authenticated_request(self.endpoint, params=auth_params)
+
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("status") == "Validated":
+                return data["username"], data["access_token"]
+            else:
+                logging.error(f"Couldn't get bearer token from Augur")
+                return None, None
+        else:
+            logging.error(
+                f"Authenticated request from augur failed: {response.status_code()}"
+            )
+
+    def make_authenticated_request(self, headers={}, params={}):
+        """Large parts of code written by John McGinness, University of Missouri
+
+        Returns:
+            _type_: _description_
+        """
+        headers["Authorization"] = f"Client {self.api_key}"
+
+        return requests.post(self.endpoint, headers=headers, params=params)
+
+    def make_user_request(self, access_token, headers={}, params={}):
+        """Large parts of code written by John McGinness, University of Missouri
+
+        Returns:
+            _type_: _description_
+        """
+        headers["Authorization"] = f"Client {self.api_key}, Bearer {access_token}"
+
+        result = requests.post(
+            self.user_groups_endpoint, headers=headers, params=params
+        )
+
+        if result.status_code == 200:
+            return result.json()
+
+    def set_api_key(self, key):
+        self.api_key = key
+
+    def set_endpoint(self, endpoint):
+        self.endpoint = endpoint

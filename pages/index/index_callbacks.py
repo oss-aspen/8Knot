@@ -1,6 +1,7 @@
 from dash import callback
 from dash.dependencies import Input, Output, State
 from app import augur
+from flask import request
 import dash
 import logging
 from cache_manager.cache_manager import CacheManager as cm
@@ -41,6 +42,52 @@ def _parse_org_choices(org_name_set):
     org_repo_names = [row[1] for row in repo_values]
 
     return org_repo_ids, org_repo_names
+
+
+@callback(
+    [
+        Output("projects", "options"),
+        Output("projects", "value"),
+        Output("users_augur_groups", "data"),
+        Output("user_bearer_token", "data"),
+    ],
+    [
+        Input("url", "href"),
+        State("user_bearer_token", "data"),
+        State("users_augur_groups", "data"),
+    ],
+)
+def dropdown_startup(this_url, user_token, users_groups):
+
+    if request.args.get("auth") is None:
+        logging.debug("no auth in url")
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+
+    # check if there user-defined groups already in cache
+    # TODO: check if there's an update to the groups from last time
+
+    # this won't be None (would have failed)
+    auth = request.args.get("code")
+
+    # use the auth token to get the bearer token
+    username, bearer_token = augur.auth_to_bearer_token(auth)
+
+    if username is not None:
+        logging.debug(f"Logged in as: {username}")
+        augur_users_groups = augur.make_user_request(bearer_token)
+        logging.debug(augur_users_groups)
+    else:
+        logging.error("Login to Augur failed")
+
+    # assume that response from augur w/ bearer_token is json w/ format
+    # {group_name: [repo_list]}
+
+    entries = augur.get_all_entries()
+    # concat_values = entries + augur_user_groups
+    # return concat_values, concat_values, augur_user_groups
+
+    # TODO: update return to handle concat
+    return [entries], [entries], dash.no_update, dash.no_update
 
 
 @callback(
