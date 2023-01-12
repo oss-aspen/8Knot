@@ -3,6 +3,7 @@ from db_manager.augur_manager import AugurManager
 from app import celery_app
 from cache_manager.cache_manager import CacheManager as cm
 import pandas as pd
+import io
 
 
 @celery_app.task(
@@ -72,10 +73,20 @@ def issues_query(self, dbmc, repos):
     pic = []
     for i, r in enumerate(repos):
         # convert series to a dataframe
-        c_df = pd.DataFrame(df_issues.loc[df_issues["id"] == r]).to_csv()
+        c_df = pd.DataFrame(df_issues.loc[df_issues["id"] == r]).reset_index(drop=True)
 
-        # add pickled dataframe to list of pickled objects
-        pic.append(c_df)
+        # bytes buffer to be written to
+        b = io.BytesIO()
+
+        # write dataframe in feather format to BytesIO buffer
+        bs = c_df.to_feather(b)
+
+        # move head of buffer to the beginning
+        b.seek(0)
+
+        # write the bytes of the buffer into the array
+        bs = b.read()
+        pic.append(bs)
 
     del df_issues
 
@@ -83,7 +94,11 @@ def issues_query(self, dbmc, repos):
     cm_o = cm()
 
     # 'ack' is a boolean of whether data was set correctly or not.
-    ack = cm_o.setm(func=issues_query, repos=repos, datas=pic)
+    ack = cm_o.setm(
+        func=issues_query,
+        repos=repos,
+        datas=pic,
+    )
 
     logging.debug("ISSUES_DATA_QUERY - END")
     return ack
