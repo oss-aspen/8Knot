@@ -17,7 +17,7 @@ from .visualizations.pr_over_time import gc_pr_over_time
 
 
 # register the page
-dash.register_page(__name__, order=2)
+dash.register_page(__name__, path="/overview", order=2)
 
 layout = dbc.Container(
     [

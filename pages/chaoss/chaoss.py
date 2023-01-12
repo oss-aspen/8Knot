@@ -11,7 +11,7 @@ from .visualizations.contributors_over_time import gc_contributors_over_time
 warnings.filterwarnings("ignore")
 
 # register the page
-dash.register_page(__name__, order=3)
+dash.register_page(__name__, path="/chaoss", order=3)
 
 
 layout = dbc.Container(
