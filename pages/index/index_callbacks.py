@@ -323,3 +323,18 @@ def button(username):
             dbc.NavLink("Click here!", href="http://chaoss.tv:5038/account/settings"),
         ]
     return child
+
+
+@callback(
+    Output("nav-login-container", "children"),
+    Input("augur_username", "data"),
+)
+def button(username):
+    child = dbc.NavLink(
+        "Augur log in/sign up",
+        href=f"http://chaoss.tv:5038/user/authorize?client_id={augur.app_id}&response_type=code",
+        active=True,
+    )
+    if username:
+        child = (dbc.NavLink(f"{username}", href="http://chaoss.tv:5038/account/settings"),)
+    return child
