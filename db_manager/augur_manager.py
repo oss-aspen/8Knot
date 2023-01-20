@@ -311,12 +311,13 @@ class AugurManager:
 
         if response.status_code == 200:
             data = response.json()
+            logging.critical(f"bearer token request payload: {data}")
             if data.get("status") == "Validated":
-                return data["username"], data["access_token"]
+                return data["username"], data["access_token"], data["expires"], data["refresh_token"]
             else:
-                return None, None
+                return None, None, None, None
         else:
-            return None, None
+            return None, None, None, None
 
     def make_authenticated_request(self, headers={}, params={}):
         """Large parts of code written by John McGinness, University of Missouri

@@ -51,26 +51,27 @@ def _parse_org_choices(org_name_set):
 
 @callback(
     [
-        # Output("projects", "options"),
-        # Output("projects", "value"),
-        Output("users_augur_groups", "data"),
         Output("augur_username", "data"),
-        Output("user_bearer_token", "data"),
+        Output("augur_user_bearer_token", "data"),
+        Output("augur_token_expiration", "data"),
+        Output("augur_refresh_token", "data"),
+        Output("augur_user_groups", "data"),
     ],
     [
         Input("url", "href"),
         State("url", "search"),
-        State("user_bearer_token", "data"),
-        State("users_augur_groups", "data"),
+        State("augur_user_bearer_token", "data"),
     ],
 )
-def dropdown_startup(this_url, search_val, user_token, users_groups):
+def login(this_url, search_val, user_token):
 
+    logging.critical("IN LOGIN FUNCTION")
     code_pattern = re.compile(r"\?code=([0-9A-z]+)", re.IGNORECASE)
 
     code_val = re.search(code_pattern, search_val)
+
     if code_val is None:
-        return dash.no_update, dash.no_update, dash.no_update
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
     else:
         auth = code_val.groups()[0]
 
@@ -78,34 +79,44 @@ def dropdown_startup(this_url, search_val, user_token, users_groups):
     # TODO: check if there's an update to the groups from last time
 
     # use the auth token to get the bearer token
-    username, bearer_token = augur.auth_to_bearer_token(auth)
+    username, bearer_token, expiration, refresh = augur.auth_to_bearer_token(auth)
 
     if username is not None:
         logging.debug(f"Logged in as: {username}")
         logging.debug(f"Got Bearer Token: {bearer_token}")
         augur_users_groups = augur.make_user_request(access_token=bearer_token)
 
-        logging.critical(f"User Groups Status: {augur_users_groups.get('status')}")
+        if augur_users_groups:
+            #logging.critical(f"Groups: {augur_users_groups}")
+            logging.critical(f"User Groups Status: {augur_users_groups.get('status')}")
+        else:
+            logging.critical("user_groups response is None")
     else:
         logging.error("Login to Augur failed")
 
-    # assume that response from augur w/ bearer_token is json w/ format
-    # {group_name: [repo_url_list]}
+    # structure of the incoming data
+    # [{group_name: {favorited: False, repos=[{repo_git: asd;lfkj, repo_id=46555}, ...]}, ...]
+    users_groups = {}
+    g = augur_users_groups.get("data")
+    for entry in g:
+        group_name = list(entry.keys())[0]
+        repo_list = list(entry.values())[0]["repos"]
+        urls = []
+        for repo in repo_list:
+            urls.append(repo.get("repo_git"))
 
-    # entries = augur.get_all_entries()
-    # concat_values = entries + augur_user_groups
-    # return concat_values, concat_values, augur_user_groups
+        users_groups[group_name] = urls
 
-    # TODO: update return to handle concat
-    return [], username, bearer_token
+
+    return username, bearer_token, expiration, refresh, users_groups
 
 
 @callback(
     [Output("projects", "options")],
     [Input("projects", "search_value")],
-    [State("projects", "value")],
+    [State("projects", "value"), State("augur_user_groups", "data")],
 )
-def dropdown_dynamic_callback(user_in, selections):
+def dropdown_dynamic_callback(user_in, selections, augur_groups):
 
     """
     Ref: https://dash.plotly.com/dash-core-components/dropdown#dynamic-options
@@ -117,6 +128,8 @@ def dropdown_dynamic_callback(user_in, selections):
     """
 
     all_entries = augur.get_all_entries()
+
+    # all_entries += users_augur_groups
 
     if selections is None:
         selections = []
@@ -138,6 +151,56 @@ def dropdown_dynamic_callback(user_in, selections):
         else:
             return [opts[:250] + selections]
 
+"""
+On app startup we can check whether the bearer token has expired and refresh it w/ the refresh
+token, if it has existed. If it's refreshed successfully we can grab the new user groups, otherwise
+unset the bearer token, expiration, and refresh token.
+
+
+def dropdown_startup_and_search(user_input, current_selections, url, username, bearer_token, user_groups):
+    if ctx.triggered_id == "url":
+        # login
+        # get new bearer token
+        # query user's groups
+        # return bearer_token, token_expiration, refresh_token, username, user's_groups, dash.no_update
+    else:
+        # we know it's a searchbar input
+        if not user_groups:
+            all_entries += user_groups
+        # proceed as normal
+        return dash.no_update, dash.no_update ..., [opts+selections]
+
+
+@callback(
+    [
+        Output("bearer_token", "data"),
+        Output("bt_expiration", "data"),
+        Output("refresh_token", "data"),
+        Output("username", "data"),
+        Output("users_augur_groups)
+    ],
+    [
+        Input("url", "href"),
+        State("bearer_token", "data"),
+        State("bt_expiration", "data"),
+        State("refresh_token", "data"),
+        State("username", "data")
+    ]
+)
+def startup_login(href, bt, bt_e, rt, usn):
+    if not bt_e or not bt or not rt:
+        # no expiration or no bt or no rt, can't do anything automatically
+        return dash.exceptions.PreventUpdate
+    if(now() > bt_e):
+        # get a new bearer token w/ refresh token
+        # return if impossible
+    groups = get_new_groups(bt)
+    return (bt,
+            bt_e,
+            rt,
+            usn,
+            groups)
+"""
 
 # callback for repo selections to feed into visualization call backs
 @callback(

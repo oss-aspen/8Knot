@@ -143,9 +143,11 @@ layout = dbc.Container(
         dcc.Store(id="repo-choices", storage_type="session", data=[]),
         # components to store job-ids for the worker queue
         dcc.Store(id="job-ids", storage_type="session", data=[]),
-        dcc.Store(id="users_augur_groups", storage_type="memory", data=[]),
-        dcc.Store(id="user_bearer_token", storage_type="session", data=""),
-        dcc.Store(id="augur_username", storage_type="session", data=""),
+        dcc.Store(id="augur_user_groups", storage_type="session", data=[]),
+        dcc.Store(id="augur_user_bearer_token", storage_type="local", data=""),
+        dcc.Store(id="augur_username", storage_type="local", data=""),
+        dcc.Store(id="augur_refresh_token", storage_type="local", data=""),
+        dcc.Store(id="augur_token_expiration", storage_type="local", data=""),
         dcc.Location(id="url"),
         navbar,
         dbc.Row(
