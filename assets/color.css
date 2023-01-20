@@ -8,3 +8,7 @@ h1{
 .dash-spinner.dash-default-spinner {
     filter:  contrast(1.2) hue-rotate(308deg) grayscale(0.76) !important;
 }
+
+.navbar-brand {
+    color: #436755 !important;
+}
