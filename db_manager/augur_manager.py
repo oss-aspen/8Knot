@@ -69,14 +69,9 @@ class AugurManager:
 
     def __init__(self):
         self.pconfig = False
-        # TODO: grab from environment
-        self.api_key = None
-        self.endpoint = "http://chaoss.tv:5038/api/unstable/user/session/generate"
-
-        # group names of a user
-        self.user_groups_endpoint = (
-            "http://chaoss.tv:5038/api/unstable/user/groups/repos/ids"
-        )
+        self.client_secret = None
+        self.session_generate_endpoint = None
+        self.user_groups_endpoint = None
         self.engine = None
         self.user = None
         self.password = None
@@ -275,8 +270,6 @@ class AugurManager:
         # making first selection for the search bar
         self.search_input = self.entries[0]
 
-        logging.debug("Search lists returned and set")
-
     def get_search_input(self):
         if self.search_input is not None:
             return self.search_input
@@ -321,14 +314,8 @@ class AugurManager:
             if data.get("status") == "Validated":
                 return data["username"], data["access_token"]
             else:
-                logging.error(
-                    f"Couldn't get bearer token from Augur: {data.get('status')}"
-                )
                 return None, None
         else:
-            logging.error(
-                f"Authenticated request from augur failed: {response.status_code}"
-            )
             return None, None
 
     def make_authenticated_request(self, headers={}, params={}):
@@ -337,9 +324,11 @@ class AugurManager:
         Returns:
             _type_: _description_
         """
-        headers["Authorization"] = f"Client {self.api_key}"
+        headers["Authorization"] = f"Client {self.client_secret}"
 
-        return requests.post(self.endpoint, headers=headers, params=params)
+        return requests.post(
+            self.session_generate_endpoint, headers=headers, params=params
+        )
 
     def make_user_request(self, access_token, headers={}, params={}):
         """Large parts of code written by John McGinness, University of Missouri
@@ -347,22 +336,23 @@ class AugurManager:
         Returns:
             _type_: _description_
         """
-        headers["Authorization"] = f"Client {self.api_key}, Bearer {access_token}"
+        headers["Authorization"] = f"Client {self.client_secret}, Bearer {access_token}"
 
-        logging.error(f"Headers-Authorization: {headers['Authorization']}")
         result = requests.post(
             self.user_groups_endpoint, headers=headers, params=params
         )
 
-        logging.error(f"RESULT STATUS: {result.json().get('status')}")
         if result.status_code == 200:
             return result.json()
 
-    def set_api_key(self, key):
-        self.api_key = key
+    def set_client_secret(self, secret):
+        self.client_secret = secret
 
-    def set_endpoint(self, endpoint):
-        self.endpoint = endpoint
+    def set_session_generate_endpoint(self, endpoint):
+        self.session_generate_endpoint = endpoint
+
+    def set_user_groups_endpoint(self, endpoint):
+        self.user_groups_endpoint = endpoint
 
     def set_app_id(self, id):
         self.app_id = id

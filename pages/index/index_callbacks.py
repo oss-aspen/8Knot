@@ -14,6 +14,7 @@ from celery.result import AsyncResult
 import dash_bootstrap_components as dbc
 from dash import html
 import re
+import os
 
 
 # list of queries to be run
@@ -69,11 +70,9 @@ def dropdown_startup(this_url, search_val, user_token, users_groups):
 
     code_val = re.search(code_pattern, search_val)
     if code_val is None:
-        logging.critical("NO AUTH FOUND IN URL")
         return dash.no_update, dash.no_update, dash.no_update
     else:
         auth = code_val.groups()[0]
-        logging.debug(f"AUTH IN URL: {auth}")
 
     # check if there user-defined groups already in cache
     # TODO: check if there's an update to the groups from last time
@@ -86,13 +85,12 @@ def dropdown_startup(this_url, search_val, user_token, users_groups):
         logging.debug(f"Got Bearer Token: {bearer_token}")
         augur_users_groups = augur.make_user_request(access_token=bearer_token)
 
-        logging.critical(f"Status: {augur_users_groups.get('status')}")
-        logging.error(f"Groups in augur for user: {augur_users_groups}")
+        logging.critical(f"User Groups Status: {augur_users_groups.get('status')}")
     else:
         logging.error("Login to Augur failed")
 
     # assume that response from augur w/ bearer_token is json w/ format
-    # {group_name: [repo_list]}
+    # {group_name: [repo_url_list]}
 
     # entries = augur.get_all_entries()
     # concat_values = entries + augur_user_groups
@@ -310,7 +308,10 @@ def button(username):
             dbc.Button(
                 dbc.NavLink(
                     "Augur log in/sign up",
-                    href=f"http://chaoss.tv:5038/user/authorize?client_id={augur.app_id}&response_type=code",
+                    href=os.getenv(
+                        "AUGUR_USER_AUTH_ENDPOINT",
+                        f"http://chaoss.tv:5038/user/authorize?client_id={augur.app_id}&response_type=code",
+                    ),
                     active=True,
                 ),
                 size="sm",
@@ -320,6 +321,12 @@ def button(username):
     else:
         child = [
             html.P(f"Welcome {username}! Need to go back to your augur account?"),
-            dbc.NavLink("Click here!", href="http://chaoss.tv:5038/account/settings"),
+            dbc.NavLink(
+                "Click here!",
+                href=os.getenv(
+                    "AUGUR_USER_ACCOUNT_ENDPOINT",
+                    "http://chaoss.tv:5038/account/settings",
+                ),
+            ),
         ]
     return child
