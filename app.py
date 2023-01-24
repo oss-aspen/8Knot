@@ -23,9 +23,7 @@ from dash import CeleryManager
 import worker_settings
 import os
 
-logging.basicConfig(
-    format="%(asctime)s %(levelname)-8s %(message)s", level=logging.DEBUG
-)
+logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.DEBUG)
 
 """CREATE CELERY TASK QUEUE AND MANAGER"""
 celery_app = Celery(
@@ -34,9 +32,7 @@ celery_app = Celery(
     backend=worker_settings.REDIS_URL,
 )
 
-celery_app.conf.update(
-    task_time_limit=84600, task_acks_late=True, task_track_started=True
-)
+celery_app.conf.update(task_time_limit=84600, task_acks_late=True, task_track_started=True)
 
 celery_manager = CeleryManager(celery_app=celery_app)
 
@@ -81,7 +77,7 @@ plt_io.templates.default = "custom_dark"
 app = dash.Dash(
     __name__,
     use_pages=True,
-    external_stylesheets=[dbc.themes.SLATE, dbc_css],
+    external_stylesheets=[dbc.themes.SLATE, dbc_css, dbc.icons.FONT_AWESOME],
     suppress_callback_exceptions=True,
     background_callback_manager=celery_manager,
 )
