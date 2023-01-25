@@ -1,6 +1,7 @@
 from dash import html, dcc
 import dash
 import dash_bootstrap_components as dbc
+import dash_mantine_components as dmc
 from app import augur
 
 
@@ -11,7 +12,9 @@ navbar = dbc.Navbar(
                 [
                     dbc.Col(
                         [
-                            html.Img(src=dash.get_asset_url("logo2.png"), height="40px"),
+                            html.Img(
+                                src=dash.get_asset_url("logo2.png"), height="40px"
+                            ),
                             dbc.NavbarBrand(
                                 "8Knot Community Data",
                                 id="navbar-title",
@@ -87,11 +90,15 @@ search_bar = html.Div(
     [
         html.Div(
             [
-                dcc.Dropdown(
+                dmc.MultiSelect(
                     id="projects",
-                    multi=True,
-                    options=[augur.get_search_input()],
-                    value=[augur.get_search_input()],
+                    searchable=True,
+                    clearable=True,
+                    nothingFound="No matching repos/orgs.",
+                    variant="filled",
+                    debounce=100,
+                    data=[augur.initial_multiselect_option()],
+                    value=[augur.initial_multiselect_option()["value"]],
                     style={"font-size": 16},
                 ),
                 dbc.Alert(
@@ -143,7 +150,9 @@ layout = dbc.Container(
         dcc.Store(id="repo-choices", storage_type="session", data=[]),
         # components to store job-ids for the worker queue
         dcc.Store(id="job-ids", storage_type="session", data=[]),
-        dcc.Store(id="augur_user_groups", storage_type="session", data=[]),
+        dcc.Store(id="is-startup", storage_type="session", data=True),
+        dcc.Store(id="augur_user_groups", storage_type="session", data={}),
+        dcc.Store(id="augur_user_group_options", storage_type="session", data=[]),
         dcc.Store(id="augur_user_bearer_token", storage_type="local", data=""),
         dcc.Store(id="augur_username", storage_type="local", data=""),
         dcc.Store(id="augur_refresh_token", storage_type="local", data=""),
@@ -162,7 +171,11 @@ layout = dbc.Container(
                         ),
                         search_bar,
                         dcc.Loading(
-                            children=[html.Div(id="results-output-container", className="mb-4")],
+                            children=[
+                                html.Div(
+                                    id="results-output-container", className="mb-4"
+                                )
+                            ],
                             color="#119DFF",
                             type="dot",
                             fullscreen=True,
@@ -170,7 +183,7 @@ layout = dbc.Container(
                         dcc.Loading(
                             dbc.Badge(
                                 children="Data Loaded",
-                                id="data_badge",
+                                id="data-badge",
                                 color="#436755",
                                 className="me-1",
                             ),

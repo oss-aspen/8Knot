@@ -80,11 +80,6 @@ class AugurManager:
         self.database = None
         self.schema = None
         self.config_loaded = False
-        self.entries = None
-        self.all_entries = None
-        self.search_input = None
-        self.repo_dict = None
-        self.org_dict = None
         self.app_id = None
 
     def get_engine(self):
@@ -228,7 +223,9 @@ class AugurManager:
         self.config_loaded = False
         self.get_engine()
 
-    def project_list_query(self):
+    def multiselect_startup(self):
+
+        logging.debug(f"MULTISELECT_STARTUP")
 
         pr_query = f"""SELECT DISTINCT
                             r.repo_git,
@@ -243,60 +240,104 @@ class AugurManager:
 
         # query for search bar entry generation
         df_search_bar = self.run_query(pr_query)
+        logging.debug(f"MULTISELECT_QUERY")
 
-        # handling case sensitive options for search bar
-        self.entries = np.concatenate(
-            (df_search_bar.rg_name.unique(), df_search_bar.repo_git.unique()), axis=None
-        )
-        self.entries = self.entries.tolist()
-        self.entries.sort(key=lambda item: (item, len(item)))
-
-        # generating search bar entries
-        lower_entries = [i.lower() for i in self.entries]
-        self.all_entries = list(zip(lower_entries, self.entries))
-
-        # generating dictionary with the git urls as the key and the repo_id and name as a list as the value pair
-        self.repo_dict = (
-            df_search_bar[["repo_git", "repo_id", "repo_name"]]
-            .set_index("repo_git")
-            .T.to_dict("list")
+        # create a list of dictionaries for the MultiSelect dropdown
+        # component on the index page.
+        # Output is of the form: [{"label": repo_url, "value": repo_id}, ...]
+        multiselect_repos = (
+            df_search_bar[["repo_git", "repo_id"]]
+            .rename(columns={"repo_git": "label", "repo_id": "value"})
+            .to_dict("records")
         )
 
-        # generating dictionary with the org name as the key and the git repos of the org in a list as the value pair
-        self.org_dict = (
-            df_search_bar.groupby("rg_name")["repo_git"].apply(list).to_dict()
+        # create a list of dictionaries for the MultiSelect dropdown
+        # Output is of the form: [{"label": org_name, "value": lower(org_name)}, ...]
+        multiselect_orgs = [
+            {"label": v, "value": str.lower(v)}
+            for v in list(df_search_bar["rg_name"].unique())
+        ]
+
+        # combine options for multiselect component and sort them by the length
+        # of their label (shorter comes first because it sorts ascending by default.)
+        self.multiselect_options = multiselect_repos + multiselect_orgs
+        self.multiselect_options = sorted(
+            self.multiselect_options, key=lambda i: i["label"]
         )
+
+        # create a dictionary to map github orgs to their constituent repos.
+        # used when the user selects an org
+        # Output is of the form: {group_name: [rid1, rid2, ...], group_name: [...], ...}
+        df_lower_repo_names = df_search_bar.copy()
+        df_lower_repo_names["rg_name"] = df_lower_repo_names["rg_name"].apply(str.lower)
+        self.org_name_to_repos_dict = (
+            df_lower_repo_names.groupby("rg_name")["repo_id"].apply(list).to_dict()
+        )
+        self.org_names = list(self.org_name_to_repos_dict.keys())
+
+        # create a dictionary that maps the github url to the repo_id in padres
+        df_repo_git_id = df_search_bar.copy()
+        df_repo_git_id = df_repo_git_id[["repo_git", "repo_id"]]
+        self.repo_git_to_repo_id = pd.Series(
+            df_repo_git_id.repo_id.values, index=df_repo_git_id["repo_git"]
+        ).to_dict()
 
         # making first selection for the search bar
-        self.search_input = self.entries[0]
+        self.initial_search_option = self.multiselect_options[0]
+        logging.debug(f"MULTISELECT_FINISHED")
 
-    def get_search_input(self):
-        if self.search_input is not None:
-            return self.search_input
-        else:
-            r = self.project_list_query()
-            return self.search_input
+    def repo_git_to_id(self, git):
+        """Getter method for dictionary
+        that converts a git URL to the respective
+        repo_id in the source db.
 
-    def get_all_entries(self):
-        if self.all_entries is not None:
-            return self.all_entries
-        else:
-            r = self.project_list_query()
-            return self.all_entries
+        Args:
+            git (str): URL of repo
 
-    def get_org_dict(self):
-        if self.org_dict is not None:
-            return self.org_dict
-        else:
-            r = self.project_list_query()
-            return self.org_dict
+        Returns:
+            int: repo_id of the URL in the source DB.
+        """
+        logging.debug(f"TRYING TO MAP: {git}")
+        return self.repo_git_to_repo_id.get(git)
 
-    def get_repo_dict(self):
-        if self.repo_dict is not None:
-            return self.repo_dict
-        else:
-            r = self.project_list_query()
-            return self.repo_dict
+    def org_to_repos(self, org):
+        """Returns the list of repos in an org.
+
+        Args:
+            org (str): Github org name
+
+        Returns:
+            [int] | None: repo_ids or None
+        """
+        return self.org_name_to_repos_dict[org]
+
+    def is_org(self, org):
+        """Checks if org name in set of known org names
+
+        Args:
+            org (str): name of org
+
+        Returns:
+            bool: whether org name is in orgs
+        """
+        return org in self.org_names
+
+    def initial_multiselect_option(self):
+        """Getter method on first multiselect option
+
+        Returns:
+            dict(value, label): first thing the multiselect will represent on startup
+        """
+        return self.initial_search_option
+
+    def get_multiselect_options(self):
+        """Getter method on all entries in repo+orgs options
+        for the multiselect dropdown.
+
+        Returns:
+            [{label, value}]: multiselect options
+        """
+        return self.multiselect_options
 
     def auth_to_bearer_token(self, auth_token):
         """Large parts of code written by John McGinness, University of Missouri
@@ -313,10 +354,17 @@ class AugurManager:
             data = response.json()
             logging.critical(f"bearer token request payload: {data}")
             if data.get("status") == "Validated":
-                return data["username"], data["access_token"], data["expires"], data["refresh_token"]
+                return (
+                    data["username"],
+                    data["access_token"],
+                    data["expires"],
+                    data["refresh_token"],
+                )
             else:
+                logging.critical(f"DATA STATUS NOT VALIDATED")
                 return None, None, None, None
         else:
+            logging.critical(f"DATA REPONSE CODE: {response.status_code}")
             return None, None, None, None
 
     def make_authenticated_request(self, headers={}, params={}):

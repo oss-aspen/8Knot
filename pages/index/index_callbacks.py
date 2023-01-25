@@ -1,20 +1,19 @@
-from dash import callback
+from datetime import datetime, timedelta
+import re
+import os
+import time
+import logging
+from celery.result import AsyncResult
+import dash_bootstrap_components as dbc
+import dash
+from dash import html, callback
 from dash.dependencies import Input, Output, State
 from app import augur
-from flask import request
-import dash
-import logging
 from cache_manager.cache_manager import CacheManager as cm
 from queries.issues_query import issues_query as iq
 from queries.commits_query import commits_query as cq
 from queries.contributors_query import contributors_query as cnq
 from queries.prs_query import prs_query as prq
-import time
-from celery.result import AsyncResult
-import dash_bootstrap_components as dbc
-from dash import html
-import re
-import os
 
 
 # list of queries to be run
@@ -56,67 +55,175 @@ def _parse_org_choices(org_name_set):
         Output("augur_token_expiration", "data"),
         Output("augur_refresh_token", "data"),
         Output("augur_user_groups", "data"),
+        Output("augur_user_group_options", "data"),
+        Output("is-startup", "data"),
     ],
     [
         Input("url", "href"),
         State("url", "search"),
+        State("is-startup", "data"),
+        State("augur_username", "data"),
         State("augur_user_bearer_token", "data"),
+        State("augur_token_expiration", "data"),
+        State("augur_refresh_token", "data"),
     ],
 )
-def login(this_url, search_val, user_token):
+def get_augur_user_preferences(
+    this_url, search_val, is_startup, username, bearer_token, expiration, refresh
+):
 
-    logging.critical("IN LOGIN FUNCTION")
+    # used to extract auth from URL
     code_pattern = re.compile(r"\?code=([0-9A-z]+)", re.IGNORECASE)
 
-    code_val = re.search(code_pattern, search_val)
+    # URL-triggered callback
+    if dash.ctx.triggered_id == "url":
+        code_val = re.search(code_pattern, search_val)
 
-    if code_val is None:
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
-    else:
-        auth = code_val.groups()[0]
+        if not is_startup and not code_val:
+            logging.debug("LOGIN: Page Switch")
+            # code_val is Falsy when it's None, so we want to pass
+            # this check when it's None
 
-    # check if there user-defined groups already in cache
-    # TODO: check if there's an update to the groups from last time
+            # this happens when the user is just going between pages
+            # so we don't need to do anything.
+            raise dash.exceptions.PreventUpdate
 
-    # use the auth token to get the bearer token
-    username, bearer_token, expiration, refresh = augur.auth_to_bearer_token(auth)
+        if code_val:
+            logging.debug("LOGIN: Augur Redirect")
+            # the user has just redirected from Augur so we know
+            # that we need to get their new credentials.
 
-    if username is not None:
-        logging.debug(f"Logged in as: {username}")
-        logging.debug(f"Got Bearer Token: {bearer_token}")
+            auth = code_val.groups()[0]
+
+            # use the auth token to get the bearer token
+            username, bearer_token, expiration, refresh = augur.auth_to_bearer_token(
+                auth
+            )
+
+            logging.debug(f"USERNAME: {username}")
+            logging.debug(f"BT: {bearer_token}")
+            logging.debug(f"EXPIRATION: {expiration}")
+            logging.debug(f"REFRESH: {refresh}")
+
+            expiration = datetime.now() + timedelta(seconds=expiration)
+
+        if is_startup:
+
+            if expiration and bearer_token:
+                logging.debug("LOGIN: Warm Startup")
+                # warm startup, bearer token could still be valid
+
+                logging.debug(expiration)
+                logging.debug(type(expiration))
+
+                logging.debug(datetime.now())
+                logging.debug(type(datetime.now()))
+                if datetime.now() > datetime.strptime(
+                    expiration, "%Y-%m-%dT%H:%M:%S.%f"
+                ):
+                    # expiration should already be a datetime object
+                    # reflecting the time at which the token will expire
+                    logging.debug("LOGIN: Expired Bearer Token")
+                    # check whether the current bearer token is valid (and exists)
+                    # if invalid, just don't do anything and let the
+                    # user login.
+                    # TODO implement refresh token here
+                    return (
+                        dash.no_update,
+                        dash.no_update,
+                        dash.no_update,
+                        dash.no_update,
+                        dash.no_update,
+                        dash.no_update,
+                        False,
+                    )
+            else:
+                logging.debug("LOGIN: Cold Startup")
+                # no previous credentials, can't do anything w/o login.
+                return (
+                    dash.no_update,
+                    dash.no_update,
+                    dash.no_update,
+                    dash.no_update,
+                    dash.no_update,
+                    dash.no_update,
+                    False,
+                )
+
+        # we'll have either gotten a new bearer token if we're coming from augur
+        # or we'll have verified that bearer_token should be valid
         augur_users_groups = augur.make_user_request(access_token=bearer_token)
+        if not augur_users_groups:
+            logging.debug("LOGIN: Failure")
+            logging.error(
+                "Error logging in to Augur- couldn't complete user's Groups request."
+            )
+            raise dash.exceptions.PreventUpdate
 
-        if augur_users_groups:
-            #logging.critical(f"Groups: {augur_users_groups}")
-            logging.critical(f"User Groups Status: {augur_users_groups.get('status')}")
-        else:
-            logging.critical("user_groups response is None")
-    else:
-        logging.error("Login to Augur failed")
+        # structure of the incoming data
+        # [{group_name: {favorited: False, repos: [{repo_git: asd;lfkj, repo_id=46555}, ...]}, ...]
+        # creates the group_name->repo_list mapping and the searchbar options for augur user groups
+        users_groups = {}
+        users_group_options = []
+        g = augur_users_groups.get("data")
 
-    # structure of the incoming data
-    # [{group_name: {favorited: False, repos=[{repo_git: asd;lfkj, repo_id=46555}, ...]}, ...]
-    users_groups = {}
-    g = augur_users_groups.get("data")
-    for entry in g:
-        group_name = list(entry.keys())[0]
-        repo_list = list(entry.values())[0]["repos"]
-        urls = []
-        for repo in repo_list:
-            urls.append(repo.get("repo_git"))
+        # each of the augur user groups
+        for entry in g:
 
-        users_groups[group_name] = urls
+            # group has one key- the name.
+            group_name: str = list(entry.keys())[0]
 
+            # only one value per entry- {favorited: ..., repos: ...},
+            # get the value component
+            repo_list = list(entry.values())[0]["repos"]
 
-    return username, bearer_token, expiration, refresh, users_groups
+            # get all of the repo_ids in the 'repos' part of the value
+            # translated via the git url to the id's of the DB that's
+            # backing the client application
+            ids = []
+            for repo in repo_list:
+                # get the git url of the repo
+                repo_git = repo.get("repo_git")
+                # translate that natural key to the repo's ID in the primary database
+                repo_id_translated = augur.repo_git_to_id(repo_git)
+                # check if the translation worked.
+                if repo_id_translated:
+                    ids.append(repo_id_translated)
+                else:
+                    logging.error(
+                        f"Repo: {repo_git} not translatable to repo_id- source DB incomplete."
+                    )
+
+            # using lower_name for convenience later- no .lower() calls
+            lower_name = group_name.lower()
+
+            # group_name->repo_list mapping
+            users_groups[lower_name] = ids
+
+            # searchbar options
+            # user's groups are prefixed w/ username to guarantee uniqueness in searchbar
+            users_group_options.append(
+                {"value": lower_name, "label": f"{username}_{group_name}"}
+            )
+
+        logging.debug(f"LOGIN: Success- \n{users_group_options}")
+        return (
+            username,
+            bearer_token,
+            expiration,
+            refresh,
+            users_groups,
+            users_group_options,
+            False,  # is_startup
+        )
 
 
 @callback(
-    [Output("projects", "options")],
-    [Input("projects", "search_value")],
-    [State("projects", "value"), State("augur_user_groups", "data")],
+    [Output("projects", "data")],
+    [Input("projects", "searchValue")],
+    [State("projects", "value"), State("augur_user_group_options", "data")],
 )
-def dropdown_dynamic_callback(user_in, selections, augur_groups):
+def dynamic_multiselect_options(user_in: str, selections, augur_groups):
 
     """
     Ref: https://dash.plotly.com/dash-core-components/dropdown#dynamic-options
@@ -127,126 +234,69 @@ def dropdown_dynamic_callback(user_in, selections, augur_groups):
     either of the options.
     """
 
-    all_entries = augur.get_all_entries()
+    if not user_in:
+        return dash.no_update
 
-    # all_entries += users_augur_groups
+    options = augur.get_multiselect_options().copy()
+    options = options + augur_groups
+
+    # if the number of options changes then we're
+    # adding AUGUR_ entries somewhere.
 
     if selections is None:
         selections = []
 
-    if user_in is None or len(user_in) == 0:
-        raise dash.exceptions.PreventUpdate
+    # match lowercase inputs with lowercase possible values
+    opts = [i for i in options if user_in.lower() in i["label"]]
+
+    # sort matches by length
+    opts = sorted(opts, key=lambda v: len(v["label"]))
+
+    # always include the previous selections from the searchbar to avoid
+    # those values being clobbered when we truncate the total length.
+    # arbitrarily 'small' number of matches returned..
+    if len(opts) < 100:
+        return [opts + [v for v in options if v["value"] in selections]]
+
     else:
-        # match lowercase inputs with lowercase possible values
-        opts = [i[1] for i in all_entries if user_in.lower() in i[0]]
+        return [opts[:100] + [v for v in options if v["value"] in selections]]
 
-        # sort matches by length
-        opts.sort(key=lambda item: (len(item), item))
-
-        # always include the previous selections from the searchbar to avoid
-        # those values being clobbered when we truncate the total length.
-        # arbitrarily 'small' number of matches returned..
-        if len(opts) < 250:
-            return [opts + selections]
-        else:
-            return [opts[:250] + selections]
-
-"""
-On app startup we can check whether the bearer token has expired and refresh it w/ the refresh
-token, if it has existed. If it's refreshed successfully we can grab the new user groups, otherwise
-unset the bearer token, expiration, and refresh token.
-
-
-def dropdown_startup_and_search(user_input, current_selections, url, username, bearer_token, user_groups):
-    if ctx.triggered_id == "url":
-        # login
-        # get new bearer token
-        # query user's groups
-        # return bearer_token, token_expiration, refresh_token, username, user's_groups, dash.no_update
-    else:
-        # we know it's a searchbar input
-        if not user_groups:
-            all_entries += user_groups
-        # proceed as normal
-        return dash.no_update, dash.no_update ..., [opts+selections]
-
-
-@callback(
-    [
-        Output("bearer_token", "data"),
-        Output("bt_expiration", "data"),
-        Output("refresh_token", "data"),
-        Output("username", "data"),
-        Output("users_augur_groups)
-    ],
-    [
-        Input("url", "href"),
-        State("bearer_token", "data"),
-        State("bt_expiration", "data"),
-        State("refresh_token", "data"),
-        State("username", "data")
-    ]
-)
-def startup_login(href, bt, bt_e, rt, usn):
-    if not bt_e or not bt or not rt:
-        # no expiration or no bt or no rt, can't do anything automatically
-        return dash.exceptions.PreventUpdate
-    if(now() > bt_e):
-        # get a new bearer token w/ refresh token
-        # return if impossible
-    groups = get_new_groups(bt)
-    return (bt,
-            bt_e,
-            rt,
-            usn,
-            groups)
-"""
 
 # callback for repo selections to feed into visualization call backs
 @callback(
     [Output("results-output-container", "children"), Output("repo-choices", "data")],
-    Input("search", "n_clicks"),
-    State("projects", "value"),
+    [
+        Input("search", "n_clicks"),
+        State("projects", "value"),
+        State("augur_user_groups", "data"),
+    ],
 )
-def update_output(n_clicks, value):
-    if value is None:
-        logging.info("No update")
-        return dash.exceptions.PreventUpdate, dash.exceptions.PreventUpdate
+def multiselect_values_to_repo_ids(n_clicks, user_vals, user_groups):
+    if user_vals is None:
+        raise dash.exceptions.PreventUpdate
 
-    """
-    Section handles parsing the input repos / orgs when there is selected values
-    """
-    logging.debug("SEARCHBAR_ORG_REPO_PARSING - START")
-    if len(value) > 0:
-        repo_git_set = []
-        org_name_set = []
+    # individual repo numbers
+    repos = [r for r in user_vals if isinstance(r, int)]
+    logging.debug(f"REPOS: {repos}")
 
-        # split our processing of repos / orgs into two streams
-        for r in value:
-            if r.startswith("http"):
-                repo_git_set.append(r)
-            else:
-                org_name_set.append(r)
+    # names of augur groups or orgs
+    names = [n for n in user_vals if isinstance(n, str)]
 
-        # get the repo_ids and the repo_names from our repo set of urls'
-        repo_ids, repo_names = _parse_repo_choices(repo_git_set=repo_git_set)
+    org_repos = [augur.org_to_repos(o) for o in names if augur.is_org(o)]
+    # flatten list repo_ids in orgs to 1D
+    org_repos = [v for l in org_repos for v in l]
+    logging.debug(f"ORG_REPOS: {org_repos}")
 
-        # get the repo_ids and the repo_names from our org set of names
-        org_repo_ids, org_repo_names = _parse_org_choices(org_name_set=org_name_set)
+    group_repos = [user_groups[g] for g in names if not augur.is_org(g)]
+    # flatten list repo_ids in orgs to 1D
+    group_repos = [v for l in group_repos for v in l]
+    logging.debug(f"GROUP_REPOS: {group_repos}")
 
-        # collect all of the id's and names together
-        total_ids = set(repo_ids + org_repo_ids)
-        total_names = set(repo_names + org_repo_names)
-        total_ids = list(total_ids)
+    # only unique repo ids
+    all_repo_ids = list(set().union(*[repos, org_repos, group_repos]))
+    logging.debug(f"SELECTED_REPOS: {all_repo_ids}")
 
-        selections = str(value)
-
-        # return the string that we want and return the list of the id's that we need for the other callback.
-        logging.debug("SEARCHBAR_ORG_REPO_PARSING - END")
-        logging.debug("=========================================================")
-        return f"Your current selections is: {selections[1:-1]}", list(total_ids)
-    elif len(value) == 0:
-        return dash.exceptions.PreventUpdate, dash.exceptions.PreventUpdate
+    return f"Your current selections is: momentarily omitted", all_repo_ids
 
 
 @callback(
@@ -406,5 +456,7 @@ def button(username):
         active=True,
     )
     if username:
-        child = (dbc.NavLink(f"{username}", href="http://chaoss.tv:5038/account/settings"),)
+        child = (
+            dbc.NavLink(f"{username}", href="http://chaoss.tv:5038/account/settings"),
+        )
     return child

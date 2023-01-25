@@ -223,7 +223,9 @@ class CacheManager:
         out_df = pd.DataFrame()
         for r in results:
             try:
-                out_df = pd.concat([out_df, pd.read_csv(io.StringIO(r), sep=",")], ignore_index=True)
+                out_df = pd.concat(
+                    [out_df, pd.read_csv(io.StringIO(r), sep=",")], ignore_index=True
+                )
             except:
                 # some json lists are empty and aren't deserializable
                 e = sys.exc_info()[0]

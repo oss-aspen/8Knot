@@ -59,7 +59,7 @@ if engine is None:
     sys.exit(1)
 
 # grab list of projects and orgs from Augur database.
-augur.get_search_input()
+augur.multiselect_startup()
 
 
 """IMPORT AFTER GLOBAL VARIABLES SET"""
