@@ -84,12 +84,12 @@ def get_augur_user_preferences(
 
     # output values when login isn't possible
     no_login = [
-        dash.no_update,  # username
-        dash.no_update,  # bearer token
-        dash.no_update,  # bearer token expiration
-        dash.no_update,  # refresh token
-        dash.no_update,  # user groups
-        dash.no_update,  # user group options
+        "",  # username
+        "",  # bearer token
+        "",  # bearer token expiration
+        "",  # refresh token
+        {},  # user groups
+        [],  # user group options
         False,  # startup state
     ]
 
@@ -114,7 +114,9 @@ def get_augur_user_preferences(
             auth = code_val.groups()[0]
 
             # use the auth token to get the bearer token
-            username, bearer_token, expiration, refresh = augur.auth_to_bearer_token(auth)
+            username, bearer_token, expiration, refresh = augur.auth_to_bearer_token(
+                auth
+            )
 
             logging.debug(f"USERNAME: {username}")
             logging.debug(f"BT: {bearer_token}")
@@ -140,7 +142,9 @@ def get_augur_user_preferences(
 
                 logging.debug(datetime.now())
                 logging.debug(type(datetime.now()))
-                if datetime.now() > datetime.strptime(expiration, "%Y-%m-%dT%H:%M:%S.%f"):
+                if datetime.now() > datetime.strptime(
+                    expiration, "%Y-%m-%dT%H:%M:%S.%f"
+                ):
                     # expiration should already be a datetime object
                     # reflecting the time at which the token will expire
                     logging.debug("LOGIN: Expired Bearer Token")
@@ -148,9 +152,10 @@ def get_augur_user_preferences(
                     # if invalid, just don't do anything and let the
                     # user login.
                     # TODO implement refresh token here
-                return no_login + [
-                    True
-                ]  # standard no-login, login didn't succeed, but it didn't fail, so don't need popover
+
+                    return no_login + [
+                        True
+                    ]  # standard no-login, login didn't succeed, but it didn't fail, so don't need popover
             else:
                 logging.debug("LOGIN: Cold Startup")
                 # no previous credentials, can't do anything w/o login.
@@ -161,9 +166,13 @@ def get_augur_user_preferences(
         # we'll have either gotten a new bearer token if we're coming from augur
         # or we'll have verified that bearer_token should be valid
         augur_users_groups = augur.make_user_request(access_token=bearer_token)
-        if not augur_users_groups:
+        if not augur_users_groups or (
+            augur_users_groups.get("status") == "Session expired"
+        ):
             logging.debug("LOGIN: Failure")
-            logging.error("Error logging in to Augur- couldn't complete user's Groups request.")
+            logging.error(
+                "Error logging in to Augur- couldn't complete user's Groups request."
+            )
             return no_login + [False]  # standard no-login plus login failed
 
         # structure of the incoming data
@@ -196,7 +205,9 @@ def get_augur_user_preferences(
                 if repo_id_translated:
                     ids.append(repo_id_translated)
                 else:
-                    logging.error(f"Repo: {repo_git} not translatable to repo_id- source DB incomplete.")
+                    logging.error(
+                        f"Repo: {repo_git} not translatable to repo_id- source DB incomplete."
+                    )
 
             # using lower_name for convenience later- no .lower() calls
             lower_name = group_name.lower()
@@ -206,7 +217,9 @@ def get_augur_user_preferences(
 
             # searchbar options
             # user's groups are prefixed w/ username to guarantee uniqueness in searchbar
-            users_group_options.append({"value": lower_name, "label": f"{username}_{group_name}"})
+            users_group_options.append(
+                {"value": lower_name, "label": f"{username}_{group_name}"}
+            )
 
         logging.debug(f"LOGIN: Success- \n{users_group_options}")
         return (
@@ -465,7 +478,9 @@ def login_logout_button(username, login_succeeded, href):
                 href="http://chaoss.tv:5038/account/settings",
                 id="login-navlink",
             ),
-            dbc.Button("Logout (In Dev.)", id="logout-button", color="danger", disabled=True),
+            dbc.Button(
+                "Logout (In Dev.)", id="logout-button", color="danger", disabled=True
+            ),
         ]
     else:
         navlink = [

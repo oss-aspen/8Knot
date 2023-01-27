@@ -87,7 +87,10 @@ pr_merged_age = dbc.Card(
     [
         dbc.CardHeader(
             html.H5(
-                [html.I(className="fa-solid fa-code-pull-request"), "Avg. Lifespan of Merged"],
+                [
+                    html.I(className="fa-solid fa-code-pull-request"),
+                    "Avg. Lifespan of Merged",
+                ],
                 className="glace_headers",
             ),
         ),
@@ -126,9 +129,12 @@ gc_pr_metrics = dbc.Card(
         dbc.CardBody(
             [
                 html.H2(
-                    [html.I(className="fa-solid fa-code-pull-request"), "Pull Requests"],
+                    [
+                        html.I(className="fa-solid fa-code-pull-request"),
+                        "Pull Requests",
+                    ],
                     className="card-title",
-                    style={"text-align": "center"},
+                    style={"textAlign": "center"},
                 ),
                 html.Br(),
                 dbc.Row(

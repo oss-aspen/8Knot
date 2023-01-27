@@ -35,7 +35,9 @@ commit_lines_added = dbc.Card(
         dbc.CardBody(
             [
                 dcc.Loading(
-                    children=[html.H4(id="commit-lines-added", className="metric_data")],
+                    children=[
+                        html.H4(id="commit-lines-added", className="metric_data")
+                    ],
                 ),
             ],
         ),
@@ -46,12 +48,17 @@ commit_lines_added = dbc.Card(
 commit_lines_removed = dbc.Card(
     [
         dbc.CardHeader(
-            html.H5([html.I(className="fa-solid fa-code-commit"), "Avg. Removed Lines"], className="glace_headers"),
+            html.H5(
+                [html.I(className="fa-solid fa-code-commit"), "Avg. Removed Lines"],
+                className="glace_headers",
+            ),
         ),
         dbc.CardBody(
             [
                 dcc.Loading(
-                    children=[html.H4(id="commit-lines-removed", className="metric_data")],
+                    children=[
+                        html.H4(id="commit-lines-removed", className="metric_data")
+                    ],
                 ),
             ],
         ),
@@ -62,7 +69,10 @@ commit_lines_removed = dbc.Card(
 commit_files = dbc.Card(
     [
         dbc.CardHeader(
-            html.H5([html.I(className="fa-solid fa-code-commit"), "Avg. # Files"], className="glace_headers"),
+            html.H5(
+                [html.I(className="fa-solid fa-code-commit"), "Avg. # Files"],
+                className="glace_headers",
+            ),
         ),
         dbc.CardBody(
             [
@@ -83,7 +93,7 @@ gc_commit_metrics = dbc.Card(
                 html.H2(
                     [html.I(className="fa-solid fa-code-commit"), "Commits"],
                     className="card-title",
-                    style={"text-align": "center"},
+                    style={"textAlign": "center"},
                 ),
                 html.Br(),
                 dbc.Row(

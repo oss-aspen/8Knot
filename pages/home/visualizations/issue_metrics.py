@@ -36,7 +36,9 @@ issue_closed = dbc.Card(
         dbc.CardBody(
             [
                 dcc.Loading(
-                    children=[html.H4(id="closed-issue-count", className="metric_data")],
+                    children=[
+                        html.H4(id="closed-issue-count", className="metric_data")
+                    ],
                 ),
             ],
         ),
@@ -55,7 +57,9 @@ issue_open_age = dbc.Card(
         dbc.CardBody(
             [
                 dcc.Loading(
-                    children=[html.H4(id="avg-open-issue-age", className="metric_data")],
+                    children=[
+                        html.H4(id="avg-open-issue-age", className="metric_data")
+                    ],
                 ),
             ],
         ),
@@ -74,7 +78,9 @@ issue_closed_age = dbc.Card(
         dbc.CardBody(
             [
                 dcc.Loading(
-                    children=[html.H4(id="avg-closed-issue-age", className="metric_data")],
+                    children=[
+                        html.H4(id="avg-closed-issue-age", className="metric_data")
+                    ],
                 ),
             ],
         ),
@@ -89,7 +95,7 @@ gc_issue_metrics = dbc.Card(
                 html.H2(
                     [html.I(className="fa-regular fa-circle-dot"), "Issues"],
                     className="card-title",
-                    style={"text-align": "center"},
+                    style={"textAlign": "center"},
                 ),
                 html.Br(),
                 dbc.Row(
