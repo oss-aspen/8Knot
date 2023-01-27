@@ -42,8 +42,39 @@ navbar = dbc.Navbar(
             dbc.Row(
                 [
                     dbc.Col(
-                        id="nav-login-container",
-                        children=[],
+                        dbc.Nav(
+                            [
+                                dbc.NavItem(
+                                    dbc.DropdownMenu(
+                                        children=[
+                                            dbc.DropdownMenuItem(
+                                                "Log out",
+                                                href="http://chaoss.tv:5038/",
+                                                external_link="True",
+                                                target="_blank",
+                                                id="logout-button",
+                                            )
+                                        ],
+                                        nav=True,
+                                        in_navbar=True,
+                                        label="More",
+                                        id="nav-dropdown",
+                                    ),
+                                ),
+                                dbc.Popover(
+                                    "Login Failed",
+                                    body=True,
+                                    id="login_popover",
+                                    is_open=False,
+                                    placement="bottom-end",
+                                    target="nav-dropdown",
+                                ),
+                                html.Div(
+                                    id="nav-login-container",
+                                    children=[],
+                                ),
+                            ]
+                        )
                     )
                 ],
                 align="center",
