@@ -126,7 +126,7 @@ gc_pr_metrics = dbc.Card(
         dbc.CardBody(
             [
                 html.H2(
-                    [html.I(className="fa-solid fa-code-pull-request"), "Pull Request"],
+                    [html.I(className="fa-solid fa-code-pull-request"), "Pull Requests"],
                     className="card-title",
                     style={"text-align": "center"},
                 ),

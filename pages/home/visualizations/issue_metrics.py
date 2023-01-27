@@ -87,7 +87,7 @@ gc_issue_metrics = dbc.Card(
         dbc.CardBody(
             [
                 html.H2(
-                    [html.I(className="fa-solid fa-code-commit"), "Commits"],
+                    [html.I(className="fa-regular fa-circle-dot"), "Issues"],
                     className="card-title",
                     style={"text-align": "center"},
                 ),
