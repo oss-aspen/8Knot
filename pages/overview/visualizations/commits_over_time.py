@@ -25,9 +25,7 @@ gc_commits_over_time = dbc.Card(
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody(
-                            "This graph plots the amount of commits in selected time buckets."
-                        ),
+                        dbc.PopoverBody("This graph plots the amount of commits in selected time buckets."),
                     ],
                     id="overview-popover-2",
                     target="overview-popover-target-2",  # needs to be the same as dbc.Button id
@@ -158,9 +156,7 @@ def process_data(df: pd.DataFrame, interval):
 
     # converts date column to a datetime object, converts to string first to handle period information
     # the period slice is to handle weekly corner case
-    df_created["Date"] = pd.to_datetime(
-        df_created["Date"].astype(str).str[:period_slice]
-    )
+    df_created["Date"] = pd.to_datetime(df_created["Date"].astype(str).str[:period_slice])
 
     return df_created
 

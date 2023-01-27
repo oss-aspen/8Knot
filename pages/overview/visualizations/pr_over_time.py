@@ -158,27 +158,19 @@ def process_data(df: pd.DataFrame, interval):
     created_range = df["created"].dt.to_period(interval).value_counts().sort_index()
 
     # converts to data frame object and created date column from period values
-    df_created = (
-        created_range.to_frame().reset_index().rename(columns={"index": "Date"})
-    )
+    df_created = created_range.to_frame().reset_index().rename(columns={"index": "Date"})
 
     # converts date column to a datetime object, converts to string first to handle period information
     # the period slice is to handle weekly corner case
-    df_created["Date"] = pd.to_datetime(
-        df_created["Date"].astype(str).str[:period_slice]
-    )
+    df_created["Date"] = pd.to_datetime(df_created["Date"].astype(str).str[:period_slice])
 
     # df for merged prs in time interval
-    merged_range = (
-        pd.to_datetime(df["merged"]).dt.to_period(interval).value_counts().sort_index()
-    )
+    merged_range = pd.to_datetime(df["merged"]).dt.to_period(interval).value_counts().sort_index()
     df_merged = merged_range.to_frame().reset_index().rename(columns={"index": "Date"})
     df_merged["Date"] = pd.to_datetime(df_merged["Date"].astype(str).str[:period_slice])
 
     # df for closed prs in time interval
-    closed_range = (
-        pd.to_datetime(df["closed"]).dt.to_period(interval).value_counts().sort_index()
-    )
+    closed_range = pd.to_datetime(df["closed"]).dt.to_period(interval).value_counts().sort_index()
     df_closed = closed_range.to_frame().reset_index().rename(columns={"index": "Date"})
     df_closed["Date"] = pd.to_datetime(df_closed["Date"].astype(str).str[:period_slice])
 
@@ -248,10 +240,7 @@ def create_figure(
         x=df_closed_merged["Date"],
         y=df_closed_merged["closed"],
         opacity=0.9,
-        hovertemplate=[
-            f"{hover}<br>Closed: {val}<br><extra></extra>"
-            for val in df_closed_merged["closed"]
-        ],
+        hovertemplate=[f"{hover}<br>Closed: {val}<br><extra></extra>" for val in df_closed_merged["closed"]],
         offsetgroup=1,
         base=df_closed_merged["merged"],
         marker=dict(color=color_seq[3]),

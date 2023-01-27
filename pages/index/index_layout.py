@@ -12,9 +12,7 @@ navbar = dbc.Navbar(
                 [
                     dbc.Col(
                         [
-                            html.Img(
-                                src=dash.get_asset_url("logo2.png"), height="40px"
-                            ),
+                            html.Img(src=dash.get_asset_url("logo2.png"), height="40px"),
                             dbc.NavbarBrand(
                                 "8Knot Community Data",
                                 id="navbar-title",
@@ -172,11 +170,7 @@ layout = dbc.Container(
                         ),
                         search_bar,
                         dcc.Loading(
-                            children=[
-                                html.Div(
-                                    id="results-output-container", className="mb-4"
-                                )
-                            ],
+                            children=[html.Div(id="results-output-container", className="mb-4")],
                             color="#119DFF",
                             type="dot",
                             fullscreen=True,

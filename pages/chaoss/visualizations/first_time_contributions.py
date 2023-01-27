@@ -115,9 +115,7 @@ def process_data(df):
 def create_figure(df):
 
     # create plotly express histogram
-    fig = px.histogram(
-        df, x="created", color="Action", color_discrete_sequence=color_seq
-    )
+    fig = px.histogram(df, x="created", color="Action", color_discrete_sequence=color_seq)
 
     # creates bins with 3 month size and customizes the hover value for the bars
     fig.update_traces(

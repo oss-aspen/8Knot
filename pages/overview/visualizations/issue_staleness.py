@@ -213,9 +213,7 @@ def process_data(df: pd.DataFrame, interval, staling_interval, stale_interval):
     # dynamically apply the function to all dates defined in the date_range to create df_status
     df_status["New"], df_status["Staling"], df_status["Stale"] = zip(
         *df_status.apply(
-            lambda row: get_new_staling_stale_up_to(
-                df, row.Date, staling_interval, stale_interval
-            ),
+            lambda row: get_new_staling_stale_up_to(df, row.Date, staling_interval, stale_interval),
             axis=1,
         )
     )
@@ -276,9 +274,7 @@ def create_figure(df_status: pd.DataFrame, interval):
         )
 
         # edit hover values
-        fig.update_traces(
-            hovertemplate=hover + "<br>Issues: %{y}<br>" + "<extra></extra>"
-        )
+        fig.update_traces(hovertemplate=hover + "<br>Issues: %{y}<br>" + "<extra></extra>")
 
     fig.update_layout(
         xaxis_title="Time",
