@@ -92,7 +92,7 @@ plt_io.templates.default = "custom_dark"
 app = dash.Dash(
     __name__,
     use_pages=True,
-    external_stylesheets=[dbc.themes.SLATE, dbc_css],
+    external_stylesheets=[dbc.themes.SLATE, dbc_css, dbc.icons.FONT_AWESOME],
     suppress_callback_exceptions=True,
     background_callback_manager=celery_manager,
 )

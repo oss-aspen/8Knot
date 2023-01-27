@@ -12,3 +12,26 @@ h1{
 .navbar-brand {
     color: #436755 !important;
 }
+
+.metric_data {
+    color: #000000 !important;
+    text-shadow: none !important;
+    padding-bottom: 15px !important;
+}
+
+.box_emissions {
+    /*border-radius: 20px;*/
+    background-color: #505050;
+    color: #505050;
+    margin: 2px;
+    box-shadow: 4px 4px 4px rgb(33, 33, 33);
+    justify-content: center;
+    /*width: 50%;*/
+    text-align: center;
+}
+
+.glace_headers {
+    color:#000000 !important;
+    text-shadow: none !important;
+    font-weight: "normal" !important;
+}

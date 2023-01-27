@@ -25,7 +25,7 @@ navbar = dbc.Navbar(
                         [
                             dbc.Nav(
                                 [
-                                    dbc.NavLink(page["name"], href=page["path"])
+                                    dbc.NavLink(page["name"], href=page["path"], active="exact")
                                     for page in dash.page_registry.values()
                                     if page["module"] != "pages.not_found_404"
                                 ],
@@ -53,6 +53,7 @@ navbar = dbc.Navbar(
     ),
     color="primary",
     dark=True,
+    sticky="top",
 )
 
 navbar_bottom = dbc.NavbarSimple(
@@ -61,18 +62,24 @@ navbar_bottom = dbc.NavbarSimple(
             dbc.NavLink(
                 "Visualization request",
                 href="https://github.com/sandiego-rh/explorer/issues/new?assignees=&labels=enhancement%2Cvisualization&template=visualizations.md",
+                external_link="True",
+                target="_blank",
             )
         ),
         dbc.NavItem(
             dbc.NavLink(
                 "Bug",
                 href="https://github.com/sandiego-rh/explorer/issues/new?assignees=&labels=bug&template=bug_report.md",
+                external_link="True",
+                target="_blank",
             )
         ),
         dbc.NavItem(
             dbc.NavLink(
                 "Repo/Org Request",
                 href="https://github.com/sandiego-rh/explorer/issues/new?assignees=&labels=augur&template=augur_load.md",
+                external_link="True",
+                target="_blank",
             )
         ),
     ],
@@ -80,7 +87,6 @@ navbar_bottom = dbc.NavbarSimple(
     brand_href="#",
     color="primary",
     dark=True,
-    # fixed= 'bottom',
     fluid=True,
 )
 
