@@ -20,7 +20,7 @@ gc_issues_over_time = dbc.Card(
                 html.H3(
                     "Issues Over Time",
                     className="card-title",
-                    style={"text-align": "center"},
+                    style={"textAlign": "center"},
                 ),
                 dbc.Popover(
                     [
@@ -75,7 +75,7 @@ gc_issues_over_time = dbc.Card(
                                         size="sm",
                                     ),
                                     width="auto",
-                                    style={"padding-top": ".5em"},
+                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
                             align="center",
@@ -154,17 +154,25 @@ def process_data(df: pd.DataFrame, interval):
     # data frames for issues created or closed. Detailed description applies for all 3.
 
     # get the count of created issues in the desired interval in pandas period format, sort index to order entries
-    created_range = pd.to_datetime(df["created"]).dt.to_period(interval).value_counts().sort_index()
+    created_range = (
+        pd.to_datetime(df["created"]).dt.to_period(interval).value_counts().sort_index()
+    )
 
     # converts to data frame object and creates date column from period values
-    df_created = created_range.to_frame().reset_index().rename(columns={"index": "Date"})
+    df_created = (
+        created_range.to_frame().reset_index().rename(columns={"index": "Date"})
+    )
 
     # converts date column to a datetime object, converts to string first to handle period information
     # the period slice is to handle weekly corner case
-    df_created["Date"] = pd.to_datetime(df_created["Date"].astype(str).str[:period_slice])
+    df_created["Date"] = pd.to_datetime(
+        df_created["Date"].astype(str).str[:period_slice]
+    )
 
     # df for closed issues in time interval
-    closed_range = pd.to_datetime(df["closed"]).dt.to_period(interval).value_counts().sort_index()
+    closed_range = (
+        pd.to_datetime(df["closed"]).dt.to_period(interval).value_counts().sort_index()
+    )
     df_closed = closed_range.to_frame().reset_index().rename(columns={"index": "Date"})
     df_closed["Date"] = pd.to_datetime(df_closed["Date"].astype(str).str[:period_slice])
 
@@ -195,7 +203,9 @@ def process_data(df: pd.DataFrame, interval):
     return df_created, df_closed, df_open
 
 
-def create_figure(df_created: pd.DataFrame, df_closed: pd.DataFrame, df_open: pd.DataFrame, interval):
+def create_figure(
+    df_created: pd.DataFrame, df_closed: pd.DataFrame, df_open: pd.DataFrame, interval
+):
 
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)

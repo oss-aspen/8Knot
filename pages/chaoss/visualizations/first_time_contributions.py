@@ -20,7 +20,7 @@ gc_first_time_contributions = dbc.Card(
                 html.H3(
                     "First Time Contributions Per Quarter",
                     className="card-title",
-                    style={"text-align": "center"},
+                    style={"textAlign": "center"},
                 ),
                 dbc.Popover(
                     [
@@ -45,7 +45,7 @@ gc_first_time_contributions = dbc.Card(
                         color="secondary",
                         size="small",
                     ),
-                    style={"padding-top": ".5em"},
+                    style={"paddingTop": ".5em"},
                 ),
             ]
         ),
@@ -115,7 +115,9 @@ def process_data(df):
 def create_figure(df):
 
     # create plotly express histogram
-    fig = px.histogram(df, x="created", color="Action", color_discrete_sequence=color_seq)
+    fig = px.histogram(
+        df, x="created", color="Action", color_discrete_sequence=color_seq
+    )
 
     # creates bins with 3 month size and customizes the hover value for the bars
     fig.update_traces(

@@ -22,7 +22,7 @@ gc_contributors_over_time = dbc.Card(
                 html.H3(
                     "Contributor Types Over Time",
                     className="card-title",
-                    style={"text-align": "center"},
+                    style={"textAlign": "center"},
                 ),
                 dbc.Popover(
                     [
@@ -96,7 +96,7 @@ gc_contributors_over_time = dbc.Card(
                                         size="sm",
                                     ),
                                     width="auto",
-                                    style={"padding-top": ".5em"},
+                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
                             align="center",

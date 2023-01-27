@@ -44,15 +44,22 @@ celery_manager = CeleryManager(celery_app=celery_app)
 """CREATE DATABASE ACCESS OBJECT AND CACHE SEARCH OPTIONS"""
 augur = AugurManager()
 
-# set user login credentials and endpoints
-augur.set_client_secret(os.getenv("AUGUR_CLIENT_SECRET", "fake_client_secret"))
-augur.set_app_id(os.getenv("AUGUR_APP_ID", "fake_app_id"))
-augur.set_session_generate_endpoint(
-    os.getenv("AUGUR_SESSION_GENERATE_ENDPOINT", "fake_endpoint")
-)
-augur.set_user_groups_endpoint(os.getenv("AUGUR_USER_GROUPS_ENDPOINT", "fake_endpoint"))
+# make sure that parameters for Augur connection have been supplied.
+client_secret = os.getenv("AUGUR_CLIENT_SECRET", "")
+app_id = os.getenv("AUGUR_APP_ID", "")
+session_endpoint = os.getenv("AUGUR_SESSION_GENERATE_ENDPOINT", "")
+groups_endpoint = os.getenv("AUGUR_USER_GROUPS_ENDPOINT", "")
 
-# create db connection
+if not all([client_secret, app_id, session_endpoint, groups_endpoint]):
+    logging.critical("ERROR: Client Augur credentials incomplete; can't start.")
+    sys.exit(1)
+else:
+    augur.set_client_secret(client_secret)
+    augur.set_app_id(app_id)
+    augur.set_session_generate_endpoint(session_endpoint)
+    augur.set_user_groups_endpoint(groups_endpoint)
+
+# connect to database
 engine = augur.get_engine()
 if engine is None:
     logging.critical("Could not get engine; check config or try later")
@@ -101,6 +108,9 @@ server = app.server
 from pages.index.index_layout import layout
 
 app.layout = layout
+
+if os.getenv("8KNOT_DEBUG", ""):
+    app.enable_dev_tools(dev_tools_ui=True, dev_tools_hot_reload=False)
 
 if __name__ == "__main__":
     print(

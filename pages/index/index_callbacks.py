@@ -57,6 +57,7 @@ def _parse_org_choices(org_name_set):
         Output("augur_user_groups", "data"),
         Output("augur_user_group_options", "data"),
         Output("is-startup", "data"),
+        Output("login-succeeded", "data"),
     ],
     [
         Input("url", "href"),
@@ -69,11 +70,28 @@ def _parse_org_choices(org_name_set):
     ],
 )
 def get_augur_user_preferences(
-    this_url, search_val, is_startup, username, bearer_token, expiration, refresh
+    this_url,
+    search_val,
+    is_startup,
+    username,
+    bearer_token,
+    expiration,
+    refresh,
 ):
 
     # used to extract auth from URL
     code_pattern = re.compile(r"\?code=([0-9A-z]+)", re.IGNORECASE)
+
+    # output values when login isn't possible
+    no_login = [
+        dash.no_update,  # username
+        dash.no_update,  # bearer token
+        dash.no_update,  # bearer token expiration
+        dash.no_update,  # refresh token
+        dash.no_update,  # user groups
+        dash.no_update,  # user group options
+        False,  # startup state
+    ]
 
     # URL-triggered callback
     if dash.ctx.triggered_id == "url":
@@ -105,7 +123,13 @@ def get_augur_user_preferences(
             logging.debug(f"EXPIRATION: {expiration}")
             logging.debug(f"REFRESH: {refresh}")
 
-            expiration = datetime.now() + timedelta(seconds=expiration)
+            # if we try to log in with the auth token we just get and the login fails, we
+            # tell the user with a popover and do nothing.
+
+            if not all([username, bearer_token, expiration, refresh]):
+                return no_login + [False]  # standard no-login plus login failed
+            else:
+                expiration = datetime.now() + timedelta(seconds=expiration)
 
         if is_startup:
 
@@ -128,27 +152,15 @@ def get_augur_user_preferences(
                     # if invalid, just don't do anything and let the
                     # user login.
                     # TODO implement refresh token here
-                    return (
-                        dash.no_update,
-                        dash.no_update,
-                        dash.no_update,
-                        dash.no_update,
-                        dash.no_update,
-                        dash.no_update,
-                        False,
-                    )
+                return no_login + [
+                    True
+                ]  # standard no-login, login didn't succeed, but it didn't fail, so don't need popover
             else:
                 logging.debug("LOGIN: Cold Startup")
                 # no previous credentials, can't do anything w/o login.
-                return (
-                    dash.no_update,
-                    dash.no_update,
-                    dash.no_update,
-                    dash.no_update,
-                    dash.no_update,
-                    dash.no_update,
-                    False,
-                )
+                return no_login + [
+                    True
+                ]  # standard no-login, login didn't succeed, but it didn't fail, so don't need popover
 
         # we'll have either gotten a new bearer token if we're coming from augur
         # or we'll have verified that bearer_token should be valid
@@ -158,7 +170,7 @@ def get_augur_user_preferences(
             logging.error(
                 "Error logging in to Augur- couldn't complete user's Groups request."
             )
-            raise dash.exceptions.PreventUpdate
+            return no_login + [False]  # standard no-login plus login failed
 
         # structure of the incoming data
         # [{group_name: {favorited: False, repos: [{repo_git: asd;lfkj, repo_id=46555}, ...]}, ...]
@@ -215,6 +227,7 @@ def get_augur_user_preferences(
             users_groups,
             users_group_options,
             False,  # is_startup
+            True,  # login succeeded
         )
 
 
@@ -296,7 +309,7 @@ def multiselect_values_to_repo_ids(n_clicks, user_vals, user_groups):
     all_repo_ids = list(set().union(*[repos, org_repos, group_repos]))
     logging.debug(f"SELECTED_REPOS: {all_repo_ids}")
 
-    return f"Your current selections is: momentarily omitted", all_repo_ids
+    return "", all_repo_ids
 
 
 @callback(
@@ -415,7 +428,7 @@ def run_queries(repos):
     Output("login-container", "children"),
     Input("augur_username", "data"),
 )
-def button(username):
+def login_button(username):
     if not username:
         child = (
             dbc.Button(
@@ -429,6 +442,7 @@ def button(username):
                 ),
                 size="sm",
                 color="primary",
+                id="login-button",
             ),
         )
     else:
@@ -440,6 +454,7 @@ def button(username):
                     "AUGUR_USER_ACCOUNT_ENDPOINT",
                     "http://chaoss.tv:5038/account/settings",
                 ),
+                id="navlink-button",
             ),
         ]
     return child
@@ -448,15 +463,40 @@ def button(username):
 @callback(
     Output("nav-login-container", "children"),
     Input("augur_username", "data"),
+    State("login-succeeded", "data"),
+    State("url", "href"),
 )
-def button(username):
-    child = dbc.NavLink(
-        "Augur log in/sign up",
-        href=f"http://chaoss.tv:5038/user/authorize?client_id={augur.app_id}&response_type=code",
-        active=True,
-    )
+def login_logout_button(username, login_succeeded, href):
+
     if username:
-        child = (
-            dbc.NavLink(f"{username}", href="http://chaoss.tv:5038/account/settings"),
-        )
-    return child
+        navlink = [
+            dbc.NavLink(
+                f"{username}",
+                href="http://chaoss.tv:5038/account/settings",
+                id="login-navlink",
+            ),
+            dbc.Button(
+                "Logout (In Dev.)", id="logout-button", color="danger", disabled=True
+            ),
+        ]
+    else:
+        navlink = [
+            dbc.NavLink(
+                "Augur log in/sign up",
+                href=f"http://chaoss.tv:5038/user/authorize?client_id={augur.app_id}&response_type=code",
+                active=True,
+                id="login-navlink",
+            ),
+        ]
+
+    popover = [
+        dbc.Popover(
+            "Login Failed",
+            body=True,
+            is_open=not login_succeeded,
+            placement="bottom",
+            target="login-navlink",
+        ),
+    ]
+
+    return navlink + popover

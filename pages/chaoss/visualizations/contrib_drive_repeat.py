@@ -20,7 +20,7 @@ gc_contrib_drive_repeat = dbc.Card(
                 html.H3(
                     id="chaoss-graph-title-1",
                     className="card-title",
-                    style={"text-align": "center"},
+                    style={"textAlign": "center"},
                 ),
                 dbc.Popover(
                     [
@@ -97,7 +97,7 @@ gc_contrib_drive_repeat = dbc.Card(
                                         size="sm",
                                     ),
                                     width="auto",
-                                    style={"padding-top": ".5em"},
+                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
                             align="center",
@@ -188,9 +188,13 @@ def process_data(df, view, contribs):
 
     # filtering data by view
     if view == "drive":
-        df_cont_subset = df_cont_subset.loc[~df_cont_subset["cntrb_id"].isin(contributors)]
+        df_cont_subset = df_cont_subset.loc[
+            ~df_cont_subset["cntrb_id"].isin(contributors)
+        ]
     else:
-        df_cont_subset = df_cont_subset.loc[df_cont_subset["cntrb_id"].isin(contributors)]
+        df_cont_subset = df_cont_subset.loc[
+            df_cont_subset["cntrb_id"].isin(contributors)
+        ]
 
     # reset index to be ready for plotly
     df_cont_subset = df_cont_subset.reset_index()
@@ -200,7 +204,9 @@ def process_data(df, view, contribs):
 
 def create_figure(df_cont_subset):
     # create plotly express histogram
-    fig = px.histogram(df_cont_subset, x="created", color="Action", color_discrete_sequence=color_seq)
+    fig = px.histogram(
+        df_cont_subset, x="created", color="Action", color_discrete_sequence=color_seq
+    )
 
     # creates bins with 3 month size and customizes the hover value for the bars
     fig.update_traces(

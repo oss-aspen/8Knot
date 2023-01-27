@@ -99,7 +99,7 @@ search_bar = html.Div(
                     debounce=100,
                     data=[augur.initial_multiselect_option()],
                     value=[augur.initial_multiselect_option()["value"]],
-                    style={"font-size": 16},
+                    style={"fontSize": 16},
                 ),
                 dbc.Alert(
                     children='Please ensure that your spelling is correct. \
@@ -117,7 +117,7 @@ search_bar = html.Div(
                 "width": "50%",
                 "display": "table-cell",
                 "verticalAlign": "middle",
-                "padding-right": "10px",
+                "paddingRight": "10px",
             },
         ),
         dbc.Button(
@@ -157,6 +157,7 @@ layout = dbc.Container(
         dcc.Store(id="augur_username", storage_type="local", data=""),
         dcc.Store(id="augur_refresh_token", storage_type="local", data=""),
         dcc.Store(id="augur_token_expiration", storage_type="local", data=""),
+        dcc.Store(id="login-succeeded", data=True),
         dcc.Location(id="url"),
         navbar,
         dbc.Row(

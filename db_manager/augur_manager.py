@@ -297,7 +297,6 @@ class AugurManager:
         Returns:
             int: repo_id of the URL in the source DB.
         """
-        logging.debug(f"TRYING TO MAP: {git}")
         return self.repo_git_to_repo_id.get(git)
 
     def org_to_repos(self, org):
