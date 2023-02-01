@@ -19,11 +19,13 @@ import sys
 import logging
 import plotly.io as plt_io
 from celery import Celery
-from dash import CeleryManager
+from dash import CeleryManager, Input, Output
 import worker_settings
 import os
 
-logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.DEBUG)
+logging.basicConfig(
+    format="%(asctime)s %(levelname)-8s %(message)s", level=logging.DEBUG
+)
 
 """CREATE CELERY TASK QUEUE AND MANAGER"""
 celery_app = Celery(
@@ -32,7 +34,9 @@ celery_app = Celery(
     backend=worker_settings.REDIS_URL,
 )
 
-celery_app.conf.update(task_time_limit=84600, task_acks_late=True, task_track_started=True)
+celery_app.conf.update(
+    task_time_limit=84600, task_acks_late=True, task_track_started=True
+)
 
 celery_manager = CeleryManager(celery_app=celery_app)
 
@@ -104,6 +108,43 @@ server = app.server
 from pages.index.index_layout import layout
 
 app.layout = layout
+
+# I know what you're thinking- "This callback shouldn't be here!"
+# well, circular imports are a hassle, the 'app' object from this
+# file can't be imported into index_callbacks.py.
+# This callback handles logging a user out of their preferences.
+app.clientside_callback(
+    """
+    function(clicks) {
+
+        // clear user's localStorage,
+        // pattern-match key's suffix.
+        const keys = Object.keys(localStorage)
+        for (let key of keys) {
+            if (String(key).includes('_dash_persistence')) {
+                localStorage.removeItem(key)
+            }
+        }
+
+        // clear user's sessionStorage,
+        // pattern-match key's suffix.
+        const sesh = Object.keys(sessionStorage)
+        for (let key of sesh) {
+            if (String(key).includes('_dash_persistence')) {
+                sessionStorage.removeItem(key)
+            }
+        }
+
+        // reload the page,
+        // redirect to index.
+        window.location.reload()
+        return "/"
+    }
+    """,
+    Output("url", "pathname"),
+    Input("logout-button", "n_clicks"),
+    prevent_initial_call=True,
+)
 
 if os.getenv("8KNOT_DEBUG", ""):
     app.enable_dev_tools(dev_tools_ui=True, dev_tools_hot_reload=False)

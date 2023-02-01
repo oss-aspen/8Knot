@@ -19,61 +19,30 @@ from queries.prs_query import prs_query as prq
 # list of queries to be run
 QUERIES = [iq, cq, cnq, prq]
 
-# helper function for repos to get repo_ids
-def _parse_repo_choices(repo_git_set):
-    # get repo values from repo dictionary
-    repo_dict = augur.get_repo_dict()
-    repo_values = [repo_dict[x] for x in repo_git_set]
-    # values for the repo_ids and names
-    repo_ids = [row[0] for row in repo_values]
-    repo_names = [row[1] for row in repo_values]
-
-    return repo_ids, repo_names
-
-
-# helper function for orgs to get repo_ids
-def _parse_org_choices(org_name_set):
-
-    org_dict = augur.get_org_dict()
-    repo_dict = augur.get_repo_dict()
-
-    # get git urls for the repos in the organization, sum operater is used to flatten the 2D list to 1D
-    org_repos = sum([org_dict[x] for x in org_name_set], [])
-    # get repo values from repo dictionary
-    repo_values = [repo_dict[x] for x in org_repos]
-    # values for the repo_ids and names
-    org_repo_ids = [row[0] for row in repo_values]
-    org_repo_names = [row[1] for row in repo_values]
-
-    return org_repo_ids, org_repo_names
-
 
 @callback(
     [
-        Output("augur_username", "data"),
-        Output("augur_user_bearer_token", "data"),
-        Output("augur_token_expiration", "data"),
-        Output("augur_refresh_token", "data"),
-        Output("augur_user_groups", "data"),
-        Output("augur_user_group_options", "data"),
+        Output("augur_username_dash_persistence", "data"),
+        Output("augur_user_bearer_token_dash_persistence", "data"),
+        Output("augur_token_expiration_dash_persistence", "data"),
+        Output("augur_refresh_token_dash_persistence", "data"),
+        Output("augur_user_groups_dash_persistence", "data"),
+        Output("augur_user_group_options_dash_persistence", "data"),
         Output("is-startup", "data"),
         Output("login-succeeded", "data"),
-        Output("logout-button", "n_clicks"),
     ],
     [
         Input("url", "href"),
-        Input("logout-button", "n_clicks"),
         State("url", "search"),
         State("is-startup", "data"),
-        State("augur_username", "data"),
-        State("augur_user_bearer_token", "data"),
-        State("augur_token_expiration", "data"),
-        State("augur_refresh_token", "data"),
+        State("augur_username_dash_persistence", "data"),
+        State("augur_user_bearer_token_dash_persistence", "data"),
+        State("augur_token_expiration_dash_persistence", "data"),
+        State("augur_refresh_token_dash_persistence", "data"),
     ],
 )
 def get_augur_user_preferences(
     this_url,
-    logout_click,
     search_val,
     is_startup,
     username,
@@ -96,9 +65,6 @@ def get_augur_user_preferences(
         False,  # startup state
     ]
 
-    if logout_click == 1:
-        return no_login + [dash.no_update, 0]
-
     # URL-triggered callback
     if dash.ctx.triggered_id == "url":
         code_val = re.search(code_pattern, search_val)
@@ -120,18 +86,17 @@ def get_augur_user_preferences(
             auth = code_val.groups()[0]
 
             # use the auth token to get the bearer token
-            username, bearer_token, expiration, refresh = augur.auth_to_bearer_token(auth)
-
-            logging.debug(f"USERNAME: {username}")
-            logging.debug(f"BT: {bearer_token}")
-            logging.debug(f"EXPIRATION: {expiration}")
-            logging.debug(f"REFRESH: {refresh}")
+            username, bearer_token, expiration, refresh = augur.auth_to_bearer_token(
+                auth
+            )
 
             # if we try to log in with the auth token we just get and the login fails, we
             # tell the user with a popover and do nothing.
 
             if not all([username, bearer_token, expiration, refresh]):
-                return no_login + [False, dash.no_update]  # standard no-login plus login failed
+                return no_login + [
+                    False,
+                ]  # standard no-login plus login failed
             else:
                 expiration = datetime.now() + timedelta(seconds=expiration)
 
@@ -146,7 +111,9 @@ def get_augur_user_preferences(
 
                 logging.debug(datetime.now())
                 logging.debug(type(datetime.now()))
-                if datetime.now() > datetime.strptime(expiration, "%Y-%m-%dT%H:%M:%S.%f"):
+                if datetime.now() > datetime.strptime(
+                    expiration, "%Y-%m-%dT%H:%M:%S.%f"
+                ):
                     # expiration should already be a datetime object
                     # reflecting the time at which the token will expire
                     logging.debug("LOGIN: Expired Bearer Token")
@@ -164,16 +131,21 @@ def get_augur_user_preferences(
                 # no previous credentials, can't do anything w/o login.
                 return no_login + [
                     True,
-                    dash.no_update,
                 ]  # standard no-login, login didn't succeed, but it didn't fail, so don't need popover
 
         # we'll have either gotten a new bearer token if we're coming from augur
         # or we'll have verified that bearer_token should be valid
         augur_users_groups = augur.make_user_request(access_token=bearer_token)
-        if not augur_users_groups or (augur_users_groups.get("status") == "Session expired"):
+        if not augur_users_groups or (
+            augur_users_groups.get("status") == "Session expired"
+        ):
             logging.debug("LOGIN: Failure")
-            logging.error("Error logging in to Augur- couldn't complete user's Groups request.")
-            return no_login + [False, dash.no_update]  # standard no-login plus login failed
+            logging.error(
+                "Error logging in to Augur- couldn't complete user's Groups request."
+            )
+            return no_login + [
+                False,
+            ]  # standard no-login plus login failed
 
         # structure of the incoming data
         # [{group_name: {favorited: False, repos: [{repo_git: asd;lfkj, repo_id=46555}, ...]}, ...]
@@ -205,7 +177,9 @@ def get_augur_user_preferences(
                 if repo_id_translated:
                     ids.append(repo_id_translated)
                 else:
-                    logging.error(f"Repo: {repo_git} not translatable to repo_id- source DB incomplete.")
+                    logging.error(
+                        f"Repo: {repo_git} not translatable to repo_id- source DB incomplete."
+                    )
 
             # using lower_name for convenience later- no .lower() calls
             lower_name = group_name.lower()
@@ -215,9 +189,11 @@ def get_augur_user_preferences(
 
             # searchbar options
             # user's groups are prefixed w/ username to guarantee uniqueness in searchbar
-            users_group_options.append({"value": lower_name, "label": f"{username}_{group_name}"})
+            users_group_options.append(
+                {"value": lower_name, "label": f"{username}_{group_name}"}
+            )
 
-        logging.debug(f"LOGIN: Success- \n{users_group_options}")
+        logging.debug("LOGIN: Success")
         return (
             username,
             bearer_token,
@@ -227,14 +203,16 @@ def get_augur_user_preferences(
             users_group_options,
             False,  # is_startup
             True,  # login succeeded
-            dash.no_update,
         )
 
 
 @callback(
     [Output("projects", "data")],
     [Input("projects", "searchValue")],
-    [State("projects", "value"), State("augur_user_group_options", "data")],
+    [
+        State("projects", "value"),
+        State("augur_user_group_options_dash_persistence", "data"),
+    ],
 )
 def dynamic_multiselect_options(user_in: str, selections, augur_groups):
 
@@ -281,7 +259,7 @@ def dynamic_multiselect_options(user_in: str, selections, augur_groups):
     [
         Input("search", "n_clicks"),
         State("projects", "value"),
-        State("augur_user_groups", "data"),
+        State("augur_user_groups_dash_persistence", "data"),
     ],
 )
 def multiselect_values_to_repo_ids(n_clicks, user_vals, user_groups):
@@ -425,44 +403,11 @@ def run_queries(repos):
 
 
 @callback(
-    Output("login-container", "children"),
-    Input("augur_username", "data"),
-)
-def login_button(username):
-    if not username:
-        child = (
-            dbc.Button(
-                dbc.NavLink(
-                    "Augur log in/sign up",
-                    href=os.getenv(
-                        "AUGUR_USER_AUTH_ENDPOINT",
-                        f"http://chaoss.tv:5038/user/authorize?client_id={augur.app_id}&response_type=code",
-                    ),
-                    active=True,
-                ),
-                size="sm",
-                color="primary",
-                id="login-button",
-            ),
-        )
-    else:
-        child = [
-            html.P(f"Welcome {username}! Need to go back to your augur account?"),
-            dbc.NavLink(
-                "Click here!",
-                href=os.getenv(
-                    "AUGUR_USER_ACCOUNT_ENDPOINT",
-                    "http://chaoss.tv:5038/account/settings",
-                ),
-                id="navlink-button",
-            ),
-        ]
-    return child
-
-
-@callback(
-    [Output("nav-login-container", "children"), Output("login_popover", "is_open")],
-    Input("augur_username", "data"),
+    [
+        Output("nav-login-container", "children"),
+        Output("login_popover", "is_open"),
+    ],
+    Input("augur_username_dash_persistence", "data"),
     State("login-succeeded", "data"),
     State("url", "href"),
 )
@@ -481,11 +426,13 @@ def login_logout_button(username, login_succeeded, href):
             dbc.NavLink(
                 "Augur log in/sign up",
                 href=f"http://chaoss.tv:5038/user/authorize?client_id={augur.app_id}&response_type=code",
-                active=True,
                 id="login-navlink",
             ),
         ]
+
     if not login_succeeded:
+        # toggle popover open
         return navlink, True
     else:
+        # toggle popover closed
         return navlink, False
