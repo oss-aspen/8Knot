@@ -11,11 +11,17 @@ dash.register_page(__name__, path="/", order=1)
 layout = dbc.Container(
     [
         dbc.Row(
+            dbc.Col(html.H1(children="At a Glance")),
+        ),
+        dbc.Row(gc_commit_metrics),
+        dbc.Row(gc_issue_metrics),
+        dbc.Row(gc_pr_metrics),
+        dbc.Row(
             [
                 dbc.Col(
                     [
-                        html.H1(
-                            "Home Page",
+                        html.H4(
+                            "App Notes",
                             # className="font-weight-bold mb-4",
                         ),
                         html.P(
@@ -30,12 +36,6 @@ layout = dbc.Container(
                 )
             ]
         ),
-        dbc.Row(
-            dbc.Col(html.H1(children="At a Glance")),
-        ),
-        dbc.Row(gc_commit_metrics),
-        dbc.Row(gc_issue_metrics),
-        dbc.Row(gc_pr_metrics),
     ],
     fluid=True,
 )
