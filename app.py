@@ -115,24 +115,30 @@ app.layout = layout
 # This callback handles logging a user out of their preferences.
 app.clientside_callback(
     """
-    function(clicks) {
+    function(logout, refresh) {
 
-        // clear user's localStorage,
-        // pattern-match key's suffix.
-        const keys = Object.keys(localStorage)
-        for (let key of keys) {
-            if (String(key).includes('_dash_persistence')) {
-                localStorage.removeItem(key)
-            }
-        }
+        const triggered = window.dash_clientside.callback_context.triggered.map(t => t.prop_id)
 
-        // clear user's sessionStorage,
-        // pattern-match key's suffix.
-        const sesh = Object.keys(sessionStorage)
-        for (let key of sesh) {
-            if (String(key).includes('_dash_persistence')) {
-                sessionStorage.removeItem(key)
+        if(triggered == "logout-button"){
+
+            // clear user's localStorage,
+            // pattern-match key's suffix.
+            const keys = Object.keys(localStorage)
+            for (let key of keys) {
+                if (String(key).includes('_dash_persistence')) {
+                    localStorage.removeItem(key)
+                }
             }
+
+            // clear user's sessionStorage,
+            // pattern-match key's suffix.
+            const sesh = Object.keys(sessionStorage)
+            for (let key of sesh) {
+                if (String(key).includes('_dash_persistence')) {
+                    sessionStorage.removeItem(key)
+                }
+            }
+            
         }
 
         // reload the page,
@@ -143,6 +149,7 @@ app.clientside_callback(
     """,
     Output("url", "pathname"),
     Input("logout-button", "n_clicks"),
+    Input("refresh-button", "n_clicks"),
     prevent_initial_call=True,
 )
 

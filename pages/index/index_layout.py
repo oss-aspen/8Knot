@@ -57,6 +57,13 @@ navbar = dbc.Navbar(
                                                 # external_link="True",
                                                 # target="_blank",
                                                 id="logout-button",
+                                            ),
+                                            dbc.DropdownMenuItem(
+                                                "Refresh",
+                                                # href="http://chaoss.tv:5038/",
+                                                # external_link="True",
+                                                # target="_blank",
+                                                id="refresh-button",
                                             )
                                         ],
                                         nav=True,
