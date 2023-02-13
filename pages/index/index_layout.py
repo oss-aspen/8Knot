@@ -3,7 +3,59 @@ import dash
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 from app import augur
+import os
+import logging
 
+# if param doesn't exist, default to False. Otherwise,
+# use the param's booly value.
+if os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True":
+    logging.debug("LOGIN ENABLED")
+    login_navbar = [
+        dbc.Row(
+            [
+                dbc.Col(
+                    dbc.Nav(
+                        [
+                            dbc.NavItem(
+                                dbc.DropdownMenu(
+                                    children=[
+                                        dbc.DropdownMenuItem(
+                                            "Refresh",
+                                            id="refresh-button",
+                                        ),
+                                        dbc.DropdownMenuItem(
+                                            "Log out",
+                                            id="logout-button",
+                                        ),
+                                    ],
+                                    nav=True,
+                                    in_navbar=True,
+                                    label="More",
+                                    id="nav-dropdown",
+                                ),
+                            ),
+                            dbc.Popover(
+                                children="Login Failed",
+                                body=True,
+                                id="login-popover",
+                                is_open=False,
+                                placement="bottom-end",
+                                target="nav-dropdown",
+                            ),
+                            html.Div(
+                                id="nav-login-container",
+                                children=[],
+                            ),
+                        ]
+                    )
+                )
+            ],
+            align="center",
+        ),
+    ]
+else:
+    logging.debug("LOGIN DISABLED")
+    login_navbar = [html.Div()]
 
 navbar = dbc.Navbar(
     dbc.Container(
@@ -12,9 +64,7 @@ navbar = dbc.Navbar(
                 [
                     dbc.Col(
                         [
-                            html.Img(
-                                src=dash.get_asset_url("logo2.png"), height="40px"
-                            ),
+                            html.Img(src=dash.get_asset_url("logo2.png"), height="40px"),
                             dbc.NavbarBrand(
                                 "8Knot Community Data",
                                 id="navbar-title",
@@ -27,9 +77,7 @@ navbar = dbc.Navbar(
                         [
                             dbc.Nav(
                                 [
-                                    dbc.NavLink(
-                                        page["name"], href=page["path"], active="exact"
-                                    )
+                                    dbc.NavLink(page["name"], href=page["path"], active="exact")
                                     for page in dash.page_registry.values()
                                     if page["module"] != "pages.not_found_404"
                                 ],
@@ -43,53 +91,10 @@ navbar = dbc.Navbar(
                 className="g-0",
                 justify="start",
             ),
-            dbc.Row(
-                [
-                    dbc.Col(
-                        dbc.Nav(
-                            [
-                                dbc.NavItem(
-                                    dbc.DropdownMenu(
-                                        children=[
-                                            dbc.DropdownMenuItem(
-                                                "Log out",
-                                                # href="http://chaoss.tv:5038/",
-                                                # external_link="True",
-                                                # target="_blank",
-                                                id="logout-button",
-                                            ),
-                                            dbc.DropdownMenuItem(
-                                                "Refresh",
-                                                # href="http://chaoss.tv:5038/",
-                                                # external_link="True",
-                                                # target="_blank",
-                                                id="refresh-button",
-                                            )
-                                        ],
-                                        nav=True,
-                                        in_navbar=True,
-                                        label="More",
-                                        id="nav-dropdown",
-                                    ),
-                                ),
-                                dbc.Popover(
-                                    "Login Failed",
-                                    body=True,
-                                    id="login_popover",
-                                    is_open=False,
-                                    placement="bottom-end",
-                                    target="nav-dropdown",
-                                ),
-                                html.Div(
-                                    id="nav-login-container",
-                                    children=[],
-                                ),
-                            ]
-                        )
-                    )
-                ],
-                align="center",
-            ),
+            # packaged as a list to make linter happy-
+            # it keeps making the login_navpar page-wrap as a tuple,
+            # so I wrapped it in a list.
+            login_navbar[0],
         ],
         fluid=True,
     ),
@@ -196,25 +201,17 @@ layout = dbc.Container(
         dcc.Store(id="repo-choices", storage_type="session", data=[]),
         # components to store job-ids for the worker queue
         dcc.Store(id="job-ids", storage_type="session", data=[]),
-        dcc.Store(id="is-startup", storage_type="session", data=True),
-        dcc.Store(
-            id="augur_user_groups_dash_persistence", storage_type="session", data={}
-        ),
+        dcc.Store(id="refresh-groups", storage_type="session", data=True),
+        dcc.Store(id="augur_user_groups_dash_persistence", storage_type="session", data={}),
         dcc.Store(
             id="augur_user_group_options_dash_persistence",
             storage_type="session",
             data=[],
         ),
-        dcc.Store(
-            id="augur_user_bearer_token_dash_persistence", storage_type="local", data=""
-        ),
+        dcc.Store(id="augur_user_bearer_token_dash_persistence", storage_type="local", data=""),
         dcc.Store(id="augur_username_dash_persistence", storage_type="local", data=""),
-        dcc.Store(
-            id="augur_refresh_token_dash_persistence", storage_type="local", data=""
-        ),
-        dcc.Store(
-            id="augur_token_expiration_dash_persistence", storage_type="local", data=""
-        ),
+        dcc.Store(id="augur_refresh_token_dash_persistence", storage_type="local", data=""),
+        dcc.Store(id="augur_token_expiration_dash_persistence", storage_type="local", data=""),
         dcc.Store(id="login-succeeded", data=True),
         dcc.Location(id="url"),
         navbar,
@@ -230,11 +227,7 @@ layout = dbc.Container(
                         ),
                         search_bar,
                         dcc.Loading(
-                            children=[
-                                html.Div(
-                                    id="results-output-container", className="mb-4"
-                                )
-                            ],
+                            children=[html.Div(id="results-output-container", className="mb-4")],
                             color="#119DFF",
                             type="dot",
                             fullscreen=True,

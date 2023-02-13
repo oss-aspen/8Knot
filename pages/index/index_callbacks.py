@@ -19,6 +19,54 @@ from queries.prs_query import prs_query as prq
 # list of queries to be run
 QUERIES = [iq, cq, cnq, prq]
 
+# page switch login an option?
+login_enabled = os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True"
+
+
+@callback(
+    [
+        Output("nav-login-container", "children"),
+        Output("login-popover", "is_open"),
+    ],
+    Input("augur_username_dash_persistence", "data"),
+    State("login-succeeded", "data"),
+)
+def login_username_button(username, login_succeeded):
+    """Sets logged-in-status component in top left of page.
+
+    If a non-null username is known then we're logged in so we provide
+    the user a button to go to Augur. Otherwise, we redirect them to login.
+
+    This callback also sets a login_failure popover depending on whether
+    a requested login succeeded.
+
+    Args:
+        username (str | None): Username of user or None
+        login_succeeded (bool): Error enabled if login failed.
+
+    Returns:
+        _type_: _description_
+    """
+
+    if username:
+        navlink = [
+            dbc.NavLink(
+                f"{username}",
+                href="http://chaoss.tv:5038/account/settings",
+                id="login-navlink",
+            ),
+        ]
+    else:
+        navlink = [
+            dbc.NavLink(
+                "Augur log in/sign up",
+                href=f"http://chaoss.tv:5038/user/authorize?client_id={augur.app_id}&response_type=code",
+                id="login-navlink",
+            ),
+        ]
+
+    return navlink, not login_succeeded
+
 
 @callback(
     [
@@ -28,13 +76,14 @@ QUERIES = [iq, cq, cnq, prq]
         Output("augur_refresh_token_dash_persistence", "data"),
         Output("augur_user_groups_dash_persistence", "data"),
         Output("augur_user_group_options_dash_persistence", "data"),
-        Output("is-startup", "data"),
+        Output("refresh-groups", "data"),
+        Output("url", "search"),
         Output("login-succeeded", "data"),
     ],
     [
         Input("url", "href"),
         State("url", "search"),
-        State("is-startup", "data"),
+        State("refresh-groups", "data"),
         State("augur_username_dash_persistence", "data"),
         State("augur_user_bearer_token_dash_persistence", "data"),
         State("augur_token_expiration_dash_persistence", "data"),
@@ -44,12 +93,46 @@ QUERIES = [iq, cq, cnq, prq]
 def get_augur_user_preferences(
     this_url,
     search_val,
-    is_startup,
+    refresh_groups,
     username,
     bearer_token,
     expiration,
     refresh,
 ):
+    """Handles logging in when the user navigates to application.
+
+    If the user is navigating to application with a fresh tab, the app
+    tries to log in with credentials (bearer token) if they're present and valid.
+
+    If credentials are valid and user is logged in, user's groups are retrieved from
+    Augur front-end and stored in their session.
+
+    This function will be invoked any time a page is switched in the app, including when
+    the application is accessed via redirect from Augur or on refresh.
+
+    Args:
+        this_url (str): current full href
+        search_val (str): query strings to HREF
+        refresh_groups (bool): whether we should refresh user's preferences
+        username (str): stored username
+        bearer_token (str): stored bearer token
+        expiration (str): bearer token expiration date
+        refresh (str): refresh token for bearer token
+
+    Raises:
+        dash.exceptions.PreventUpdate: if we're just switching between pages, don't update anything
+
+    Returns:
+        augur_username_dash_persistence (str): username
+        augur_user_bearer_token_dash_persistence (str): bearer token
+        augur_token_expiration_dash_persistence (str): bearer token expiration
+        augur_refresh_token_dash_persistence (str): refresh token for bearer token
+        augur_user_groups_dash_persistence (str): user's groups
+        augur_user_group_options_dash_persistence (str): possible groups from source DB
+        refresh-groups (bool): whether we should refresh user's preferences
+        search_val (str): query strings to HREF- remove on login to fix refresh bug
+        login-succeeded (bool):
+    """
 
     # used to extract auth from URL
     code_pattern = re.compile(r"\?code=([0-9A-z]+)", re.IGNORECASE)
@@ -62,14 +145,19 @@ def get_augur_user_preferences(
         "",  # refresh token
         {},  # user groups
         [],  # user group options
-        False,  # startup state
+        False,  # fetch groups?
+        "",  # search (code_val) removed once logged in
     ]
+    # ^note about 'search' above- we're removing it when this function returns
+    # so that on refresh the logic below won't trigger another login try if the
+    # user tries to refresh while still on the page redirected-to from Augur authorization.
 
     # URL-triggered callback
     if dash.ctx.triggered_id == "url":
         code_val = re.search(code_pattern, search_val)
 
-        if not is_startup and not code_val:
+        # always go through this path if login not enabled
+        if (not refresh_groups and not code_val) or (not login_enabled):
             logging.debug("LOGIN: Page Switch")
             # code_val is Falsy when it's None, so we want to pass
             # this check when it's None
@@ -79,16 +167,14 @@ def get_augur_user_preferences(
             raise dash.exceptions.PreventUpdate
 
         if code_val:
-            logging.debug("LOGIN: Augur Redirect")
+            logging.debug("LOGIN: Redirect from Augur; Code pattern in href")
             # the user has just redirected from Augur so we know
             # that we need to get their new credentials.
 
             auth = code_val.groups()[0]
 
             # use the auth token to get the bearer token
-            username, bearer_token, expiration, refresh = augur.auth_to_bearer_token(
-                auth
-            )
+            username, bearer_token, expiration, refresh = augur.auth_to_bearer_token(auth)
 
             # if we try to log in with the auth token we just get and the login fails, we
             # tell the user with a popover and do nothing.
@@ -100,34 +186,20 @@ def get_augur_user_preferences(
             else:
                 expiration = datetime.now() + timedelta(seconds=expiration)
 
-        if is_startup:
+        elif refresh_groups:
 
             if expiration and bearer_token:
-                logging.debug("LOGIN: Warm Startup")
+                logging.debug("LOGIN: Warm Startup; expiration and bearer token in localStorage")
                 # warm startup, bearer token could still be valid
 
-                logging.debug(expiration)
-                logging.debug(type(expiration))
-
-                logging.debug(datetime.now())
-                logging.debug(type(datetime.now()))
-                if datetime.now() > datetime.strptime(
-                    expiration, "%Y-%m-%dT%H:%M:%S.%f"
-                ):
-                    # expiration should already be a datetime object
-                    # reflecting the time at which the token will expire
+                if datetime.now() > datetime.strptime(expiration, "%Y-%m-%dT%H:%M:%S.%f"):
                     logging.debug("LOGIN: Expired Bearer Token")
-                    # check whether the current bearer token is valid (and exists)
-                    # if invalid, just don't do anything and let the
-                    # user login.
-                    # TODO implement refresh token here
 
                     return no_login + [
                         True,
-                        dash.no_update,
                     ]  # standard no-login, login didn't succeed, but it didn't fail, so don't need popover
             else:
-                logging.debug("LOGIN: Cold Startup")
+                logging.debug("LOGIN: Cold Startup; no credentials available")
                 # no previous credentials, can't do anything w/o login.
                 return no_login + [
                     True,
@@ -136,13 +208,9 @@ def get_augur_user_preferences(
         # we'll have either gotten a new bearer token if we're coming from augur
         # or we'll have verified that bearer_token should be valid
         augur_users_groups = augur.make_user_request(access_token=bearer_token)
-        if not augur_users_groups or (
-            augur_users_groups.get("status") == "Session expired"
-        ):
+        if not augur_users_groups or (augur_users_groups.get("status") != "success"):
             logging.debug("LOGIN: Failure")
-            logging.error(
-                "Error logging in to Augur- couldn't complete user's Groups request."
-            )
+            logging.error("Error logging in to Augur- couldn't complete user's Groups request.")
             return no_login + [
                 False,
             ]  # standard no-login plus login failed
@@ -177,9 +245,7 @@ def get_augur_user_preferences(
                 if repo_id_translated:
                     ids.append(repo_id_translated)
                 else:
-                    logging.error(
-                        f"Repo: {repo_git} not translatable to repo_id- source DB incomplete."
-                    )
+                    logging.error(f"Repo: {repo_git} not translatable to repo_id- source DB incomplete.")
 
             # using lower_name for convenience later- no .lower() calls
             lower_name = group_name.lower()
@@ -189,9 +255,7 @@ def get_augur_user_preferences(
 
             # searchbar options
             # user's groups are prefixed w/ username to guarantee uniqueness in searchbar
-            users_group_options.append(
-                {"value": lower_name, "label": f"{username}_{group_name}"}
-            )
+            users_group_options.append({"value": lower_name, "label": f"{username}_{group_name}"})
 
         logging.debug("LOGIN: Success")
         return (
@@ -201,7 +265,8 @@ def get_augur_user_preferences(
             refresh,
             users_groups,
             users_group_options,
-            False,  # is_startup
+            False,  # refresh_groups
+            "",  # reset search to empty post-login
             True,  # login succeeded
         )
 
@@ -400,39 +465,3 @@ def run_queries(repos):
         jobs.append(j)
 
     return [j.id for j in jobs]
-
-
-@callback(
-    [
-        Output("nav-login-container", "children"),
-        Output("login_popover", "is_open"),
-    ],
-    Input("augur_username_dash_persistence", "data"),
-    State("login-succeeded", "data"),
-    State("url", "href"),
-)
-def login_logout_button(username, login_succeeded, href):
-
-    if username:
-        navlink = [
-            dbc.NavLink(
-                f"{username}",
-                href="http://chaoss.tv:5038/account/settings",
-                id="login-navlink",
-            ),
-        ]
-    else:
-        navlink = [
-            dbc.NavLink(
-                "Augur log in/sign up",
-                href=f"http://chaoss.tv:5038/user/authorize?client_id={augur.app_id}&response_type=code",
-                id="login-navlink",
-            ),
-        ]
-
-    if not login_succeeded:
-        # toggle popover open
-        return navlink, True
-    else:
-        # toggle popover closed
-        return navlink, False

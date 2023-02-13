@@ -23,9 +23,7 @@ from dash import CeleryManager, Input, Output
 import worker_settings
 import os
 
-logging.basicConfig(
-    format="%(asctime)s %(levelname)-8s %(message)s", level=logging.DEBUG
-)
+logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.DEBUG)
 
 """CREATE CELERY TASK QUEUE AND MANAGER"""
 celery_app = Celery(
@@ -34,9 +32,7 @@ celery_app = Celery(
     backend=worker_settings.REDIS_URL,
 )
 
-celery_app.conf.update(
-    task_time_limit=84600, task_acks_late=True, task_track_started=True
-)
+celery_app.conf.update(task_time_limit=84600, task_acks_late=True, task_track_started=True)
 
 celery_manager = CeleryManager(celery_app=celery_app)
 
@@ -110,17 +106,18 @@ from pages.index.index_layout import layout
 app.layout = layout
 
 # I know what you're thinking- "This callback shouldn't be here!"
-# well, circular imports are a hassle, the 'app' object from this
-# file can't be imported into index_callbacks.py.
+# well, circular imports are a hassle, and the 'app' object from this
+# file can't be imported into index_callbacks.py file where it should be.
 # This callback handles logging a user out of their preferences.
 app.clientside_callback(
     """
     function(logout, refresh) {
 
-        const triggered = window.dash_clientside.callback_context.triggered.map(t => t.prop_id)
+        // gets the string representing the component_id and component_prop that triggered the callback.
+        const triggered = window.dash_clientside.callback_context.triggered.map(t => t.prop_id)[0]
+        console.log(triggered)
 
-        if(triggered == "logout-button"){
-
+        if(triggered == "logout-button.n_clicks"){
             // clear user's localStorage,
             // pattern-match key's suffix.
             const keys = Object.keys(localStorage)
@@ -138,7 +135,10 @@ app.clientside_callback(
                     sessionStorage.removeItem(key)
                 }
             }
-            
+        }
+        else{
+            // trigger user preferences redownload
+            sessionStorage["refresh-groups"] = true
         }
 
         // reload the page,

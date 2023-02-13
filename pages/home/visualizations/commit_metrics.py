@@ -35,9 +35,7 @@ commit_lines_added = dbc.Card(
         dbc.CardBody(
             [
                 dcc.Loading(
-                    children=[
-                        html.H4(id="commit-lines-added", className="metric_data")
-                    ],
+                    children=[html.H4(id="commit-lines-added", className="metric_data")],
                 ),
             ],
         ),
@@ -56,9 +54,7 @@ commit_lines_removed = dbc.Card(
         dbc.CardBody(
             [
                 dcc.Loading(
-                    children=[
-                        html.H4(id="commit-lines-removed", className="metric_data")
-                    ],
+                    children=[html.H4(id="commit-lines-removed", className="metric_data")],
                 ),
             ],
         ),
