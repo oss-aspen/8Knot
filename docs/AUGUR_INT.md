@@ -3,8 +3,11 @@
 ## **Intro**
 ---
 
+THIS DOCUMENT IS DEPRECATED AND WILL BE UPDATED TO REFLECT
+THE CURRENT STATE OF DEVELOPMENT IN THE NEXT DOCUMENTATION UPDATE.
+
 A user should be able to:
-1. Create a group of repos and orgs that they want to see aggregate for and
+1. Create a group of repos and orgs that they want to see aggregate for.
 2. Access that group in 8Knot.
 
 ## **Preparation**

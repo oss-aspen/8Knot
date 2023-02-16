@@ -81,6 +81,8 @@ class AugurManager:
         self.schema = None
         self.config_loaded = False
         self.app_id = None
+        self.user_account_endpoint = None
+        self.user_auth_endpoint = None
 
     def get_engine(self):
         """
@@ -262,7 +264,7 @@ class AugurManager:
         self.org_name_to_repos_dict = df_lower_repo_names.groupby("rg_name")["repo_id"].apply(list).to_dict()
         self.org_names = list(self.org_name_to_repos_dict.keys())
 
-        # create a dictionary that maps the github url to the repo_id in padres
+        # create a dictionary that maps the github url to the repo_id in database
         df_repo_git_id = df_search_bar.copy()
         df_repo_git_id = df_repo_git_id[["repo_git", "repo_id"]]
         self.repo_git_to_repo_id = pd.Series(df_repo_git_id.repo_id.values, index=df_repo_git_id["repo_git"]).to_dict()
@@ -384,3 +386,9 @@ class AugurManager:
 
     def set_app_id(self, id):
         self.app_id = id
+
+    def set_user_account_endpoint(self, endpoint):
+        self.user_account_endpoint = endpoint
+
+    def set_user_auth_endpoint(self, endpoint):
+        self.user_auth_endpoint = endpoint

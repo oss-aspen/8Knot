@@ -19,7 +19,7 @@ from queries.prs_query import prs_query as prq
 # list of queries to be run
 QUERIES = [iq, cq, cnq, prq]
 
-# page switch login an option?
+# check if login has been enabled in config
 login_enabled = os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True"
 
 
@@ -52,7 +52,7 @@ def login_username_button(username, login_succeeded):
         navlink = [
             dbc.NavLink(
                 f"{username}",
-                href="http://chaoss.tv:5038/account/settings",
+                href=augur.user_account_endpoint,
                 id="login-navlink",
             ),
         ]
@@ -60,7 +60,7 @@ def login_username_button(username, login_succeeded):
         navlink = [
             dbc.NavLink(
                 "Augur log in/sign up",
-                href=f"http://chaoss.tv:5038/user/authorize?client_id={augur.app_id}&response_type=code",
+                href=augur.user_auth_endpoint,
                 id="login-navlink",
             ),
         ]
