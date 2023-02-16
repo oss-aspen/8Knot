@@ -20,7 +20,7 @@ gc_contrib_drive_repeat = dbc.Card(
                 html.H3(
                     id="chaoss-graph-title-1",
                     className="card-title",
-                    style={"text-align": "center"},
+                    style={"textAlign": "center"},
                 ),
                 dbc.Popover(
                     [
@@ -97,7 +97,7 @@ gc_contrib_drive_repeat = dbc.Card(
                                         size="sm",
                                     ),
                                     width="auto",
-                                    style={"padding-top": ".5em"},
+                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
                             align="center",

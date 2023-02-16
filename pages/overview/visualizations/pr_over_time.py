@@ -21,7 +21,7 @@ gc_pr_over_time = dbc.Card(
                 html.H3(
                     "Pull Requests Over Time",
                     className="card-title",
-                    style={"text-align": "center"},
+                    style={"textAlign": "center"},
                 ),
                 dbc.Popover(
                     [
@@ -75,7 +75,7 @@ gc_pr_over_time = dbc.Card(
                                         size="sm",
                                     ),
                                     width="auto",
-                                    style={"padding-top": ".5em"},
+                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
                             align="center",
@@ -206,7 +206,12 @@ def process_data(df: pd.DataFrame, interval):
     return df_created, df_closed_merged, df_open
 
 
-def create_figure(df_created: pd.DataFrame, df_closed_merged: pd.DataFrame, df_open: pd.DataFrame, interval):
+def create_figure(
+    df_created: pd.DataFrame,
+    df_closed_merged: pd.DataFrame,
+    df_open: pd.DataFrame,
+    interval,
+):
 
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)

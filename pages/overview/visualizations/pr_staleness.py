@@ -22,7 +22,7 @@ gc_pr_staleness = dbc.Card(
                 html.H3(
                     "Pull Request Activity- Staleness",
                     className="card-title",
-                    style={"text-align": "center"},
+                    style={"textAlign": "center"},
                 ),
                 dbc.Popover(
                     [
@@ -124,7 +124,7 @@ gc_pr_staleness = dbc.Card(
                                         size="sm",
                                     ),
                                     width="auto",
-                                    style={"padding-top": ".5em"},
+                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
                             align="center",
@@ -269,7 +269,12 @@ def create_figure(df_status: pd.DataFrame, interval):
             ]
         )
     else:
-        fig = px.bar(df_status, x="Date", y=["New", "Staling", "Stale"], color_discrete_sequence=color_seq)
+        fig = px.bar(
+            df_status,
+            x="Date",
+            y=["New", "Staling", "Stale"],
+            color_discrete_sequence=color_seq,
+        )
 
         # edit hover values
         fig.update_traces(hovertemplate=hover + "<br>PRs: %{y}<br>" + "<extra></extra>")

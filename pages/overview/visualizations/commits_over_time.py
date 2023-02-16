@@ -20,7 +20,7 @@ gc_commits_over_time = dbc.Card(
                 html.H3(
                     "Commits Over Time",
                     className="card-title",
-                    style={"text-align": "center"},
+                    style={"textAlign": "center"},
                 ),
                 dbc.Popover(
                     [
@@ -72,7 +72,7 @@ gc_commits_over_time = dbc.Card(
                                         size="sm",
                                     ),
                                     width="auto",
-                                    style={"padding-top": ".5em"},
+                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
                             align="center",

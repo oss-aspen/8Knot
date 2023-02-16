@@ -23,7 +23,7 @@ gc_issue_staleness = dbc.Card(
                 html.H3(
                     "Issue Activity- Staleness",
                     className="card-title",
-                    style={"text-align": "center"},
+                    style={"textAlign": "center"},
                 ),
                 dbc.Popover(
                     [
@@ -53,7 +53,13 @@ gc_issue_staleness = dbc.Card(
                                 ),
                                 dbc.Col(
                                     dbc.Input(
-                                        id="i_staling_days", type="number", min=1, max=120, step=1, value=7, size="sm"
+                                        id="i_staling_days",
+                                        type="number",
+                                        min=1,
+                                        max=120,
+                                        step=1,
+                                        value=7,
+                                        size="sm",
                                     ),
                                     className="me-2",
                                     width=1,
@@ -65,7 +71,13 @@ gc_issue_staleness = dbc.Card(
                                 ),
                                 dbc.Col(
                                     dbc.Input(
-                                        id="i_stale_days", type="number", min=1, max=120, step=1, value=30, size="sm"
+                                        id="i_stale_days",
+                                        type="number",
+                                        min=1,
+                                        max=120,
+                                        step=1,
+                                        value=30,
+                                        size="sm",
                                     ),
                                     className="me-2",
                                     width=1,
@@ -110,7 +122,7 @@ gc_issue_staleness = dbc.Card(
                                         size="sm",
                                     ),
                                     width="auto",
-                                    style={"padding-top": ".5em"},
+                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
                             align="center",
@@ -254,7 +266,12 @@ def create_figure(df_status: pd.DataFrame, interval):
             ]
         )
     else:
-        fig = px.bar(df_status, x="Date", y=["New", "Staling", "Stale"], color_discrete_sequence=color_seq)
+        fig = px.bar(
+            df_status,
+            x="Date",
+            y=["New", "Staling", "Stale"],
+            color_discrete_sequence=color_seq,
+        )
 
         # edit hover values
         fig.update_traces(hovertemplate=hover + "<br>Issues: %{y}<br>" + "<extra></extra>")

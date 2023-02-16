@@ -51,7 +51,7 @@ gc_VISUALIZATION_NAME_HERE = dbc.Card(
                 html.H3(
                     "TITLE OF VISUALIZATION",
                     className="card-title",
-                    style={"text-align": "center"},
+                    style={"textAlign": "center"},
                 ),
                 dbc.Popover(
                     [
@@ -80,7 +80,10 @@ gc_VISUALIZATION_NAME_HERE = dbc.Card(
                                         dbc.RadioItems(
                                             id=f"{VIZ_ID}-interval",
                                             options=[
-                                                {"label": "Trend", "value": "D"},  # TREND IF LINE, DAY IF NOT
+                                                {
+                                                    "label": "Trend",
+                                                    "value": "D",
+                                                },  # TREND IF LINE, DAY IF NOT
                                                 # {"label": "Week","value": "W",}, UNCOMMENT IF APPLICABLE
                                                 {"label": "Month", "value": "M"},
                                                 {"label": "Year", "value": "Y"},
@@ -98,7 +101,7 @@ gc_VISUALIZATION_NAME_HERE = dbc.Card(
                                         size="sm",
                                     ),
                                     width="auto",
-                                    style={"padding-top": ".5em"},
+                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
                             align="center",

@@ -7,6 +7,7 @@ import sqlalchemy as salc
 import os
 import logging
 import sys
+import requests
 
 
 class AugurManager:
@@ -68,6 +69,9 @@ class AugurManager:
 
     def __init__(self):
         self.pconfig = False
+        self.client_secret = None
+        self.session_generate_endpoint = None
+        self.user_groups_endpoint = None
         self.engine = None
         self.user = None
         self.password = None
@@ -76,11 +80,9 @@ class AugurManager:
         self.database = None
         self.schema = None
         self.config_loaded = False
-        self.entries = None
-        self.all_entries = None
-        self.search_input = None
-        self.repo_dict = None
-        self.org_dict = None
+        self.app_id = None
+        self.user_account_endpoint = None
+        self.user_auth_endpoint = None
 
     def get_engine(self):
         """
@@ -217,7 +219,9 @@ class AugurManager:
         self.config_loaded = False
         self.get_engine()
 
-    def project_list_query(self):
+    def multiselect_startup(self):
+
+        logging.debug(f"MULTISELECT_STARTUP")
 
         pr_query = f"""SELECT DISTINCT
                             r.repo_git,
@@ -232,51 +236,159 @@ class AugurManager:
 
         # query for search bar entry generation
         df_search_bar = self.run_query(pr_query)
+        logging.debug(f"MULTISELECT_QUERY")
 
-        # handling case sensitive options for search bar
-        self.entries = np.concatenate((df_search_bar.rg_name.unique(), df_search_bar.repo_git.unique()), axis=None)
-        self.entries = self.entries.tolist()
-        self.entries.sort(key=lambda item: (item, len(item)))
+        # create a list of dictionaries for the MultiSelect dropdown
+        # component on the index page.
+        # Output is of the form: [{"label": repo_url, "value": repo_id}, ...]
+        multiselect_repos = (
+            df_search_bar[["repo_git", "repo_id"]]
+            .rename(columns={"repo_git": "label", "repo_id": "value"})
+            .to_dict("records")
+        )
 
-        # generating search bar entries
-        lower_entries = [i.lower() for i in self.entries]
-        self.all_entries = list(zip(lower_entries, self.entries))
+        # create a list of dictionaries for the MultiSelect dropdown
+        # Output is of the form: [{"label": org_name, "value": lower(org_name)}, ...]
+        multiselect_orgs = [{"label": v, "value": str.lower(v)} for v in list(df_search_bar["rg_name"].unique())]
 
-        # generating dictionary with the git urls as the key and the repo_id and name as a list as the value pair
-        self.repo_dict = df_search_bar[["repo_git", "repo_id", "repo_name"]].set_index("repo_git").T.to_dict("list")
+        # combine options for multiselect component and sort them by the length
+        # of their label (shorter comes first because it sorts ascending by default.)
+        self.multiselect_options = multiselect_repos + multiselect_orgs
+        self.multiselect_options = sorted(self.multiselect_options, key=lambda i: i["label"])
 
-        # generating dictionary with the org name as the key and the git repos of the org in a list as the value pair
-        self.org_dict = df_search_bar.groupby("rg_name")["repo_git"].apply(list).to_dict()
+        # create a dictionary to map github orgs to their constituent repos.
+        # used when the user selects an org
+        # Output is of the form: {group_name: [rid1, rid2, ...], group_name: [...], ...}
+        df_lower_repo_names = df_search_bar.copy()
+        df_lower_repo_names["rg_name"] = df_lower_repo_names["rg_name"].apply(str.lower)
+        self.org_name_to_repos_dict = df_lower_repo_names.groupby("rg_name")["repo_id"].apply(list).to_dict()
+        self.org_names = list(self.org_name_to_repos_dict.keys())
+
+        # create a dictionary that maps the github url to the repo_id in database
+        df_repo_git_id = df_search_bar.copy()
+        df_repo_git_id = df_repo_git_id[["repo_git", "repo_id"]]
+        self.repo_git_to_repo_id = pd.Series(df_repo_git_id.repo_id.values, index=df_repo_git_id["repo_git"]).to_dict()
 
         # making first selection for the search bar
-        self.search_input = self.entries[0]
+        self.initial_search_option = self.multiselect_options[0]
+        logging.debug(f"MULTISELECT_FINISHED")
 
-        logging.debug("Search lists returned and set")
+    def repo_git_to_id(self, git):
+        """Getter method for dictionary
+        that converts a git URL to the respective
+        repo_id in the source db.
 
-    def get_search_input(self):
-        if self.search_input is not None:
-            return self.search_input
+        Args:
+            git (str): URL of repo
+
+        Returns:
+            int: repo_id of the URL in the source DB.
+        """
+        return self.repo_git_to_repo_id.get(git)
+
+    def org_to_repos(self, org):
+        """Returns the list of repos in an org.
+
+        Args:
+            org (str): Github org name
+
+        Returns:
+            [int] | None: repo_ids or None
+        """
+        return self.org_name_to_repos_dict[org]
+
+    def is_org(self, org):
+        """Checks if org name in set of known org names
+
+        Args:
+            org (str): name of org
+
+        Returns:
+            bool: whether org name is in orgs
+        """
+        return org in self.org_names
+
+    def initial_multiselect_option(self):
+        """Getter method on first multiselect option
+
+        Returns:
+            dict(value, label): first thing the multiselect will represent on startup
+        """
+        return self.initial_search_option
+
+    def get_multiselect_options(self):
+        """Getter method on all entries in repo+orgs options
+        for the multiselect dropdown.
+
+        Returns:
+            [{label, value}]: multiselect options
+        """
+        return self.multiselect_options
+
+    def auth_to_bearer_token(self, auth_token):
+        """Large parts of code written by John McGinness, University of Missouri
+
+        Returns:
+            _type_: _description_
+        """
+
+        auth_params = {"code": auth_token, "grant_type": "code"}
+
+        response = self.make_authenticated_request(params=auth_params)
+
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("status") == "Validated":
+                return (
+                    data["username"],
+                    data["access_token"],
+                    data["expires"],
+                    data["refresh_token"],
+                )
+            else:
+                logging.critical(f"AUGUR-MANAGER FAILURE: Couldn't get Bearer Token, response not Validated.")
+                return None, None, None, None
         else:
-            r = self.project_list_query()
-            return self.search_input
+            logging.critical(f"AUGUR-MANAGER FAILURE: Couldn't get Bearer Token, non-200 status.")
+            return None, None, None, None
 
-    def get_all_entries(self):
-        if self.all_entries is not None:
-            return self.all_entries
-        else:
-            r = self.project_list_query()
-            return self.all_entries
+    def make_authenticated_request(self, headers={}, params={}):
+        """Large parts of code written by John McGinness, University of Missouri
 
-    def get_org_dict(self):
-        if self.org_dict is not None:
-            return self.org_dict
-        else:
-            r = self.project_list_query()
-            return self.org_dict
+        Returns:
+            _type_: _description_
+        """
+        headers["Authorization"] = f"Client {self.client_secret}"
 
-    def get_repo_dict(self):
-        if self.repo_dict is not None:
-            return self.repo_dict
-        else:
-            r = self.project_list_query()
-            return self.repo_dict
+        return requests.post(self.session_generate_endpoint, headers=headers, params=params)
+
+    def make_user_request(self, access_token, headers={}, params={}):
+        """Large parts of code written by John McGinness, University of Missouri
+
+        Returns:
+            _type_: _description_
+        """
+        headers["Authorization"] = f"Client {self.client_secret}, Bearer {access_token}"
+
+        result = requests.post(self.user_groups_endpoint, headers=headers, params=params)
+
+        if result.status_code == 200:
+            return result.json()
+
+    def set_client_secret(self, secret):
+        self.client_secret = secret
+
+    def set_session_generate_endpoint(self, endpoint):
+        self.session_generate_endpoint = endpoint
+
+    def set_user_groups_endpoint(self, endpoint):
+        self.user_groups_endpoint = endpoint
+
+    def set_app_id(self, id):
+        self.app_id = id
+
+    def set_user_account_endpoint(self, endpoint):
+        self.user_account_endpoint = endpoint
+
+    def set_user_auth_endpoint(self, endpoint):
+        self.user_auth_endpoint = endpoint

@@ -146,3 +146,5 @@ output.dat
 env.sh
 dump.rdb
 env.list
+Makefile
+run_compose.sh

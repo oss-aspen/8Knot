@@ -21,7 +21,7 @@ gc_total_contributor_growth = dbc.Card(
                 html.H3(
                     id="overview-graph-title-1",
                     className="card-title",
-                    style={"text-align": "center"},
+                    style={"textAlign": "center"},
                 ),
                 dbc.Popover(
                     [
@@ -73,7 +73,7 @@ gc_total_contributor_growth = dbc.Card(
                                         size="sm",
                                     ),
                                     width="auto",
-                                    style={"padding-top": ".5em"},
+                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
                             align="center",

@@ -20,7 +20,7 @@ gc_first_time_contributions = dbc.Card(
                 html.H3(
                     "First Time Contributions Per Quarter",
                     className="card-title",
-                    style={"text-align": "center"},
+                    style={"textAlign": "center"},
                 ),
                 dbc.Popover(
                     [
@@ -45,7 +45,7 @@ gc_first_time_contributions = dbc.Card(
                         color="secondary",
                         size="small",
                     ),
-                    style={"padding-top": ".5em"},
+                    style={"paddingTop": ".5em"},
                 ),
             ]
         ),

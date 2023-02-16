@@ -22,7 +22,7 @@ gc_active_drifting_contributors = dbc.Card(
                 html.H3(
                     "Contributor Growth by Engagement",
                     className="card-title",
-                    style={"text-align": "center"},
+                    style={"textAlign": "center"},
                 ),
                 dbc.Popover(
                     [
@@ -53,7 +53,13 @@ gc_active_drifting_contributors = dbc.Card(
                                 ),
                                 dbc.Col(
                                     dbc.Input(
-                                        id="drifting_months", type="number", min=1, max=120, step=1, value=6, size="sm"
+                                        id="drifting_months",
+                                        type="number",
+                                        min=1,
+                                        max=120,
+                                        step=1,
+                                        value=6,
+                                        size="sm",
                                     ),
                                     className="me-2",
                                     width=1,
@@ -65,7 +71,13 @@ gc_active_drifting_contributors = dbc.Card(
                                 ),
                                 dbc.Col(
                                     dbc.Input(
-                                        id="away_months", type="number", min=1, max=120, step=1, value=12, size="sm"
+                                        id="away_months",
+                                        type="number",
+                                        min=1,
+                                        max=120,
+                                        step=1,
+                                        value=12,
+                                        size="sm",
                                     ),
                                     className="me-2",
                                     width=1,
@@ -110,7 +122,7 @@ gc_active_drifting_contributors = dbc.Card(
                                         size="sm",
                                     ),
                                     width="auto",
-                                    style={"padding-top": ".5em"},
+                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
                             align="center",
@@ -253,7 +265,12 @@ def create_figure(df_status: pd.DataFrame, interval):
             ]
         )
     else:
-        fig = px.bar(df_status, x="Date", y=["Active", "Drifting", "Away"], color_discrete_sequence=color_seq)
+        fig = px.bar(
+            df_status,
+            x="Date",
+            y=["Active", "Drifting", "Away"],
+            color_discrete_sequence=color_seq,
+        )
 
         # edit hover values
         fig.update_traces(hovertemplate=hover + "<br>Contributors: %{y}<br>" + "<extra></extra>")
