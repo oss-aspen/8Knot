@@ -1,12 +1,12 @@
 h2,
-h3,
 h4,
 h5,
 h6 {
     color: #8D9D92 !important;
 }
 
-h1 {
+h1,
+h3 {
     color: #436755 !important;
 }
 
@@ -26,14 +26,13 @@ h1 {
 }
 
 .box_emissions {
-    /*border-radius: 20px;*/
+
     background-color: #505050;
     color: #505050;
     margin: 2px;
     box-shadow: 4px 4px 4px rgb(33, 33, 33);
     justify-content: center;
-    /*width: 50%;*/
-    textAlign: center;
+    text-align: center;
 }
 
 .glace_headers {
