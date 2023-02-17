@@ -238,6 +238,7 @@ layout = dbc.Container(
                                 id="data-badge",
                                 color="#436755",
                                 className="me-1",
+                                style={"marginBottom": ".5%"},
                             ),
                             type="cube",
                             color="#436755",

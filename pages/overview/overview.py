@@ -22,9 +22,6 @@ dash.register_page(__name__, path="/overview", order=2)
 layout = dbc.Container(
     [
         dbc.Row(
-            dbc.Col(html.H1(children="Overview")),
-        ),
-        dbc.Row(
             [
                 dbc.Col(gc_issues_over_time, width=6),
                 dbc.Col(gc_commits_over_time, width=6),
