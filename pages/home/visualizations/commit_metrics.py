@@ -4,7 +4,7 @@ from dash import callback
 from dash.dependencies import Input, Output, State
 from db_manager.augur_manager import AugurManager
 
-
+# card for commit total for selected repos
 commit_total = dbc.Card(
     [
         dbc.CardHeader(
@@ -24,6 +24,7 @@ commit_total = dbc.Card(
     className="box_emissions",
 )
 
+# card for average number of lines added per commit for selected repos
 commit_lines_added = dbc.Card(
     [
         dbc.CardHeader(
@@ -43,6 +44,7 @@ commit_lines_added = dbc.Card(
     className="box_emissions",
 )
 
+# card for average number of lines removed per commit for selected repos
 commit_lines_removed = dbc.Card(
     [
         dbc.CardHeader(
@@ -62,6 +64,7 @@ commit_lines_removed = dbc.Card(
     className="box_emissions",
 )
 
+# card for average number of files changed per commit for selected repos
 commit_files = dbc.Card(
     [
         dbc.CardHeader(
@@ -104,6 +107,9 @@ gc_commit_metrics = dbc.Card(
         ),
     ],
 )
+
+
+# callbacks below are for the specific queries for these cards
 
 
 @callback(
