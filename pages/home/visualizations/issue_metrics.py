@@ -6,6 +6,8 @@ from db_manager.augur_manager import AugurManager
 import numpy as np
 import pandas as pd
 
+
+# card for number of open issues in the selected repo set
 issue_open = dbc.Card(
     [
         dbc.CardHeader(
@@ -25,6 +27,7 @@ issue_open = dbc.Card(
     className="box_emissions",
 )
 
+# card for total issues closed in the repo set
 issue_closed = dbc.Card(
     [
         dbc.CardHeader(
@@ -44,6 +47,7 @@ issue_closed = dbc.Card(
     className="box_emissions",
 )
 
+# card for average age for currently opened issues in the selected repos
 issue_open_age = dbc.Card(
     [
         dbc.CardHeader(
@@ -63,6 +67,7 @@ issue_open_age = dbc.Card(
     className="box_emissions",
 )
 
+# card for average amount of time a closed issue was open in the selected repos
 issue_closed_age = dbc.Card(
     [
         dbc.CardHeader(
@@ -81,6 +86,7 @@ issue_closed_age = dbc.Card(
     ],
     className="box_emissions",
 )
+
 
 gc_issue_metrics = dbc.Card(
     [
@@ -104,6 +110,8 @@ gc_issue_metrics = dbc.Card(
         ),
     ],
 )
+
+# callbacks below are for the specific queries for these cards
 
 
 @callback(

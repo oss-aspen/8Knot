@@ -223,7 +223,7 @@ class AugurManager:
 
         logging.debug(f"MULTISELECT_STARTUP")
 
-        pr_query = f"""SELECT DISTINCT
+        query_string = f"""SELECT DISTINCT
                             r.repo_git,
                             r.repo_id,
                             r.repo_name,
@@ -235,7 +235,7 @@ class AugurManager:
                         ORDER BY rg.rg_name"""
 
         # query for search bar entry generation
-        df_search_bar = self.run_query(pr_query)
+        df_search_bar = self.run_query(query_string)
         logging.debug(f"MULTISELECT_QUERY")
 
         # create a list of dictionaries for the MultiSelect dropdown

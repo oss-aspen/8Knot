@@ -6,8 +6,8 @@ from app import augur
 import os
 import logging
 
-# if param doesn't exist, default to False. Otherwise,
-# use the param's booly value.
+# if param doesn't exist, default to False. Otherwise, use the param's booly value.
+# this determines if the log in option will be shown or not
 if os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True":
     logging.debug("LOGIN ENABLED")
     login_navbar = [
@@ -57,6 +57,7 @@ else:
     logging.debug("LOGIN DISABLED")
     login_navbar = [html.Div()]
 
+# navbar for top of screen
 navbar = dbc.Navbar(
     dbc.Container(
         [

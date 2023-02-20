@@ -7,6 +7,7 @@ import numpy as np
 import logging
 from db_manager.augur_manager import AugurManager
 
+# card for number of open prs in the selected repo set
 pr_open = dbc.Card(
     [
         dbc.CardHeader(
@@ -26,6 +27,7 @@ pr_open = dbc.Card(
     className="box_emissions",
 )
 
+# card for number of merged prs in the selected repo set
 pr_merged = dbc.Card(
     [
         dbc.CardHeader(
@@ -45,6 +47,7 @@ pr_merged = dbc.Card(
     className="box_emissions",
 )
 
+# card for number of closed prs in the selected repo set
 pr_closed = dbc.Card(
     [
         dbc.CardHeader(
@@ -64,6 +67,7 @@ pr_closed = dbc.Card(
     className="box_emissions",
 )
 
+# card for average age for currently opened prs in the selected repos
 pr_open_age = dbc.Card(
     [
         dbc.CardHeader(
@@ -83,6 +87,7 @@ pr_open_age = dbc.Card(
     className="box_emissions",
 )
 
+# card for average time to merged for merged prs in the selected repos
 pr_merged_age = dbc.Card(
     [
         dbc.CardHeader(
@@ -105,6 +110,7 @@ pr_merged_age = dbc.Card(
     className="box_emissions",
 )
 
+# card for average number of messages for each pr in the selected repos
 pr_messages = dbc.Card(
     [
         dbc.CardHeader(
@@ -158,7 +164,7 @@ gc_pr_metrics = dbc.Card(
     ],
 )
 
-
+# callbacks below are for the specific queries for these cards
 @callback(
     Output("open-pr-count", "children"),
     [
