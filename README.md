@@ -132,15 +132,31 @@ You will need credentials of the following form, named "env.list", at the top-le
 The credentials below are valid, so you can copy and use them to access a development instance of Augur.
 
 ```
-    connection_string=sqlite:///:memory:
-    database=astros
-    host=chaoss.tv
-    password=!xpk98T6?bK
-    port=5432
-    schema=augur_data
-    user=eightknot
-    user_type=read_only
+    AUGUR_DATABASE=astros
+    AUGUR_HOST=chaoss.tv
+    AUGUR_PASSWORD=!xpk98T6?bK
+    AUGUR_PORT=5432
+    AUGUR_SCHEMA=augur_data
+    AUGUR_USERNAME=eightknot
+    8KNOT_DEBUG=True
 ```
+
+If you have a companion Augur front end application you'll need to set the following credentials in the env.list as well.
+By setting these credentials, a button on the top tab of the application will become available to allow you to create an account on
+your Augur front end, to log into your application via this front end, and to create user-defined groups of repos/organizations that
+will become available in your application, prefixed by your Augur username (e.g. \<username\>_example_group and \<username\>_other_example).
+
+```
+    AUGUR_LOGIN_ENABLED=True
+    AUGUR_APP_ID=<id>
+    AUGUR_CLIENT_SECRET=<secret>
+    AUGUR_SESSION_GENERATE_ENDPOINT=<endpoint>/api/unstable/user/session/generate
+    AUGUR_USER_GROUPS_ENDPOINT=<endpoint>/api/unstable/user/groups/repos?columns=repo_id,repo_git
+    AUGUR_USER_ACCOUNT_ENDPOINT=<endpoint>/account/settings
+    AUGUR_USER_AUTH_ENDPOINT=<endpoint>/user/authorize?client_id=<AUGUR_APP_ID>response_type=code
+```
+
+Note: You'll have to manually fill in the \<AUGUR_APP_ID\> in the AUGUR_USER_AUTH_ENDPOINT environment variable.
 
 ### Runtime
 
