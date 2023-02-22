@@ -20,12 +20,16 @@ gc_contrib_drive_repeat = dbc.Card(
                 html.H3(
                     id="chaoss-graph-title-1",
                     className="card-title",
-                    style={"text-align": "center"},
+                    style={"textAlign": "center"},
                 ),
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody("Information on graph 1"),
+                        dbc.PopoverBody(
+                            "This graph gives a break down of how many and what type of contributions\n\
+                            different types of contributors in your community make. By your community standard you can\n\
+                            have the critera of how many contributions it takes for a member to be a repeat contributor."
+                        ),
                     ],
                     id="chaoss-popover-1",
                     target="chaoss-popover-target-1",  # needs to be the same as dbc.Button id
@@ -93,7 +97,7 @@ gc_contrib_drive_repeat = dbc.Card(
                                         size="sm",
                                     ),
                                     width="auto",
-                                    style={"padding-top": ".5em"},
+                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
                             align="center",
@@ -106,7 +110,7 @@ gc_contrib_drive_repeat = dbc.Card(
     # color="light",
 )
 
-
+# callback for graph info popover
 @callback(
     Output("chaoss-popover-1", "is_open"),
     [Input("chaoss-popover-target-1", "n_clicks")],
@@ -118,6 +122,7 @@ def toggle_popover_1(n, is_open):
     return is_open
 
 
+# callback for dynamically changing the graph title
 @callback(Output("chaoss-graph-title-1", "children"), Input("drive-repeat", "value"))
 def graph_title(view):
     title = ""
@@ -194,12 +199,19 @@ def process_data(df, view, contribs):
 
 
 def create_figure(df_cont_subset):
+    # create plotly express histogram
     fig = px.histogram(df_cont_subset, x="created", color="Action", color_discrete_sequence=color_seq)
+
+    # creates bins with 3 month size and customizes the hover value for the bars
     fig.update_traces(
         xbins_size="M3",
         hovertemplate="Date: %{x}" + "<br>Amount: %{y}<br><extra></extra>",
     )
+
+    # update xaxes to align for the 3 month bin size
     fig.update_xaxes(showgrid=True, ticklabelmode="period", dtick="M3")
+
+    # layout styling
     fig.update_layout(
         xaxis_title="Quarter",
         yaxis_title="Contributions",

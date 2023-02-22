@@ -1,9 +1,42 @@
-h2, h3, h4, h5, h6 {
+h2,
+h4,
+h5,
+h6 {
     color: #8D9D92 !important;
 }
-h1{
+
+h1,
+h3 {
     color: #436755 !important;
 }
+
+/* this is to change the color for the spinner, cant be changed directly */
 .dash-spinner.dash-default-spinner {
-    filter:  contrast(1.2) hue-rotate(308deg) grayscale(0.76) !important;
+    filter: contrast(1.2) hue-rotate(308deg) grayscale(0.76) !important;
+}
+
+.navbar-brand {
+    color: #436755 !important;
+}
+
+.metric_data {
+    color: #000000 !important;
+    text-shadow: none !important;
+    padding-bottom: 15px !important;
+}
+
+.box_emissions {
+
+    background-color: #505050;
+    color: #505050;
+    margin: 2px;
+    box-shadow: 4px 4px 4px rgb(33, 33, 33);
+    justify-content: center;
+    text-align: center;
+}
+
+.glace_headers {
+    color: #000000 !important;
+    text-shadow: none !important;
+    font-weight: "normal" !important;
 }

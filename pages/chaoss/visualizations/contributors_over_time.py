@@ -22,12 +22,15 @@ gc_contributors_over_time = dbc.Card(
                 html.H3(
                     "Contributor Types Over Time",
                     className="card-title",
-                    style={"text-align": "center"},
+                    style={"textAlign": "center"},
                 ),
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody("Information on graph 3"),
+                        dbc.PopoverBody(
+                            "This graph breaks down your contributors by time interval into active or repeat contributors.\n\
+                            This criteria can be selected to cater to your specfic community."
+                        ),
                     ],
                     id="chaoss-popover-3",
                     target="chaoss-popover-target-3",  # needs to be the same as dbc.Button id
@@ -93,7 +96,7 @@ gc_contributors_over_time = dbc.Card(
                                         size="sm",
                                     ),
                                     width="auto",
-                                    style={"padding-top": ".5em"},
+                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
                             align="center",
@@ -103,10 +106,9 @@ gc_contributors_over_time = dbc.Card(
             ]
         ),
     ],
-    # color="light",
 )
 
-
+# callback for graph info popover
 @callback(
     Output("chaoss-popover-3", "is_open"),
     [Input("chaoss-popover-target-3", "n_clicks")],

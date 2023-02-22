@@ -20,12 +20,12 @@ gc_commits_over_time = dbc.Card(
                 html.H3(
                     "Commits Over Time",
                     className="card-title",
-                    style={"text-align": "center"},
+                    style={"textAlign": "center"},
                 ),
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody("Information on overview graph 2"),
+                        dbc.PopoverBody("This graph plots the amount of commits in selected time buckets."),
                     ],
                     id="overview-popover-2",
                     target="overview-popover-target-2",  # needs to be the same as dbc.Button id
@@ -72,7 +72,7 @@ gc_commits_over_time = dbc.Card(
                                         size="sm",
                                     ),
                                     width="auto",
-                                    style={"padding-top": ".5em"},
+                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
                             align="center",
@@ -85,7 +85,7 @@ gc_commits_over_time = dbc.Card(
     # color="light",
 )
 
-# call backs for card graph 2 - Commits Over Time
+# callback for graph info popover
 @callback(
     Output("overview-popover-2", "is_open"),
     [Input("overview-popover-target-2", "n_clicks")],

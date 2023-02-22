@@ -21,12 +21,16 @@ gc_total_contributor_growth = dbc.Card(
                 html.H3(
                     id="overview-graph-title-1",
                     className="card-title",
-                    style={"text-align": "center"},
+                    style={"textAlign": "center"},
                 ),
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody("Information on graph 1"),
+                        dbc.PopoverBody(
+                            "This graph allows you to see two different views on your contributor base.\n\
+                            Trend: This view is the total growth of contributors over time \n\
+                            Month/Year: This view looks specifically at the new contributors by selected time bucket."
+                        ),
                     ],
                     id="overview-popover-1",
                     target="overview-popover-target-1",  # needs to be the same as dbc.Button id
@@ -69,7 +73,7 @@ gc_total_contributor_growth = dbc.Card(
                                         size="sm",
                                     ),
                                     width="auto",
-                                    style={"padding-top": ".5em"},
+                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
                             align="center",
@@ -79,11 +83,10 @@ gc_total_contributor_growth = dbc.Card(
             ]
         ),
     ],
-    # color="light",
 )
 
 
-# call backs for card graph 1 - total contributor growth
+# callback for graph info popover
 @callback(
     Output("overview-popover-1", "is_open"),
     [Input("overview-popover-target-1", "n_clicks")],
@@ -95,6 +98,7 @@ def toggle_popover_1(n, is_open):
     return is_open
 
 
+# callback to dynamically change the graph title
 @callback(
     Output("overview-graph-title-1", "children"),
     Input("contributor-growth-time-interval", "value"),

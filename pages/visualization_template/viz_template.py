@@ -51,7 +51,7 @@ gc_VISUALIZATION_NAME_HERE = dbc.Card(
                 html.H3(
                     "TITLE OF VISUALIZATION",
                     className="card-title",
-                    style={"text-align": "center"},
+                    style={"textAlign": "center"},
                 ),
                 dbc.Popover(
                     [
@@ -80,7 +80,10 @@ gc_VISUALIZATION_NAME_HERE = dbc.Card(
                                         dbc.RadioItems(
                                             id=f"{VIZ_ID}-interval",
                                             options=[
-                                                {"label": "Trend", "value": "D"},  # TREND IF LINE, DAY IF NOT
+                                                {
+                                                    "label": "Trend",
+                                                    "value": "D",
+                                                },  # TREND IF LINE, DAY IF NOT
                                                 # {"label": "Week","value": "W",}, UNCOMMENT IF APPLICABLE
                                                 {"label": "Month", "value": "M"},
                                                 {"label": "Year", "value": "Y"},
@@ -98,7 +101,7 @@ gc_VISUALIZATION_NAME_HERE = dbc.Card(
                                         size="sm",
                                     ),
                                     width="auto",
-                                    style={"padding-top": ".5em"},
+                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
                             align="center",
@@ -160,7 +163,7 @@ gc_VISUALIZATION_NAME_HERE = dbc.Card(
     ],
 )
 
-# call backs for card graph NUMER - VIZ TITLE
+# callback for graph info popover
 @callback(
     Output(f"{PAGE}-popover-{VIZ_ID}", "is_open"),
     [Input(f"{PAGE}-popover-target-{VIZ_ID}", "n_clicks")],

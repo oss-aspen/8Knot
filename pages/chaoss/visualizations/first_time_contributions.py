@@ -20,12 +20,15 @@ gc_first_time_contributions = dbc.Card(
                 html.H3(
                     "First Time Contributions Per Quarter",
                     className="card-title",
-                    style={"text-align": "center"},
+                    style={"textAlign": "center"},
                 ),
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody("Information on graph 2"),
+                        dbc.PopoverBody(
+                            "This graph displays how many new contributors in a repository set by quarter\n\
+                            and what activity was their first in the community."
+                        ),
                     ],
                     id="chaoss-popover-2",
                     target="chaoss-popover-target-2",  # needs to be the same as dbc.Button id
@@ -42,15 +45,14 @@ gc_first_time_contributions = dbc.Card(
                         color="secondary",
                         size="small",
                     ),
-                    style={"padding-top": ".5em"},
+                    style={"paddingTop": ".5em"},
                 ),
             ]
         ),
     ],
-    # color="light",
 )
 
-
+# callback for graph info popover
 @callback(
     Output("chaoss-popover-2", "is_open"),
     [Input("chaoss-popover-target-2", "n_clicks")],
@@ -112,13 +114,19 @@ def process_data(df):
 
 def create_figure(df):
 
-    # Graph generation
+    # create plotly express histogram
     fig = px.histogram(df, x="created", color="Action", color_discrete_sequence=color_seq)
+
+    # creates bins with 3 month size and customizes the hover value for the bars
     fig.update_traces(
         xbins_size="M3",
         hovertemplate="Date: %{x}" + "<br>Amount: %{y}<br><extra></extra>",
     )
+
+    # update xaxes to align for the 3 month bin size
     fig.update_xaxes(showgrid=True, ticklabelmode="period", dtick="M3")
+
+    # layout styling
     fig.update_layout(
         xaxis_title="Quarter",
         yaxis_title="Contributions",

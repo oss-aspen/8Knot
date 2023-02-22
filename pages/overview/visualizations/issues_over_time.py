@@ -5,36 +5,37 @@ from dash import callback
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
-import datetime as dt
 import logging
 from pages.utils.graph_utils import get_graph_time_values, color_seq
-import io
 from pages.utils.job_utils import nodata_graph
-from queries.prs_query import prs_query as prq
+from queries.issues_query import issues_query as iq
 from cache_manager.cache_manager import CacheManager as cm
+import io
 import time
 
-gc_pr_over_time = dbc.Card(
+gc_issues_over_time = dbc.Card(
     [
         dbc.CardBody(
             [
                 html.H3(
-                    "Pull Requests Over Time",
+                    "Issues Over Time",
                     className="card-title",
-                    style={"text-align": "center"},
+                    style={"textAlign": "center"},
                 ),
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody("Information on overview graph 7"),
+                        dbc.PopoverBody(
+                            "This graph takes the open and close times on the issues in the selected repositories."
+                        ),
                     ],
-                    id="overview-popover-7",
-                    target="overview-popover-target-7",  # needs to be the same as dbc.Button id
+                    id="overview-popover-3",
+                    target="overview-popover-target-3",  # needs to be the same as dbc.Button id
                     placement="top",
                     is_open=False,
                 ),
                 dcc.Loading(
-                    dcc.Graph(id="prs-over-time"),
+                    dcc.Graph(id="issues-over-time"),
                 ),
                 dbc.Form(
                     [
@@ -42,12 +43,13 @@ gc_pr_over_time = dbc.Card(
                             [
                                 dbc.Label(
                                     "Date Interval:",
-                                    html_for="pr-time-interval",
+                                    html_for="issue-time-interval",
                                     width="auto",
+                                    # size = "lg"
                                 ),
                                 dbc.Col(
                                     dbc.RadioItems(
-                                        id="pr-time-interval",
+                                        id="issue-time-interval",
                                         options=[
                                             {
                                                 "label": "Day",
@@ -68,12 +70,12 @@ gc_pr_over_time = dbc.Card(
                                 dbc.Col(
                                     dbc.Button(
                                         "About Graph",
-                                        id="overview-popover-target-7",
+                                        id="overview-popover-target-3",
                                         color="secondary",
                                         size="sm",
                                     ),
                                     width="auto",
-                                    style={"padding-top": ".5em"},
+                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
                             align="center",
@@ -83,63 +85,61 @@ gc_pr_over_time = dbc.Card(
             ]
         ),
     ],
-    # color="light",
 )
 
-# call backs for card graph 7 - Pull Request Over Time
+# callback for graph info popover
 @callback(
-    Output("overview-popover-7", "is_open"),
-    [Input("overview-popover-target-7", "n_clicks")],
-    [State("overview-popover-7", "is_open")],
+    Output("overview-popover-3", "is_open"),
+    [Input("overview-popover-target-3", "n_clicks")],
+    [State("overview-popover-3", "is_open")],
 )
-def toggle_popover_7(n, is_open):
+def toggle_popover_3(n, is_open):
     if n:
         return not is_open
     return is_open
 
 
-# callback for prs over time graph
+# callback for issues over time graph
 @callback(
-    Output("prs-over-time", "figure"),
+    Output("issues-over-time", "figure"),
     [
         Input("repo-choices", "data"),
-        Input("pr-time-interval", "value"),
+        Input("issue-time-interval", "value"),
     ],
     background=True,
 )
-def prs_over_time_graph(repolist, interval):
+def issues_over_time_graph(repolist, interval):
 
     # wait for data to asynchronously download and become available.
     cache = cm()
-    df = cache.grabm(func=prq, repos=repolist)
+    df = cache.grabm(func=iq, repos=repolist)
     while df is None:
         time.sleep(1.0)
-        df = cache.grabm(func=prq, repos=repolist)
+        df = cache.grabm(func=iq, repos=repolist)
 
     # data ready.
     start = time.perf_counter()
-    logging.debug("PULL REQUESTS OVER TIME - START")
+    logging.debug("ISSUES OVER TIME - START")
 
     # test if there is data
     if df.empty:
-        logging.debug("PULL REQUESTS OVER TIME - NO DATA AVAILABLE")
+        logging.debug("ISSUES OVER TIME - NO DATA AVAILABLE")
         return nodata_graph
 
     # function for all data pre processing
-    df_created, df_closed_merged, df_open = process_data(df, interval)
+    df_created, df_closed, df_open = process_data(df, interval)
 
-    fig = create_figure(df_created, df_closed_merged, df_open, interval)
+    fig = create_figure(df_created, df_closed, df_open, interval)
 
-    logging.debug(f"PRS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
+    logging.debug(f"ISSUES_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
 
     return fig
 
 
 def process_data(df: pd.DataFrame, interval):
 
-    # convert dates to datetime objects rather than strings
+    # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
-    df["merged"] = pd.to_datetime(df["merged"], utc=True)
     df["closed"] = pd.to_datetime(df["closed"], utc=True)
 
     # order values chronologically by creation date
@@ -151,39 +151,30 @@ def process_data(df: pd.DataFrame, interval):
         # this is to slice the extra period information that comes with the weekly case
         period_slice = 10
 
-    # --data frames for PR created, merged, or closed. Detailed description applies for all 3.--
+    # data frames for issues created or closed. Detailed description applies for all 3.
 
-    # get the count of created prs in the desired interval in pandas period format, sort index to order entries
-    created_range = df["created"].dt.to_period(interval).value_counts().sort_index()
+    # get the count of created issues in the desired interval in pandas period format, sort index to order entries
+    created_range = pd.to_datetime(df["created"]).dt.to_period(interval).value_counts().sort_index()
 
-    # converts to data frame object and created date column from period values
+    # converts to data frame object and creates date column from period values
     df_created = created_range.to_frame().reset_index().rename(columns={"index": "Date"})
 
     # converts date column to a datetime object, converts to string first to handle period information
     # the period slice is to handle weekly corner case
     df_created["Date"] = pd.to_datetime(df_created["Date"].astype(str).str[:period_slice])
 
-    # df for merged prs in time interval
-    merged_range = pd.to_datetime(df["merged"]).dt.to_period(interval).value_counts().sort_index()
-    df_merged = merged_range.to_frame().reset_index().rename(columns={"index": "Date"})
-    df_merged["Date"] = pd.to_datetime(df_merged["Date"].astype(str).str[:period_slice])
-
-    # df for closed prs in time interval
+    # df for closed issues in time interval
     closed_range = pd.to_datetime(df["closed"]).dt.to_period(interval).value_counts().sort_index()
     df_closed = closed_range.to_frame().reset_index().rename(columns={"index": "Date"})
     df_closed["Date"] = pd.to_datetime(df_closed["Date"].astype(str).str[:period_slice])
 
-    # A single df created for plotting merged and closed as stacked bar chart
-    df_closed_merged = pd.merge(df_merged, df_closed, on="Date", how="outer")
-
+    # formatting for graph generation
     if interval == "M":
         df_created["Date"] = df_created["Date"].dt.strftime("%Y-%m-01")
-        df_closed_merged["Date"] = df_closed_merged["Date"].dt.strftime("%Y-%m-01")
+        df_closed["Date"] = df_closed["Date"].dt.strftime("%Y-%m-01")
     elif interval == "Y":
         df_created["Date"] = df_created["Date"].dt.strftime("%Y-01-01")
-        df_closed_merged["Date"] = df_closed_merged["Date"].dt.strftime("%Y-01-01")
-
-    # ----- Open PR processinging starts here ----
+        df_closed["Date"] = df_closed["Date"].dt.strftime("%Y-01-01")
 
     # first and last elements of the dataframe are the
     # earliest and latest events respectively
@@ -193,18 +184,18 @@ def process_data(df: pd.DataFrame, interval):
     # beginning to the end of time by the specified interval
     dates = pd.date_range(start=earliest, end=latest, freq="D", inclusive="both")
 
-    # df for open prs from time interval
+    # df for open issues for time interval
     df_open = dates.to_frame(index=False, name="Date")
 
-    # aplies function to get the amount of open prs for each day
+    # aplies function to get the amount of open issues for each day
     df_open["Open"] = df_open.apply(lambda row: get_open(df, row.Date), axis=1)
 
     df_open["Date"] = df_open["Date"].dt.strftime("%Y-%m-%d")
 
-    return df_created, df_closed_merged, df_open
+    return df_created, df_closed, df_open
 
 
-def create_figure(df_created: pd.DataFrame, df_closed_merged: pd.DataFrame, df_open: pd.DataFrame, interval):
+def create_figure(df_created: pd.DataFrame, df_closed: pd.DataFrame, df_open: pd.DataFrame, interval):
 
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
@@ -221,21 +212,11 @@ def create_figure(df_created: pd.DataFrame, df_closed_merged: pd.DataFrame, df_o
         name="Created",
     )
     fig.add_bar(
-        x=df_closed_merged["Date"],
-        y=df_closed_merged["merged"],
+        x=df_closed["Date"],
+        y=df_closed["closed"],
         opacity=0.9,
-        hovertemplate=hover + "<br>Merged: %{y}<br>" + "<extra></extra>",
+        hovertemplate=hover + "<br>Closed: %{y}<br>" + "<extra></extra>",
         offsetgroup=1,
-        marker=dict(color=color_seq[4]),
-        name="Merged",
-    )
-    fig.add_bar(
-        x=df_closed_merged["Date"],
-        y=df_closed_merged["closed"],
-        opacity=0.9,
-        hovertemplate=[f"{hover}<br>Closed: {val}<br><extra></extra>" for val in df_closed_merged["closed"]],
-        offsetgroup=1,
-        base=df_closed_merged["merged"],
         marker=dict(color=color_seq[3]),
         name="Closed",
     )
@@ -248,7 +229,7 @@ def create_figure(df_created: pd.DataFrame, df_closed_merged: pd.DataFrame, df_o
     )
     fig.update_layout(
         xaxis_title=x_name,
-        yaxis_title="Number of PRs",
+        yaxis_title="Number of Issues",
         bargroupgap=0.1,
         margin_b=40,
         font=dict(size=14),
@@ -260,25 +241,25 @@ def create_figure(df_created: pd.DataFrame, df_closed_merged: pd.DataFrame, df_o
             mode="lines",
             marker=dict(color=color_seq[5]),
             name="Open",
-            hovertemplate="PRs Open: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
+            hovertemplate="Issues Open: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
         )
     )
 
     return fig
 
 
-# for each day, this function calculates the amount of open prs
+# for each day, this function calculates the amount of open issues
 def get_open(df, date):
 
     # drop rows that are more recent than the date limit
-    df_created = df[df["created"] <= date]
+    df_lim = df[df["created"] <= date]
 
     # drops rows that have been closed after date
-    df_open = df_created[df_created["closed"] > date]
+    df_open = df_lim[df_lim["closed"] > date]
 
-    # include prs that have not been close yet
-    df_open = pd.concat([df_open, df_created[df_created.closed.isnull()]])
+    # include issues that have not been close yet
+    df_open = pd.concat([df_open, df_lim[df_lim.closed.isnull()]])
 
-    # generates number of columns ie open prs
+    # generates number of columns ie open issues
     num_open = df_open.shape[0]
     return num_open

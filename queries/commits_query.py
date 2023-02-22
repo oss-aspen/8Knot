@@ -1,8 +1,9 @@
 import logging
-from db_manager.AugurInterface import AugurInterface
-from app_global import celery_app
+from db_manager.augur_manager import AugurManager
+from app import celery_app
 import pandas as pd
 from cache_manager.cache_manager import CacheManager as cm
+import io
 
 
 @celery_app.task(
@@ -19,7 +20,7 @@ def commits_query(self, dbmc, repos):
 
     Args:
     -----
-        dbmc (AugurInterface): Handles connection to Augur database, executes queries and returns results.
+        dbmc (AugurManager): Handles connection to Augur database, executes queries and returns results.
 
         repo_ids ([str]): repos that SQL query is executed on.
 
@@ -54,7 +55,7 @@ def commits_query(self, dbmc, repos):
                     """
 
     # create database connection, load config, execute query above.
-    dbm = AugurInterface()
+    dbm = AugurManager()
     dbm.load_pconfig(dbmc)
     df_commits = dbm.run_query(query_string)
 
@@ -65,16 +66,20 @@ def commits_query(self, dbmc, repos):
     for r in repos:
         # convert series to a dataframe
         # once we've stored the data by ID we no longer need the column.
-        c_df = pd.DataFrame(df_commits.loc[df_commits["id"] == r].drop(columns=["id"]))
+        c_df = pd.DataFrame(df_commits.loc[df_commits["id"] == r].drop(columns=["id"])).reset_index(drop=True)
 
-        # try to convert dates in date-columns to posix timestamps
-        try:
-            c_df["date"] = pd.Timestamp(c_df["date"]).timestamp()
-        except:
-            pass
+        # bytes buffer to be written to
+        b = io.BytesIO()
 
-        # add pickled dataframe to list of pickled objects
-        pic.append(c_df.to_csv(index=False))
+        # write dataframe in feather format to BytesIO buffer
+        bs = c_df.to_feather(b)
+
+        # move head of buffer to the beginning
+        b.seek(0)
+
+        # write the bytes of the buffer into the array
+        bs = b.read()
+        pic.append(bs)
 
     del df_commits
 
@@ -82,7 +87,11 @@ def commits_query(self, dbmc, repos):
     cm_o = cm()
 
     # 'ack' is a boolean of whether data was set correctly or not.
-    ack = cm_o.setm(func=commits_query, repos=repos, datas=pic)
+    ack = cm_o.setm(
+        func=commits_query,
+        repos=repos,
+        datas=pic,
+    )
 
     logging.debug("COMMITS_DATA_QUERY - END")
     return ack

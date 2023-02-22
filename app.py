@@ -11,96 +11,80 @@
     Having laid out the HTML-like organization of this page, we write the callbacks for this page in
     the neighbor 'app_callbacks.py' file.
 """
-import pstats
-import cProfile
-from db_manager.AugurInterface import AugurInterface
-from dash import html, dcc
+from db_manager.augur_manager import AugurManager
 import dash
 import dash_bootstrap_components as dbc
 from dash_bootstrap_templates import load_figure_template
-import numpy as np
 import sys
-import os
 import logging
-from app_global import celery_manager, celery_app
 import plotly.io as plt_io
+from celery import Celery
+from dash import CeleryManager, Input, Output
+import worker_settings
+import os
 
 logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.DEBUG)
 
-# GLOBAL VARIABLE DECLARATIONS
-engine = None
-search_input = None
-all_entries = None
-entries = None
-augur_db = None
-repo_dict = None
-org_dict = None
+"""CREATE CELERY TASK QUEUE AND MANAGER"""
+celery_app = Celery(
+    __name__,
+    broker=worker_settings.REDIS_URL,
+    backend=worker_settings.REDIS_URL,
+)
+
+celery_app.conf.update(task_time_limit=84600, task_acks_late=True, task_track_started=True)
+
+celery_manager = CeleryManager(celery_app=celery_app)
 
 
-def _load_config():
-    global engine
-    global augur_db
-    # Get config details
-    augur_db = AugurInterface()
-    engine = augur_db.get_engine()
-    if engine is None:
-        logging.critical("Could not get engine; check config or try later")
+"""CREATE DATABASE ACCESS OBJECT AND CACHE SEARCH OPTIONS"""
+augur = AugurManager()
+
+if os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True":
+
+    # make sure that parameters for Augur connection have been supplied.
+    client_secret = os.getenv("AUGUR_CLIENT_SECRET", "")
+    app_id = os.getenv("AUGUR_APP_ID", "")
+    session_endpoint = os.getenv("AUGUR_SESSION_GENERATE_ENDPOINT", "")
+    groups_endpoint = os.getenv("AUGUR_USER_GROUPS_ENDPOINT", "")
+    account_endpoint = os.getenv("AUGUR_USER_ACCOUNT_ENDPOINT", "")
+    auth_endpoint = os.getenv("AUGUR_USER_AUTH_ENDPOINT", "")
+
+    if not all(
+        [
+            client_secret,
+            app_id,
+            session_endpoint,
+            groups_endpoint,
+            account_endpoint,
+            auth_endpoint,
+        ]
+    ):
+        logging.critical("ERROR: Client Augur credentials incomplete; can't start.")
         sys.exit(1)
+    else:
+        augur.set_client_secret(client_secret)
+        augur.set_app_id(app_id)
+        augur.set_session_generate_endpoint(session_endpoint)
+        augur.set_user_groups_endpoint(groups_endpoint)
+        augur.set_user_account_endpoint(account_endpoint)
+        augur.set_user_auth_endpoint(auth_endpoint)
+
+# connect to database
+engine = augur.get_engine()
+if engine is None:
+    logging.critical("Could not get engine; check config or try later")
+    sys.exit(1)
+
+# grab list of projects and orgs from Augur database.
+augur.multiselect_startup()
 
 
-def _project_list_query():
-    global entries
-    global all_entries
-    global search_input
-    global augur_db
-    global repo_dict
-    global org_dict
-
-    # query of available orgs / repos
-    logging.debug("AUGUR_ENTRY_LIST - START")
-    pr_query = f"""SELECT DISTINCT
-                        r.repo_git,
-                        r.repo_id,
-                        r.repo_name,
-                        rg.rg_name
-                    FROM
-                        repo r
-                    JOIN repo_groups rg
-                    ON rg.repo_group_id = r.repo_group_id
-                    ORDER BY rg.rg_name"""
-
-    # query for search bar entry generation
-    df_search_bar = augur_db.run_query(pr_query)
-
-    # handling case sensitive options for search bar
-    entries = np.concatenate((df_search_bar.rg_name.unique(), df_search_bar.repo_git.unique()), axis=None)
-    entries = entries.tolist()
-    entries.sort(key=lambda item: (item, len(item)))
-
-    # generating search bar entries
-    lower_entries = [i.lower() for i in entries]
-    all_entries = list(zip(lower_entries, entries))
-
-    # generating dictionary with the git urls as the key and the repo_id and name as a list as the value pair
-    repo_dict = df_search_bar[["repo_git", "repo_id", "repo_name"]].set_index("repo_git").T.to_dict("list")
-
-    # generating dictionary with the org name as the key and the git repos of the org in a list as the value pair
-    org_dict = df_search_bar.groupby("rg_name")["repo_git"].apply(list).to_dict()
-
-    # making first selection for the search bar
-    search_input = entries[0]
-
-    logging.debug("AUGUR_ENTRY_LIST - END")
+"""IMPORT AFTER GLOBAL VARIABLES SET"""
+import pages.index.index_callbacks as index_callbacks
 
 
-# RUN SETUP FUNCTIONS DEFINED ABOVE
-_load_config()
-_project_list_query()
-
-# can import this file once we've loaded relevant global variables.
-import app_callbacks
-
-# CREATE APP OBJECT
+"""SET STYLING FOR APPLICATION"""
 load_figure_template(["sandstone", "minty", "slate"])
 
 # stylesheet with the .dbc class, this is a complement to the dash bootstrap templates, credit AnnMarieW
@@ -118,58 +102,77 @@ plt_io.templates["custom_dark"]["layout"]["colorway"] = [
 ]  # dartmouth green
 plt_io.templates.default = "custom_dark"
 
+
+"""CREATE APPLICATION"""
 app = dash.Dash(
     __name__,
     use_pages=True,
-    external_stylesheets=[dbc.themes.SLATE, dbc_css],
+    external_stylesheets=[dbc.themes.SLATE, dbc_css, dbc.icons.FONT_AWESOME],
     suppress_callback_exceptions=True,
     background_callback_manager=celery_manager,
 )
 
-# expose the server variable so that gunicorn can use it.
+# expose the application object's server variable so that the wsgi server can use it.
 server = app.server
 
 # layout of the app stored in the app_layout file, must be imported after the app is initiated
-from app_layout import layout
+from pages.index.index_layout import layout
 
 app.layout = layout
 
+# I know what you're thinking- "This callback shouldn't be here!"
+# well, circular imports are a hassle, and the 'app' object from this
+# file can't be imported into index_callbacks.py file where it should be.
+# This callback handles logging a user out of their preferences.
+app.clientside_callback(
+    """
+    function(logout, refresh) {
 
-def main():
-    # shouldn't run server in debug mode if we're in a production setting
-    debug_mode = True
-    try:
-        if os.environ["running_on"] == "prod":
-            debug_mode = False
-        else:
-            debug_mode = True
-    except:
-        debug_mode = True
+        // gets the string representing the component_id and component_prop that triggered the callback.
+        const triggered = window.dash_clientside.callback_context.triggered.map(t => t.prop_id)[0]
+        console.log(triggered)
 
-    app.run(host="0.0.0.0", port=8050, debug=False, process=4, threading=False)
+        if(triggered == "logout-button.n_clicks"){
+            // clear user's localStorage,
+            // pattern-match key's suffix.
+            const keys = Object.keys(localStorage)
+            for (let key of keys) {
+                if (String(key).includes('_dash_persistence')) {
+                    localStorage.removeItem(key)
+                }
+            }
 
+            // clear user's sessionStorage,
+            // pattern-match key's suffix.
+            const sesh = Object.keys(sessionStorage)
+            for (let key of sesh) {
+                if (String(key).includes('_dash_persistence')) {
+                    sessionStorage.removeItem(key)
+                }
+            }
+        }
+        else{
+            // trigger user preferences redownload
+            sessionStorage["refresh-groups"] = true
+        }
+
+        // reload the page,
+        // redirect to index.
+        window.location.reload()
+        return "/"
+    }
+    """,
+    Output("url", "pathname"),
+    Input("logout-button", "n_clicks"),
+    Input("refresh-button", "n_clicks"),
+    prevent_initial_call=True,
+)
+
+if os.getenv("8KNOT_DEBUG", ""):
+    app.enable_dev_tools(dev_tools_ui=True, dev_tools_hot_reload=False)
 
 if __name__ == "__main__":
-
-    try:
-        if os.environ["profiling"] == "True":
-            """
-            Ref for how to do this:
-            https://www.youtube.com/watch?v=dmnA3axZ3FY
-
-            Credit to IDG TECHTALK
-            """
-            logging.debug("Profiling")
-
-            cProfile.run("main()", "output.dat")
-
-            with open("output_time.txt", "w") as f:
-                p = pstats.Stats("output.dat", stream=f)
-                p.sort_stats("time").print_stats()
-
-            with open("output_calls.txt", "w") as f:
-                p = pstats.Stats("output.dat", stream=f)
-                p.sort_stats("calls").print_stats()
-    except KeyError:
-        logging.debug("---------PROFILING OFF---------")
-        main()
+    print(
+        "We've deprecated the Flask/Dash debug webserver.\
+         Please use gunicorn to run application or docker/podman compose."
+    )

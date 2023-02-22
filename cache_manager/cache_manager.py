@@ -42,14 +42,14 @@ class CacheManager:
 
     """
 
-    def __init__(self):
+    def __init__(self, decode_value=False):
         # Redis cache for job queue and results cache
         self._redis = StrictRedis(
             # openshift will reconcile the 'redis' naming via the dns
             host=os.getenv("REDIS_SERVICE_HOST", "localhost"),
             port=os.getenv("REDIS_SERVICE_PORT", "6379"),
             password=os.getenv("REDIS_PASSWORD", ""),
-            decode_responses=True,
+            decode_responses=decode_value,
         )
 
     def _get_hash(self, func, repo):
@@ -118,7 +118,7 @@ class CacheManager:
 
         # create hashes for each (func, repo_id) pair
         hs = [self._get_hash(func, r) for r in repos]
-        ds = [str(data) for data in datas]
+        ds = datas
 
         # bulk-set keys to values in Redis
         acks = self._redis.mset(dict(zip(hs, ds)))
@@ -217,16 +217,15 @@ class CacheManager:
             return None
 
         # get all results from cache
-        results = self.getm(func=func, repos=repos)
+        dfs_from_cache = self.getm(func=func, repos=repos)
 
-        # deserialize results, create list of dfs
-        out_df = pd.DataFrame()
-        for r in results:
-            try:
-                out_df = pd.concat([out_df, pd.read_csv(io.StringIO(r), sep=",")], ignore_index=True)
-            except:
-                # some json lists are empty and aren't deserializable
-                e = sys.exc_info()[0]
-                logging.error(e)
+        pd_dfs = []
+        for bdf in dfs_from_cache:
+            bbuff = io.BytesIO(bdf)
+            bbuff.seek(0)
+            df = pd.read_feather(bbuff)
+            pd_dfs.append(df)
+
+        out_df = pd.concat(pd_dfs)
 
         return out_df

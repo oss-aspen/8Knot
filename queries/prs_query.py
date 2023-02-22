@@ -1,8 +1,9 @@
 import logging
 import pandas as pd
-from db_manager.AugurInterface import AugurInterface
-from app_global import celery_app
+from db_manager.augur_manager import AugurManager
+from app import celery_app
 from cache_manager.cache_manager import CacheManager as cm
+import io
 
 
 @celery_app.task(
@@ -19,7 +20,7 @@ def prs_query(self, dbmc, repos):
 
     Args:
     -----
-        dbmc (AugurInterface): Handles connection to Augur database, executes queries and returns results.
+        dbmc (AugurManager): Handles connection to Augur database, executes queries and returns results.
 
         repo_ids ([str]): repos that SQL query is executed on.
 
@@ -50,7 +51,7 @@ def prs_query(self, dbmc, repos):
                     """
 
     # create database connection, load config, execute query above.
-    dbm = AugurInterface()
+    dbm = AugurManager()
     dbm.load_pconfig(dbmc)
     df_pr = dbm.run_query(query_string)
 
@@ -70,10 +71,20 @@ def prs_query(self, dbmc, repos):
     pic = []
     for i, r in enumerate(repos):
         # convert series to a dataframe
-        c_df = pd.DataFrame(df_pr.loc[df_pr["id"] == r]).to_csv()
+        c_df = pd.DataFrame(df_pr.loc[df_pr["id"] == r]).reset_index(drop=True)
 
-        # add pickled dataframe to list of pickled objects
-        pic.append(c_df)
+        # bytes buffer to be written to
+        b = io.BytesIO()
+
+        # write dataframe in feather format to BytesIO buffer
+        bs = c_df.to_feather(b)
+
+        # move head of buffer to the beginning
+        b.seek(0)
+
+        # write the bytes of the buffer into the array
+        bs = b.read()
+        pic.append(bs)
 
     del df_pr
 
@@ -81,7 +92,11 @@ def prs_query(self, dbmc, repos):
     cm_o = cm()
 
     # 'ack' is a boolean of whether data was set correctly or not.
-    ack = cm_o.setm(func=prs_query, repos=repos, datas=pic)
+    ack = cm_o.setm(
+        func=prs_query,
+        repos=repos,
+        datas=pic,
+    )
 
     logging.debug("PR_DATA_QUERY - END")
     return ack
