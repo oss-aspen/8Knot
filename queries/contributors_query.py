@@ -3,6 +3,7 @@ import pandas as pd
 from db_manager.augur_manager import AugurManager
 from app import celery_app
 from cache_manager.cache_manager import CacheManager as cm
+import io
 
 
 @celery_app.task(
@@ -57,19 +58,29 @@ def contributors_query(self, dbmc, repos):
     df_cont.loc[df_cont["action"] == "issue_opened", "action"] = "Issue Opened"
     df_cont.loc[df_cont["action"] == "issue_closed", "action"] = "Issue Closed"
     df_cont.loc[df_cont["action"] == "commit", "action"] = "Commit"
+    df_cont["cntrb_id"] = df_cont["cntrb_id"].astype(str)  # contributor ids to strings
     df_cont.rename(columns={"action": "Action"}, inplace=True)
 
-    df_cont = df_cont.reset_index()
-    df_cont.drop("index", axis=1, inplace=True)
+    df_cont = df_cont.reset_index(drop=True)
 
     pic = []
 
     for i, r in enumerate(repos):
         # convert series to a dataframe
-        c_df = pd.DataFrame(df_cont.loc[df_cont["id"] == r]).to_csv()
+        c_df = pd.DataFrame(df_cont.loc[df_cont["id"] == r]).reset_index(drop=True)
 
-        # add pickled dataframe to list of pickled objects
-        pic.append(c_df)
+        # bytes buffer to be written to
+        b = io.BytesIO()
+
+        # write dataframe in feather format to BytesIO buffer
+        bs = c_df.to_feather(b)
+
+        # move head of buffer to the beginning
+        b.seek(0)
+
+        # write the bytes of the buffer into the array
+        bs = b.read()
+        pic.append(bs)
 
     del df_cont
 
@@ -77,7 +88,11 @@ def contributors_query(self, dbmc, repos):
     cm_o = cm()
 
     # 'ack' is a boolean of whether data was set correctly or not.
-    ack = cm_o.setm(func=contributors_query, repos=repos, datas=pic)
+    ack = cm_o.setm(
+        func=contributors_query,
+        repos=repos,
+        datas=pic,
+    )
     logging.debug("CONTRIBUTIONS_DATA_QUERY - END")
 
     return ack
