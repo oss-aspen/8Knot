@@ -8,6 +8,8 @@ import os
 import logging
 import sys
 import requests
+import traceback
+import time
 
 
 class AugurManager:
@@ -164,11 +166,22 @@ class AugurManager:
 
         query = salc.sql.text(query_string)
 
-        try:
-            with self.engine.connect() as conn:
-                result_df = pd.read_sql(query, con=conn)
-        except:
-            raise Exception("DB Read Failure")
+        # try to connect to augur to run query 5 times
+        # TODO: this is a terrible patch for the problem. Should be using
+        # job retries with the task manager so that the problem is
+        # scheduled. However, the problem occurs only 1/13 metrics only
+        # sometimes so the more major fix will come later.
+        for i in range(5):
+            try:
+                with self.engine.connect() as conn:
+                    result_df = pd.read_sql(query, con=conn)
+                    break
+            except:
+                if i < 4:
+                    # give more time in between trials.
+                    time.sleep((i + 1) * 2.0)
+                else:
+                    raise Exception("DB Read failed.")
 
         result_df = result_df.reset_index()
         result_df.drop("index", axis=1, inplace=True)
