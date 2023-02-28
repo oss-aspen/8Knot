@@ -158,6 +158,8 @@ will become available in your application, prefixed by your Augur username (e.g.
 
 Note: You'll have to manually fill in the \<AUGUR_APP_ID\> in the AUGUR_USER_AUTH_ENDPOINT environment variable.
 
+In-depth instructions for enabling 8Knot + Augur integration is available in docs/AUGUR_LOGIN.md.
+
 ### Runtime
 
 We use Docker containers to minimize the installation requirements for development. If you do not have Docker on your system, please follow the following guide: [Install Docker](https://docs.docker.com/engine/install/)
