@@ -45,7 +45,10 @@ def commits_query(self, dbmc, repos):
                         -- c.cmt_id AS file,
                         -- c.cmt_added AS lines_added,
                         -- c.cmt_removed AS lines_removed,
-                        c.cmt_author_date AS date
+                        c.cmt_author_date AS date,
+                        c.cmt_author_timestamp AS author_timestamp,
+                        c.cmt_committer_timestamp AS committer_timestamp
+
                     FROM
                         repo r
                     JOIN commits c

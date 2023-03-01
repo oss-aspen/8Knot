@@ -234,7 +234,7 @@ def process_data(df: pd.DataFrame, interval):
     return df
 
 
-def create_figure(df_status: pd.DataFrame, interval):
+def create_figure(df: pd.DataFrame, interval):
 
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
