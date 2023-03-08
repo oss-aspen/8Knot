@@ -146,20 +146,23 @@ def process_data(df: pd.DataFrame, interval):
     # convert to datetime objects rather than strings
     df["author_timestamp"] = pd.to_datetime(df["author_timestamp"], utc=True)
     df["committer_timestamp"] = pd.to_datetime(df["committer_timestamp"], utc=True)
+    # removes duplicate values when the author and committer is the same
     df.loc[df["author_timestamp"] == df["committer_timestamp"], "author_timestamp"] = None
 
     df_final = pd.DataFrame()
 
     if interval == "H":
+        # combine the hour values for author and committer
         hour = pd.concat([df["author_timestamp"].dt.hour, df["committer_timestamp"].dt.hour])
         df_hour = pd.DataFrame(hour, columns=["Hour"])
         df_final = df_hour.groupby(["Hour"])["Hour"].count()
     else:
+        # combine the weekday values for author and committer
         weekday = pd.concat([df["author_timestamp"].dt.day_name(), df["committer_timestamp"].dt.day_name()])
         df_weekday = pd.DataFrame(weekday, columns=["Weekday"])
         df_final = df_weekday.groupby(["Weekday"])["Weekday"].count()
 
-    # combine the weekday values for author and committer
+    # code for the histogram option for the workshop - will remove when pushing to dev
     """weekday = pd.concat([df["author_timestamp"].dt.day_name(), df["committer_timestamp"].dt.day_name()])
     hour = pd.concat([df["author_timestamp"].dt.hour, df["committer_timestamp"].dt.hour])
     df_final = pd.DataFrame(weekday, columns=["Weekday"])
@@ -171,10 +174,11 @@ def process_data(df: pd.DataFrame, interval):
 def create_figure(df: pd.DataFrame, interval):
 
     column = "Weekday"
-    order = ["Saturday", "Friday", "Thursday", "Wednesday", "Tuesday", "Monday", "Sunday"]
+    order = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
     if interval == "H":
         column = "Hour"
 
+    # code for the histogram option for the workshop - will remove when pushing to dev
     """fig = px.histogram(df, x=column, color_discrete_sequence=[color_seq[3]])
     if interval == "D":
         fig.update_xaxes(
@@ -187,7 +191,10 @@ def create_figure(df: pd.DataFrame, interval):
     )"""
 
     fig = px.bar(df, y=column, color_discrete_sequence=[color_seq[3]])
-    fig.update_traces(hovertemplate="%{x} Activity Count: %{y}<br>")
+    hover = "%{x} Activity Count: %{y}<br>"
+    if interval == "H":
+        hover = "Hour: %{x}:00 Activity Count: %{y}<br>"
+    fig.update_traces(hovertemplate=hover)
     fig.update_xaxes(
         categoryorder="array",
         categoryarray=order,
