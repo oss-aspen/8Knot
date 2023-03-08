@@ -146,6 +146,7 @@ def process_data(df: pd.DataFrame, interval):
     # convert to datetime objects rather than strings
     df["author_timestamp"] = pd.to_datetime(df["author_timestamp"], utc=True)
     df["committer_timestamp"] = pd.to_datetime(df["committer_timestamp"], utc=True)
+    df.loc[df["author_timestamp"] == df["committer_timestamp"], "author_timestamp"] = None
 
     df_final = pd.DataFrame()
 
@@ -154,7 +155,6 @@ def process_data(df: pd.DataFrame, interval):
         df_hour = pd.DataFrame(hour, columns=["Hour"])
         df_final = df_hour.groupby(["Hour"])["Hour"].count()
     else:
-        print("here first")
         weekday = pd.concat([df["author_timestamp"].dt.day_name(), df["committer_timestamp"].dt.day_name()])
         df_weekday = pd.DataFrame(weekday, columns=["Weekday"])
         df_final = df_weekday.groupby(["Weekday"])["Weekday"].count()
@@ -186,15 +186,15 @@ def create_figure(df: pd.DataFrame, interval):
         font=dict(size=14),
     )"""
 
-    fig = px.bar(df, x=column, color_discrete_sequence=[color_seq[3]])
-    fig.update_traces(hovertemplate="%{y} Activity Count: %{x}<br>")
-    fig.update_yaxes(
+    fig = px.bar(df, y=column, color_discrete_sequence=[color_seq[3]])
+    fig.update_traces(hovertemplate="%{x} Activity Count: %{y}<br>")
+    fig.update_xaxes(
         categoryorder="array",
         categoryarray=order,
     )
     fig.update_layout(
-        yaxis_title=column,
-        xaxis_title="Activity Count",
+        yaxis_title="Activity Count",
+        xaxis_title=column,
         font=dict(size=14),
     )
 
