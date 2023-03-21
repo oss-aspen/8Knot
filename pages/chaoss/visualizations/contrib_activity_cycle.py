@@ -162,12 +162,6 @@ def process_data(df: pd.DataFrame, interval):
         df_weekday = pd.DataFrame(weekday, columns=["Weekday"])
         df_final = df_weekday.groupby(["Weekday"])["Weekday"].count()
 
-    # code for the histogram option for the workshop - will remove when pushing to dev
-    """weekday = pd.concat([df["author_timestamp"].dt.day_name(), df["committer_timestamp"].dt.day_name()])
-    hour = pd.concat([df["author_timestamp"].dt.hour, df["committer_timestamp"].dt.hour])
-    df_final = pd.DataFrame(weekday, columns=["Weekday"])
-    df_final["Hour"] = hour"""
-
     return df_final
 
 
@@ -177,18 +171,6 @@ def create_figure(df: pd.DataFrame, interval):
     order = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
     if interval == "H":
         column = "Hour"
-
-    # code for the histogram option for the workshop - will remove when pushing to dev
-    """fig = px.histogram(df, x=column, color_discrete_sequence=[color_seq[3]])
-    if interval == "D":
-        fig.update_xaxes(
-            categoryorder="array",
-            categoryarray=["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-        )
-    fig.update_layout(
-        yaxis_title="Activity Count",
-        font=dict(size=14),
-    )"""
 
     fig = px.bar(df, y=column, color_discrete_sequence=[color_seq[3]])
     hover = "%{x} Activity Count: %{y}<br>"
