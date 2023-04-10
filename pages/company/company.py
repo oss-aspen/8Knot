@@ -5,6 +5,7 @@ import warnings
 
 # import visualization cards
 from .visualizations.gh_company_affiliation import gc_gh_company_affiliation
+from .visualizations.unqiue_domains import gc_unique_domains
 
 warnings.filterwarnings("ignore")
 
@@ -17,7 +18,7 @@ layout = dbc.Container(
         dbc.Row(
             [
                 dbc.Col(gc_gh_company_affiliation, width=6),
-                # dbc.Col(gc_first_time_contributions, width=6),
+                dbc.Col(gc_unique_domains, width=6),
             ],
             align="center",
             style={"marginBottom": ".5%"},

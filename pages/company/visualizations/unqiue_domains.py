@@ -14,30 +14,27 @@ from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
-from fuzzywuzzy import fuzz
 
-PAGE = "company"  # EDIT FOR PAGE USED
-VIZ_ID = "gh-company-affiliation"  # UNIQUE IDENTIFIER FOR CALLBAKCS, MUST BE UNIQUE
+PAGE = "company"
+VIZ_ID = "unique-domains"
 
 paramter_1 = "company-contributions-required"
 paramter_2 = "null-check"
 
 
-gc_gh_company_affiliation = dbc.Card(
+gc_unique_domains = dbc.Card(
     [
         dbc.CardBody(
             [
                 html.H3(
-                    "Company Affiliation by Github Account Info",
+                    "Unqiue Contributor Email Domains",
                     className="card-title",
                     style={"textAlign": "center"},
                 ),
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody(
-                            "This graph looks at github contributors profiles and takes in their listed company"
-                        ),
+                        dbc.PopoverBody("This graph counts the number of UNIQUE emails by domains"),
                     ],
                     id=f"{PAGE}-popover-{VIZ_ID}",
                     target=f"{PAGE}-popover-target-{VIZ_ID}",  # needs to be the same as dbc.Button id
@@ -63,7 +60,7 @@ gc_gh_company_affiliation = dbc.Card(
                                         min=1,
                                         max=50,
                                         step=1,
-                                        value=5,
+                                        value=3,
                                         size="sm",
                                     ),
                                     className="me-2",
@@ -74,7 +71,7 @@ gc_gh_company_affiliation = dbc.Card(
                                         dbc.Checklist(
                                             id=f"{PAGE}-{paramter_2}-{VIZ_ID}",
                                             options=[
-                                                {"label": "Exclude None", "value": "none"},
+                                                {"label": "Exclude gmail", "value": "gmail"},
                                                 {"label": "Exclude Other", "value": "other"},
                                             ],
                                             value=[""],
@@ -164,7 +161,7 @@ def create_slider(repolist):
     background=True,
     prevent_initial_call=True,
 )
-def gh_company_affiliation_graph(repolist, checks, num, start_date, end_date):
+def unique_domains_graph(repolist, checks, num, start_date, end_date):
 
     # wait for data to asynchronously download and become available.
     cache = cm()
@@ -207,65 +204,45 @@ def process_data(df: pd.DataFrame, checks, num, start_date, end_date):
     if end_date is not None:
         df = df[df.created <= end_date]
 
-    # intital count of same company name in github profile
-    result = df.cntrb_company.value_counts(dropna=False)
+    # creates list of unique emails and flattens list result
+    emails = df.email_list.str.split(" , ").explode("email_list").unique().tolist()
 
-    # reset format for df work
-    df = result.to_frame()
-    df["company_name"] = df.index
-    df = df.reset_index()
-    df["company_name"] = df["company_name"].astype(str)
-    df = df.rename(columns={"index": "orginal_name", "cntrb_company": "contribution_count"})
+    # remove any entries not in email format
+    emails = [x for x in emails if "@" in x]
 
-    # applies fuzzy matching comparing all rows to each other
-    df["match"] = df.apply(lambda row: func(df, row["company_name"]), axis=1)
+    # creates list of email domains from the emails list
+    email_domains = [x[x.rindex("@") + 1 :] for x in emails]
 
-    # changes company name to match other fuzzy matches
-    for x in range(0, len(df)):
-        matches = df.iloc[x]["match"]
-        for y in matches:
-            df.loc[y, "company_name"] = df.iloc[x]["company_name"]
-            df.loc[y, "match"] = ""
+    # creates df of domains and counts
+    df = pd.DataFrame(email_domains, columns=["domains"]).value_counts().to_frame().reset_index()
 
-    # groups all same name company affiliation and sums the contributions
-    df = (
-        df.groupby(by="company_name")["contribution_count"]
-        .sum()
-        .reset_index()
-        .sort_values(by=["contribution_count"])
-        .reset_index(drop=True)
-    )
+    df = df.rename(columns={0: "occurances"})
 
     # changes the name of the company if under a certain threshold
-    df.loc[df.contribution_count <= num, "company_name"] = "Other"
+    df.loc[df.occurances <= num, "domains"] = "Other"
 
     # groups others together for final counts
     df = (
-        df.groupby(by="company_name")["contribution_count"]
+        df.groupby(by="domains")["occurances"]
         .sum()
         .reset_index()
-        .sort_values(by=["contribution_count"])
+        .sort_values(by=["occurances"], ascending=False)
         .reset_index(drop=True)
     )
 
-    # removes entries with none or other if checked
-    if "none" in checks:
-        df = df[df.company_name != "None"]
+    # removes entries with gmail or other if checked
+    if "gmail" in checks:
+        df = df[df.domains != "gmail.com"]
     if "other" in checks:
-        df = df[df.company_name != "Other"]
+        df = df[df.domains != "Other"]
 
     return df
-
-
-def func(df, name):
-    matches = df.apply(lambda row: (fuzz.partial_ratio(row["company_name"], name) >= 70), axis=1)
-    return [i for i, x in enumerate(matches) if x]
 
 
 def create_figure(df: pd.DataFrame):
 
     # graph generation
-    fig = px.pie(df, names="company_name", values="contribution_count", color_discrete_sequence=color_seq)
+    fig = px.pie(df, names="domains", values="occurances", color_discrete_sequence=color_seq)
     fig.update_traces(
         textposition="inside",
         textinfo="percent+label",

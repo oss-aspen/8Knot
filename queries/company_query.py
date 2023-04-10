@@ -36,23 +36,27 @@ def company_query(self, dbmc, repos):
     # commenting-outunused query components. only need the repo_id and the
     # authorship date for our current queries. remove the '--' to re-add
     # the now-removed values.
+
     query_string = f"""
                     SELECT
-                        ca.cntrb_id,
-                        ca.created_at AS created,
-                        ca.repo_id AS id,
-                        ca.login,
-                        ca.action,
-                        ca.rank,
-                        c.cntrb_company
+                        c.cntrb_id,
+                        c.created_at AS created,
+                        c.repo_id AS id,
+                        c.login,
+                        c.action,
+                        c.rank,
+                        con.cntrb_company,
+                        string_agg(ca.alias_email, ' , ' order by ca.alias_email) as email_list
                     FROM
-                        explorer_contributor_actions ca
-                    JOIN contributors c
+                        explorer_contributor_actions c
+                    JOIN contributors_aliases ca
                         ON c.cntrb_id = ca.cntrb_id
+                    JOIN contributors con
+                        ON c.cntrb_id = con.cntrb_id
                     WHERE
-                        ca.repo_id in({str(repos)[1:-1]})
+                        c.repo_id in({str(repos)[1:-1]})
+                    GROUP BY c.cntrb_id, c.created_at, c.repo_id, c.login, c.action, c.rank, con.cntrb_company
                     """
-
     # create database connection, load config, execute query above.
     dbm = AugurManager()
     dbm.load_pconfig(dbmc)
