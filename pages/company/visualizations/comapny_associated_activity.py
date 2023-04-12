@@ -16,25 +16,29 @@ import time
 import datetime as dt
 
 PAGE = "company"
-VIZ_ID = "unique-domains"
+VIZ_ID = "company-associated-activity"
 
 paramter_1 = "company-contributions-required"
 paramter_2 = "checks"
 
 
-gc_unique_domains = dbc.Card(
+gc_compay_associated_activity = dbc.Card(
     [
         dbc.CardBody(
             [
                 html.H3(
-                    "Unqiue Contributor Email Domains",
+                    "Company Associated Activity",
                     className="card-title",
                     style={"textAlign": "center"},
                 ),
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody("This graph counts the number of UNIQUE emails by domains"),
+                        dbc.PopoverBody(
+                            "This graph counts the number of contributions that COULD be linked to each company.\n\
+                            The methodology behind this is to take each associated email to someones github account\n\
+                            and link the contributions to each as it is unknown which initity the actvity was done for."
+                        ),
                     ],
                     id=f"{PAGE}-popover-{VIZ_ID}",
                     target=f"{PAGE}-popover-target-{VIZ_ID}",  # needs to be the same as dbc.Button id
@@ -49,7 +53,7 @@ gc_unique_domains = dbc.Card(
                         dbc.Row(
                             [
                                 dbc.Label(
-                                    "Contributors Required:",
+                                    "Contributions Required:",
                                     html_for=f"{PAGE}-{paramter_1}-{VIZ_ID}",
                                     width={"size": "auto"},
                                 ),
@@ -58,13 +62,13 @@ gc_unique_domains = dbc.Card(
                                         id=f"{PAGE}-{paramter_1}-{VIZ_ID}",
                                         type="number",
                                         min=1,
-                                        max=50,
+                                        max=100,
                                         step=1,
-                                        value=3,
+                                        value=10,
                                         size="sm",
                                     ),
                                     className="me-2",
-                                    width=1,
+                                    width=2,
                                 ),
                                 dbc.Col(
                                     [
@@ -161,7 +165,7 @@ def create_slider(repolist):
     background=True,
     prevent_initial_call=True,
 )
-def unique_domains_graph(repolist, checks, num, start_date, end_date):
+def compay_associated_activity_graph(repolist, checks, num, start_date, end_date):
 
     # wait for data to asynchronously download and become available.
     cache = cm()
@@ -204,8 +208,8 @@ def process_data(df: pd.DataFrame, checks, num, start_date, end_date):
     if end_date is not None:
         df = df[df.created <= end_date]
 
-    # creates list of unique emails and flattens list result
-    emails = df.email_list.str.split(" , ").explode("email_list").unique().tolist()
+    # creates list of emails for each contribution and flattens list result
+    emails = df.email_list.str.split(" , ").explode("email_list").tolist()
 
     # remove any entries not in email format
     emails = [x for x in emails if "@" in x]
