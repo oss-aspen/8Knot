@@ -188,9 +188,6 @@ def unique_domains_graph(repolist, checks, num, start_date, end_date):
 
 
 def process_data(df: pd.DataFrame, checks, num, start_date, end_date):
-    """Implement your custom data-processing logic in this function.
-    The output of this function is the data you intend to create a visualization with,
-    requiring no further processing."""
 
     # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)

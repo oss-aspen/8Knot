@@ -8,7 +8,7 @@ import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import color_seq
-from queries.company_query import company_query as cq
+from queries.commits_query import commits_query as cq
 import io
 from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
@@ -16,18 +16,18 @@ import time
 import datetime as dt
 
 PAGE = "company"
-VIZ_ID = "company-associated-activity"
+VIZ_ID = "commit-domains"
 
 paramter_1 = "company-contributions-required"
 paramter_2 = "checks"
 
 
-gc_compay_associated_activity = dbc.Card(
+gc_commit_domains = dbc.Card(
     [
         dbc.CardBody(
             [
                 html.H3(
-                    "Company Associated Activity",
+                    "Commit Activity by Domain",
                     className="card-title",
                     style={"textAlign": "center"},
                 ),
@@ -35,9 +35,8 @@ gc_compay_associated_activity = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "This graph counts the number of contributions that COULD be linked to each company.\n\
-                            The methodology behind this is to take each associated email to someones github account\n\
-                            and link the contributions to each as it is unknown which initity the actvity was done for."
+                            "This graph views the percent of each domain directly linked to the commit.\n\
+                            NOTE: the domain might not respresent if it is done as an individual or company."
                         ),
                     ],
                     id=f"{PAGE}-popover-{VIZ_ID}",
@@ -75,7 +74,7 @@ gc_compay_associated_activity = dbc.Card(
                                         dbc.Checklist(
                                             id=f"{PAGE}-{paramter_2}-{VIZ_ID}",
                                             options=[
-                                                {"label": "Exclude gmail", "value": "gmail"},
+                                                {"label": "Exclude Gmail", "value": "gmail"},
                                                 {"label": "Exclude Other", "value": "other"},
                                             ],
                                             value=[""],
@@ -137,9 +136,9 @@ def create_slider(repolist):
         df = cache.grabm(func=cq, repos=repolist)
 
     # get date value for first contribution
-    df["created"] = pd.to_datetime(df["created"], utc=True)
-    df = df.sort_values(by="created", axis=0, ascending=True)
-    base = df.iloc[0]["created"]
+    df["author_timestamp"] = pd.to_datetime(df["author_timestamp"], utc=True)
+    df = df.sort_values(by="author_timestamp", axis=0, ascending=True)
+    base = df.iloc[0]["author_timestamp"]
 
     date_picker = (
         dcc.DatePickerRange(
@@ -165,7 +164,7 @@ def create_slider(repolist):
     background=True,
     prevent_initial_call=True,
 )
-def compay_associated_activity_graph(repolist, checks, num, start_date, end_date):
+def commit_domains_graph(repolist, checks, num, start_date, end_date):
 
     # wait for data to asynchronously download and become available.
     cache = cm()
@@ -192,24 +191,21 @@ def compay_associated_activity_graph(repolist, checks, num, start_date, end_date
 
 
 def process_data(df: pd.DataFrame, checks, num, start_date, end_date):
-    """Implement your custom data-processing logic in this function.
-    The output of this function is the data you intend to create a visualization with,
-    requiring no further processing."""
 
     # convert to datetime objects rather than strings
-    df["created"] = pd.to_datetime(df["created"], utc=True)
+    df["author_timestamp"] = pd.to_datetime(df["author_timestamp"], utc=True)
 
     # order values chronologically by COLUMN_TO_SORT_BY date
-    df = df.sort_values(by="created", axis=0, ascending=True)
+    df = df.sort_values(by="author_timestamp", axis=0, ascending=True)
 
     # filter values based on date picker
     if start_date is not None:
-        df = df[df.created >= start_date]
+        df = df[df.author_timestamp >= start_date]
     if end_date is not None:
-        df = df[df.created <= end_date]
+        df = df[df.author_timestamp <= end_date]
 
     # creates list of emails for each contribution and flattens list result
-    emails = df.email_list.str.split(" , ").explode("email_list").tolist()
+    emails = df.committer_email.tolist()
 
     # remove any entries not in email format
     emails = [x for x in emails if "@" in x]

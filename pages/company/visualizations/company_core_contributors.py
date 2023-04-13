@@ -221,9 +221,6 @@ def compay_associated_activity_graph(repolist, checks, contributions, contributo
 
 
 def process_data(df: pd.DataFrame, checks, contributions, contributors, start_date, end_date):
-    """Implement your custom data-processing logic in this function.
-    The output of this function is the data you intend to create a visualization with,
-    requiring no further processing."""
 
     # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
