@@ -16,7 +16,7 @@ import io
 def company_query(self, dbmc, repos):
     """
     (Worker Query)
-    Executes SQL query against Augur database for commit data.
+    Executes SQL query against Augur database for company affiliation data.
 
     Args:
     -----
@@ -32,10 +32,6 @@ def company_query(self, dbmc, repos):
 
     if len(repos) == 0:
         return None
-
-    # commenting-outunused query components. only need the repo_id and the
-    # authorship date for our current queries. remove the '--' to re-add
-    # the now-removed values.
 
     query_string = f"""
                     SELECT

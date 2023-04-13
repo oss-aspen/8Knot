@@ -8,7 +8,7 @@ import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import color_seq
-from queries.company_query import company_query as cq
+from queries.company_query import company_query as cmq
 import io
 from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
@@ -130,10 +130,10 @@ def toggle_popover(n, is_open):
 def create_slider(repolist):
     # wait for data to asynchronously download and become available.
     cache = cm()
-    df = cache.grabm(func=cq, repos=repolist)
+    df = cache.grabm(func=cmq, repos=repolist)
     while df is None:
         time.sleep(1.0)
-        df = cache.grabm(func=cq, repos=repolist)
+        df = cache.grabm(func=cmq, repos=repolist)
 
     # get date value for first contribution
     df["created"] = pd.to_datetime(df["created"], utc=True)
@@ -168,10 +168,10 @@ def gh_company_affiliation_graph(repolist, checks, num, start_date, end_date):
 
     # wait for data to asynchronously download and become available.
     cache = cm()
-    df = cache.grabm(func=cq, repos=repolist)
+    df = cache.grabm(func=cmq, repos=repolist)
     while df is None:
         time.sleep(1.0)
-        df = cache.grabm(func=cq, repos=repolist)
+        df = cache.grabm(func=cmq, repos=repolist)
 
     start = time.perf_counter()
     logging.debug(f"{VIZ_ID}- START")
@@ -222,8 +222,11 @@ def process_data(df: pd.DataFrame, checks, num, start_date, end_date):
 
     # changes company name to match other fuzzy matches
     for x in range(0, len(df)):
+        # gets match values for the current row
         matches = df.iloc[x]["match"]
         for y in matches:
+            # for each match, change the name to its match and clear out match column as
+            # it will unnecessarily reapply changes
             df.loc[y, "company_name"] = df.iloc[x]["company_name"]
             df.loc[y, "match"] = ""
 
@@ -261,7 +264,8 @@ def fuzzy_match(df, name):
     """
     This function compares each row to all of the other values in the company_name column and
     outputs a list on if there is a fuzzy match between the different rows. This gives the values
-    necessary for the loop to change the company name if there is a match.
+    necessary for the loop to change the company name if there is a match. 70 is the match value
+    threshold for the partial ratio to be considered a match
     """
     matches = df.apply(lambda row: (fuzz.partial_ratio(row["company_name"], name) >= 70), axis=1)
     return [i for i, x in enumerate(matches) if x]

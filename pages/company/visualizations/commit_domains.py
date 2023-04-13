@@ -35,7 +35,8 @@ gc_commit_domains = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "This graph views the percent of each domain directly linked to the commit.\n\
+                            "This graph shows the proportions of email domains that contributors used to make commits.\n\
+                            e.g. johndoe@gmail.com as a commit author would contribute to the count of gmail.com once.\n\
                             NOTE: the domain might not respresent if it is done as an individual or company."
                         ),
                     ],
@@ -97,7 +98,12 @@ gc_commit_domains = dbc.Card(
                         ),
                         dbc.Row(
                             [
-                                html.Div(id=f"{PAGE}-SliderContainer-{VIZ_ID}"),
+                                dcc.DatePickerRange(
+                                    id=f"{PAGE}-date-picker-range-{VIZ_ID}",
+                                    min_date_allowed=dt.date(2005, 1, 1),
+                                    max_date_allowed=dt.date.today(),
+                                    clearable=True,
+                                ),
                             ],
                             align="center",
                         ),
@@ -120,37 +126,6 @@ def toggle_popover(n, is_open):
     return is_open
 
 
-@callback(
-    Output(f"{PAGE}-SliderContainer-{VIZ_ID}", "children"),
-    [
-        Input("repo-choices", "data"),
-    ],
-    # background=True,
-)
-def create_slider(repolist):
-    # wait for data to asynchronously download and become available.
-    cache = cm()
-    df = cache.grabm(func=cq, repos=repolist)
-    while df is None:
-        time.sleep(1.0)
-        df = cache.grabm(func=cq, repos=repolist)
-
-    # get date value for first contribution
-    df["author_timestamp"] = pd.to_datetime(df["author_timestamp"], utc=True)
-    df = df.sort_values(by="author_timestamp", axis=0, ascending=True)
-    base = df.iloc[0]["author_timestamp"]
-
-    date_picker = (
-        dcc.DatePickerRange(
-            id=f"{PAGE}-date-picker-range-{VIZ_ID}",
-            min_date_allowed=base,
-            max_date_allowed=dt.date.today(),
-            clearable=True,
-        ),
-    )
-    return date_picker
-
-
 # callback for Company Affiliation by Github Account Info graph
 @callback(
     Output(VIZ_ID, "figure"),
@@ -162,7 +137,7 @@ def create_slider(repolist):
         Input(f"{PAGE}-date-picker-range-{VIZ_ID}", "end_date"),
     ],
     background=True,
-    prevent_initial_call=True,
+    # prevent_initial_call=True,
 )
 def commit_domains_graph(repolist, checks, num, start_date, end_date):
 
@@ -182,9 +157,11 @@ def commit_domains_graph(repolist, checks, num, start_date, end_date):
         return nodata_graph
 
     # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
+    print("here 1")
     df = process_data(df, checks, num, start_date, end_date)
-
+    print("here 2")
     fig = create_figure(df)
+    print("here 3")
 
     logging.debug(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
@@ -195,7 +172,7 @@ def process_data(df: pd.DataFrame, checks, num, start_date, end_date):
     # convert to datetime objects rather than strings
     df["author_timestamp"] = pd.to_datetime(df["author_timestamp"], utc=True)
 
-    # order values chronologically by COLUMN_TO_SORT_BY date
+    # order values chronologically by author_timestamp date earliest to latest
     df = df.sort_values(by="author_timestamp", axis=0, ascending=True)
 
     # filter values based on date picker
@@ -216,17 +193,17 @@ def process_data(df: pd.DataFrame, checks, num, start_date, end_date):
     # creates df of domains and counts
     df = pd.DataFrame(email_domains, columns=["domains"]).value_counts().to_frame().reset_index()
 
-    df = df.rename(columns={0: "occurances"})
+    df = df.rename(columns={0: "occurrences"})
 
     # changes the name of the company if under a certain threshold
-    df.loc[df.occurances <= num, "domains"] = "Other"
+    df.loc[df.occurrences <= num, "domains"] = "Other"
 
     # groups others together for final counts
     df = (
-        df.groupby(by="domains")["occurances"]
+        df.groupby(by="domains")["occurrences"]
         .sum()
         .reset_index()
-        .sort_values(by=["occurances"], ascending=False)
+        .sort_values(by=["occurrences"], ascending=False)
         .reset_index(drop=True)
     )
 
@@ -242,7 +219,7 @@ def process_data(df: pd.DataFrame, checks, num, start_date, end_date):
 def create_figure(df: pd.DataFrame):
 
     # graph generation
-    fig = px.pie(df, names="domains", values="occurances", color_discrete_sequence=color_seq)
+    fig = px.pie(df, names="domains", values="occurrences", color_discrete_sequence=color_seq)
     fig.update_traces(
         textposition="inside",
         textinfo="percent+label",
