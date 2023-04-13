@@ -19,7 +19,6 @@ PAGE = "company"
 VIZ_ID = "commit-domains"
 
 paramter_1 = "company-contributions-required"
-paramter_2 = "checks"
 
 
 gc_commit_domains = dbc.Card(
@@ -58,30 +57,24 @@ gc_commit_domains = dbc.Card(
                                     width={"size": "auto"},
                                 ),
                                 dbc.Col(
-                                    dbc.Input(
-                                        id=f"{PAGE}-{paramter_1}-{VIZ_ID}",
-                                        type="number",
-                                        min=1,
-                                        max=100,
-                                        step=1,
-                                        value=10,
-                                        size="sm",
-                                    ),
+                                    [
+                                        dbc.Input(
+                                            id=f"{PAGE}-{paramter_1}-{VIZ_ID}",
+                                            type="number",
+                                            min=1,
+                                            max=100,
+                                            step=1,
+                                            value=10,
+                                            size="sm",
+                                        ),
+                                    ],
                                     className="me-2",
                                     width=2,
                                 ),
+                                # pads spacing in the card
                                 dbc.Col(
-                                    [
-                                        dbc.Checklist(
-                                            id=f"{PAGE}-{paramter_2}-{VIZ_ID}",
-                                            options=[
-                                                {"label": "Exclude Gmail", "value": "gmail"},
-                                                {"label": "Exclude Other", "value": "other"},
-                                            ],
-                                            value=[""],
-                                            inline=True,
-                                        ),
-                                    ]
+                                    [],
+                                    width=5,
                                 ),
                                 dbc.Col(
                                     dbc.Button(
@@ -131,7 +124,6 @@ def toggle_popover(n, is_open):
     Output(VIZ_ID, "figure"),
     [
         Input("repo-choices", "data"),
-        Input(f"{PAGE}-{paramter_2}-{VIZ_ID}", "value"),
         Input(f"{PAGE}-{paramter_1}-{VIZ_ID}", "value"),
         Input(f"{PAGE}-date-picker-range-{VIZ_ID}", "start_date"),
         Input(f"{PAGE}-date-picker-range-{VIZ_ID}", "end_date"),
@@ -139,7 +131,7 @@ def toggle_popover(n, is_open):
     background=True,
     # prevent_initial_call=True,
 )
-def commit_domains_graph(repolist, checks, num, start_date, end_date):
+def commit_domains_graph(repolist, num, start_date, end_date):
 
     # wait for data to asynchronously download and become available.
     cache = cm()
@@ -158,7 +150,7 @@ def commit_domains_graph(repolist, checks, num, start_date, end_date):
 
     # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
     print("here 1")
-    df = process_data(df, checks, num, start_date, end_date)
+    df = process_data(df, num, start_date, end_date)
     print("here 2")
     fig = create_figure(df)
     print("here 3")
@@ -167,7 +159,7 @@ def commit_domains_graph(repolist, checks, num, start_date, end_date):
     return fig
 
 
-def process_data(df: pd.DataFrame, checks, num, start_date, end_date):
+def process_data(df: pd.DataFrame, num, start_date, end_date):
 
     # convert to datetime objects rather than strings
     df["author_timestamp"] = pd.to_datetime(df["author_timestamp"], utc=True)
@@ -206,12 +198,6 @@ def process_data(df: pd.DataFrame, checks, num, start_date, end_date):
         .sort_values(by=["occurrences"], ascending=False)
         .reset_index(drop=True)
     )
-
-    # removes entries with gmail or other if checked
-    if "gmail" in checks:
-        df = df[df.domains != "gmail.com"]
-    if "other" in checks:
-        df = df[df.domains != "Other"]
 
     return df
 

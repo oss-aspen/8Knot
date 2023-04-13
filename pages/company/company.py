@@ -20,8 +20,8 @@ layout = dbc.Container(
     [
         dbc.Row(
             [
-                dbc.Col(gc_gh_company_affiliation, width=6),
                 dbc.Col(gc_unique_domains, width=6),
+                dbc.Col(gc_commit_domains, width=6),
             ],
             align="center",
             style={"marginBottom": ".5%"},
@@ -36,7 +36,7 @@ layout = dbc.Container(
         ),
         dbc.Row(
             [
-                dbc.Col(gc_commit_domains, width=6),
+                dbc.Col(gc_gh_company_affiliation, width=6),
                 # dbc.Col(gc_compay_core_contributors, width=6),
             ],
             align="center",

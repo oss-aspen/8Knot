@@ -19,7 +19,6 @@ PAGE = "company"
 VIZ_ID = "company-associated-activity"
 
 paramter_1 = "company-contributions-required"
-paramter_2 = "checks"
 
 
 gc_compay_associated_activity = dbc.Card(
@@ -70,18 +69,10 @@ gc_compay_associated_activity = dbc.Card(
                                     className="me-2",
                                     width=2,
                                 ),
+                                # pads spacing in the card
                                 dbc.Col(
-                                    [
-                                        dbc.Checklist(
-                                            id=f"{PAGE}-{paramter_2}-{VIZ_ID}",
-                                            options=[
-                                                {"label": "Exclude gmail", "value": "gmail"},
-                                                {"label": "Exclude Other", "value": "other"},
-                                            ],
-                                            value=[""],
-                                            inline=True,
-                                        ),
-                                    ]
+                                    [],
+                                    width=5,
                                 ),
                                 dbc.Col(
                                     dbc.Button(
@@ -98,7 +89,12 @@ gc_compay_associated_activity = dbc.Card(
                         ),
                         dbc.Row(
                             [
-                                html.Div(id=f"{PAGE}-SliderContainer-{VIZ_ID}"),
+                                dcc.DatePickerRange(
+                                    id=f"{PAGE}-date-picker-range-{VIZ_ID}",
+                                    min_date_allowed=dt.date(2005, 1, 1),
+                                    max_date_allowed=dt.date.today(),
+                                    clearable=True,
+                                ),
                             ],
                             align="center",
                         ),
@@ -121,51 +117,18 @@ def toggle_popover(n, is_open):
     return is_open
 
 
-@callback(
-    Output(f"{PAGE}-SliderContainer-{VIZ_ID}", "children"),
-    [
-        Input("repo-choices", "data"),
-    ],
-    # background=True,
-)
-def create_slider(repolist):
-    # wait for data to asynchronously download and become available.
-    cache = cm()
-    df = cache.grabm(func=cmq, repos=repolist)
-    while df is None:
-        time.sleep(1.0)
-        df = cache.grabm(func=cmq, repos=repolist)
-
-    # get date value for first contribution
-    df["created"] = pd.to_datetime(df["created"], utc=True)
-    df = df.sort_values(by="created", axis=0, ascending=True)
-    base = df.iloc[0]["created"]
-
-    date_picker = (
-        dcc.DatePickerRange(
-            id=f"{PAGE}-date-picker-range-{VIZ_ID}",
-            min_date_allowed=base,
-            max_date_allowed=dt.date.today(),
-            clearable=True,
-        ),
-    )
-    return date_picker
-
-
 # callback for Company Affiliation by Github Account Info graph
 @callback(
     Output(VIZ_ID, "figure"),
     [
         Input("repo-choices", "data"),
-        Input(f"{PAGE}-{paramter_2}-{VIZ_ID}", "value"),
         Input(f"{PAGE}-{paramter_1}-{VIZ_ID}", "value"),
         Input(f"{PAGE}-date-picker-range-{VIZ_ID}", "start_date"),
         Input(f"{PAGE}-date-picker-range-{VIZ_ID}", "end_date"),
     ],
     background=True,
-    prevent_initial_call=True,
 )
-def compay_associated_activity_graph(repolist, checks, num, start_date, end_date):
+def compay_associated_activity_graph(repolist, num, start_date, end_date):
 
     # wait for data to asynchronously download and become available.
     cache = cm()
@@ -183,7 +146,7 @@ def compay_associated_activity_graph(repolist, checks, num, start_date, end_date
         return nodata_graph
 
     # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
-    df = process_data(df, checks, num, start_date, end_date)
+    df = process_data(df, num, start_date, end_date)
 
     fig = create_figure(df)
 
@@ -191,7 +154,7 @@ def compay_associated_activity_graph(repolist, checks, num, start_date, end_date
     return fig
 
 
-def process_data(df: pd.DataFrame, checks, num, start_date, end_date):
+def process_data(df: pd.DataFrame, num, start_date, end_date):
 
     # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
@@ -230,12 +193,6 @@ def process_data(df: pd.DataFrame, checks, num, start_date, end_date):
         .sort_values(by=["occurences"], ascending=False)
         .reset_index(drop=True)
     )
-
-    # removes entries with gmail or other if checked
-    if "gmail" in checks:
-        df = df[df.domains != "gmail.com"]
-    if "other" in checks:
-        df = df[df.domains != "Other"]
 
     return df
 
