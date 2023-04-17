@@ -64,9 +64,19 @@ gc_unique_domains = dbc.Card(
                                     className="me-2",
                                     width=2,
                                 ),
+                            ],
+                            align="center",
+                        ),
+                        dbc.Row(
+                            [
                                 dbc.Col(
-                                    [],
-                                    width=5,
+                                    dcc.DatePickerRange(
+                                        id=f"{PAGE}-date-picker-range-{VIZ_ID}",
+                                        min_date_allowed=dt.date(2005, 1, 1),
+                                        max_date_allowed=dt.date.today(),
+                                        clearable=True,
+                                    ),
+                                    width="auto",
                                 ),
                                 dbc.Col(
                                     dbc.Button(
@@ -80,17 +90,7 @@ gc_unique_domains = dbc.Card(
                                 ),
                             ],
                             align="center",
-                        ),
-                        dbc.Row(
-                            [
-                                dcc.DatePickerRange(
-                                    id=f"{PAGE}-date-picker-range-{VIZ_ID}",
-                                    min_date_allowed=dt.date(2005, 1, 1),
-                                    max_date_allowed=dt.date.today(),
-                                    clearable=True,
-                                ),
-                            ],
-                            align="center",
+                            justify="between",
                         ),
                     ]
                 ),
@@ -198,7 +198,7 @@ def create_figure(df: pd.DataFrame):
     fig.update_traces(
         textposition="inside",
         textinfo="percent+label",
-        hovertemplate="%{label} <br>Contribution: %{value}<br><extra></extra>",
+        hovertemplate="%{label} <br>Contributions: %{value}<br><extra></extra>",
     )
 
     return fig

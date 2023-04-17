@@ -73,25 +73,6 @@ gc_compay_core_contributors = dbc.Card(
                                     className="me-2",
                                     width=2,
                                 ),
-                                dbc.Col(
-                                    [],
-                                    width=5,
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"{PAGE}-popover-target-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
-                                ),
-                            ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
                                 dbc.Label(
                                     "Core Contributors Required:",
                                     html_for=f"{PAGE}-{paramter_3}-{VIZ_ID}",
@@ -115,14 +96,28 @@ gc_compay_core_contributors = dbc.Card(
                         ),
                         dbc.Row(
                             [
-                                dcc.DatePickerRange(
-                                    id=f"{PAGE}-date-picker-range-{VIZ_ID}",
-                                    min_date_allowed=dt.date(2005, 1, 1),
-                                    max_date_allowed=dt.date.today(),
-                                    clearable=True,
+                                dbc.Col(
+                                    dcc.DatePickerRange(
+                                        id=f"{PAGE}-date-picker-range-{VIZ_ID}",
+                                        min_date_allowed=dt.date(2005, 1, 1),
+                                        max_date_allowed=dt.date.today(),
+                                        clearable=True,
+                                    ),
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    dbc.Button(
+                                        "About Graph",
+                                        id=f"{PAGE}-popover-target-{VIZ_ID}",
+                                        color="secondary",
+                                        size="sm",
+                                    ),
+                                    width="auto",
+                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
                             align="center",
+                            justify="between",
                         ),
                     ]
                 ),
@@ -213,17 +208,17 @@ def process_data(df: pd.DataFrame, contributions, contributors, start_date, end_
     # creates df of domains and counts
     df = pd.DataFrame(email_domains, columns=["domains"]).value_counts().to_frame().reset_index()
 
-    df = df.rename(columns={0: "occurences"})
+    df = df.rename(columns={0: "contributors"})
 
     # changes the name of the company if under a certain threshold
-    df.loc[df.occurences <= contributors, "domains"] = "Other"
+    df.loc[df.contributors <= contributors, "domains"] = "Other"
 
     # groups others together for final counts
     df = (
-        df.groupby(by="domains")["occurences"]
+        df.groupby(by="domains")["contributors"]
         .sum()
         .reset_index()
-        .sort_values(by=["occurences"], ascending=False)
+        .sort_values(by=["contributors"], ascending=False)
         .reset_index(drop=True)
     )
 
@@ -233,11 +228,17 @@ def process_data(df: pd.DataFrame, contributions, contributors, start_date, end_
 def create_figure(df: pd.DataFrame):
 
     # graph generation
-    fig = px.pie(df, names="domains", values="occurences", color_discrete_sequence=color_seq)
+    fig = px.bar(df, x="domains", y="contributors", color_discrete_sequence=color_seq)
+    fig.update_xaxes(rangeslider_visible=True, range=[-0.5, 15])
+    fig.update_layout(
+        xaxis_title="Domains",
+        yaxis_title="Core Contributors",
+        bargroupgap=0.1,
+        margin_b=40,
+        font=dict(size=14),
+    )
     fig.update_traces(
-        textposition="inside",
-        textinfo="percent+label",
-        hovertemplate="%{label} <br>Contribution: %{value}<br><extra></extra>",
+        hovertemplate="%{label} <br>Contributors: %{value}<br><extra></extra>",
     )
 
     return fig

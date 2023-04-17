@@ -71,10 +71,19 @@ gc_commit_domains = dbc.Card(
                                     className="me-2",
                                     width=2,
                                 ),
-                                # pads spacing in the card
+                            ],
+                            align="center",
+                        ),
+                        dbc.Row(
+                            [
                                 dbc.Col(
-                                    [],
-                                    width=5,
+                                    dcc.DatePickerRange(
+                                        id=f"{PAGE}-date-picker-range-{VIZ_ID}",
+                                        min_date_allowed=dt.date(2005, 1, 1),
+                                        max_date_allowed=dt.date.today(),
+                                        clearable=True,
+                                    ),
+                                    width="auto",
                                 ),
                                 dbc.Col(
                                     dbc.Button(
@@ -88,17 +97,7 @@ gc_commit_domains = dbc.Card(
                                 ),
                             ],
                             align="center",
-                        ),
-                        dbc.Row(
-                            [
-                                dcc.DatePickerRange(
-                                    id=f"{PAGE}-date-picker-range-{VIZ_ID}",
-                                    min_date_allowed=dt.date(2005, 1, 1),
-                                    max_date_allowed=dt.date.today(),
-                                    clearable=True,
-                                ),
-                            ],
-                            align="center",
+                            justify="between",
                         ),
                     ]
                 ),
@@ -149,11 +148,9 @@ def commit_domains_graph(repolist, num, start_date, end_date):
         return nodata_graph
 
     # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
-    print("here 1")
     df = process_data(df, num, start_date, end_date)
-    print("here 2")
+
     fig = create_figure(df)
-    print("here 3")
 
     logging.debug(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
@@ -209,7 +206,7 @@ def create_figure(df: pd.DataFrame):
     fig.update_traces(
         textposition="inside",
         textinfo="percent+label",
-        hovertemplate="%{label} <br>Contribution: %{value}<br><extra></extra>",
+        hovertemplate="%{label} <br>Commits: %{value}<br><extra></extra>",
     )
 
     return fig

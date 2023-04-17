@@ -69,10 +69,19 @@ gc_compay_associated_activity = dbc.Card(
                                     className="me-2",
                                     width=2,
                                 ),
-                                # pads spacing in the card
+                            ],
+                            align="center",
+                        ),
+                        dbc.Row(
+                            [
                                 dbc.Col(
-                                    [],
-                                    width=5,
+                                    dcc.DatePickerRange(
+                                        id=f"{PAGE}-date-picker-range-{VIZ_ID}",
+                                        min_date_allowed=dt.date(2005, 1, 1),
+                                        max_date_allowed=dt.date.today(),
+                                        clearable=True,
+                                    ),
+                                    width="auto",
                                 ),
                                 dbc.Col(
                                     dbc.Button(
@@ -86,17 +95,7 @@ gc_compay_associated_activity = dbc.Card(
                                 ),
                             ],
                             align="center",
-                        ),
-                        dbc.Row(
-                            [
-                                dcc.DatePickerRange(
-                                    id=f"{PAGE}-date-picker-range-{VIZ_ID}",
-                                    min_date_allowed=dt.date(2005, 1, 1),
-                                    max_date_allowed=dt.date.today(),
-                                    clearable=True,
-                                ),
-                            ],
-                            align="center",
+                            justify="between",
                         ),
                     ]
                 ),
@@ -200,11 +199,17 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
 def create_figure(df: pd.DataFrame):
 
     # graph generation
-    fig = px.pie(df, names="domains", values="occurences", color_discrete_sequence=color_seq)
+    fig = px.bar(df, x="domains", y="occurences", color_discrete_sequence=color_seq)
+    fig.update_xaxes(rangeslider_visible=True, range=[-0.5, 15])
+    fig.update_layout(
+        xaxis_title="Domains",
+        yaxis_title="Contributions",
+        bargroupgap=0.1,
+        margin_b=40,
+        font=dict(size=14),
+    )
     fig.update_traces(
-        textposition="inside",
-        textinfo="percent+label",
-        hovertemplate="%{label} <br>Contribution: %{value}<br><extra></extra>",
+        hovertemplate="%{label} <br>Contributions: %{value}<br><extra></extra>",
     )
 
     return fig
