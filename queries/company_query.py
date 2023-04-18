@@ -13,10 +13,10 @@ import io
     retry_kwargs={"max_retries": 5},
     retry_jitter=True,
 )
-def commits_query(self, dbmc, repos):
+def company_query(self, dbmc, repos):
     """
     (Worker Query)
-    Executes SQL query against Augur database for commit data.
+    Executes SQL query against Augur database for company affiliation data.
 
     Args:
     -----
@@ -28,40 +28,40 @@ def commits_query(self, dbmc, repos):
     --------
         dict: Results from SQL query, interpreted from pd.to_dict('records')
     """
-    logging.debug("COMMITS_DATA_QUERY - START")
+    logging.debug("COMPANY_DATA_QUERY - START")
 
     if len(repos) == 0:
         return None
 
-    # commenting-outunused query components. only need the repo_id and the
-    # authorship date for our current queries. remove the '--' to re-add
-    # the now-removed values.
     query_string = f"""
                     SELECT
-                        distinct
-                        r.repo_id AS id,
-                        -- r.repo_name,
-                        c.cmt_commit_hash AS commits,
-                        -- c.cmt_id AS file,
-                        -- c.cmt_added AS lines_added,
-                        -- c.cmt_removed AS lines_removed,
-                        c.cmt_author_email AS author_email,
-                        c.cmt_author_date AS date,
-                        c.cmt_author_timestamp AS author_timestamp,
-                        c.cmt_committer_timestamp AS committer_timestamp
-
+                        c.cntrb_id,
+                        c.created_at AS created,
+                        c.repo_id AS id,
+                        c.login,
+                        c.action,
+                        c.rank,
+                        con.cntrb_company,
+                        string_agg(ca.alias_email, ' , ' order by ca.alias_email) as email_list
                     FROM
-                        repo r
-                    JOIN commits c
-                        ON r.repo_id = c.repo_id
+                        explorer_contributor_actions c
+                    JOIN contributors_aliases ca
+                        ON c.cntrb_id = ca.cntrb_id
+                    JOIN contributors con
+                        ON c.cntrb_id = con.cntrb_id
                     WHERE
-                        c.repo_id in ({str(repos)[1:-1]})
+                        c.repo_id in({str(repos)[1:-1]})
+                    GROUP BY c.cntrb_id, c.created_at, c.repo_id, c.login, c.action, c.rank, con.cntrb_company
                     """
-
     # create database connection, load config, execute query above.
     dbm = AugurManager()
     dbm.load_pconfig(dbmc)
-    df_commits = dbm.run_query(query_string)
+    df = dbm.run_query(query_string)
+
+    df["cntrb_id"] = df["cntrb_id"].astype(str)
+    df = df.sort_values(by="created")
+    df = df.reset_index()
+    df.drop("index", axis=1, inplace=True)
 
     # break apart returned data per repo
     # and temporarily store in List to be
@@ -70,7 +70,7 @@ def commits_query(self, dbmc, repos):
     for r in repos:
         # convert series to a dataframe
         # once we've stored the data by ID we no longer need the column.
-        c_df = pd.DataFrame(df_commits.loc[df_commits["id"] == r].drop(columns=["id"])).reset_index(drop=True)
+        c_df = pd.DataFrame(df.loc[df["id"] == r].drop(columns=["id"])).reset_index(drop=True)
 
         # bytes buffer to be written to
         b = io.BytesIO()
@@ -85,17 +85,17 @@ def commits_query(self, dbmc, repos):
         bs = b.read()
         pic.append(bs)
 
-    del df_commits
+    del df
 
     # store results in Redis
     cm_o = cm()
 
     # 'ack' is a boolean of whether data was set correctly or not.
     ack = cm_o.setm(
-        func=commits_query,
+        func=company_query,
         repos=repos,
         datas=pic,
     )
 
-    logging.debug("COMMITS_DATA_QUERY - END")
+    logging.debug("COMPANY_DATA_QUERY - END")
     return ack

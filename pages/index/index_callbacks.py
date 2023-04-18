@@ -14,10 +14,11 @@ from queries.issues_query import issues_query as iq
 from queries.commits_query import commits_query as cq
 from queries.contributors_query import contributors_query as cnq
 from queries.prs_query import prs_query as prq
+from queries.company_query import company_query as cmq
 
 
 # list of queries to be run
-QUERIES = [iq, cq, cnq, prq]
+QUERIES = [iq, cq, cnq, prq, cmq]
 
 # check if login has been enabled in config
 login_enabled = os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True"
