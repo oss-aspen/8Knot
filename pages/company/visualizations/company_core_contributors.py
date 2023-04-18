@@ -190,7 +190,8 @@ def process_data(df: pd.DataFrame, contributions, contributors, start_date, end_
     if end_date is not None:
         df = df[df.created <= end_date]
 
-    # groups contributions by countributor id and counts
+    # groups contributions by countributor id and counts, created column now hold the number
+    # of contributions for its respective contributor
     df = df.groupby(["cntrb_id", "email_list"], as_index=False)[["created"]].count()
 
     # filters out contributors that dont meet the core contribution threshhold

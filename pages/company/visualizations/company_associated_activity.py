@@ -128,6 +128,18 @@ def toggle_popover(n, is_open):
     background=True,
 )
 def compay_associated_activity_graph(repolist, num, start_date, end_date):
+    """Each contribution is associated with a contributor. That contributor can be associated with
+
+    more than one different email. Hence each contribution is associated with all of the emails that a contributor has historically used.
+
+    We don't always know which email (and therefore which organization) a contributor is affiliated with at contribution
+
+    time, so we choose to count all of their possible affiliations via their email list. e.g. if "Jane Doe" is associated with "gmail.com"
+
+    and "yahoo.com" and they have 5 contributions, "gmail.com" and "yahoo.com" would be counted 5 times each. We assume that relatively few people
+
+    will have many emails. We acknowledge that this will almost always contribute to an overcount but will never undercount."
+    """
 
     # wait for data to asynchronously download and become available.
     cache = cm()
@@ -179,17 +191,17 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
     # creates df of domains and counts
     df = pd.DataFrame(email_domains, columns=["domains"]).value_counts().to_frame().reset_index()
 
-    df = df.rename(columns={0: "occurences"})
+    df = df.rename(columns={0: "occurrences"})
 
     # changes the name of the company if under a certain threshold
-    df.loc[df.occurences <= num, "domains"] = "Other"
+    df.loc[df.occurrences <= num, "domains"] = "Other"
 
     # groups others together for final counts
     df = (
-        df.groupby(by="domains")["occurences"]
+        df.groupby(by="domains")["occurrences"]
         .sum()
         .reset_index()
-        .sort_values(by=["occurences"], ascending=False)
+        .sort_values(by=["occurrences"], ascending=False)
         .reset_index(drop=True)
     )
 
@@ -199,7 +211,7 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
 def create_figure(df: pd.DataFrame):
 
     # graph generation
-    fig = px.bar(df, x="domains", y="occurences", color_discrete_sequence=color_seq)
+    fig = px.bar(df, x="domains", y="occurrences", color_discrete_sequence=color_seq)
     fig.update_xaxes(rangeslider_visible=True, range=[-0.5, 15])
     fig.update_layout(
         xaxis_title="Domains",

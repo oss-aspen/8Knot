@@ -157,6 +157,7 @@ def commit_domains_graph(repolist, num, start_date, end_date):
 
 
 def process_data(df: pd.DataFrame, num, start_date, end_date):
+    # TODO: create docstring
 
     # convert to datetime objects rather than strings
     df["author_timestamp"] = pd.to_datetime(df["author_timestamp"], utc=True)
@@ -171,7 +172,7 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
         df = df[df.author_timestamp <= end_date]
 
     # creates list of emails for each contribution and flattens list result
-    emails = df.committer_email.tolist()
+    emails = df.author_email.tolist()
 
     # remove any entries not in email format
     emails = [x for x in emails if "@" in x]
