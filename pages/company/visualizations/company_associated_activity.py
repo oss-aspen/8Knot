@@ -21,7 +21,7 @@ VIZ_ID = "company-associated-activity"
 paramter_1 = "company-contributions-required"
 
 
-gc_compay_associated_activity = dbc.Card(
+gc_company_associated_activity = dbc.Card(
     [
         dbc.CardBody(
             [

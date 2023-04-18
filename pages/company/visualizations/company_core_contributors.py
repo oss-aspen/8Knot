@@ -22,7 +22,7 @@ paramter_1 = "core-contributions-required"
 paramter_3 = "core-contributors-required"
 
 
-gc_compay_core_contributors = dbc.Card(
+gc_company_core_contributors = dbc.Card(
     [
         dbc.CardBody(
             [
