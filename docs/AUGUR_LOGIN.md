@@ -7,6 +7,25 @@ With this feature, users can:
 1. Create an account on an Augur database frontend page.
 2. Organize repos and orgs into named groups in Augur, specific to their user account.
 3. Log in to to Augur via 8Knot and see aggregate visualizations of their named groups.
+4. See the groups created by the Augur user who registered the 8Knot application with the Augur frontend.
+
+
+## **Roles**
+---
+
+There are two personas required for this integration:
+
+1. The application owner (Admin).
+2. The application deployer (Dev). 
+
+The job of the application owner (Admin) is to:
+1. log into the Augur front-end with credentials intended for Admin-level access
+2. create repo groups in their profile for the consumption of other users logging into the Augur frontend via the same 8Knot instance
+3. provide the 'client_secret' and 'application_id' values to the Dev role.
+
+In turn, the job of the application deployer (Dev) is to:
+1. receive the 'client_secret' and 'application_id' credentials from the Admin
+2. use those credentials to link 8Knot instance to Augur frontend as described below.
 
 ## **Setup 8Knot to enable Login and user groups**
 ---
@@ -15,12 +34,12 @@ With this feature, users can:
    - Ports 8050 (*Dash*) and 6379 (*Redis*) are assumed to be available. If this isn't possible, modifications to the docker-compose.yml file may be necessary.
    - Inter-pod name resolution is done with Docker network's DNS.
 
-2. Create an application in Augur front-end
-   - Navigate to your Augur instance's front-end by URL.
-   - Create an Augur account.
-   - Create an application in your account to get an *app_id* and a *client_secret* to register your 8Knot instance with Augur. You can use the url [http://0.0.0.0:8050/] if you're developing locally.
+2. Create an application in Augur front-end (Admin)
+   - Navigate to Augur instance's front-end by URL.
+   - Create an Admin-level Augur account.
+   - Create an application for Admin account to get an *app_id* and a *client_secret* to register your 8Knot instance with Augur. You can use the url [http://0.0.0.0:8050/] if you're developing locally.
 
-3. Prepare client environment
+3. Prepare client environment (Dev)
    - App will communicate w/ Augur front-end via HTTP and w/ its database Augur instance via direct connection.
      - The following environment variables will need to be available to the application at startup in an 'env.list' file at the same directory-level at 'app.py':
        - AUGUR_DATABASE=
