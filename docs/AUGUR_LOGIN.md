@@ -13,19 +13,26 @@ With this feature, users can:
 ## **Roles**
 ---
 
-There are two personas required for this integration:
+There are three personas required for this integration:
 
 1. The application owner (Admin).
-2. The application deployer (Dev). 
+2. The application deployer (Dep). 
+3. The application user (User).
 
 The job of the application owner (Admin) is to:
-1. log into the Augur front-end with credentials intended for Admin-level access
-2. create repo groups in their profile for the consumption of other users logging into the Augur frontend via the same 8Knot instance
-3. provide the 'client_secret' and 'application_id' values to the Dev role.
+1. Log into the Augur front-end with credentials intended for Admin-level access
+2. Create repo groups in their profile for the consumption of other users logging into the Augur frontend via the same 8Knot instance
+3. Provide the 'client_secret' and 'application_id' values to the Dep role
 
-In turn, the job of the application deployer (Dev) is to:
-1. receive the 'client_secret' and 'application_id' credentials from the Admin
-2. use those credentials to link 8Knot instance to Augur frontend as described below.
+In turn, the job of the application deployer (Dep) is to:
+1. Receive the 'client_secret' and 'application_id' credentials from the Admin
+2. Use those credentials to link 8Knot instance to Augur frontend as described below
+
+Finally, the job of the application user (User) is to:
+1. Access the deployed application
+2. Click the 'Log In' button which will redirect to the Augur front end
+3. Create their own groups of repos
+4. Navigate back to the 8Knot app they were using and refresh the app
 
 ## **Setup 8Knot to enable Login and user groups**
 ---
