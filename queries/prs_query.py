@@ -5,6 +5,8 @@ from app import celery_app
 from cache_manager.cache_manager import CacheManager as cm
 import io
 
+QUERY_NAME = "PR"
+
 
 @celery_app.task(
     bind=True,
@@ -28,7 +30,7 @@ def prs_query(self, dbmc, repos):
     --------
         dict: Results from SQL query, interpreted from pd.to_dict('records')
     """
-    logging.debug("PR_DATA_QUERY - START")
+    logging.debug(f"{QUERY_NAME}_DATA_QUERY - START")
 
     if len(repos) == 0:
         return None
@@ -53,17 +55,12 @@ def prs_query(self, dbmc, repos):
     # create database connection, load config, execute query above.
     dbm = AugurManager()
     dbm.load_pconfig(dbmc)
-    df_pr = dbm.run_query(query_string)
+    df = dbm.run_query(query_string)
 
     # sort by the date created
-    df_pr = df_pr.sort_values(by="created")
-
-    # convert to datetime objects
-    df_pr["created"] = pd.to_datetime(df_pr["created"], utc=True)
-    df_pr["merged"] = pd.to_datetime(df_pr["merged"], utc=True)
-    df_pr["closed"] = pd.to_datetime(df_pr["closed"], utc=True)
-    df_pr = df_pr.reset_index()
-    df_pr.drop("index", axis=1, inplace=True)
+    df = df.sort_values(by="created")
+    df = df.reset_index()
+    df.drop("index", axis=1, inplace=True)
 
     # break apart returned data per repo
     # and temporarily store in List to be
@@ -71,7 +68,7 @@ def prs_query(self, dbmc, repos):
     pic = []
     for i, r in enumerate(repos):
         # convert series to a dataframe
-        c_df = pd.DataFrame(df_pr.loc[df_pr["id"] == r]).reset_index(drop=True)
+        c_df = pd.DataFrame(df.loc[df["id"] == r]).reset_index(drop=True)
 
         # bytes buffer to be written to
         b = io.BytesIO()
@@ -86,7 +83,7 @@ def prs_query(self, dbmc, repos):
         bs = b.read()
         pic.append(bs)
 
-    del df_pr
+    del df
 
     # store results in Redis
     cm_o = cm()
@@ -98,5 +95,5 @@ def prs_query(self, dbmc, repos):
         datas=pic,
     )
 
-    logging.debug("PR_DATA_QUERY - END")
+    logging.debug(f"{QUERY_NAME}_DATA_QUERY - END")
     return ack
