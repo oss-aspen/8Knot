@@ -6,7 +6,7 @@ import warnings
 # import visualization cards
 from .visualizations.contrib_drive_repeat import gc_contrib_drive_repeat
 from .visualizations.first_time_contributions import gc_first_time_contributions
-from .visualizations.contributors_over_time import gc_contributors_over_time
+from .visualizations.contributors_types_over_time import gc_contributors_over_time
 from .visualizations.contrib_activity_cycle import gc_contrib_activity_cycle
 
 warnings.filterwarnings("ignore")

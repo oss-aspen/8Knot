@@ -18,10 +18,6 @@ import datetime as dt
 PAGE = "company"
 VIZ_ID = "company-core-contributors"
 
-paramter_1 = "core-contributions-required"
-paramter_3 = "core-contributors-required"
-
-
 gc_company_core_contributors = dbc.Card(
     [
         dbc.CardBody(
@@ -49,7 +45,7 @@ gc_company_core_contributors = dbc.Card(
                     is_open=False,
                 ),
                 dcc.Loading(
-                    dcc.Graph(id=VIZ_ID),
+                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
                 dbc.Form(
                     [
@@ -57,12 +53,12 @@ gc_company_core_contributors = dbc.Card(
                             [
                                 dbc.Label(
                                     "Contributions Required:",
-                                    html_for=f"{PAGE}-{paramter_1}-{VIZ_ID}",
+                                    html_for=f"{PAGE}-contributions_required-{VIZ_ID}",
                                     width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     dbc.Input(
-                                        id=f"{PAGE}-{paramter_1}-{VIZ_ID}",
+                                        id=f"{PAGE}-contributions_required-{VIZ_ID}",
                                         type="number",
                                         min=1,
                                         max=100,
@@ -75,12 +71,12 @@ gc_company_core_contributors = dbc.Card(
                                 ),
                                 dbc.Label(
                                     "Core Contributors Required:",
-                                    html_for=f"{PAGE}-{paramter_3}-{VIZ_ID}",
+                                    html_for=f"{PAGE}-contributors_required-{VIZ_ID}",
                                     width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     dbc.Input(
-                                        id=f"{PAGE}-{paramter_3}-{VIZ_ID}",
+                                        id=f"{PAGE}-contributors_required-{VIZ_ID}",
                                         type="number",
                                         min=1,
                                         max=50,
@@ -140,11 +136,11 @@ def toggle_popover(n, is_open):
 
 # callback for Company Affiliation by Github Account Info graph
 @callback(
-    Output(VIZ_ID, "figure"),
+    Output(f"{PAGE}-{VIZ_ID}", "figure"),
     [
         Input("repo-choices", "data"),
-        Input(f"{PAGE}-{paramter_1}-{VIZ_ID}", "value"),
-        Input(f"{PAGE}-{paramter_3}-{VIZ_ID}", "value"),
+        Input(f"{PAGE}-contributions_required-{VIZ_ID}", "value"),
+        Input(f"{PAGE}-contributors_required-{VIZ_ID}", "value"),
         Input(f"{PAGE}-date-picker-range-{VIZ_ID}", "start_date"),
         Input(f"{PAGE}-date-picker-range-{VIZ_ID}", "end_date"),
     ],

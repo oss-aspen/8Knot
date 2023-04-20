@@ -16,6 +16,10 @@ from cache_manager.cache_manager import CacheManager as cm
 import io
 import time
 
+PAGE = "overview"
+VIZ_ID = "issue-staleness"
+
+
 gc_issue_staleness = dbc.Card(
     [
         dbc.CardBody(
@@ -34,13 +38,13 @@ gc_issue_staleness = dbc.Card(
                             staying idly open compared to your communities normal activity standards."
                         ),
                     ],
-                    id="overview-popover-is",
-                    target="overview-popover-target-is",  # needs to be the same as dbc.Button id
+                    id=f"{PAGE}-popover-{VIZ_ID}",
+                    target=f"{PAGE}-popover-target-{VIZ_ID}",
                     placement="top",
                     is_open=False,
                 ),
                 dcc.Loading(
-                    dcc.Graph(id="issue_staleness"),
+                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
                 dbc.Form(
                     [
@@ -48,12 +52,12 @@ gc_issue_staleness = dbc.Card(
                             [
                                 dbc.Label(
                                     "Days Until Staling:",
-                                    html_for="i_staling_days",
+                                    html_for=f"{PAGE}-staling_days-{VIZ_ID}",
                                     width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     dbc.Input(
-                                        id="i_staling_days",
+                                        id=f"{PAGE}-staling_days-{VIZ_ID}",
                                         type="number",
                                         min=1,
                                         max=120,
@@ -66,12 +70,12 @@ gc_issue_staleness = dbc.Card(
                                 ),
                                 dbc.Label(
                                     "Days Until Stale:",
-                                    html_for="i_stale_days",
+                                    html_for=f"{PAGE}-stale_days-{VIZ_ID}",
                                     width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     dbc.Input(
-                                        id="i_stale_days",
+                                        id=f"{PAGE}-stale_days-{VIZ_ID}",
                                         type="number",
                                         min=1,
                                         max=120,
@@ -84,7 +88,7 @@ gc_issue_staleness = dbc.Card(
                                 ),
                                 dbc.Alert(
                                     children="Please ensure that 'Days Until Staling' is less than 'Days Until Stale'",
-                                    id="issue_staling_stale_check_alert",
+                                    id=f"{PAGE}-check_alert-{VIZ_ID}",
                                     dismissable=True,
                                     fade=False,
                                     is_open=False,
@@ -97,13 +101,13 @@ gc_issue_staleness = dbc.Card(
                             [
                                 dbc.Label(
                                     "Date Interval:",
-                                    html_for="issue-staleness-interval",
+                                    html_for=f"{PAGE}-date_interval-{VIZ_ID}",
                                     width="auto",
                                 ),
                                 dbc.Col(
                                     [
                                         dbc.RadioItems(
-                                            id="issue-staleness-interval",
+                                            id=f"{PAGE}-date_interval-{VIZ_ID}",
                                             options=[
                                                 {"label": "Trend", "value": "D"},
                                                 {"label": "Month", "value": "M"},
@@ -117,7 +121,7 @@ gc_issue_staleness = dbc.Card(
                                 dbc.Col(
                                     dbc.Button(
                                         "About Graph",
-                                        id="overview-popover-target-is",
+                                        id=f"{PAGE}-popover-target-{VIZ_ID}",
                                         color="secondary",
                                         size="sm",
                                     ),
@@ -136,24 +140,24 @@ gc_issue_staleness = dbc.Card(
 
 # callback for graph info popover
 @callback(
-    Output("overview-popover-is", "is_open"),
-    [Input("overview-popover-target-is", "n_clicks")],
-    [State("overview-popover-is", "is_open")],
+    Output(f"{PAGE}-popover-{VIZ_ID}", "is_open"),
+    [Input(f"{PAGE}-popover-target-{VIZ_ID}", "n_clicks")],
+    [State(f"{PAGE}-popover-{VIZ_ID}", "is_open")],
 )
-def toggle_popover_issues(n, is_open):
+def toggle_popover(n, is_open):
     if n:
         return not is_open
     return is_open
 
 
 @callback(
-    Output("issue_staleness", "figure"),
-    Output("issue_staling_stale_check_alert", "is_open"),
+    Output(f"{PAGE}-{VIZ_ID}", "figure"),
+    Output(f"{PAGE}-check_alert-{VIZ_ID}", "is_open"),
     [
         Input("repo-choices", "data"),
-        Input("issue-staleness-interval", "value"),
-        Input("i_staling_days", "value"),
-        Input("i_stale_days", "value"),
+        Input(f"{PAGE}-date_interval-{VIZ_ID}", "value"),
+        Input(f"{PAGE}-staling_days-{VIZ_ID}", "value"),
+        Input(f"{PAGE}-stale_days-{VIZ_ID}", "value"),
     ],
     background=True,
 )

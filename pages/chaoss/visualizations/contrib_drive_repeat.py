@@ -13,12 +13,15 @@ import time
 import io
 from cache_manager.cache_manager import CacheManager as cm
 
+PAGE = "chaoss"
+VIZ_ID = "contrib-drive-repeat"
+
 gc_contrib_drive_repeat = dbc.Card(
     [
         dbc.CardBody(
             [
                 html.H3(
-                    id="chaoss-graph-title-1",
+                    id=f"{PAGE}-graph_title-{VIZ_ID}",
                     className="card-title",
                     style={"textAlign": "center"},
                 ),
@@ -31,13 +34,13 @@ gc_contrib_drive_repeat = dbc.Card(
                             have the critera of how many contributions it takes for a member to be a repeat contributor."
                         ),
                     ],
-                    id="chaoss-popover-1",
-                    target="chaoss-popover-target-1",  # needs to be the same as dbc.Button id
+                    id=f"{PAGE}-popover-{VIZ_ID}",
+                    target=f"{PAGE}-popover-target-{VIZ_ID}",
                     placement="top",
                     is_open=False,
                 ),
                 dcc.Loading(
-                    dcc.Graph(id="cont-drive-repeat"),
+                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
                 dbc.Form(
                     [
@@ -45,12 +48,12 @@ gc_contrib_drive_repeat = dbc.Card(
                             [
                                 dbc.Label(
                                     "Contributions Required:",
-                                    html_for="num_contributions",
+                                    html_for=f"{PAGE}-contributions_required-{VIZ_ID}",
                                     width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     dbc.Input(
-                                        id="num_contributions",
+                                        id=f"{PAGE}-contributions_required-{VIZ_ID}",
                                         type="number",
                                         min=1,
                                         max=15,
@@ -68,12 +71,12 @@ gc_contrib_drive_repeat = dbc.Card(
                             [
                                 dbc.Label(
                                     "Graph View:",
-                                    html_for="drive-repeat",
+                                    html_for=f"{PAGE}-graph_view-{VIZ_ID}",
                                     width="auto",
                                 ),
                                 dbc.Col(
                                     dbc.RadioItems(
-                                        id="drive-repeat",
+                                        id=f"{PAGE}-graph_view-{VIZ_ID}",
                                         options=[
                                             {
                                                 "label": "Repeat",
@@ -92,7 +95,7 @@ gc_contrib_drive_repeat = dbc.Card(
                                 dbc.Col(
                                     dbc.Button(
                                         "About Graph",
-                                        id="chaoss-popover-target-1",
+                                        id=f"{PAGE}-popover-target-{VIZ_ID}",
                                         color="secondary",
                                         size="sm",
                                     ),
@@ -107,14 +110,13 @@ gc_contrib_drive_repeat = dbc.Card(
             ]
         ),
     ],
-    # color="light",
 )
 
 # callback for graph info popover
 @callback(
-    Output("chaoss-popover-1", "is_open"),
-    [Input("chaoss-popover-target-1", "n_clicks")],
-    [State("chaoss-popover-1", "is_open")],
+    Output(f"{PAGE}-popover-{VIZ_ID}", "is_open"),
+    [Input(f"{PAGE}-popover-target-{VIZ_ID}", "n_clicks")],
+    [State(f"{PAGE}-popover-{VIZ_ID}", "is_open")],
 )
 def toggle_popover_1(n, is_open):
     if n:
@@ -123,7 +125,7 @@ def toggle_popover_1(n, is_open):
 
 
 # callback for dynamically changing the graph title
-@callback(Output("chaoss-graph-title-1", "children"), Input("drive-repeat", "value"))
+@callback(Output(f"{PAGE}-graph_title-{VIZ_ID}", "children"), Input(f"{PAGE}-graph_view-{VIZ_ID}", "value"))
 def graph_title(view):
     title = ""
     if view == "drive":
@@ -135,11 +137,11 @@ def graph_title(view):
 
 # call back for drive by vs commits over time graph
 @callback(
-    Output("cont-drive-repeat", "figure"),
+    Output(f"{PAGE}-{VIZ_ID}", "figure"),
     [
         Input("repo-choices", "data"),
-        Input("num_contributions", "value"),
-        Input("drive-repeat", "value"),
+        Input(f"{PAGE}-contributions_required-{VIZ_ID}", "value"),
+        Input(f"{PAGE}-graph_view-{VIZ_ID}", "value"),
     ],
     background=True,
 )

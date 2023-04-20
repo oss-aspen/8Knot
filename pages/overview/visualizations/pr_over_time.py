@@ -14,6 +14,9 @@ from queries.prs_query import prs_query as prq
 from cache_manager.cache_manager import CacheManager as cm
 import time
 
+PAGE = "overview"
+VIZ_ID = "prs-over-time"
+
 gc_pr_over_time = dbc.Card(
     [
         dbc.CardBody(
@@ -30,13 +33,13 @@ gc_pr_over_time = dbc.Card(
                             "This graph takes the open, close, and merge times on the pull requests in the selected repositories."
                         ),
                     ],
-                    id="overview-popover-7",
-                    target="overview-popover-target-7",  # needs to be the same as dbc.Button id
+                    id=f"{PAGE}-popover-{VIZ_ID}",
+                    target=f"{PAGE}-popover-target-{VIZ_ID}",
                     placement="top",
                     is_open=False,
                 ),
                 dcc.Loading(
-                    dcc.Graph(id="prs-over-time"),
+                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
                 dbc.Form(
                     [
@@ -44,12 +47,12 @@ gc_pr_over_time = dbc.Card(
                             [
                                 dbc.Label(
                                     "Date Interval:",
-                                    html_for="pr-time-interval",
+                                    html_for=f"{PAGE}-date_interval-{VIZ_ID}",
                                     width="auto",
                                 ),
                                 dbc.Col(
                                     dbc.RadioItems(
-                                        id="pr-time-interval",
+                                        id=f"{PAGE}-date_interval-{VIZ_ID}",
                                         options=[
                                             {
                                                 "label": "Day",
@@ -70,7 +73,7 @@ gc_pr_over_time = dbc.Card(
                                 dbc.Col(
                                     dbc.Button(
                                         "About Graph",
-                                        id="overview-popover-target-7",
+                                        id=f"{PAGE}-popover-target-{VIZ_ID}",
                                         color="secondary",
                                         size="sm",
                                     ),
@@ -89,11 +92,11 @@ gc_pr_over_time = dbc.Card(
 
 # formatting for graph generation
 @callback(
-    Output("overview-popover-7", "is_open"),
-    [Input("overview-popover-target-7", "n_clicks")],
-    [State("overview-popover-7", "is_open")],
+    Output(f"{PAGE}-popover-{VIZ_ID}", "is_open"),
+    [Input(f"{PAGE}-popover-target-{VIZ_ID}", "n_clicks")],
+    [State(f"{PAGE}-popover-{VIZ_ID}", "is_open")],
 )
-def toggle_popover_7(n, is_open):
+def toggle_popover(n, is_open):
     if n:
         return not is_open
     return is_open
@@ -101,10 +104,10 @@ def toggle_popover_7(n, is_open):
 
 # callback for prs over time graph
 @callback(
-    Output("prs-over-time", "figure"),
+    Output(f"{PAGE}-{VIZ_ID}", "figure"),
     [
         Input("repo-choices", "data"),
-        Input("pr-time-interval", "value"),
+        Input(f"{PAGE}-date_interval-{VIZ_ID}", "value"),
     ],
     background=True,
 )

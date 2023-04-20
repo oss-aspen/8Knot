@@ -11,15 +11,17 @@ from queries.contributors_query import contributors_query as ctq
 import io
 from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
-
 import time
 
-gc_total_contributor_growth = dbc.Card(
+PAGE = "overview"
+VIZ_ID = "new-contributor-growth"
+
+gc_new_contributor_growth = dbc.Card(
     [
         dbc.CardBody(
             [
                 html.H3(
-                    id="overview-graph-title-1",
+                    id=f"{PAGE}-graph_title-{VIZ_ID}",
                     className="card-title",
                     style={"textAlign": "center"},
                 ),
@@ -32,13 +34,13 @@ gc_total_contributor_growth = dbc.Card(
                             Month/Year: This view looks specifically at the new contributors by selected time bucket."
                         ),
                     ],
-                    id="overview-popover-1",
-                    target="overview-popover-target-1",  # needs to be the same as dbc.Button id
+                    id=f"{PAGE}-popover-{VIZ_ID}",
+                    target=f"{PAGE}-popover-target-{VIZ_ID}",
                     placement="top",
                     is_open=False,
                 ),
                 dcc.Loading(
-                    dcc.Graph(id="total_contributor_growth"),
+                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
                 dbc.Form(
                     [
@@ -46,12 +48,12 @@ gc_total_contributor_growth = dbc.Card(
                             [
                                 dbc.Label(
                                     "Date Interval",
-                                    html_for="contributor-growth-time-interval",
+                                    html_for=f"{PAGE}-date_interval-{VIZ_ID}",
                                     width="auto",
                                 ),
                                 dbc.Col(
                                     dbc.RadioItems(
-                                        id="contributor-growth-time-interval",
+                                        id=f"{PAGE}-date_interval-{VIZ_ID}",
                                         options=[
                                             {
                                                 "label": "Trend",
@@ -68,7 +70,7 @@ gc_total_contributor_growth = dbc.Card(
                                 dbc.Col(
                                     dbc.Button(
                                         "About Graph",
-                                        id="overview-popover-target-1",
+                                        id=f"{PAGE}-popover-target-{VIZ_ID}",
                                         color="secondary",
                                         size="sm",
                                     ),
@@ -88,9 +90,9 @@ gc_total_contributor_growth = dbc.Card(
 
 # callback for graph info popover
 @callback(
-    Output("overview-popover-1", "is_open"),
-    [Input("overview-popover-target-1", "n_clicks")],
-    [State("overview-popover-1", "is_open")],
+    Output(f"{PAGE}-popover-{VIZ_ID}", "is_open"),
+    [Input(f"{PAGE}-popover-target-{VIZ_ID}", "n_clicks")],
+    [State(f"{PAGE}-popover-{VIZ_ID}", "is_open")],
 )
 def toggle_popover_1(n, is_open):
     if n:
@@ -100,8 +102,8 @@ def toggle_popover_1(n, is_open):
 
 # callback to dynamically change the graph title
 @callback(
-    Output("overview-graph-title-1", "children"),
-    Input("contributor-growth-time-interval", "value"),
+    Output(f"{PAGE}-graph_title-{VIZ_ID}", "children"),
+    Input(f"{PAGE}-date_interval-{VIZ_ID}", "value"),
 )
 def graph_title(view):
     title = ""
@@ -115,14 +117,14 @@ def graph_title(view):
 
 
 @callback(
-    Output("total_contributor_growth", "figure"),
+    Output(f"{PAGE}-{VIZ_ID}", "figure"),
     [
         Input("repo-choices", "data"),
-        Input("contributor-growth-time-interval", "value"),
+        Input(f"{PAGE}-date_interval-{VIZ_ID}", "value"),
     ],
     background=True,
 )
-def total_contributor_growth_graph(repolist, interval):
+def new_contributor_growth_graph(repolist, interval):
 
     # wait for data to asynchronously download and become available.
     cache = cm()

@@ -13,6 +13,9 @@ import io
 import time
 from pages.utils.job_utils import nodata_graph
 
+PAGE = "chaoss"
+VIZ_ID = "first-time-contribution"
+
 gc_first_time_contributions = dbc.Card(
     [
         dbc.CardBody(
@@ -30,18 +33,18 @@ gc_first_time_contributions = dbc.Card(
                             and what activity was their first in the community."
                         ),
                     ],
-                    id="chaoss-popover-2",
-                    target="chaoss-popover-target-2",  # needs to be the same as dbc.Button id
+                    id=f"{PAGE}-popover-{VIZ_ID}",
+                    target=f"{PAGE}-popover-target-{VIZ_ID}",
                     placement="top",
                     is_open=False,
                 ),
                 dcc.Loading(
-                    dcc.Graph(id="first-time-contributions"),
+                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
                 dbc.Row(
                     dbc.Button(
                         "About Graph",
-                        id="chaoss-popover-target-2",
+                        id=f"{PAGE}-popover-target-{VIZ_ID}",
                         color="secondary",
                         size="small",
                     ),
@@ -54,18 +57,18 @@ gc_first_time_contributions = dbc.Card(
 
 # callback for graph info popover
 @callback(
-    Output("chaoss-popover-2", "is_open"),
-    [Input("chaoss-popover-target-2", "n_clicks")],
-    [State("chaoss-popover-2", "is_open")],
+    Output(f"{PAGE}-popover-{VIZ_ID}", "is_open"),
+    [Input(f"{PAGE}-popover-target-{VIZ_ID}", "n_clicks")],
+    [State(f"{PAGE}-popover-{VIZ_ID}", "is_open")],
 )
-def toggle_popover_2(n, is_open):
+def toggle_popover(n, is_open):
     if n:
         return not is_open
     return is_open
 
 
 @callback(
-    Output("first-time-contributions", "figure"),
+    Output(f"{PAGE}-{VIZ_ID}", "figure"),
     [
         Input("repo-choices", "data"),
     ],

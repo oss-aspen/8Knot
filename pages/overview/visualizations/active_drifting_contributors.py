@@ -12,8 +12,10 @@ from queries.contributors_query import contributors_query as ctq
 import io
 from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
-
 import time
+
+PAGE = "overview"
+VIZ_ID = "active-drifting-contributors"
 
 gc_active_drifting_contributors = dbc.Card(
     [
@@ -34,13 +36,13 @@ gc_active_drifting_contributors = dbc.Card(
                             <AWAY> Contributors that are considered no longer participating members of the community"
                         ),
                     ],
-                    id="overview-popover-4",
-                    target="overview-popover-target-4",  # needs to be the same as dbc.Button id
+                    id=f"{PAGE}-popover-{VIZ_ID}",
+                    target=f"{PAGE}-popover-target-{VIZ_ID}",  # needs to be the same as dbc.Button id
                     placement="top",
                     is_open=False,
                 ),
                 dcc.Loading(
-                    dcc.Graph(id="active_drifting_contributors"),
+                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
                 dbc.Form(
                     [
@@ -48,12 +50,12 @@ gc_active_drifting_contributors = dbc.Card(
                             [
                                 dbc.Label(
                                     "Months Until Drifting:",
-                                    html_for="drifting_months",
+                                    html_for=f"{PAGE}-drifting_months-{VIZ_ID}",
                                     width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     dbc.Input(
-                                        id="drifting_months",
+                                        id=f"{PAGE}-drifting_months-{VIZ_ID}",
                                         type="number",
                                         min=1,
                                         max=120,
@@ -66,12 +68,12 @@ gc_active_drifting_contributors = dbc.Card(
                                 ),
                                 dbc.Label(
                                     "Months Until Away:",
-                                    html_for="away_months",
+                                    html_for=f"{PAGE}-away_months-{VIZ_ID}",
                                     width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     dbc.Input(
-                                        id="away_months",
+                                        id=f"{PAGE}-away_months-{VIZ_ID}",
                                         type="number",
                                         min=1,
                                         max=120,
@@ -84,7 +86,7 @@ gc_active_drifting_contributors = dbc.Card(
                                 ),
                                 dbc.Alert(
                                     children="Please ensure that 'Months Until Drifting' is less than 'Months Until Away'",
-                                    id="drifting_away_check_alert",
+                                    id=f"{PAGE}-check_alert-{VIZ_ID}",
                                     dismissable=True,
                                     fade=False,
                                     is_open=False,
@@ -97,13 +99,13 @@ gc_active_drifting_contributors = dbc.Card(
                             [
                                 dbc.Label(
                                     "Date Interval:",
-                                    html_for="active-drifting-interval",
+                                    html_for=f"{PAGE}-date_interval-{VIZ_ID}",
                                     width="auto",
                                 ),
                                 dbc.Col(
                                     [
                                         dbc.RadioItems(
-                                            id="active-drifting-interval",
+                                            id=f"{PAGE}-date_interval-{VIZ_ID}",
                                             options=[
                                                 {"label": "Trend", "value": "D"},
                                                 {"label": "Month", "value": "M"},
@@ -117,7 +119,7 @@ gc_active_drifting_contributors = dbc.Card(
                                 dbc.Col(
                                     dbc.Button(
                                         "About Graph",
-                                        id="overview-popover-target-4",
+                                        id=f"{PAGE}-popover-target-{VIZ_ID}",
                                         color="secondary",
                                         size="sm",
                                     ),
@@ -136,24 +138,24 @@ gc_active_drifting_contributors = dbc.Card(
 
 # callback for graph info popover
 @callback(
-    Output("overview-popover-4", "is_open"),
-    [Input("overview-popover-target-4", "n_clicks")],
-    [State("overview-popover-4", "is_open")],
+    Output(f"{PAGE}-popover-{VIZ_ID}", "is_open"),
+    [Input(f"{PAGE}-popover-target-{VIZ_ID}", "n_clicks")],
+    [State(f"{PAGE}-popover-{VIZ_ID}", "is_open")],
 )
-def toggle_popover_4(n, is_open):
+def toggle_popover(n, is_open):
     if n:
         return not is_open
     return is_open
 
 
 @callback(
-    Output("active_drifting_contributors", "figure"),
-    Output("drifting_away_check_alert", "is_open"),
+    Output(f"{PAGE}-{VIZ_ID}", "figure"),
+    Output(f"{PAGE}-check_alert-{VIZ_ID}", "is_open"),
     [
         Input("repo-choices", "data"),
-        Input("active-drifting-interval", "value"),
-        Input("drifting_months", "value"),
-        Input("away_months", "value"),
+        Input(f"{PAGE}-date_interval-{VIZ_ID}", "value"),
+        Input(f"{PAGE}-drifting_months-{VIZ_ID}", "value"),
+        Input(f"{PAGE}-away_months-{VIZ_ID}", "value"),
     ],
     background=True,
 )

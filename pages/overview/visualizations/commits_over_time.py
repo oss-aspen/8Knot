@@ -13,6 +13,9 @@ from pages.utils.job_utils import nodata_graph
 import io
 import time
 
+PAGE = "overview"
+VIZ_ID = "commits-over-time"
+
 gc_commits_over_time = dbc.Card(
     [
         dbc.CardBody(
@@ -27,13 +30,13 @@ gc_commits_over_time = dbc.Card(
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody("This graph plots the amount of commits in selected time buckets."),
                     ],
-                    id="overview-popover-2",
-                    target="overview-popover-target-2",  # needs to be the same as dbc.Button id
+                    id=f"{PAGE}-popover-{VIZ_ID}",
+                    target=f"{PAGE}-popover-target-{VIZ_ID}",  # needs to be the same as dbc.Button id
                     placement="top",
                     is_open=False,
                 ),
                 dcc.Loading(
-                    dcc.Graph(id="commits-over-time"),
+                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
                 dbc.Form(
                     [
@@ -41,12 +44,12 @@ gc_commits_over_time = dbc.Card(
                             [
                                 dbc.Label(
                                     "Date Interval:",
-                                    html_for="commits-time-interval",
+                                    html_for=f"{PAGE}-date_interval-{VIZ_ID}",
                                     width="auto",
                                 ),
                                 dbc.Col(
                                     dbc.RadioItems(
-                                        id="commits-time-interval",
+                                        id=f"{PAGE}-date_interval-{VIZ_ID}",
                                         options=[
                                             {
                                                 "label": "Day",
@@ -67,7 +70,7 @@ gc_commits_over_time = dbc.Card(
                                 dbc.Col(
                                     dbc.Button(
                                         "About Graph",
-                                        id="overview-popover-target-2",
+                                        id=f"{PAGE}-popover-target-{VIZ_ID}",
                                         color="secondary",
                                         size="sm",
                                     ),
@@ -82,16 +85,15 @@ gc_commits_over_time = dbc.Card(
             ]
         ),
     ],
-    # color="light",
 )
 
 # callback for graph info popover
 @callback(
-    Output("overview-popover-2", "is_open"),
-    [Input("overview-popover-target-2", "n_clicks")],
-    [State("overview-popover-2", "is_open")],
+    Output(f"{PAGE}-popover-{VIZ_ID}", "is_open"),
+    [Input(f"{PAGE}-popover-target-{VIZ_ID}", "n_clicks")],
+    [State(f"{PAGE}-popover-{VIZ_ID}", "is_open")],
 )
-def toggle_popover_2(n, is_open):
+def toggle_popover(n, is_open):
     if n:
         return not is_open
     return is_open
@@ -99,10 +101,10 @@ def toggle_popover_2(n, is_open):
 
 # callback for commits over time graph
 @callback(
-    Output("commits-over-time", "figure"),
+    Output(f"{PAGE}-{VIZ_ID}", "figure"),
     [
         Input("repo-choices", "data"),
-        Input("commits-time-interval", "value"),
+        Input(f"{PAGE}-date_interval-{VIZ_ID}", "value"),
     ],
     background=True,
 )

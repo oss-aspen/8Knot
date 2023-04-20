@@ -13,6 +13,9 @@ from cache_manager.cache_manager import CacheManager as cm
 import io
 import time
 
+PAGE = "overview"
+VIZ_ID = "issues-over-time"
+
 gc_issues_over_time = dbc.Card(
     [
         dbc.CardBody(
@@ -29,13 +32,13 @@ gc_issues_over_time = dbc.Card(
                             "This graph takes the open and close times on the issues in the selected repositories."
                         ),
                     ],
-                    id="overview-popover-3",
-                    target="overview-popover-target-3",  # needs to be the same as dbc.Button id
+                    id=f"{PAGE}-popover-{VIZ_ID}",
+                    target=f"{PAGE}-popover-target-{VIZ_ID}",
                     placement="top",
                     is_open=False,
                 ),
                 dcc.Loading(
-                    dcc.Graph(id="issues-over-time"),
+                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
                 dbc.Form(
                     [
@@ -43,13 +46,12 @@ gc_issues_over_time = dbc.Card(
                             [
                                 dbc.Label(
                                     "Date Interval:",
-                                    html_for="issue-time-interval",
+                                    html_for=f"{PAGE}-date_interval-{VIZ_ID}",
                                     width="auto",
-                                    # size = "lg"
                                 ),
                                 dbc.Col(
                                     dbc.RadioItems(
-                                        id="issue-time-interval",
+                                        id=f"{PAGE}-date_interval-{VIZ_ID}",
                                         options=[
                                             {
                                                 "label": "Day",
@@ -70,7 +72,7 @@ gc_issues_over_time = dbc.Card(
                                 dbc.Col(
                                     dbc.Button(
                                         "About Graph",
-                                        id="overview-popover-target-3",
+                                        id=f"{PAGE}-popover-target-{VIZ_ID}",
                                         color="secondary",
                                         size="sm",
                                     ),
@@ -89,11 +91,11 @@ gc_issues_over_time = dbc.Card(
 
 # callback for graph info popover
 @callback(
-    Output("overview-popover-3", "is_open"),
-    [Input("overview-popover-target-3", "n_clicks")],
-    [State("overview-popover-3", "is_open")],
+    Output(f"{PAGE}-popover-{VIZ_ID}", "is_open"),
+    [Input(f"{PAGE}-popover-target-{VIZ_ID}", "n_clicks")],
+    [State(f"{PAGE}-popover-{VIZ_ID}", "is_open")],
 )
-def toggle_popover_3(n, is_open):
+def toggle_popover(n, is_open):
     if n:
         return not is_open
     return is_open
@@ -101,10 +103,10 @@ def toggle_popover_3(n, is_open):
 
 # callback for issues over time graph
 @callback(
-    Output("issues-over-time", "figure"),
+    Output(f"{PAGE}-{VIZ_ID}", "figure"),
     [
         Input("repo-choices", "data"),
-        Input("issue-time-interval", "value"),
+        Input(f"{PAGE}-date_interval-{VIZ_ID}", "value"),
     ],
     background=True,
 )

@@ -18,9 +18,6 @@ import datetime as dt
 PAGE = "company"
 VIZ_ID = "company-associated-activity"
 
-paramter_1 = "company-contributions-required"
-
-
 gc_company_associated_activity = dbc.Card(
     [
         dbc.CardBody(
@@ -45,7 +42,7 @@ gc_company_associated_activity = dbc.Card(
                     is_open=False,
                 ),
                 dcc.Loading(
-                    dcc.Graph(id=VIZ_ID),
+                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
                 dbc.Form(
                     [
@@ -53,12 +50,12 @@ gc_company_associated_activity = dbc.Card(
                             [
                                 dbc.Label(
                                     "Contributions Required:",
-                                    html_for=f"{PAGE}-{paramter_1}-{VIZ_ID}",
+                                    html_for=f"{PAGE}-company_contributions_required-{VIZ_ID}",
                                     width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     dbc.Input(
-                                        id=f"{PAGE}-{paramter_1}-{VIZ_ID}",
+                                        id=f"{PAGE}-company_contributions_required-{VIZ_ID}",
                                         type="number",
                                         min=1,
                                         max=100,
@@ -118,10 +115,10 @@ def toggle_popover(n, is_open):
 
 # callback for Company Affiliation by Github Account Info graph
 @callback(
-    Output(VIZ_ID, "figure"),
+    Output(f"{PAGE}-{VIZ_ID}", "figure"),
     [
         Input("repo-choices", "data"),
-        Input(f"{PAGE}-{paramter_1}-{VIZ_ID}", "value"),
+        Input(f"{PAGE}-company_contributions_required-{VIZ_ID}", "value"),
         Input(f"{PAGE}-date-picker-range-{VIZ_ID}", "start_date"),
         Input(f"{PAGE}-date-picker-range-{VIZ_ID}", "end_date"),
     ],

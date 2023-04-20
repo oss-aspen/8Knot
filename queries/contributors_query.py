@@ -5,6 +5,8 @@ from app import celery_app
 from cache_manager.cache_manager import CacheManager as cm
 import io
 
+QUERY_NAME = "CONTRIBUTOR"
+
 
 @celery_app.task(
     bind=True,
@@ -28,7 +30,7 @@ def contributors_query(self, dbmc, repos):
     --------
         dict: Results from SQL query, interpreted from pd.to_dict('records')
     """
-    logging.debug("CONTRIBUTIONS_DATA_QUERY - START")
+    logging.debug(f"{QUERY_NAME}_DATA_QUERY - START")
 
     if len(repos) == 0:
         return None
@@ -50,24 +52,24 @@ def contributors_query(self, dbmc, repos):
     # create database connection, load config, execute query above.
     dbm = AugurManager()
     dbm.load_pconfig(dbmc)
-    df_cont = dbm.run_query(query_string)
+    df = dbm.run_query(query_string)
 
     # update column values
-    df_cont.loc[df_cont["action"] == "open_pull_request", "action"] = "Open PR"
-    df_cont.loc[df_cont["action"] == "pull_request_comment", "action"] = "PR Comment"
-    df_cont.loc[df_cont["action"] == "issue_opened", "action"] = "Issue Opened"
-    df_cont.loc[df_cont["action"] == "issue_closed", "action"] = "Issue Closed"
-    df_cont.loc[df_cont["action"] == "commit", "action"] = "Commit"
-    df_cont["cntrb_id"] = df_cont["cntrb_id"].astype(str)  # contributor ids to strings
-    df_cont.rename(columns={"action": "Action"}, inplace=True)
+    df.loc[df["action"] == "open_pull_request", "action"] = "Open PR"
+    df.loc[df["action"] == "pull_request_comment", "action"] = "PR Comment"
+    df.loc[df["action"] == "issue_opened", "action"] = "Issue Opened"
+    df.loc[df["action"] == "issue_closed", "action"] = "Issue Closed"
+    df.loc[df["action"] == "commit", "action"] = "Commit"
+    df["cntrb_id"] = df["cntrb_id"].astype(str)  # contributor ids to strings
+    df.rename(columns={"action": "Action"}, inplace=True)
 
-    df_cont = df_cont.reset_index(drop=True)
+    df = df.reset_index(drop=True)
 
     pic = []
 
     for i, r in enumerate(repos):
         # convert series to a dataframe
-        c_df = pd.DataFrame(df_cont.loc[df_cont["id"] == r]).reset_index(drop=True)
+        c_df = pd.DataFrame(df.loc[df["id"] == r]).reset_index(drop=True)
 
         # bytes buffer to be written to
         b = io.BytesIO()
@@ -82,7 +84,7 @@ def contributors_query(self, dbmc, repos):
         bs = b.read()
         pic.append(bs)
 
-    del df_cont
+    del df
 
     # store results in Redis
     cm_o = cm()
@@ -93,6 +95,6 @@ def contributors_query(self, dbmc, repos):
         repos=repos,
         datas=pic,
     )
-    logging.debug("CONTRIBUTIONS_DATA_QUERY - END")
+    logging.debug(f"{QUERY_NAME}_DATA_QUERY - END")
 
     return ack
