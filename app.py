@@ -49,6 +49,9 @@ if os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True":
     groups_endpoint = os.getenv("AUGUR_USER_GROUPS_ENDPOINT", "")
     account_endpoint = os.getenv("AUGUR_USER_ACCOUNT_ENDPOINT", "")
     auth_endpoint = os.getenv("AUGUR_USER_AUTH_ENDPOINT", "")
+    admin_name_endpoint = os.getenv("AUGUR_ADMIN_NAME_ENDPOINT", "")
+    admin_group_names_endpoint = os.getenv("AUGUR_ADMIN_GROUP_NAMES_ENDPOINT", "")
+    admin_groups_endpoint = os.getenv("AUGUR_ADMIN_GROUPS_ENDPOINT", "")
 
     if not all(
         [
@@ -58,6 +61,9 @@ if os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True":
             groups_endpoint,
             account_endpoint,
             auth_endpoint,
+            admin_name_endpoint,
+            admin_group_names_endpoint,
+            admin_groups_endpoint,
         ]
     ):
         logging.critical("ERROR: Client Augur credentials incomplete; can't start.")
@@ -69,6 +75,9 @@ if os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True":
         augur.set_user_groups_endpoint(groups_endpoint)
         augur.set_user_account_endpoint(account_endpoint)
         augur.set_user_auth_endpoint(auth_endpoint)
+        augur.set_admin_name_endpoint(admin_name_endpoint)
+        augur.set_admin_group_names_endpoint(admin_group_names_endpoint)
+        augur.set_admin_groups_endpoint(admin_groups_endpoint)
 
 # connect to database
 engine = augur.get_engine()
@@ -153,7 +162,7 @@ app.clientside_callback(
         }
         else{
             // trigger user preferences redownload
-            sessionStorage["refresh-groups"] = true
+            sessionStorage["is-client-startup"] = true
         }
 
         // reload the page,

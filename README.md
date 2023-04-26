@@ -145,6 +145,8 @@ If you have a companion Augur front end application you'll need to set the follo
 By setting these credentials, a button on the top tab of the application will become available to allow you to create an account on
 your Augur front end, to log into your application via this front end, and to create user-defined groups of repos/organizations that
 will become available in your application, prefixed by your Augur username (e.g. \<username\>_example_group and \<username\>_other_example).
+The groups of the user who registers the 8Knot app with an Augur front end will be available to all other users- this user is considered the 
+application's owner.
 
 ```
     AUGUR_LOGIN_ENABLED=True
@@ -154,6 +156,9 @@ will become available in your application, prefixed by your Augur username (e.g.
     AUGUR_USER_GROUPS_ENDPOINT=<endpoint>/api/unstable/user/groups/repos?columns=repo_id,repo_git
     AUGUR_USER_ACCOUNT_ENDPOINT=<endpoint>/account/settings
     AUGUR_USER_AUTH_ENDPOINT=<endpoint>/user/authorize?client_id=<AUGUR_APP_ID>response_type=code
+    AUGUR_ADMIN_NAME_ENDPOINT=<endpoint>/api/unstable/application/
+    AUGUR_ADMIN_GROUP_NAMES_ENDPOINT=<endpoint>/api/unstable/application/groups/names
+    AUGUR_ADMIN_GROUPS_ENDPOINT=<endpoint>/api/unstable/application/group/repos
 ```
 
 Note: You'll have to manually fill in the \<AUGUR_APP_ID\> in the AUGUR_USER_AUTH_ENDPOINT environment variable.

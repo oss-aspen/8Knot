@@ -16,6 +16,13 @@ from queries.contributors_query import contributors_query as cnq
 from queries.prs_query import prs_query as prq
 from queries.company_query import company_query as cmq
 
+# DONE: imported other functions
+from pages.index.login_help import (
+    verify_previous_login_credentials,
+    get_user_groups,
+    get_admin_groups,
+)
+
 
 # list of queries to be run
 QUERIES = [iq, cq, cnq, prq, cmq]
@@ -77,14 +84,14 @@ def login_username_button(username, login_succeeded):
         Output("augur_refresh_token_dash_persistence", "data"),
         Output("augur_user_groups_dash_persistence", "data"),
         Output("augur_user_group_options_dash_persistence", "data"),
-        Output("refresh-groups", "data"),
+        Output("is-client-startup", "data"),
         Output("url", "search"),
         Output("login-succeeded", "data"),
     ],
     [
         Input("url", "href"),
         State("url", "search"),
-        State("refresh-groups", "data"),
+        State("is-client-startup", "data"),
         State("augur_username_dash_persistence", "data"),
         State("augur_user_bearer_token_dash_persistence", "data"),
         State("augur_token_expiration_dash_persistence", "data"),
@@ -94,11 +101,11 @@ def login_username_button(username, login_succeeded):
 def get_augur_user_preferences(
     this_url,
     search_val,
-    refresh_groups,
+    is_client_startup,
     username,
     bearer_token,
     expiration,
-    refresh,
+    refresh_token,
 ):
     """Handles logging in when the user navigates to application.
 
@@ -154,122 +161,67 @@ def get_augur_user_preferences(
     # user tries to refresh while still on the page redirected-to from Augur authorization.
 
     # URL-triggered callback
-    if dash.ctx.triggered_id == "url":
-        code_val = re.search(code_pattern, search_val)
+    auth_code_match = re.search(code_pattern, search_val)
 
-        # always go through this path if login not enabled
-        if (not refresh_groups and not code_val) or (not login_enabled):
-            logging.debug("LOGIN: Page Switch")
-            # code_val is Falsy when it's None, so we want to pass
-            # this check when it's None
+    # always go through this path if login not enabled
+    if (not is_client_startup and not auth_code_match) or (not login_enabled):
+        logging.debug("LOGIN: Page Switch")
+        raise dash.exceptions.PreventUpdate
 
-            # this happens when the user is just going between pages
-            # so we don't need to do anything.
-            raise dash.exceptions.PreventUpdate
+    if auth_code_match:
+        logging.debug("LOGIN: Redirect from Augur; Code pattern in href")
+        # the user has just redirected from Augur so we know
+        # that we need to get their new credentials.
 
-        if code_val:
-            logging.debug("LOGIN: Redirect from Augur; Code pattern in href")
-            # the user has just redirected from Augur so we know
-            # that we need to get their new credentials.
+        auth = auth_code_match.group(1)
 
-            auth = code_val.groups()[0]
-
-            # use the auth token to get the bearer token
-            username, bearer_token, expiration, refresh = augur.auth_to_bearer_token(auth)
-
-            # if we try to log in with the auth token we just get and the login fails, we
-            # tell the user with a popover and do nothing.
-
-            if not all([username, bearer_token, expiration, refresh]):
-                return no_login + [
-                    False,
-                ]  # standard no-login plus login failed
-            else:
-                expiration = datetime.now() + timedelta(seconds=expiration)
-
-        elif refresh_groups:
-
-            if expiration and bearer_token:
-                logging.debug("LOGIN: Warm Startup; expiration and bearer token in localStorage")
-                # warm startup, bearer token could still be valid
-
-                if datetime.now() > datetime.strptime(expiration, "%Y-%m-%dT%H:%M:%S.%f"):
-                    logging.debug("LOGIN: Expired Bearer Token")
-
-                    return no_login + [
-                        True,
-                    ]  # standard no-login, login didn't succeed, but it didn't fail, so don't need popover
-            else:
-                logging.debug("LOGIN: Cold Startup; no credentials available")
-                # no previous credentials, can't do anything w/o login.
-                return no_login + [
-                    True,
-                ]  # standard no-login, login didn't succeed, but it didn't fail, so don't need popover
-
-        # we'll have either gotten a new bearer token if we're coming from augur
-        # or we'll have verified that bearer_token should be valid
-        augur_users_groups = augur.make_user_request(access_token=bearer_token)
-        if not augur_users_groups or (augur_users_groups.get("status") != "success"):
-            logging.debug("LOGIN: Failure")
-            logging.error("Error logging in to Augur- couldn't complete user's Groups request.")
-            return no_login + [
-                False,
-            ]  # standard no-login plus login failed
-
-        # structure of the incoming data
-        # [{group_name: {favorited: False, repos: [{repo_git: asd;lfkj, repo_id=46555}, ...]}, ...]
-        # creates the group_name->repo_list mapping and the searchbar options for augur user groups
-        users_groups = {}
-        users_group_options = []
-        g = augur_users_groups.get("data")
-
-        # each of the augur user groups
-        for entry in g:
-
-            # group has one key- the name.
-            group_name: str = list(entry.keys())[0]
-
-            # only one value per entry- {favorited: ..., repos: ...},
-            # get the value component
-            repo_list = list(entry.values())[0]["repos"]
-
-            # get all of the repo_ids in the 'repos' part of the value
-            # translated via the git url to the id's of the DB that's
-            # backing the client application
-            ids = []
-            for repo in repo_list:
-                # get the git url of the repo
-                repo_git = repo.get("repo_git")
-                # translate that natural key to the repo's ID in the primary database
-                repo_id_translated = augur.repo_git_to_id(repo_git)
-                # check if the translation worked.
-                if repo_id_translated:
-                    ids.append(repo_id_translated)
-                else:
-                    logging.error(f"Repo: {repo_git} not translatable to repo_id- source DB incomplete.")
-
-            # using lower_name for convenience later- no .lower() calls
-            lower_name = group_name.lower()
-
-            # group_name->repo_list mapping
-            users_groups[lower_name] = ids
-
-            # searchbar options
-            # user's groups are prefixed w/ username to guarantee uniqueness in searchbar
-            users_group_options.append({"value": lower_name, "label": f"{username}_{group_name}"})
-
-        logging.debug("LOGIN: Success")
-        return (
-            username,
-            bearer_token,
-            expiration,
-            refresh,
-            users_groups,
-            users_group_options,
-            False,  # refresh_groups
-            "",  # reset search to empty post-login
-            True,  # login succeeded
+        # use the auth token to get the bearer token
+        username, bearer_token, expiration, refresh_token = augur.auth_to_bearer_token(
+            auth
         )
+
+        # if we try to log in with the auth token we just get and the login fails, we
+        # tell the user with a popover and do nothing.
+
+        if not all([username, bearer_token, expiration, refresh_token]):
+            return no_login + [False]
+
+        # expiration should be a future time not a duration
+        expiration = datetime.now() + timedelta(seconds=expiration)
+
+    elif is_client_startup:
+
+        if expiration and bearer_token:
+            checked_bt, checked_rt = verify_previous_login_credentials(
+                bearer_token, refresh_token, expiration
+            )
+            if not all([checked_bt, checked_rt]):
+                return no_login + [True]
+            logging.debug("LOGIN: Warm startup; preexisting credentials available")
+        else:
+            logging.debug("LOGIN: Cold Startup; no credentials available")
+            return no_login + [True]
+
+    # get groups for admin and user from front-end
+    user_groups, user_group_options = get_user_groups(username, bearer_token)
+    admin_groups, admin_group_options = get_admin_groups(bearer_token)
+
+    # combine admin and user groups
+    user_groups.update(admin_groups)
+    user_group_options += admin_group_options
+
+    logging.debug("LOGIN: Success")
+    return (
+        username,
+        bearer_token,
+        expiration,
+        refresh_token,
+        user_groups,
+        user_group_options,
+        False,  # refresh_groups
+        "",  # reset search to empty post-login
+        True,  # login succeeded
+    )
 
 
 @callback(
