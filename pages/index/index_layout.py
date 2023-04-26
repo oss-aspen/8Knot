@@ -20,7 +20,7 @@ if os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True":
                                 dbc.DropdownMenu(
                                     children=[
                                         dbc.DropdownMenuItem(
-                                            "Refresh",
+                                            "Refresh Groups",
                                             id="refresh-button",
                                         ),
                                         dbc.DropdownMenuItem(
@@ -202,7 +202,7 @@ layout = dbc.Container(
         dcc.Store(id="repo-choices", storage_type="session", data=[]),
         # components to store job-ids for the worker queue
         dcc.Store(id="job-ids", storage_type="session", data=[]),
-        dcc.Store(id="refresh-groups", storage_type="session", data=True),
+        dcc.Store(id="is-client-startup", storage_type="session", data=True),
         dcc.Store(id="augur_user_groups_dash_persistence", storage_type="session", data={}),
         dcc.Store(
             id="augur_user_group_options_dash_persistence",
