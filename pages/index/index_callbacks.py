@@ -35,6 +35,8 @@ login_enabled = os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True"
     [
         Output("nav-login-container", "children"),
         Output("login-popover", "is_open"),
+        Output("refresh-button", "disabled"),
+        Output("logout-button", "disabled"),
     ],
     Input("augur_username_dash_persistence", "data"),
     State("login-succeeded", "data"),
@@ -56,24 +58,30 @@ def login_username_button(username, login_succeeded):
         _type_: _description_
     """
 
+    buttons_disabled = True
+
     if username:
         navlink = [
-            dbc.NavLink(
-                f"{username}",
-                href=augur.user_account_endpoint,
-                id="login-navlink",
+            dbc.NavItem(
+                dbc.NavLink(
+                    f"{username}",
+                    href=augur.user_account_endpoint,
+                    id="login-navlink",
+                ),
             ),
         ]
+        buttons_disabled = False
     else:
         navlink = [
             dbc.NavLink(
                 "Augur log in/sign up",
                 href=augur.user_auth_endpoint,
                 id="login-navlink",
+                active=True,
             ),
         ]
 
-    return navlink, not login_succeeded
+    return navlink, not login_succeeded, buttons_disabled, buttons_disabled
 
 
 @callback(
