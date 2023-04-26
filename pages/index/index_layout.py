@@ -16,22 +16,18 @@ if os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True":
                 dbc.Col(
                     dbc.Nav(
                         [
+                            html.Div(
+                                id="nav-login-container",
+                                children=[],
+                            ),
                             dbc.NavItem(
-                                dbc.DropdownMenu(
-                                    children=[
-                                        dbc.DropdownMenuItem(
-                                            "Refresh Groups",
-                                            id="refresh-button",
-                                        ),
-                                        dbc.DropdownMenuItem(
-                                            "Log out",
-                                            id="logout-button",
-                                        ),
-                                    ],
-                                    nav=True,
-                                    in_navbar=True,
-                                    label="More",
-                                    id="nav-dropdown",
+                                dbc.NavLink(
+                                    "Refresh Groups", id="refresh-button", disabled=True
+                                ),
+                            ),
+                            dbc.NavItem(
+                                dbc.NavLink(
+                                    "Log out", id="logout-button", disabled=True
                                 ),
                             ),
                             dbc.Popover(
@@ -41,10 +37,6 @@ if os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True":
                                 is_open=False,
                                 placement="bottom-end",
                                 target="nav-dropdown",
-                            ),
-                            html.Div(
-                                id="nav-login-container",
-                                children=[],
                             ),
                         ]
                     )
@@ -65,7 +57,9 @@ navbar = dbc.Navbar(
                 [
                     dbc.Col(
                         [
-                            html.Img(src=dash.get_asset_url("logo2.png"), height="40px"),
+                            html.Img(
+                                src=dash.get_asset_url("logo2.png"), height="40px"
+                            ),
                             dbc.NavbarBrand(
                                 "8Knot Community Data",
                                 id="navbar-title",
@@ -78,7 +72,9 @@ navbar = dbc.Navbar(
                         [
                             dbc.Nav(
                                 [
-                                    dbc.NavLink(page["name"], href=page["path"], active="exact")
+                                    dbc.NavLink(
+                                        page["name"], href=page["path"], active="exact"
+                                    )
                                     for page in dash.page_registry.values()
                                     if page["module"] != "pages.not_found_404"
                                 ],
@@ -203,16 +199,24 @@ layout = dbc.Container(
         # components to store job-ids for the worker queue
         dcc.Store(id="job-ids", storage_type="session", data=[]),
         dcc.Store(id="is-client-startup", storage_type="session", data=True),
-        dcc.Store(id="augur_user_groups_dash_persistence", storage_type="session", data={}),
+        dcc.Store(
+            id="augur_user_groups_dash_persistence", storage_type="session", data={}
+        ),
         dcc.Store(
             id="augur_user_group_options_dash_persistence",
             storage_type="session",
             data=[],
         ),
-        dcc.Store(id="augur_user_bearer_token_dash_persistence", storage_type="local", data=""),
+        dcc.Store(
+            id="augur_user_bearer_token_dash_persistence", storage_type="local", data=""
+        ),
         dcc.Store(id="augur_username_dash_persistence", storage_type="local", data=""),
-        dcc.Store(id="augur_refresh_token_dash_persistence", storage_type="local", data=""),
-        dcc.Store(id="augur_token_expiration_dash_persistence", storage_type="local", data=""),
+        dcc.Store(
+            id="augur_refresh_token_dash_persistence", storage_type="local", data=""
+        ),
+        dcc.Store(
+            id="augur_token_expiration_dash_persistence", storage_type="local", data=""
+        ),
         dcc.Store(id="login-succeeded", data=True),
         dcc.Location(id="url"),
         navbar,
@@ -228,7 +232,11 @@ layout = dbc.Container(
                         ),
                         search_bar,
                         dcc.Loading(
-                            children=[html.Div(id="results-output-container", className="mb-4")],
+                            children=[
+                                html.Div(
+                                    id="results-output-container", className="mb-4"
+                                )
+                            ],
                             color="#119DFF",
                             type="dot",
                             fullscreen=True,
