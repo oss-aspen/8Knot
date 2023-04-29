@@ -47,7 +47,7 @@ class CacheManager:
         self._redis = StrictRedis(
             # openshift will reconcile the 'redis' naming via the dns
             host=os.getenv("REDIS_SERVICE_HOST", "localhost"),
-            port=os.getenv("REDIS_SERVICE_PORT", "6379"),
+            port=os.getenv("REDIS_SERVICE_PORT", "6388"),
             password=os.getenv("REDIS_PASSWORD", ""),
             decode_responses=decode_value,
         )

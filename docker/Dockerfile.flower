@@ -1,7 +1,7 @@
 FROM registry.access.redhat.com/ubi9/python-39
 
 # need this for the Dash app
-EXPOSE 8050
+EXPOSE 8055
 
 # install pipenv
 RUN pip --no-cache-dir install pipenv

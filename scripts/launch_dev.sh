@@ -24,12 +24,12 @@ which podman || CONTAINER_CMD=docker
 if [ -z "$1" ]
     then
         echo "No Redis remap-port supplied."
-        echo "Defaulting to port: 6379"
+        echo "Defaulting to port: 6388"
         printf "\n"
-        REDIS_PORT_MAP=6379;
+        REDIS_PORT_MAP=6388;
     else
         echo "Redis remap-port supplied.";
-        echo "Mapping container port 6379 to: $1";
+        echo "Mapping container port 6388 to: $1";
         printf "\n";
         REDIS_PORT_MAP=$1;
 fi
@@ -38,7 +38,7 @@ fi
 ${CONTAINER_CMD} network create eightknot-network;
 
 # create a redis instance inside of a container, on our Docker network, mapped to its respective port.
-${CONTAINER_CMD} run --rm -itd --name redis --net eightknot-network -p $REDIS_PORT_MAP:6379 redis;
+${CONTAINER_CMD} run --rm -itd --name redis --net eightknot-network -p $REDIS_PORT_MAP:6388 redis;
 
 # grab the route to the redis server from the running redis container
 REDIS_CONTAINER_URL=$(${CONTAINER_CMD} inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' redis);
