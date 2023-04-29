@@ -46,7 +46,7 @@ services:
   cache:
     image: redis
     ports:
-      - 6380:6380
+      - 6388:6388
     restart: always
 
   flower:
