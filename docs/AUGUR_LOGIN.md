@@ -34,9 +34,9 @@ Finally, the job of the application user (User) is to:
 3. Create their own groups of repos
 4. Navigate back to the 8Knot app they were using and refresh the app
 
-## **Setup 8Knot to enable Login and user groups**
+## **Setup 8Knot to enable Login and user and admin groups**
 ---
-1. Clone [github.com/oss-aspen/8Knot/dev]
+1. Clone [github.com/oss-aspen/8Knot/dev] (Dep)
    - We use a docker compose multi-container application build strategy.
    - Ports 8050 (*Dash*) and 6379 (*Redis*) are assumed to be available. If this isn't possible, modifications to the docker-compose.yml file may be necessary.
    - Inter-pod name resolution is done with Docker network's DNS.
@@ -46,7 +46,7 @@ Finally, the job of the application user (User) is to:
    - Create an Admin-level Augur account.
    - Create an application for Admin account to get an *app_id* and a *client_secret* to register your 8Knot instance with Augur. You can use the url [http://0.0.0.0:8050/] if you're developing locally.
 
-3. Prepare client environment (Dev)
+3. Prepare client environment (Dep)
    - App will communicate w/ Augur front-end via HTTP and w/ its database Augur instance via direct connection.
      - The following environment variables will need to be available to the application at startup in an 'env.list' file at the same directory-level at 'app.py':
        - AUGUR_DATABASE=
@@ -64,9 +64,12 @@ Finally, the job of the application user (User) is to:
        - AUGUR_USER_ACCOUNT_ENDPOINT=\<!!!\>/account/settings
        - AUGUR_USER_AUTH_ENDPOINT=\<!!!\>/user/authorize?client_id=<AUGUR_APP_ID>&response_type=code
          - You'll need to use the *app_id* from the Augur front-end here to fill in the "<AUGUR_APP_ID>".
+       - AUGUR_ADMIN_NAME_ENDPOINT=\<!!!\>/api/unstable/application/
+       - AUGUR_ADMIN_GROUP_NAMES_ENDPOINT=\<!!!\>/api/unstable/application/groups/name
+       - AUGUR_ADMIN_GROUPS_ENDPOINT=\<!!!\>/api/unstable/application/group/repos
        - AUGUR_LOGIN_ENABLED=True
     
-    - Any place that there is a <!!!> should be replaced by your Augur instance's URL. For example, if your application is running on port 5038 on localhost, <!!!> will be replaced by 0.0.0.0:5038
+    - Any place that there is a \<!!!\> should be replaced by your Augur instance's URL. For example, if your application is running on port 5038 on localhost, \<!!!\> will be replaced by 0.0.0.0:5038
     - The first six environment variables are used to connect to database, not for front-end. Instructions to get these credentials are in the project README.md file.
 
 ## **8Knot at Runtime**
