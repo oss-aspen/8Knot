@@ -145,7 +145,7 @@ If you have a companion Augur front end application you'll need to set the follo
 By setting these credentials, a button on the top tab of the application will become available to allow you to create an account on
 your Augur front end, to log into your application via this front end, and to create user-defined groups of repos/organizations that
 will become available in your application, prefixed by your Augur username (e.g. \<username\>_example_group and \<username\>_other_example).
-The groups of the user who registers the 8Knot app with an Augur front end will be available to all other users- this user is considered the 
+The groups of the user who registers the 8Knot app with an Augur front end will be available to all other users- this user is considered the
 application's owner.
 
 ```
