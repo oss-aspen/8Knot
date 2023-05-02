@@ -7,15 +7,15 @@ import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
-from pages.utils.graph_utils import get_graph_time_values, color_seq
+from pages.utils.graph_utils import color_seq
 from queries.commits_query import commits_query as cmq
 import io
 from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
 
-PAGE = "chaoss"  # EDIT FOR PAGE USED
-VIZ_ID = "contrib-activity-cycle"  # UNIQUE IDENTIFIER FOR CALLBAKCS, MUST BE UNIQUE
+PAGE = "chaoss"
+VIZ_ID = "contrib-activity-cycle"
 
 
 gc_contrib_activity_cycle = dbc.Card(
@@ -36,13 +36,13 @@ gc_contrib_activity_cycle = dbc.Card(
                                         of you contributor base."
                         ),
                     ],
-                    id=f"{PAGE}-popover-{VIZ_ID}",
-                    target=f"{PAGE}-popover-target-{VIZ_ID}",  # needs to be the same as dbc.Button id
+                    id=f"popover-{PAGE}-{VIZ_ID}",
+                    target=f"popover-target-{PAGE}-{VIZ_ID}",  # needs to be the same as dbc.Button id
                     placement="top",
                     is_open=False,
                 ),
                 dcc.Loading(
-                    dcc.Graph(id=VIZ_ID),
+                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
                 dbc.Form(
                     [
@@ -50,13 +50,13 @@ gc_contrib_activity_cycle = dbc.Card(
                             [
                                 dbc.Label(
                                     "Date Interval:",
-                                    html_for=f"{VIZ_ID}-interval",
+                                    html_for=f"date-interval-{PAGE}-{VIZ_ID}",
                                     width="auto",
                                 ),
                                 dbc.Col(
                                     [
                                         dbc.RadioItems(
-                                            id=f"{VIZ_ID}-interval",
+                                            id=f"date-interval-{PAGE}-{VIZ_ID}",
                                             options=[
                                                 {
                                                     "label": "Weekday",
@@ -72,7 +72,7 @@ gc_contrib_activity_cycle = dbc.Card(
                                 dbc.Col(
                                     dbc.Button(
                                         "About Graph",
-                                        id=f"{PAGE}-popover-target-{VIZ_ID}",
+                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
                                         color="secondary",
                                         size="sm",
                                     ),
@@ -91,9 +91,9 @@ gc_contrib_activity_cycle = dbc.Card(
 
 # callback for graph info popover
 @callback(
-    Output(f"{PAGE}-popover-{VIZ_ID}", "is_open"),
-    [Input(f"{PAGE}-popover-target-{VIZ_ID}", "n_clicks")],
-    [State(f"{PAGE}-popover-{VIZ_ID}", "is_open")],
+    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
+    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
+    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
 )
 def toggle_popover(n, is_open):
     if n:
@@ -103,10 +103,10 @@ def toggle_popover(n, is_open):
 
 # callback for VIZ TITLE graph
 @callback(
-    Output(VIZ_ID, "figure"),
+    Output(f"{PAGE}-{VIZ_ID}", "figure"),
     [
         Input("repo-choices", "data"),
-        Input(VIZ_ID + "-interval", "value"),
+        Input(f"date-interval-{PAGE}-{VIZ_ID}", "value"),
     ],
     background=True,
 )

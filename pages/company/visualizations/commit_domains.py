@@ -18,9 +18,6 @@ import datetime as dt
 PAGE = "company"
 VIZ_ID = "commit-domains"
 
-paramter_1 = "company-contributions-required"
-
-
 gc_commit_domains = dbc.Card(
     [
         dbc.CardBody(
@@ -39,13 +36,13 @@ gc_commit_domains = dbc.Card(
                             NOTE: the domain might not respresent if it is done as an individual or company."
                         ),
                     ],
-                    id=f"{PAGE}-popover-{VIZ_ID}",
-                    target=f"{PAGE}-popover-target-{VIZ_ID}",  # needs to be the same as dbc.Button id
+                    id=f"popover-{PAGE}-{VIZ_ID}",
+                    target=f"popover-target-{PAGE}-{VIZ_ID}",  # needs to be the same as dbc.Button id
                     placement="top",
                     is_open=False,
                 ),
                 dcc.Loading(
-                    dcc.Graph(id=VIZ_ID),
+                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
                 dbc.Form(
                     [
@@ -53,13 +50,13 @@ gc_commit_domains = dbc.Card(
                             [
                                 dbc.Label(
                                     "Contributions Required:",
-                                    html_for=f"{PAGE}-{paramter_1}-{VIZ_ID}",
+                                    html_for=f"company-contributions-required-{PAGE}-{VIZ_ID}",
                                     width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     [
                                         dbc.Input(
-                                            id=f"{PAGE}-{paramter_1}-{VIZ_ID}",
+                                            id=f"company-contributions-required-{PAGE}-{VIZ_ID}",
                                             type="number",
                                             min=1,
                                             max=100,
@@ -78,7 +75,7 @@ gc_commit_domains = dbc.Card(
                             [
                                 dbc.Col(
                                     dcc.DatePickerRange(
-                                        id=f"{PAGE}-date-picker-range-{VIZ_ID}",
+                                        id=f"date-picker-range-{PAGE}-{VIZ_ID}",
                                         min_date_allowed=dt.date(2005, 1, 1),
                                         max_date_allowed=dt.date.today(),
                                         clearable=True,
@@ -88,7 +85,7 @@ gc_commit_domains = dbc.Card(
                                 dbc.Col(
                                     dbc.Button(
                                         "About Graph",
-                                        id=f"{PAGE}-popover-target-{VIZ_ID}",
+                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
                                         color="secondary",
                                         size="sm",
                                     ),
@@ -108,9 +105,9 @@ gc_commit_domains = dbc.Card(
 
 # callback for graph info popover
 @callback(
-    Output(f"{PAGE}-popover-{VIZ_ID}", "is_open"),
-    [Input(f"{PAGE}-popover-target-{VIZ_ID}", "n_clicks")],
-    [State(f"{PAGE}-popover-{VIZ_ID}", "is_open")],
+    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
+    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
+    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
 )
 def toggle_popover(n, is_open):
     if n:
@@ -120,15 +117,14 @@ def toggle_popover(n, is_open):
 
 # callback for Company Affiliation by Github Account Info graph
 @callback(
-    Output(VIZ_ID, "figure"),
+    Output(f"{PAGE}-{VIZ_ID}", "figure"),
     [
         Input("repo-choices", "data"),
-        Input(f"{PAGE}-{paramter_1}-{VIZ_ID}", "value"),
-        Input(f"{PAGE}-date-picker-range-{VIZ_ID}", "start_date"),
-        Input(f"{PAGE}-date-picker-range-{VIZ_ID}", "end_date"),
+        Input(f"company-contributions-required-{PAGE}-{VIZ_ID}", "value"),
+        Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "start_date"),
+        Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "end_date"),
     ],
     background=True,
-    # prevent_initial_call=True,
 )
 def commit_domains_graph(repolist, num, start_date, end_date):
 

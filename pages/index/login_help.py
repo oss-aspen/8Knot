@@ -76,9 +76,7 @@ def get_user_groups(username, bearer_token):
 
         # searchbar options
         # user's groups are prefixed w/ username to guarantee uniqueness in searchbar
-        users_group_options.append(
-            {"value": lower_name, "label": f"{username}_{group_name}"}
-        )
+        users_group_options.append({"value": lower_name, "label": f"{username}_{group_name}"})
 
     return users_groups, users_group_options
 
@@ -132,9 +130,7 @@ def get_admin_groups(bearer_token):
         lower_name = n.lower()
 
         admin_groups[f"{name}_{lower_name}"] = ids
-        admin_group_options.append(
-            {"value": f"{name}_{lower_name}", "label": f"{name}_{n}"}
-        )
+        admin_group_options.append({"value": f"{name}_{lower_name}", "label": f"{name}_{n}"})
 
     return admin_groups, admin_group_options
 

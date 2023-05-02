@@ -8,7 +8,7 @@ import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, color_seq
-from queries.QUERY_USED import QUERY_NAME as QUERY_INITIALS
+from queries.QUERY_NAME import QUERY_NAME as QUERY_INITIALS
 import io
 from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
@@ -18,33 +18,33 @@ import time
 List of variables to change:
 (1) PAGE
 (2) VIZ_ID
-(3) TITLE OF VISUALIZATION
-(4) CONTEXT OF GRAPH
-(5) TITLE OF VISUALIZATION
-(6) COLUMN_WITH_DATETIME
+(3) gc_VISUALIZATION
+(4) TITLE OF VISUALIZATION
+(5) CONTEXT OF GRAPH
+(6) IDs of Dash components
+(6) NAME_OF_VISUALIZATION_graph
 (7) COLUMN_WITH_DATETIME
-(8) COLUMN_TO_SORT_BY
-(9) Comments before callbacks
-(10) QUERY_USED, QUERY_NAME, QUERY_INITIALS
+(8) COLUMN_WITH_DATETIME
+(9) COLUMN_TO_SORT_BY
+(10) Comments before callbacks
+(11) QUERY_USED, QUERY_NAME, QUERY_INITIALS
 
-NOTE: If you add addtional graph inputs, the one on the same row as the graph info button (date) should be last
+NOTE: ADDITIONAL DASH COMPONENTS FOR USER GRAPH CUSTOMIZATIONS
+
+If you add Dash components (ie dbc.Input, dbc.RadioItems, dcc.DatePickerRange...) the ids, html_for, and targets should be in the
+following format: f"component-identifier-{PAGE}-{VIZ_ID}"
+
+NOTE: If you change or add a new query, you need to do "docker system prune -af" before building again
 """
 
 
 # TODO: Remove unused imports and edit strings and variables in all CAPS
+# TODO: Remove comments specific for the template
 
-PAGE = "overview"  # EDIT FOR PAGE USED
-VIZ_ID = "shortname-of-viz"  # UNIQUE IDENTIFIER FOR CALLBAKCS, MUST BE UNIQUE
+PAGE = "page-name"  # EDIT FOR CURRENT PAGE
+VIZ_ID = "shortname-of-viz"  # UNIQUE IDENTIFIER FOR VIZUALIZATION
 
-"""
-ADDITIONAL INPUT/OUTPUT PARAMETER NAMES FOR DASH CALLBACKS
-If you add a new Input() or Output() to your visualization, name them here
-
-paramter_1 = "name-of-additional-graph-input"
-paramter_2 = "name-of-additional-graph-input
-"""
-
-gc_VISUALIZATION_NAME_HERE = dbc.Card(
+gc_VISUALIZATION = dbc.Card(
     [
         dbc.CardBody(
             [
@@ -58,13 +58,13 @@ gc_VISUALIZATION_NAME_HERE = dbc.Card(
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody("INSERT CONTEXT OF GRAPH HERE"),
                     ],
-                    id=f"{PAGE}-popover-{VIZ_ID}",
-                    target=f"{PAGE}-popover-target-{VIZ_ID}",  # needs to be the same as dbc.Button id
+                    id=f"popover-{PAGE}-{VIZ_ID}",
+                    target=f"popover-target-{PAGE}-{VIZ_ID}",  # needs to be the same as dbc.Button id
                     placement="top",
                     is_open=False,
                 ),
                 dcc.Loading(
-                    dcc.Graph(id=VIZ_ID),
+                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
                 dbc.Form(
                     [
@@ -72,13 +72,13 @@ gc_VISUALIZATION_NAME_HERE = dbc.Card(
                             [
                                 dbc.Label(
                                     "Date Interval:",
-                                    html_for=f"{VIZ_ID}-interval",
+                                    html_for=f"date-radio-{PAGE}-{VIZ_ID}",
                                     width="auto",
                                 ),
                                 dbc.Col(
                                     [
                                         dbc.RadioItems(
-                                            id=f"{VIZ_ID}-interval",
+                                            id=f"date-radio-{PAGE}-{VIZ_ID}",
                                             options=[
                                                 {
                                                     "label": "Trend",
@@ -96,7 +96,7 @@ gc_VISUALIZATION_NAME_HERE = dbc.Card(
                                 dbc.Col(
                                     dbc.Button(
                                         "About Graph",
-                                        id=f"{PAGE}-popover-target-{VIZ_ID}",
+                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
                                         color="secondary",
                                         size="sm",
                                     ),
@@ -107,16 +107,15 @@ gc_VISUALIZATION_NAME_HERE = dbc.Card(
                             align="center",
                         ),
                         # TODO: ADD IN IF ADDITIONAL PARAMETERS FOR GRAPH, REMOVE IF NOT
-                        """dbc.Row(
-                            [
+                        """ format dbc.Inputs, including dbc.Alert if needed
                                 dbc.Label(
                                     "TITLE_OF_ADDITIONAL_PARAMETER:",
-                                    html_for=paramter_1,
+                                    html_for=f"component-identifier-{PAGE}-{VIZ_ID}",
                                     width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     dbc.Input(
-                                        id=paramter_1,
+                                        id=f"component-identifier-{PAGE}-{VIZ_ID}",,
                                         type="number",
                                         min=1,
                                         max=120,
@@ -126,35 +125,26 @@ gc_VISUALIZATION_NAME_HERE = dbc.Card(
                                     className="me-2",
                                     width=2,
                                 ),
-                                dbc.Label(
-                                    "TITLE_OF_ADDITIONAL_PARAMETER:",
-                                    html_for=paramter_2,
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id=paramter_2,
-                                        type="number",
-                                        min=1,
-                                        max=120,
-                                        step=1,
-                                        value=30,
-                                        size= "sm"
-                                    ),
-                                    className="me-2",
-                                    width=1,
-                                ),
                                 dbc.Alert(
                                     children="Please ensure that 'PARAMETER' is less than 'PARAMETER'",
-                                    id= VIZ_ID + "-check-alert",
+                                    id=f"component-identifier-{PAGE}-{VIZ_ID}",
                                     dismissable=True,
                                     fade=False,
                                     is_open=False,
                                     color="warning",
                                 ),
-                            ],
-                            align="center",
-                        ),
+                        """
+                        """ format for dcc.DatePickerRange:
+                                dbc.Col(
+                                    dcc.DatePickerRange(
+                                        id=f"component-identifier-{PAGE}-{VIZ_ID}",
+                                        min_date_allowed=dt.date(2005, 1, 1),
+                                        max_date_allowed=dt.date.today(),
+                                        clearable=True,
+                                    ),
+                                    width="auto",
+                                ),
+
                         """,
                     ]
                 ),
@@ -165,9 +155,9 @@ gc_VISUALIZATION_NAME_HERE = dbc.Card(
 
 # callback for graph info popover
 @callback(
-    Output(f"{PAGE}-popover-{VIZ_ID}", "is_open"),
-    [Input(f"{PAGE}-popover-target-{VIZ_ID}", "n_clicks")],
-    [State(f"{PAGE}-popover-{VIZ_ID}", "is_open")],
+    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
+    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
+    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
 )
 def toggle_popover(n, is_open):
     if n:
@@ -177,17 +167,13 @@ def toggle_popover(n, is_open):
 
 # callback for VIZ TITLE graph
 @callback(
-    Output(VIZ_ID, "figure"),
-    # Output(VIZ_ID + "-check-alert", "is_open"), USE WITH ADDITIONAL PARAMETERS
+    Output(f"{PAGE}-{VIZ_ID}", "figure"),
+    # Output(f"check-alert-{PAGE}-{VIZ_ID}", "is_open"), USE WITH ADDITIONAL PARAMETERS
     # if additional output is added, change returns accordingly
     [
         Input("repo-choices", "data"),
-        Input(VIZ_ID + "-interval", "value"),
-        """
-        USE IN CASE OF ADDITIONAL PARAMETERS, MUST REMOVE IF NOT
-        Input(paramter_1, "value"),
-        Input(paramter_2, "value"),
-        """,
+        Input(f"date-radio-{PAGE}-{VIZ_ID}", "value"),
+        # add additional inputs here
     ],
     background=True,
 )

@@ -184,9 +184,7 @@ def get_augur_user_preferences(
         auth = auth_code_match.group(1)
 
         # use the auth token to get the bearer token
-        username, bearer_token, expiration, refresh_token = augur.auth_to_bearer_token(
-            auth
-        )
+        username, bearer_token, expiration, refresh_token = augur.auth_to_bearer_token(auth)
 
         # if we try to log in with the auth token we just get and the login fails, we
         # tell the user with a popover and do nothing.
@@ -200,9 +198,7 @@ def get_augur_user_preferences(
     elif is_client_startup:
 
         if expiration and bearer_token:
-            checked_bt, checked_rt = verify_previous_login_credentials(
-                bearer_token, refresh_token, expiration
-            )
+            checked_bt, checked_rt = verify_previous_login_credentials(bearer_token, refresh_token, expiration)
             if not all([checked_bt, checked_rt]):
                 return no_login + [True]
             logging.debug("LOGIN: Warm startup; preexisting credentials available")

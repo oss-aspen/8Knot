@@ -5,6 +5,8 @@ from cache_manager.cache_manager import CacheManager as cm
 import pandas as pd
 import io
 
+QUERY_NAME = "ISSUE"
+
 
 @celery_app.task(
     bind=True,
@@ -29,7 +31,7 @@ def issues_query(self, dbmc, repos):
         dict: Results from SQL query, interpreted from pd.to_dict('records')
     """
 
-    logging.debug("ISSUES_DATA_QUERY - START")
+    logging.debug(f"{QUERY_NAME}_DATA_QUERY - START")
 
     if len(repos) == 0:
         return None
@@ -58,14 +60,14 @@ def issues_query(self, dbmc, repos):
     dbm = AugurManager()
     dbm.load_pconfig(dbmc)
 
-    df_issues = dbm.run_query(query_string)
+    df = dbm.run_query(query_string)
 
-    df_issues = df_issues[df_issues["pull_request_id"].isnull()]
-    df_issues = df_issues.drop(columns="pull_request_id")
-    df_issues = df_issues.sort_values(by="created")
+    df = df[df["pull_request_id"].isnull()]
+    df = df.drop(columns="pull_request_id")
+    df = df.sort_values(by="created")
 
-    df_issues = df_issues.reset_index()
-    df_issues.drop("index", axis=1, inplace=True)
+    df = df.reset_index()
+    df.drop("index", axis=1, inplace=True)
 
     # break apart returned data per repo
     # and temporarily store in List to be
@@ -73,7 +75,7 @@ def issues_query(self, dbmc, repos):
     pic = []
     for i, r in enumerate(repos):
         # convert series to a dataframe
-        c_df = pd.DataFrame(df_issues.loc[df_issues["id"] == r]).reset_index(drop=True)
+        c_df = pd.DataFrame(df.loc[df["id"] == r]).reset_index(drop=True)
 
         # bytes buffer to be written to
         b = io.BytesIO()
@@ -88,7 +90,7 @@ def issues_query(self, dbmc, repos):
         bs = b.read()
         pic.append(bs)
 
-    del df_issues
+    del df
 
     # store results in Redis
     cm_o = cm()
@@ -100,5 +102,5 @@ def issues_query(self, dbmc, repos):
         datas=pic,
     )
 
-    logging.debug("ISSUES_DATA_QUERY - END")
+    logging.debug(f"{QUERY_NAME}_DATA_QUERY - END")
     return ack
