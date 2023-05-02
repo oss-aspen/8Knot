@@ -36,8 +36,8 @@ gc_contrib_activity_cycle = dbc.Card(
                                         of you contributor base."
                         ),
                     ],
-                    id=f"{PAGE}-popover-{VIZ_ID}",
-                    target=f"{PAGE}-popover-target-{VIZ_ID}",  # needs to be the same as dbc.Button id
+                    id=f"popover-{PAGE}-{VIZ_ID}",
+                    target=f"popover-target-{PAGE}-{VIZ_ID}",  # needs to be the same as dbc.Button id
                     placement="top",
                     is_open=False,
                 ),
@@ -50,13 +50,13 @@ gc_contrib_activity_cycle = dbc.Card(
                             [
                                 dbc.Label(
                                     "Date Interval:",
-                                    html_for=f"{PAGE}-date_interval-{VIZ_ID}",
+                                    html_for=f"date-interval-{PAGE}-{VIZ_ID}",
                                     width="auto",
                                 ),
                                 dbc.Col(
                                     [
                                         dbc.RadioItems(
-                                            id=f"{PAGE}-date_interval-{VIZ_ID}",
+                                            id=f"date-interval-{PAGE}-{VIZ_ID}",
                                             options=[
                                                 {
                                                     "label": "Weekday",
@@ -72,7 +72,7 @@ gc_contrib_activity_cycle = dbc.Card(
                                 dbc.Col(
                                     dbc.Button(
                                         "About Graph",
-                                        id=f"{PAGE}-popover-target-{VIZ_ID}",
+                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
                                         color="secondary",
                                         size="sm",
                                     ),
@@ -91,9 +91,9 @@ gc_contrib_activity_cycle = dbc.Card(
 
 # callback for graph info popover
 @callback(
-    Output(f"{PAGE}-popover-{VIZ_ID}", "is_open"),
-    [Input(f"{PAGE}-popover-target-{VIZ_ID}", "n_clicks")],
-    [State(f"{PAGE}-popover-{VIZ_ID}", "is_open")],
+    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
+    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
+    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
 )
 def toggle_popover(n, is_open):
     if n:
@@ -106,7 +106,7 @@ def toggle_popover(n, is_open):
     Output(f"{PAGE}-{VIZ_ID}", "figure"),
     [
         Input("repo-choices", "data"),
-        Input(f"{PAGE}-date_interval-{VIZ_ID}", "value"),
+        Input(f"date-interval-{PAGE}-{VIZ_ID}", "value"),
     ],
     background=True,
 )

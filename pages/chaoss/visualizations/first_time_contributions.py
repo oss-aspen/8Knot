@@ -33,8 +33,8 @@ gc_first_time_contributions = dbc.Card(
                             and what activity was their first in the community."
                         ),
                     ],
-                    id=f"{PAGE}-popover-{VIZ_ID}",
-                    target=f"{PAGE}-popover-target-{VIZ_ID}",
+                    id=f"popover-{PAGE}-{VIZ_ID}",
+                    target=f"popover-target-{PAGE}-{VIZ_ID}",
                     placement="top",
                     is_open=False,
                 ),
@@ -44,7 +44,7 @@ gc_first_time_contributions = dbc.Card(
                 dbc.Row(
                     dbc.Button(
                         "About Graph",
-                        id=f"{PAGE}-popover-target-{VIZ_ID}",
+                        id=f"popover-target-{PAGE}-{VIZ_ID}",
                         color="secondary",
                         size="small",
                     ),
@@ -57,9 +57,9 @@ gc_first_time_contributions = dbc.Card(
 
 # callback for graph info popover
 @callback(
-    Output(f"{PAGE}-popover-{VIZ_ID}", "is_open"),
-    [Input(f"{PAGE}-popover-target-{VIZ_ID}", "n_clicks")],
-    [State(f"{PAGE}-popover-{VIZ_ID}", "is_open")],
+    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
+    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
+    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
 )
 def toggle_popover(n, is_open):
     if n:
