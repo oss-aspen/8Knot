@@ -8,12 +8,13 @@ import io
 """
 TODO:
 (1) update QUERY_NAME
-(2) update NAME_query in function definition and ack func=, should be the same as file name
-(2) paste SQL query in the query_string
-(3) insert any nessary df column name or format changed under the pandas column and format updates comment
-(4) reset df index if #3 is performed via "df = df.reset_index(drop=True)"
-(5) go to index/index_callbacks.py and import the NAME_query as a unqiue acronym and add it to the QUERIES list
-(6) delete this list when completed
+(2) update 'NAME_query' found in function definition and in the function call that sets the 'ack' variable below.
+'NAME' should be the same as QUERY_NAME
+(3) paste SQL query in the query_string
+(4) insert any necessary df column name or format changed under the pandas column and format updates comment
+(5) reset df index if #3 is performed via "df = df.reset_index(drop=True)"
+(6) go to index/index_callbacks.py and import the NAME_query as a unqiue acronym and add it to the QUERIES list
+(7) delete this list when completed
 """
 
 QUERY_NAME = "NAME"

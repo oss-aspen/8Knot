@@ -32,7 +32,7 @@ List of variables to change:
 NOTE: ADDITIONAL DASH COMPONENTS FOR USER GRAPH CUSTOMIZATIONS
 
 If you add Dash components (ie dbc.Input, dbc.RadioItems, dcc.DatePickerRange...) the ids, html_for, and targets should be in the
-following format: f"{PAGE}-component_identifier-{VIZ_ID}
+following format: f"component-identifier-{PAGE}-{VIZ_ID}"
 
 NOTE: If you change or add a new query, you need to do "docker system prune -af" before building again
 """
@@ -58,8 +58,8 @@ gc_VISUALIZATION = dbc.Card(
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody("INSERT CONTEXT OF GRAPH HERE"),
                     ],
-                    id=f"{PAGE}-popover-{VIZ_ID}",
-                    target=f"{PAGE}-popover-target-{VIZ_ID}",  # needs to be the same as dbc.Button id
+                    id=f"popover-{PAGE}-{VIZ_ID}",
+                    target=f"popover-target-{PAGE}-{VIZ_ID}",  # needs to be the same as dbc.Button id
                     placement="top",
                     is_open=False,
                 ),
@@ -72,13 +72,13 @@ gc_VISUALIZATION = dbc.Card(
                             [
                                 dbc.Label(
                                     "Date Interval:",
-                                    html_for=f"{PAGE}-date_radio-{VIZ_ID}",
+                                    html_for=f"date-radio-{PAGE}-{VIZ_ID}",
                                     width="auto",
                                 ),
                                 dbc.Col(
                                     [
                                         dbc.RadioItems(
-                                            id=f"{PAGE}-date_radio-{VIZ_ID}",
+                                            id=f"date-radio-{PAGE}-{VIZ_ID}",
                                             options=[
                                                 {
                                                     "label": "Trend",
@@ -96,7 +96,7 @@ gc_VISUALIZATION = dbc.Card(
                                 dbc.Col(
                                     dbc.Button(
                                         "About Graph",
-                                        id=f"{PAGE}-popover-target-{VIZ_ID}",
+                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
                                         color="secondary",
                                         size="sm",
                                     ),
@@ -110,12 +110,12 @@ gc_VISUALIZATION = dbc.Card(
                         """ format dbc.Inputs, including dbc.Alert if needed
                                 dbc.Label(
                                     "TITLE_OF_ADDITIONAL_PARAMETER:",
-                                    html_for=f"{PAGE}-component_identifier-{VIZ_ID}",
+                                    html_for=f"component-identifier-{PAGE}-{VIZ_ID}",
                                     width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     dbc.Input(
-                                        id=f"{PAGE}-component_identifier-{VIZ_ID}",,
+                                        id=f"component-identifier-{PAGE}-{VIZ_ID}",,
                                         type="number",
                                         min=1,
                                         max=120,
@@ -127,7 +127,7 @@ gc_VISUALIZATION = dbc.Card(
                                 ),
                                 dbc.Alert(
                                     children="Please ensure that 'PARAMETER' is less than 'PARAMETER'",
-                                    id=f"{PAGE}-component_identifier-{VIZ_ID}",
+                                    id=f"component-identifier-{PAGE}-{VIZ_ID}",
                                     dismissable=True,
                                     fade=False,
                                     is_open=False,
@@ -137,7 +137,7 @@ gc_VISUALIZATION = dbc.Card(
                         """ format for dcc.DatePickerRange:
                                 dbc.Col(
                                     dcc.DatePickerRange(
-                                        id=f"{PAGE}-component_identifier-{VIZ_ID}",
+                                        id=f"component-identifier-{PAGE}-{VIZ_ID}",
                                         min_date_allowed=dt.date(2005, 1, 1),
                                         max_date_allowed=dt.date.today(),
                                         clearable=True,
@@ -155,9 +155,9 @@ gc_VISUALIZATION = dbc.Card(
 
 # callback for graph info popover
 @callback(
-    Output(f"{PAGE}-popover-{VIZ_ID}", "is_open"),
-    [Input(f"{PAGE}-popover-target-{VIZ_ID}", "n_clicks")],
-    [State(f"{PAGE}-popover-{VIZ_ID}", "is_open")],
+    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
+    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
+    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
 )
 def toggle_popover(n, is_open):
     if n:
@@ -168,11 +168,11 @@ def toggle_popover(n, is_open):
 # callback for VIZ TITLE graph
 @callback(
     Output(f"{PAGE}-{VIZ_ID}", "figure"),
-    # Output(VIZ_ID + "-check-alert", "is_open"), USE WITH ADDITIONAL PARAMETERS
+    # Output(f"check-alert-{PAGE}-{VIZ_ID}", "is_open"), USE WITH ADDITIONAL PARAMETERS
     # if additional output is added, change returns accordingly
     [
         Input("repo-choices", "data"),
-        Input(f"{PAGE}-date_radio-{VIZ_ID}", "value"),
+        Input(f"date-radio-{PAGE}-{VIZ_ID}", "value"),
         # add additional inputs here
     ],
     background=True,

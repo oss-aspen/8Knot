@@ -14,14 +14,14 @@ from pages.utils.job_utils import nodata_graph
 import time
 
 PAGE = "overview"
-VIZ_ID = "new-contributor-growth"
+VIZ_ID = "new-contributor"
 
-gc_new_contributor_growth = dbc.Card(
+gc_new_contributor = dbc.Card(
     [
         dbc.CardBody(
             [
                 html.H3(
-                    id=f"{PAGE}-graph_title-{VIZ_ID}",
+                    id=f"graph-title-{PAGE}-{VIZ_ID}",
                     className="card-title",
                     style={"textAlign": "center"},
                 ),
@@ -34,8 +34,8 @@ gc_new_contributor_growth = dbc.Card(
                             Month/Year: This view looks specifically at the new contributors by selected time bucket."
                         ),
                     ],
-                    id=f"{PAGE}-popover-{VIZ_ID}",
-                    target=f"{PAGE}-popover-target-{VIZ_ID}",
+                    id=f"popover-{PAGE}-{VIZ_ID}",
+                    target=f"popover-target-{PAGE}-{VIZ_ID}",
                     placement="top",
                     is_open=False,
                 ),
@@ -48,12 +48,12 @@ gc_new_contributor_growth = dbc.Card(
                             [
                                 dbc.Label(
                                     "Date Interval",
-                                    html_for=f"{PAGE}-date_interval-{VIZ_ID}",
+                                    html_for=f"date-interval-{PAGE}-{VIZ_ID}",
                                     width="auto",
                                 ),
                                 dbc.Col(
                                     dbc.RadioItems(
-                                        id=f"{PAGE}-date_interval-{VIZ_ID}",
+                                        id=f"date-interval-{PAGE}-{VIZ_ID}",
                                         options=[
                                             {
                                                 "label": "Trend",
@@ -70,7 +70,7 @@ gc_new_contributor_growth = dbc.Card(
                                 dbc.Col(
                                     dbc.Button(
                                         "About Graph",
-                                        id=f"{PAGE}-popover-target-{VIZ_ID}",
+                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
                                         color="secondary",
                                         size="sm",
                                     ),
@@ -90,9 +90,9 @@ gc_new_contributor_growth = dbc.Card(
 
 # callback for graph info popover
 @callback(
-    Output(f"{PAGE}-popover-{VIZ_ID}", "is_open"),
-    [Input(f"{PAGE}-popover-target-{VIZ_ID}", "n_clicks")],
-    [State(f"{PAGE}-popover-{VIZ_ID}", "is_open")],
+    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
+    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
+    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
 )
 def toggle_popover_1(n, is_open):
     if n:
@@ -102,8 +102,8 @@ def toggle_popover_1(n, is_open):
 
 # callback to dynamically change the graph title
 @callback(
-    Output(f"{PAGE}-graph_title-{VIZ_ID}", "children"),
-    Input(f"{PAGE}-date_interval-{VIZ_ID}", "value"),
+    Output(f"graph-title-{PAGE}-{VIZ_ID}", "children"),
+    Input(f"date-interval-{PAGE}-{VIZ_ID}", "value"),
 )
 def graph_title(view):
     title = ""
@@ -120,11 +120,11 @@ def graph_title(view):
     Output(f"{PAGE}-{VIZ_ID}", "figure"),
     [
         Input("repo-choices", "data"),
-        Input(f"{PAGE}-date_interval-{VIZ_ID}", "value"),
+        Input(f"date-interval-{PAGE}-{VIZ_ID}", "value"),
     ],
     background=True,
 )
-def new_contributor_growth_graph(repolist, interval):
+def new_contributor_graph(repolist, interval):
 
     # wait for data to asynchronously download and become available.
     cache = cm()
