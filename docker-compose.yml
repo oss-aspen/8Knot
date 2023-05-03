@@ -13,7 +13,7 @@ services:
       - ./env.list
     environment:
       REDIS_SERVICE_HOST: cache
-      REDIS_SERVICE_PORT: 6388
+      REDIS_SERVICE_PORT: 6380
     restart: always
 
   callback-worker:
@@ -26,7 +26,7 @@ services:
       - ./env.list
     environment:
       REDIS_SERVICE_HOST: cache
-      REDIS_SERVICE_PORT: 6388
+      REDIS_SERVICE_PORT: 6380
     restart: always
 
   query-worker:
@@ -40,13 +40,14 @@ services:
       - ./env.list
     environment:
       REDIS_SERVICE_HOST: cache
-      REDIS_SERVICE_PORT: 6388
+      REDIS_SERVICE_PORT: 6380
     restart: always
 
   cache:
     image: redis
+    command: --port 6380
     ports:
-      - 6388:6388
+      - 6380:6380
     restart: always
 
   flower:
@@ -62,6 +63,6 @@ services:
       - ./env.list
     environment:
       REDIS_SERVICE_HOST: cache
-      REDIS_SERVICE_PORT: 6388
+      REDIS_SERVICE_PORT: 6380
     ports:
       - 5557:5557

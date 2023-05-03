@@ -29,5 +29,5 @@ COPY ./ /explorer/
 
 # run worker
 # CMD [ "rq", "worker", "-c", "worker_settings" ]
-# CMD ["celery", "-A", "app:celery_app", "--broker", "redis://:@cache:6379", "flower"]
+# CMD ["celery", "-A", "app:celery_app", "--broker", "redis://:@cache:6380", "flower"]
 CMD ["celery", "-A", "app:celery_app", "flower"]
