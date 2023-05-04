@@ -275,7 +275,7 @@ class AugurManager:
         df_repo_git_id = df_search_bar.copy()
         df_repo_git_id = df_repo_git_id[["repo_git", "repo_id"]]
         self.repo_git_to_repo_id = pd.Series(df_repo_git_id.repo_id.values, index=df_repo_git_id["repo_git"]).to_dict()
-        self.repo_id_to_repo_git = pd.Series(df_repo_git_id["repo_git"], index=df_repo_git_id.repo_id.values).to_dict()
+        self.repo_id_to_repo_git = {value: key for (key, value) in self.repo_git_to_repo_id.items()}
 
         # making first selection for the search bar
         self.initial_search_option = self.multiselect_options[0]
