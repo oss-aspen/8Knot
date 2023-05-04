@@ -338,6 +338,32 @@ def show_help_alert(n_clicks, openness):
 
 
 @callback(
+    [Output("repo-list-alert", "is_open"), Output("repo-list-alert", "children")],
+    [Input("repo-list-button", "n_clicks")],
+    [State("help-alert", "is_open"), State("repo-choices", "data")],
+)
+def show_help_alert(n_clicks, openness, repo_ids):
+    """Sets the 'open' state of a help message
+    for the search bar to encourage users to check
+    their spelling and to ask for data to be loaded
+    if not available.
+    Args:
+        n_clicks (int): number of times 'help' button clicked.
+        openness (boolean): whether help alert is currently open.
+    Returns:
+        dash.no_update | boolean: whether the help alert should be open.
+    """
+    print(repo_ids)
+    url_list = [augur.repo_id_to_git(i) for i in repo_ids]
+
+    if n_clicks == 0:
+        return dash.no_update, str(url_list)
+    # switch the openness parameter, allows button to also
+    # dismiss the Alert.
+    return not openness, str(url_list)
+
+
+@callback(
     [Output("data-badge", "children"), Output("data-badge", "color")],
     Input("job-ids", "data"),
     background=True,
