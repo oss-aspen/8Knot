@@ -275,6 +275,8 @@ class AugurManager:
         df_repo_git_id = df_search_bar.copy()
         df_repo_git_id = df_repo_git_id[["repo_git", "repo_id"]]
         self.repo_git_to_repo_id = pd.Series(df_repo_git_id.repo_id.values, index=df_repo_git_id["repo_git"]).to_dict()
+        #self.repo_id_to_repo_git = {value: key for (key, value) in self.repo_git_to_repo_id.items()}
+        self.repo_id_to_repo_git = pd.Series(df_repo_git_id.repo_git.values, index=df_repo_git_id["repo_id"]).to_dict()
 
         # making first selection for the search bar
         self.initial_search_option = self.multiselect_options[0]
@@ -292,6 +294,17 @@ class AugurManager:
             int: repo_id of the URL in the source DB.
         """
         return self.repo_git_to_repo_id.get(git)
+
+    def repo_id_to_git(self, id):
+        """Getter method for dictionary
+        that converts a repo_id to the respective
+        git URL in the source db.
+        Args:
+            int: repo_id of the URL in the source DB.
+        Returns:
+            git (str): URL of repo
+        """
+        return self.repo_id_to_repo_git.get(id)
 
     def org_to_repos(self, org):
         """Returns the list of repos in an org.

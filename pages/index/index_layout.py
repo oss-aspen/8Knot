@@ -152,6 +152,16 @@ search_bar = html.Div(
                     is_open=False,
                     color="info",
                 ),
+                dbc.Alert(
+                    children="List of repos",
+                    id="repo-list-alert",
+                    dismissable=True,
+                    fade=True,
+                    is_open=False,
+                    color="light",
+                    # if number of repos is large, render as a scrolling window
+                    style={"overflow-y": "scroll", "max-height": "440px"}
+                ),
             ],
             style={
                 "width": "50%",
@@ -169,6 +179,16 @@ search_bar = html.Div(
         dbc.Button(
             "Help",
             id="search-help",
+            n_clicks=0,
+            size="md",
+            style={
+                "verticalAlign": "top",
+                "display": "table-cell",
+            },
+        ),
+        dbc.Button(
+            "Repo List",
+            id="repo-list-button",
             n_clicks=0,
             size="md",
             style={
