@@ -177,7 +177,7 @@ app.clientside_callback(
     prevent_initial_call=True,
 )
 
-if os.getenv("8KNOT_DEBUG", ""):
+if os.getenv("8KNOT_DEBUG", "False") == "True":
     app.enable_dev_tools(dev_tools_ui=True, dev_tools_hot_reload=False)
 
 if __name__ == "__main__":
