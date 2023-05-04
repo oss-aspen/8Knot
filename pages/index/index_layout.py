@@ -53,7 +53,7 @@ navbar = dbc.Navbar(
                 [
                     dbc.Col(
                         [
-                            html.Img(src=dash.get_asset_url("logo2.png"), height="40px"),
+                            html.Img(src=dash.get_asset_url("8knot-logo-vertical.png"), height="40px"),
                             dbc.NavbarBrand(
                                 "8Knot Community Data",
                                 id="navbar-title",
