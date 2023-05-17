@@ -1,13 +1,24 @@
+:root {
+    --color-bg: #201D24;
+    --color-bg-light: #4C3839;
+    --color-fg: #E8EDF3;
+    --color-fg-contrast: #A7C7E0;
+    --color-accent: #EC6A39;
+    --color-accent-dark: #CE957A;
+    --color-notice: #FCAE10;
+}
+
+
 h2,
 h4,
 h5,
 h6 {
-    color: #8D9D92 !important;
+    color: var(--color-fg) !important;
 }
 
 h1,
 h3 {
-    color: #436755 !important;
+    color: var(--color-fg-contrast) !important;
 }
 
 /* this is to change the color for the spinner, cant be changed directly */
@@ -16,27 +27,27 @@ h3 {
 }
 
 .navbar-brand {
-    color: #436755 !important;
+    color: var(--color-fg) !important;
 }
 
 .metric_data {
-    color: #000000 !important;
+    color: var(--color-fg) !important;
     text-shadow: none !important;
     padding-bottom: 15px !important;
 }
 
 .box_emissions {
 
-    background-color: #505050;
-    color: #505050;
+    background-color: var(--color-bg-light);
+    color: var(--color-fg);
     margin: 2px;
-    box-shadow: 4px 4px 4px rgb(33, 33, 33);
+    box-shadow: 4px 4px 4px var(--color-bg);
     justify-content: center;
     text-align: center;
 }
 
 .glace_headers {
-    color: #000000 !important;
+    color: var(--color-fg) !important;
     text-shadow: none !important;
     font-weight: "normal" !important;
 }
