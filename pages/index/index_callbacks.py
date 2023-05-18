@@ -37,6 +37,7 @@ login_enabled = os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True"
         Output("login-popover", "is_open"),
         Output("refresh-button", "disabled"),
         Output("logout-button", "disabled"),
+        Output("manage-group-button", "disabled"),
     ],
     Input("augur_username_dash_persistence", "data"),
     State("login-succeeded", "data"),
@@ -67,6 +68,7 @@ def login_username_button(username, login_succeeded):
                     f"{username}",
                     href=augur.user_account_endpoint,
                     id="login-navlink",
+                    disabled=True,
                 ),
             ),
         ]
@@ -81,7 +83,7 @@ def login_username_button(username, login_succeeded):
             ),
         ]
 
-    return navlink, not login_succeeded, buttons_disabled, buttons_disabled
+    return navlink, not login_succeeded, buttons_disabled, buttons_disabled, buttons_disabled
 
 
 @callback(
