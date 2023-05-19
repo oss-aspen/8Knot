@@ -16,9 +16,13 @@ if os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True":
                 dbc.Col(
                     dbc.Nav(
                         [
-                            html.Div(
-                                id="nav-login-container",
-                                children=[],
+                            dcc.Loading(
+                                children=[
+                                    html.Div(
+                                        id="nav-login-container",
+                                        children=[],
+                                    ),
+                                ]
                             ),
                             dbc.NavItem(
                                 dbc.NavLink("Refresh Groups", id="refresh-button", disabled=True),
