@@ -199,6 +199,15 @@ def get_augur_user_preferences(
 
     elif is_client_startup:
 
+        logging.debug("LOGIN: STARTUP - GETTING ADMIN GROUPS")
+        # try to get admin groups
+        admin_groups, admin_group_options = get_admin_groups()
+
+        no_login[4] = admin_groups
+        no_login[5] = admin_group_options
+
+        logging.debug("LOGIN: STARTUP - ADMIN GROUPS SET")
+
         if expiration and bearer_token:
             checked_bt, checked_rt = verify_previous_login_credentials(bearer_token, refresh_token, expiration)
             if not all([checked_bt, checked_rt]):
@@ -210,7 +219,7 @@ def get_augur_user_preferences(
 
     # get groups for admin and user from front-end
     user_groups, user_group_options = get_user_groups(username, bearer_token)
-    admin_groups, admin_group_options = get_admin_groups(bearer_token)
+    admin_groups, admin_group_options = get_admin_groups()
 
     # combine admin and user groups
     user_groups.update(admin_groups)

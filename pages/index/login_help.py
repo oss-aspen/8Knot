@@ -81,7 +81,7 @@ def get_user_groups(username, bearer_token):
     return users_groups, users_group_options
 
 
-def get_admin_groups(bearer_token):
+def get_admin_groups():
     """Requests all admin-level groups from augur frontend.
 
     Args:
@@ -97,7 +97,7 @@ def get_admin_groups(bearer_token):
 
     logging.debug("ADMIN_GROUPS: GETTING NAME")
     # get name of admin account that linked 8knot to augur instance
-    admin_name = augur.make_admin_name_request(bearer_token)
+    admin_name = augur.make_admin_name_request()
     if not admin_name:
         return None, None
     name = admin_name["user"]
@@ -105,7 +105,7 @@ def get_admin_groups(bearer_token):
 
     logging.debug("ADMIN_GROUPS: GETTING GROUP NAMES")
     # get the names of the admin account's groups
-    group_names = augur.make_admin_group_names_request(bearer_token)
+    group_names = augur.make_admin_group_names_request()
     if not group_names:
         return None, None
     gnames = group_names["group_names"]
@@ -114,7 +114,7 @@ def get_admin_groups(bearer_token):
     # create an entry for each group that the admin has listed.
     for n in gnames:
         logging.debug(f"ADMIN_GROUPS: REQUESTING GROUP FOR: {n}")
-        group = augur.make_admin_groups_request(bearer_token, params={"group_name": n})
+        group = augur.make_admin_groups_request(params={"group_name": n})
 
         repo_list = group["repos"]
         logging.debug(f"ADMIN_GROUPS: GOT REPOS FOR {n}, {len(repo_list)}")
