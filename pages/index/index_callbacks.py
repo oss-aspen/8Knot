@@ -37,6 +37,7 @@ login_enabled = os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True"
         Output("login-popover", "is_open"),
         Output("refresh-button", "disabled"),
         Output("logout-button", "disabled"),
+        Output("manage-group-button", "disabled"),
     ],
     Input("augur_username_dash_persistence", "data"),
     State("login-succeeded", "data"),
@@ -67,6 +68,7 @@ def login_username_button(username, login_succeeded):
                     f"{username}",
                     href=augur.user_account_endpoint,
                     id="login-navlink",
+                    disabled=True,
                 ),
             ),
         ]
@@ -81,7 +83,7 @@ def login_username_button(username, login_succeeded):
             ),
         ]
 
-    return navlink, not login_succeeded, buttons_disabled, buttons_disabled
+    return navlink, not login_succeeded, buttons_disabled, buttons_disabled, buttons_disabled
 
 
 @callback(
@@ -184,9 +186,7 @@ def get_augur_user_preferences(
         auth = auth_code_match.group(1)
 
         # use the auth token to get the bearer token
-        username, bearer_token, expiration, refresh_token = augur.auth_to_bearer_token(
-            auth
-        )
+        username, bearer_token, expiration, refresh_token = augur.auth_to_bearer_token(auth)
 
         # if we try to log in with the auth token we just get and the login fails, we
         # tell the user with a popover and do nothing.
@@ -199,10 +199,17 @@ def get_augur_user_preferences(
 
     elif is_client_startup:
 
+        logging.debug("LOGIN: STARTUP - GETTING ADMIN GROUPS")
+        # try to get admin groups
+        admin_groups, admin_group_options = get_admin_groups()
+
+        no_login[4] = admin_groups
+        no_login[5] = admin_group_options
+
+        logging.debug("LOGIN: STARTUP - ADMIN GROUPS SET")
+
         if expiration and bearer_token:
-            checked_bt, checked_rt = verify_previous_login_credentials(
-                bearer_token, refresh_token, expiration
-            )
+            checked_bt, checked_rt = verify_previous_login_credentials(bearer_token, refresh_token, expiration)
             if not all([checked_bt, checked_rt]):
                 return no_login + [True]
             logging.debug("LOGIN: Warm startup; preexisting credentials available")
@@ -339,6 +346,32 @@ def show_help_alert(n_clicks, openness):
     # switch the openness parameter, allows button to also
     # dismiss the Alert.
     return not openness
+
+
+@callback(
+    [Output("repo-list-alert", "is_open"), Output("repo-list-alert", "children")],
+    [Input("repo-list-button", "n_clicks")],
+    [State("help-alert", "is_open"), State("repo-choices", "data")],
+)
+def show_help_alert(n_clicks, openness, repo_ids):
+    """Sets the 'open' state of a help message
+    for the search bar to encourage users to check
+    their spelling and to ask for data to be loaded
+    if not available.
+    Args:
+        n_clicks (int): number of times 'help' button clicked.
+        openness (boolean): whether help alert is currently open.
+    Returns:
+        dash.no_update | boolean: whether the help alert should be open.
+    """
+    print(repo_ids)
+    url_list = [augur.repo_id_to_git(i) for i in repo_ids]
+
+    if n_clicks == 0:
+        return dash.no_update, str(url_list)
+    # switch the openness parameter, allows button to also
+    # dismiss the Alert.
+    return not openness, str(url_list)
 
 
 @callback(

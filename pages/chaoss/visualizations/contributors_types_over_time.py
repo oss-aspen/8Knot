@@ -15,6 +15,9 @@ import time
 import io
 from cache_manager.cache_manager import CacheManager as cm
 
+PAGE = "chaoss"
+VIZ_ID = "contrib-types-over-time"
+
 gc_contributors_over_time = dbc.Card(
     [
         dbc.CardBody(
@@ -32,13 +35,13 @@ gc_contributors_over_time = dbc.Card(
                             This criteria can be selected to cater to your specfic community."
                         ),
                     ],
-                    id="chaoss-popover-3",
-                    target="chaoss-popover-target-3",  # needs to be the same as dbc.Button id
+                    id=f"popover-{PAGE}-{VIZ_ID}",
+                    target=f"popover-target-{PAGE}-{VIZ_ID}",
                     placement="top",
                     is_open=False,
                 ),
                 dcc.Loading(
-                    dcc.Graph(id="contributors-over-time"),
+                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
                 dbc.Form(
                     [
@@ -46,12 +49,12 @@ gc_contributors_over_time = dbc.Card(
                             [
                                 dbc.Label(
                                     "Contributions Required:",
-                                    html_for="num_contribs_req",
+                                    html_for=f"contributions-required-{PAGE}-{VIZ_ID}",
                                     width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     dbc.Input(
-                                        id="num_contribs_req",
+                                        id=f"contributions-required-{PAGE}-{VIZ_ID}",
                                         type="number",
                                         min=1,
                                         max=15,
@@ -69,12 +72,12 @@ gc_contributors_over_time = dbc.Card(
                             [
                                 dbc.Label(
                                     "Date Interval:",
-                                    html_for="contrib-time-interval",
+                                    html_for=f"date-interval-{PAGE}-{VIZ_ID}",
                                     width="auto",
                                 ),
                                 dbc.Col(
                                     dbc.RadioItems(
-                                        id="contrib-time-interval",
+                                        id=f"date-interval-{PAGE}-{VIZ_ID}",
                                         options=[
                                             {
                                                 "label": "Week",
@@ -91,7 +94,7 @@ gc_contributors_over_time = dbc.Card(
                                 dbc.Col(
                                     dbc.Button(
                                         "About Graph",
-                                        id="chaoss-popover-target-3",
+                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
                                         color="secondary",
                                         size="sm",
                                     ),
@@ -110,22 +113,22 @@ gc_contributors_over_time = dbc.Card(
 
 # callback for graph info popover
 @callback(
-    Output("chaoss-popover-3", "is_open"),
-    [Input("chaoss-popover-target-3", "n_clicks")],
-    [State("chaoss-popover-3", "is_open")],
+    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
+    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
+    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
 )
-def toggle_popover_3(n, is_open):
+def toggle_popover(n, is_open):
     if n:
         return not is_open
     return is_open
 
 
 @callback(
-    Output("contributors-over-time", "figure"),
+    Output(f"{PAGE}-{VIZ_ID}", "figure"),
     [
         Input("repo-choices", "data"),
-        Input("num_contribs_req", "value"),
-        Input("contrib-time-interval", "value"),
+        Input(f"contributions-required-{PAGE}-{VIZ_ID}", "value"),
+        Input(f"date-interval-{PAGE}-{VIZ_ID}", "value"),
     ],
     background=True,
 )

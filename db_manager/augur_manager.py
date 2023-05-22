@@ -116,15 +116,11 @@ class AugurManager:
             for v in env_values:
 
                 if v not in os.environ:
-                    logging.critical(
-                        f'Required environment variable "{v}" not available.'
-                    )
+                    logging.critical(f'Required environment variable "{v}" not available.')
                     return None
 
                 if os.getenv(v) is None:
-                    logging.critical(
-                        f'Required environment variable: "{v}" available but none.'
-                    )
+                    logging.critical(f'Required environment variable: "{v}" available but none.')
                     return None
 
             # have confirmed that necessary environment variables exist- proceed.
@@ -168,9 +164,7 @@ class AugurManager:
             pd.DataFrame: Results from SQL query.
         """
         if self.engine is None:
-            logging.critical(
-                "No engine- please use 'get_engine' method to create engine."
-            )
+            logging.critical("No engine- please use 'get_engine' method to create engine.")
             return None
 
         result_df = pd.DataFrame()
@@ -262,34 +256,27 @@ class AugurManager:
 
         # create a list of dictionaries for the MultiSelect dropdown
         # Output is of the form: [{"label": org_name, "value": lower(org_name)}, ...]
-        multiselect_orgs = [
-            {"label": v, "value": str.lower(v)}
-            for v in list(df_search_bar["rg_name"].unique())
-        ]
+        multiselect_orgs = [{"label": v, "value": str.lower(v)} for v in list(df_search_bar["rg_name"].unique())]
 
         # combine options for multiselect component and sort them by the length
         # of their label (shorter comes first because it sorts ascending by default.)
         self.multiselect_options = multiselect_repos + multiselect_orgs
-        self.multiselect_options = sorted(
-            self.multiselect_options, key=lambda i: i["label"]
-        )
+        self.multiselect_options = sorted(self.multiselect_options, key=lambda i: i["label"])
 
         # create a dictionary to map github orgs to their constituent repos.
         # used when the user selects an org
         # Output is of the form: {group_name: [rid1, rid2, ...], group_name: [...], ...}
         df_lower_repo_names = df_search_bar.copy()
         df_lower_repo_names["rg_name"] = df_lower_repo_names["rg_name"].apply(str.lower)
-        self.org_name_to_repos_dict = (
-            df_lower_repo_names.groupby("rg_name")["repo_id"].apply(list).to_dict()
-        )
+        self.org_name_to_repos_dict = df_lower_repo_names.groupby("rg_name")["repo_id"].apply(list).to_dict()
         self.org_names = list(self.org_name_to_repos_dict.keys())
 
         # create a dictionary that maps the github url to the repo_id in database
         df_repo_git_id = df_search_bar.copy()
         df_repo_git_id = df_repo_git_id[["repo_git", "repo_id"]]
-        self.repo_git_to_repo_id = pd.Series(
-            df_repo_git_id.repo_id.values, index=df_repo_git_id["repo_git"]
-        ).to_dict()
+        self.repo_git_to_repo_id = pd.Series(df_repo_git_id.repo_id.values, index=df_repo_git_id["repo_git"]).to_dict()
+        # self.repo_id_to_repo_git = {value: key for (key, value) in self.repo_git_to_repo_id.items()}
+        self.repo_id_to_repo_git = pd.Series(df_repo_git_id.repo_git.values, index=df_repo_git_id["repo_id"]).to_dict()
 
         # making first selection for the search bar
         self.initial_search_option = self.multiselect_options[0]
@@ -307,6 +294,17 @@ class AugurManager:
             int: repo_id of the URL in the source DB.
         """
         return self.repo_git_to_repo_id.get(git)
+
+    def repo_id_to_git(self, id):
+        """Getter method for dictionary
+        that converts a repo_id to the respective
+        git URL in the source db.
+        Args:
+            int: repo_id of the URL in the source DB.
+        Returns:
+            git (str): URL of repo
+        """
+        return self.repo_id_to_repo_git.get(id)
 
     def org_to_repos(self, org):
         """Returns the list of repos in an org.
@@ -368,14 +366,10 @@ class AugurManager:
                     data["refresh_token"],
                 )
             else:
-                logging.critical(
-                    f"AUGUR-MANAGER FAILURE: Couldn't get Bearer Token, response not Validated."
-                )
+                logging.critical(f"AUGUR-MANAGER FAILURE: Couldn't get Bearer Token, response not Validated.")
                 return None, None, None, None
         else:
-            logging.critical(
-                f"AUGUR-MANAGER FAILURE: Couldn't get Bearer Token, non-200 status."
-            )
+            logging.critical(f"AUGUR-MANAGER FAILURE: Couldn't get Bearer Token, non-200 status.")
             return None, None, None, None
 
     def make_authenticated_request(self, headers={}, params={}):
@@ -386,9 +380,7 @@ class AugurManager:
         """
         headers["Authorization"] = f"Client {self.client_secret}"
 
-        return requests.post(
-            self.session_generate_endpoint, headers=headers, params=params
-        )
+        return requests.post(self.session_generate_endpoint, headers=headers, params=params)
 
     def make_user_request(self, access_token, headers={}, params={}):
         """Large parts of code written by John McGinness, University of Missouri
@@ -398,55 +390,49 @@ class AugurManager:
         """
         headers["Authorization"] = f"Client {self.client_secret}, Bearer {access_token}"
 
-        result = requests.post(
-            self.user_groups_endpoint, headers=headers, params=params
-        )
+        result = requests.post(self.user_groups_endpoint, headers=headers, params=params)
 
         if result.status_code == 200:
             return result.json()
 
-    def make_admin_name_request(self, access_token, headers={}, params={}):
+    def make_admin_name_request(self, headers={}, params={}):
         """Large parts of code written by John McGinness, University of Missouri
         Added by James Kunstle.
 
         Returns:
             _type_: _description_
         """
-        headers["Authorization"] = f"Client {self.client_secret}, Bearer {access_token}"
+        headers["Authorization"] = f"Client {self.client_secret}"
 
-        result = requests.post(self.admin_name_endpoint, headers=headers, params=params)
+        result = requests.get(self.admin_name_endpoint, headers=headers, params=params)
 
         if result.status_code == 200:
             return result.json()
 
-    def make_admin_group_names_request(self, access_token, headers={}, params={}):
+    def make_admin_group_names_request(self, headers={}, params={}):
         """Large parts of code written by John McGinness, University of Missouri
         Added by James Kunstle.
 
         Returns:
             _type_: _description_
         """
-        headers["Authorization"] = f"Client {self.client_secret}, Bearer {access_token}"
+        headers["Authorization"] = f"Client {self.client_secret}"
 
-        result = requests.post(
-            self.admin_group_names_endpoint, headers=headers, params=params
-        )
+        result = requests.get(self.admin_group_names_endpoint, headers=headers, params=params)
 
         if result.status_code == 200:
             return result.json()
 
-    def make_admin_groups_request(self, access_token, headers={}, params={}):
+    def make_admin_groups_request(self, headers={}, params={}):
         """Large parts of code written by John McGinness, University of Missouri
         Added by James Kunstle.
 
         Returns:
             _type_: _description_
         """
-        headers["Authorization"] = f"Client {self.client_secret}, Bearer {access_token}"
+        headers["Authorization"] = f"Client {self.client_secret}"
 
-        result = requests.post(
-            self.admin_groups_endpoint, headers=headers, params=params
-        )
+        result = requests.get(self.admin_groups_endpoint, headers=headers, params=params)
 
         if result.status_code == 200:
             return result.json()

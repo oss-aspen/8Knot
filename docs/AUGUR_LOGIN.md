@@ -16,7 +16,7 @@ With this feature, users can:
 There are three personas required for this integration:
 
 1. The application owner (Admin).
-2. The application deployer (Dep). 
+2. The application deployer (Dep).
 3. The application user (User).
 
 The job of the application owner (Admin) is to:
@@ -68,7 +68,7 @@ Finally, the job of the application user (User) is to:
        - AUGUR_ADMIN_GROUP_NAMES_ENDPOINT=\<!!!\>/api/unstable/application/groups/name
        - AUGUR_ADMIN_GROUPS_ENDPOINT=\<!!!\>/api/unstable/application/group/repos
        - AUGUR_LOGIN_ENABLED=True
-    
+
     - Any place that there is a \<!!!\> should be replaced by your Augur instance's URL. For example, if your application is running on port 5038 on localhost, \<!!!\> will be replaced by 0.0.0.0:5038
     - The first six environment variables are used to connect to database, not for front-end. Instructions to get these credentials are in the project README.md file.
 

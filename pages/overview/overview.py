@@ -9,7 +9,7 @@ from .visualizations.issues_over_time import gc_issues_over_time
 # disable and re-enable formatter
 # fmt: off
 from .visualizations.active_drifting_contributors import gc_active_drifting_contributors
-from .visualizations.total_contributor_growth import gc_total_contributor_growth
+from .visualizations.new_contributor import gc_new_contributor
 # fmt: on
 from .visualizations.issue_staleness import gc_issue_staleness
 from .visualizations.pr_staleness import gc_pr_staleness
@@ -23,16 +23,16 @@ layout = dbc.Container(
     [
         dbc.Row(
             [
-                dbc.Col(gc_issues_over_time, width=6),
-                dbc.Col(gc_commits_over_time, width=6),
+                dbc.Col(gc_active_drifting_contributors, width=6),
+                dbc.Col(gc_new_contributor, width=6),
             ],
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
             [
-                dbc.Col(gc_total_contributor_growth, width=6),
-                dbc.Col(gc_active_drifting_contributors, width=6),
+                dbc.Col(gc_pr_staleness, width=6),
+                dbc.Col(gc_pr_over_time, width=6),
             ],
             align="center",
             style={"marginBottom": ".5%"},
@@ -40,14 +40,14 @@ layout = dbc.Container(
         dbc.Row(
             [
                 dbc.Col(gc_issue_staleness, width=6),
-                dbc.Col(gc_pr_staleness, width=6),
+                dbc.Col(gc_issues_over_time, width=6),
             ],
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
             [
-                dbc.Col(gc_pr_over_time, width=6),
+                dbc.Col(gc_commits_over_time, width=6),
             ],
             align="center",
             style={"marginBottom": ".5%"},

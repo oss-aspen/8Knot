@@ -5,6 +5,8 @@ import pandas as pd
 from cache_manager.cache_manager import CacheManager as cm
 import io
 
+QUERY_NAME = "COMPANY"
+
 
 @celery_app.task(
     bind=True,
@@ -28,7 +30,7 @@ def company_query(self, dbmc, repos):
     --------
         dict: Results from SQL query, interpreted from pd.to_dict('records')
     """
-    logging.debug("COMPANY_DATA_QUERY - START")
+    logging.debug(f"{QUERY_NAME}_DATA_QUERY - START")
 
     if len(repos) == 0:
         return None
@@ -97,5 +99,5 @@ def company_query(self, dbmc, repos):
         datas=pic,
     )
 
-    logging.debug("COMPANY_DATA_QUERY - END")
+    logging.debug(f"{QUERY_NAME}_DATA_QUERY - END")
     return ack
