@@ -219,7 +219,7 @@ def get_augur_user_preferences(
 
     # get groups for admin and user from front-end
     user_groups, user_group_options = get_user_groups(username, bearer_token)
-    admin_groups, admin_group_options = get_admin_groups(bearer_token)
+    admin_groups, admin_group_options = get_admin_groups()
 
     # combine admin and user groups
     user_groups.update(admin_groups)
