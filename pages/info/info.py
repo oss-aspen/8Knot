@@ -3,7 +3,8 @@ import dash
 import dash_bootstrap_components as dbc
 
 # register the page
-dash.register_page(__name__, path="/info", order=4)
+# Page is promoted to order=1 ahead of Home page because Home page is temporarily deactivated for overhaul.
+dash.register_page(__name__, path="/", order=1)
 
 layout = dbc.Container(
     [
