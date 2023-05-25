@@ -101,6 +101,7 @@ gc_company_associated_activity = dbc.Card(
     ],
 )
 
+
 # callback for graph info popover
 @callback(
     Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
@@ -146,11 +147,11 @@ def compay_associated_activity_graph(repolist, num, start_date, end_date):
         df = cache.grabm(func=cmq, repos=repolist)
 
     start = time.perf_counter()
-    logging.debug(f"{VIZ_ID}- START")
+    logging.warning(f"{VIZ_ID}- START")
 
     # test if there is data
     if df.empty:
-        logging.debug(f"{VIZ_ID} - NO DATA AVAILABLE")
+        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return nodata_graph
 
     # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
@@ -158,12 +159,11 @@ def compay_associated_activity_graph(repolist, num, start_date, end_date):
 
     fig = create_figure(df)
 
-    logging.debug(f"{VIZ_ID} - END - {time.perf_counter() - start}")
+    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
 
 def process_data(df: pd.DataFrame, num, start_date, end_date):
-
     # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
 
@@ -206,7 +206,6 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
 
 
 def create_figure(df: pd.DataFrame):
-
     # graph generation
     fig = px.bar(df, x="domains", y="occurrences", color_discrete_sequence=color_seq)
     fig.update_xaxes(rangeslider_visible=True, range=[-0.5, 15])

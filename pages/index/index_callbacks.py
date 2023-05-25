@@ -83,7 +83,13 @@ def login_username_button(username, login_succeeded):
             ),
         ]
 
-    return navlink, not login_succeeded, buttons_disabled, buttons_disabled, buttons_disabled
+    return (
+        navlink,
+        not login_succeeded,
+        buttons_disabled,
+        buttons_disabled,
+        buttons_disabled,
+    )
 
 
 @callback(
@@ -175,11 +181,11 @@ def get_augur_user_preferences(
 
     # always go through this path if login not enabled
     if (not is_client_startup and not auth_code_match) or (not login_enabled):
-        logging.debug("LOGIN: Page Switch")
+        logging.warning("LOGIN: Page Switch")
         raise dash.exceptions.PreventUpdate
 
     if auth_code_match:
-        logging.debug("LOGIN: Redirect from Augur; Code pattern in href")
+        logging.warning("LOGIN: Redirect from Augur; Code pattern in href")
         # the user has just redirected from Augur so we know
         # that we need to get their new credentials.
 
@@ -198,23 +204,22 @@ def get_augur_user_preferences(
         expiration = datetime.now() + timedelta(seconds=expiration)
 
     elif is_client_startup:
-
-        logging.debug("LOGIN: STARTUP - GETTING ADMIN GROUPS")
+        logging.warning("LOGIN: STARTUP - GETTING ADMIN GROUPS")
         # try to get admin groups
         admin_groups, admin_group_options = get_admin_groups()
 
         no_login[4] = admin_groups
         no_login[5] = admin_group_options
 
-        logging.debug("LOGIN: STARTUP - ADMIN GROUPS SET")
+        logging.warning("LOGIN: STARTUP - ADMIN GROUPS SET")
 
         if expiration and bearer_token:
             checked_bt, checked_rt = verify_previous_login_credentials(bearer_token, refresh_token, expiration)
             if not all([checked_bt, checked_rt]):
                 return no_login + [True]
-            logging.debug("LOGIN: Warm startup; preexisting credentials available")
+            logging.warning("LOGIN: Warm startup; preexisting credentials available")
         else:
-            logging.debug("LOGIN: Cold Startup; no credentials available")
+            logging.warning("LOGIN: Cold Startup; no credentials available")
             return no_login + [True]
 
     # get groups for admin and user from front-end
@@ -225,7 +230,7 @@ def get_augur_user_preferences(
     user_groups.update(admin_groups)
     user_group_options += admin_group_options
 
-    logging.debug("LOGIN: Success")
+    logging.warning("LOGIN: Success")
     return (
         username,
         bearer_token,
@@ -248,7 +253,6 @@ def get_augur_user_preferences(
     ],
 )
 def dynamic_multiselect_options(user_in: str, selections, augur_groups):
-
     """
     Ref: https://dash.plotly.com/dash-core-components/dropdown#dynamic-options
 
@@ -301,7 +305,7 @@ def multiselect_values_to_repo_ids(n_clicks, user_vals, user_groups):
 
     # individual repo numbers
     repos = [r for r in user_vals if isinstance(r, int)]
-    logging.debug(f"REPOS: {repos}")
+    logging.warning(f"REPOS: {repos}")
 
     # names of augur groups or orgs
     names = [n for n in user_vals if isinstance(n, str)]
@@ -309,16 +313,16 @@ def multiselect_values_to_repo_ids(n_clicks, user_vals, user_groups):
     org_repos = [augur.org_to_repos(o) for o in names if augur.is_org(o)]
     # flatten list repo_ids in orgs to 1D
     org_repos = [v for l in org_repos for v in l]
-    logging.debug(f"ORG_REPOS: {org_repos}")
+    logging.warning(f"ORG_REPOS: {org_repos}")
 
     group_repos = [user_groups[g] for g in names if not augur.is_org(g)]
     # flatten list repo_ids in orgs to 1D
     group_repos = [v for l in group_repos for v in l]
-    logging.debug(f"GROUP_REPOS: {group_repos}")
+    logging.warning(f"GROUP_REPOS: {group_repos}")
 
     # only unique repo ids
     all_repo_ids = list(set().union(*[repos, org_repos, group_repos]))
-    logging.debug(f"SELECTED_REPOS: {all_repo_ids}")
+    logging.warning(f"SELECTED_REPOS: {all_repo_ids}")
 
     return "", all_repo_ids
 
@@ -391,17 +395,16 @@ def wait_queries(job_ids):
     # results before we exit.
 
     while True:
-        logging.info([j.status for j in jobs])
+        logging.warning([j.status for j in jobs])
 
         # jobs are either all ready
         if all(j.successful() for j in jobs):
-            logging.info([j.status for j in jobs])
+            logging.warning([j.status for j in jobs])
             jobs = [j.forget() for j in jobs]
             return "Data Ready", "success"
 
         # or one of them has failed
         if any(j.failed() for j in jobs):
-
             # if a job fails, we need to wait for the others to finish before
             # we can 'forget' them. otherwise to-be-successful jobs will always
             # be forgotten if one fails.
@@ -448,7 +451,6 @@ def run_queries(repos):
     jobs = []
 
     for f in funcs:
-
         # only download repos that aren't currently in cache
         not_ready = [r for r in repos if cache.exists(f, r) != 1]
 

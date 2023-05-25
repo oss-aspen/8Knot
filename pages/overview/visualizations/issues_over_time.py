@@ -89,6 +89,7 @@ gc_issues_over_time = dbc.Card(
     ],
 )
 
+
 # callback for graph info popover
 @callback(
     Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
@@ -111,7 +112,6 @@ def toggle_popover(n, is_open):
     background=True,
 )
 def issues_over_time_graph(repolist, interval):
-
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=iq, repos=repolist)
@@ -121,11 +121,11 @@ def issues_over_time_graph(repolist, interval):
 
     # data ready.
     start = time.perf_counter()
-    logging.debug("ISSUES OVER TIME - START")
+    logging.warning("ISSUES OVER TIME - START")
 
     # test if there is data
     if df.empty:
-        logging.debug("ISSUES OVER TIME - NO DATA AVAILABLE")
+        logging.warning("ISSUES OVER TIME - NO DATA AVAILABLE")
         return nodata_graph
 
     # function for all data pre processing
@@ -133,13 +133,12 @@ def issues_over_time_graph(repolist, interval):
 
     fig = create_figure(df_created, df_closed, df_open, interval)
 
-    logging.debug(f"ISSUES_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
+    logging.warning(f"ISSUES_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
 
     return fig
 
 
 def process_data(df: pd.DataFrame, interval):
-
     # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
     df["closed"] = pd.to_datetime(df["closed"], utc=True)
@@ -198,7 +197,6 @@ def process_data(df: pd.DataFrame, interval):
 
 
 def create_figure(df_created: pd.DataFrame, df_closed: pd.DataFrame, df_open: pd.DataFrame, interval):
-
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
@@ -252,7 +250,6 @@ def create_figure(df_created: pd.DataFrame, df_closed: pd.DataFrame, df_open: pd
 
 # for each day, this function calculates the amount of open issues
 def get_open(df, date):
-
     # drop rows that are more recent than the date limit
     df_lim = df[df["created"] <= date]
 
