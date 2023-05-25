@@ -31,7 +31,7 @@ def issues_query(self, dbmc, repos):
         dict: Results from SQL query, interpreted from pd.to_dict('records')
     """
 
-    logging.debug(f"{QUERY_NAME}_DATA_QUERY - START")
+    logging.warning(f"{QUERY_NAME}_DATA_QUERY - START")
 
     if len(repos) == 0:
         return None
@@ -54,7 +54,7 @@ def issues_query(self, dbmc, repos):
                         r.repo_id in ({str(repos)[1:-1]})
                     """
 
-    # logging.debug(query_string)
+    # logging.warning(query_string)
 
     # create database connection, load config, execute query above.
     dbm = AugurManager()
@@ -102,5 +102,5 @@ def issues_query(self, dbmc, repos):
         datas=pic,
     )
 
-    logging.debug(f"{QUERY_NAME}_DATA_QUERY - END")
+    logging.warning(f"{QUERY_NAME}_DATA_QUERY - END")
     return ack

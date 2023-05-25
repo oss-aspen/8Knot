@@ -87,6 +87,7 @@ gc_commits_over_time = dbc.Card(
     ],
 )
 
+
 # callback for graph info popover
 @callback(
     Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
@@ -109,7 +110,6 @@ def toggle_popover(n, is_open):
     background=True,
 )
 def commits_over_time_graph(repolist, interval):
-
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=cmq, repos=repolist)
@@ -119,11 +119,11 @@ def commits_over_time_graph(repolist, interval):
 
     # data ready.
     start = time.perf_counter()
-    logging.debug("COMMITS_OVER_TIME_VIZ - START")
+    logging.warning("COMMITS_OVER_TIME_VIZ - START")
 
     # test if there is data
     if df.empty:
-        logging.debug("COMMITS OVER TIME - NO DATA AVAILABLE")
+        logging.warning("COMMITS OVER TIME - NO DATA AVAILABLE")
         return nodata_graph
 
     # function for all data pre processing
@@ -131,12 +131,11 @@ def commits_over_time_graph(repolist, interval):
 
     fig = create_figure(df_created, interval)
 
-    logging.debug(f"COMMITS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
+    logging.warning(f"COMMITS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
     return fig
 
 
 def process_data(df: pd.DataFrame, interval):
-
     # convert to datetime objects with consistent column name
     # incoming value should be a posix integer.
     df["date"] = pd.to_datetime(df["date"], utc=True)
@@ -164,7 +163,6 @@ def process_data(df: pd.DataFrame, interval):
 
 
 def create_figure(df_created: pd.DataFrame, interval):
-
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
