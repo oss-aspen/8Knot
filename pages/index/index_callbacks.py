@@ -83,7 +83,13 @@ def login_username_button(username, login_succeeded):
             ),
         ]
 
-    return navlink, not login_succeeded, buttons_disabled, buttons_disabled, buttons_disabled
+    return (
+        navlink,
+        not login_succeeded,
+        buttons_disabled,
+        buttons_disabled,
+        buttons_disabled,
+    )
 
 
 @callback(
@@ -198,7 +204,6 @@ def get_augur_user_preferences(
         expiration = datetime.now() + timedelta(seconds=expiration)
 
     elif is_client_startup:
-
         logging.debug("LOGIN: STARTUP - GETTING ADMIN GROUPS")
         # try to get admin groups
         admin_groups, admin_group_options = get_admin_groups()
@@ -248,7 +253,6 @@ def get_augur_user_preferences(
     ],
 )
 def dynamic_multiselect_options(user_in: str, selections, augur_groups):
-
     """
     Ref: https://dash.plotly.com/dash-core-components/dropdown#dynamic-options
 
@@ -296,7 +300,8 @@ def dynamic_multiselect_options(user_in: str, selections, augur_groups):
     ],
 )
 def multiselect_values_to_repo_ids(n_clicks, user_vals, user_groups):
-    if user_vals is None:
+    if not user_vals:
+        logging.warning("NOTHING SELECTED IN SEARCH BAR")
         raise dash.exceptions.PreventUpdate
 
     # individual repo numbers
@@ -401,7 +406,6 @@ def wait_queries(job_ids):
 
         # or one of them has failed
         if any(j.failed() for j in jobs):
-
             # if a job fails, we need to wait for the others to finish before
             # we can 'forget' them. otherwise to-be-successful jobs will always
             # be forgotten if one fails.
@@ -448,7 +452,6 @@ def run_queries(repos):
     jobs = []
 
     for f in funcs:
-
         # only download repos that aren't currently in cache
         not_ready = [r for r in repos if cache.exists(f, r) != 1]
 
