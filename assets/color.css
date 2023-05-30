@@ -10,6 +10,28 @@ h3 {
     color: #436755 !important;
 }
 
+blockquote h5 {
+    color: #AAA !important;
+}
+
+blockquote {
+    color: #8D9D92 !important;
+    font-style: normal;
+    font-size: 18px;
+    margin-left: 32px;
+    font-family: Consolas, "Times New Roman", Verdana;
+    border-left: 4px solid #787878;
+    padding-left: 8px;
+}
+
+blockquote p {
+    margin-top: 1px;
+    margin-bottom: 1px;
+    width: auto;
+    min-width: 50px;
+    max-width: 950px;
+}
+
 /* this is to change the color for the spinner, cant be changed directly */
 .dash-spinner.dash-default-spinner {
     filter: contrast(1.2) hue-rotate(308deg) grayscale(0.76) !important;
