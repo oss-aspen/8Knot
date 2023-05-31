@@ -15,6 +15,12 @@ h3 {
     filter: contrast(1.2) hue-rotate(308deg) grayscale(0.76) !important;
 }
 
+.explanation-p {
+    width: auto;
+    min-width: 50px;
+    max-width: 550px;
+}
+
 .navbar-brand {
     color: #436755 !important;
 }
