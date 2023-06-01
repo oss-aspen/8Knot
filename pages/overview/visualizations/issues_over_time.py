@@ -29,7 +29,10 @@ gc_issues_over_time = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "This graph takes the open and close times on the issues in the selected repositories."
+                            """
+                            Visualizes the activity of issues being Opened and Closed paritioned by time-window.\n
+                            Also shows the total volume of Open issues over time.
+                            """
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
@@ -89,6 +92,7 @@ gc_issues_over_time = dbc.Card(
     ],
 )
 
+
 # callback for graph info popover
 @callback(
     Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
@@ -111,7 +115,6 @@ def toggle_popover(n, is_open):
     background=True,
 )
 def issues_over_time_graph(repolist, interval):
-
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=iq, repos=repolist)
@@ -139,7 +142,6 @@ def issues_over_time_graph(repolist, interval):
 
 
 def process_data(df: pd.DataFrame, interval):
-
     # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
     df["closed"] = pd.to_datetime(df["closed"], utc=True)
@@ -198,7 +200,6 @@ def process_data(df: pd.DataFrame, interval):
 
 
 def create_figure(df_created: pd.DataFrame, df_closed: pd.DataFrame, df_open: pd.DataFrame, interval):
-
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
@@ -252,7 +253,6 @@ def create_figure(df_created: pd.DataFrame, df_closed: pd.DataFrame, df_open: pd
 
 # for each day, this function calculates the amount of open issues
 def get_open(df, date):
-
     # drop rows that are more recent than the date limit
     df_lim = df[df["created"] <= date]
 

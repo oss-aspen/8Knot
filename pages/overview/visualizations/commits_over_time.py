@@ -28,7 +28,12 @@ gc_commits_over_time = dbc.Card(
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody("This graph plots the amount of commits in selected time buckets."),
+                        dbc.PopoverBody(
+                            """
+                            Visualizes the number of commits added to the project.\n
+                            Commits are counted relative to a user-selected time window.
+                            """
+                        ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
                     target=f"popover-target-{PAGE}-{VIZ_ID}",  # needs to be the same as dbc.Button id
@@ -87,6 +92,7 @@ gc_commits_over_time = dbc.Card(
     ],
 )
 
+
 # callback for graph info popover
 @callback(
     Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
@@ -109,7 +115,6 @@ def toggle_popover(n, is_open):
     background=True,
 )
 def commits_over_time_graph(repolist, interval):
-
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=cmq, repos=repolist)
@@ -136,7 +141,6 @@ def commits_over_time_graph(repolist, interval):
 
 
 def process_data(df: pd.DataFrame, interval):
-
     # convert to datetime objects with consistent column name
     # incoming value should be a posix integer.
     df["date"] = pd.to_datetime(df["date"], utc=True)
@@ -164,7 +168,6 @@ def process_data(df: pd.DataFrame, interval):
 
 
 def create_figure(df_created: pd.DataFrame, interval):
-
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 

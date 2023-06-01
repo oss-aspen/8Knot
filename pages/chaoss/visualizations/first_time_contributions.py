@@ -29,8 +29,10 @@ gc_first_time_contributions = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "This graph displays how many new contributors in a repository set by quarter\n\
-                            and what activity was their first in the community."
+                            """
+                            Visualizes the arrival of net-new contributors to a project\n
+                            and differentiates them by their first in-project action.
+                            """
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
@@ -55,6 +57,7 @@ gc_first_time_contributions = dbc.Card(
     ],
 )
 
+
 # callback for graph info popover
 @callback(
     Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
@@ -75,7 +78,6 @@ def toggle_popover(n, is_open):
     background=True,
 )
 def create_first_time_contributors_graph(repolist):
-
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=ctq, repos=repolist)
@@ -101,7 +103,6 @@ def create_first_time_contributors_graph(repolist):
 
 
 def process_data(df):
-
     # convert to datetime objects with consistent column name
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
     df.rename(columns={"created_at": "created"}, inplace=True)
@@ -116,7 +117,6 @@ def process_data(df):
 
 
 def create_figure(df):
-
     # create plotly express histogram
     fig = px.histogram(df, x="created", color="Action", color_discrete_sequence=color_seq)
 

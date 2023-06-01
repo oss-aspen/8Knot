@@ -31,9 +31,21 @@ gc_company_associated_activity = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "This graph counts the number of contributions that COULD be linked to each company.\n\
-                            The methodology behind this is to take each associated email to someones github account\n\
-                            and link the contributions to each as it is unknown which initity the actvity was done for."
+                            """
+                            For non-commit contributions (see definition of Contribution on Info page)\n
+                            we only know which contributor account contributed. We don't know which email,\n
+                            and therefore which possible institution the contribution represented.\n
+                            e.g. if we know that a PR comment was made by JaneDoe, and they have a '@redhat.com' and\n
+                            an '@gmail.com' email, we don't know whether they contributed individually\n
+                            or as a representative of an instituion. Therefore, we lower-bound the contribution\n
+                            of representation by counting each contribution as being made by ALL of the contributors\n
+                            linked email domains.\n
+                            This graph can therefore be interpreted as 'The minimum number of individuals who have\n
+                            been associated with each domain.'\n
+                            e.g. If there are 100 contributions and 20 contributors, and each contributor has an '@redhat.com'\n
+                            email associated with their account and one other random email, '@redhat.com' will be counted 100 times\n
+                            and the other contributor emails will also total a count of 100.\n
+                            """
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
@@ -101,6 +113,7 @@ gc_company_associated_activity = dbc.Card(
     ],
 )
 
+
 # callback for graph info popover
 @callback(
     Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
@@ -163,7 +176,6 @@ def compay_associated_activity_graph(repolist, num, start_date, end_date):
 
 
 def process_data(df: pd.DataFrame, num, start_date, end_date):
-
     # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
 
@@ -206,7 +218,6 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
 
 
 def create_figure(df: pd.DataFrame):
-
     # graph generation
     fig = px.bar(df, x="domains", y="occurrences", color_discrete_sequence=color_seq)
     fig.update_xaxes(rangeslider_visible=True, range=[-0.5, 15])

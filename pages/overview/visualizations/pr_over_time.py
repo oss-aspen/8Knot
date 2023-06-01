@@ -30,7 +30,10 @@ gc_pr_over_time = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "This graph takes the open, close, and merge times on the pull requests in the selected repositories."
+                            """
+                            Visualizes PR behavior by tracking Created, Merged, and Closed-Not-Merged PRs over time.\n
+                            Also shows Created PR count as a trend over lifespan.
+                            """
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
@@ -90,6 +93,7 @@ gc_pr_over_time = dbc.Card(
     ],
 )
 
+
 # formatting for graph generation
 @callback(
     Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
@@ -112,7 +116,6 @@ def toggle_popover(n, is_open):
     background=True,
 )
 def prs_over_time_graph(repolist, interval):
-
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=prq, repos=repolist)
@@ -140,7 +143,6 @@ def prs_over_time_graph(repolist, interval):
 
 
 def process_data(df: pd.DataFrame, interval):
-
     # convert dates to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
     df["merged"] = pd.to_datetime(df["merged"], utc=True)
@@ -217,7 +219,6 @@ def create_figure(
     df_open: pd.DataFrame,
     interval,
 ):
-
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
@@ -281,7 +282,6 @@ def create_figure(
 
 # for each day, this function calculates the amount of open prs
 def get_open(df, date):
-
     # drop rows that are more recent than the date limit
     df_created = df[df["created"] <= date]
 

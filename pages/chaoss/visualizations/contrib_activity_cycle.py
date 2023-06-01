@@ -31,9 +31,10 @@ gc_contrib_activity_cycle = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "This graph looks at the the timestamps of commits being created and\n\
-                                        when they are commited to the code base. This gives a view on the activity cycle\n\
-                                        of you contributor base."
+                            """
+                            Visualizes the distribution of Commit timestamps by Weekday or Hour.\n
+                            Helps to describe operating-hours of community code contributions.
+                            """
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
@@ -89,6 +90,7 @@ gc_contrib_activity_cycle = dbc.Card(
     ],
 )
 
+
 # callback for graph info popover
 @callback(
     Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
@@ -111,7 +113,6 @@ def toggle_popover(n, is_open):
     background=True,
 )
 def contrib_activity_cycle_graph(repolist, interval):
-
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=cmq, repos=repolist)
@@ -137,7 +138,6 @@ def contrib_activity_cycle_graph(repolist, interval):
 
 
 def process_data(df: pd.DataFrame, interval):
-
     # for this usecase we want the datetimes to be in their local values
     # tricking pandas to keep local values when UTC conversion is required for to_datetime
     df["author_timestamp"] = df["author_timestamp"].astype("str").str[:-6]
@@ -158,7 +158,12 @@ def process_data(df: pd.DataFrame, interval):
         df_final = df_hour.groupby(["Hour"])["Hour"].count()
     else:
         # combine the weekday values for author and committer
-        weekday = pd.concat([df["author_timestamp"].dt.day_name(), df["committer_timestamp"].dt.day_name()])
+        weekday = pd.concat(
+            [
+                df["author_timestamp"].dt.day_name(),
+                df["committer_timestamp"].dt.day_name(),
+            ]
+        )
         df_weekday = pd.DataFrame(weekday, columns=["Weekday"])
         df_final = df_weekday.groupby(["Weekday"])["Weekday"].count()
 
@@ -166,9 +171,16 @@ def process_data(df: pd.DataFrame, interval):
 
 
 def create_figure(df: pd.DataFrame, interval):
-
     column = "Weekday"
-    order = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+    order = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+    ]
     if interval == "H":
         column = "Hour"
 

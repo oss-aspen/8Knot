@@ -32,7 +32,11 @@ gc_gh_company_affiliation = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "This graph looks at github contributors profiles and takes in their listed company"
+                            """
+                            Visualizes Github account institution affiliation.\n
+                            Many individuals don't report an affiliated institution, but\n
+                            this count may be considered an absolute lower-bound on affiliation.
+                            """
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
@@ -100,6 +104,7 @@ gc_gh_company_affiliation = dbc.Card(
     ],
 )
 
+
 # callback for graph info popover
 @callback(
     Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
@@ -124,7 +129,6 @@ def toggle_popover(n, is_open):
     background=True,
 )
 def gh_company_affiliation_graph(repolist, num, start_date, end_date):
-
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=cmq, repos=repolist)
@@ -225,9 +229,13 @@ def fuzzy_match(df, name):
 
 
 def create_figure(df: pd.DataFrame):
-
     # graph generation
-    fig = px.pie(df, names="company_name", values="contribution_count", color_discrete_sequence=color_seq)
+    fig = px.pie(
+        df,
+        names="company_name",
+        values="contribution_count",
+        color_discrete_sequence=color_seq,
+    )
     fig.update_traces(
         textposition="inside",
         textinfo="percent+label",
