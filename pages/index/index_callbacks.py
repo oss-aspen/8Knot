@@ -300,7 +300,8 @@ def dynamic_multiselect_options(user_in: str, selections, augur_groups):
     ],
 )
 def multiselect_values_to_repo_ids(n_clicks, user_vals, user_groups):
-    if user_vals is None:
+    if not user_vals:
+        logging.warning("NOTHING SELECTED IN SEARCH BAR")
         raise dash.exceptions.PreventUpdate
 
     # individual repo numbers
