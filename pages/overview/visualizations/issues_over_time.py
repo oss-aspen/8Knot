@@ -124,11 +124,11 @@ def issues_over_time_graph(repolist, interval):
 
     # data ready.
     start = time.perf_counter()
-    logging.debug("ISSUES OVER TIME - START")
+    logging.warning("ISSUES OVER TIME - START")
 
     # test if there is data
     if df.empty:
-        logging.debug("ISSUES OVER TIME - NO DATA AVAILABLE")
+        logging.warning("ISSUES OVER TIME - NO DATA AVAILABLE")
         return nodata_graph
 
     # function for all data pre processing
@@ -136,7 +136,7 @@ def issues_over_time_graph(repolist, interval):
 
     fig = create_figure(df_created, df_closed, df_open, interval)
 
-    logging.debug(f"ISSUES_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
+    logging.warning(f"ISSUES_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
 
     return fig
 

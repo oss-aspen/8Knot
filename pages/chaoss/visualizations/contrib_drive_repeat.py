@@ -163,11 +163,11 @@ def repeat_drive_by_graph(repolist, contribs, view):
 
     # data ready.
     start = time.perf_counter()
-    logging.debug("CONTRIB_DRIVE_REPEAT_VIZ - START")
+    logging.warning("CONTRIB_DRIVE_REPEAT_VIZ - START")
 
     # test if there is data
     if df.empty:
-        logging.debug("CONTRIB DRIVE REPEAT - NO DATA AVAILABLE")
+        logging.warning("CONTRIB DRIVE REPEAT - NO DATA AVAILABLE")
         return nodata_graph
 
     # function for all data pre processing
@@ -175,12 +175,12 @@ def repeat_drive_by_graph(repolist, contribs, view):
 
     # test if there is data
     if df_cont_subset.empty:
-        logging.debug("CONTRIB DRIVE REPEAT - NO DRIVE OR REPEAT DATA")
+        logging.warning("CONTRIB DRIVE REPEAT - NO DRIVE OR REPEAT DATA")
         return nodata_graph
 
     fig = create_figure(df_cont_subset)
 
-    logging.debug(f"CONTRIB_DRIVE_REPEAT_VIZ - END - {time.perf_counter() - start}")
+    logging.warning(f"CONTRIB_DRIVE_REPEAT_VIZ - END - {time.perf_counter() - start}")
 
     return fig
 

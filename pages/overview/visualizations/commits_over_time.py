@@ -124,11 +124,11 @@ def commits_over_time_graph(repolist, interval):
 
     # data ready.
     start = time.perf_counter()
-    logging.debug("COMMITS_OVER_TIME_VIZ - START")
+    logging.warning("COMMITS_OVER_TIME_VIZ - START")
 
     # test if there is data
     if df.empty:
-        logging.debug("COMMITS OVER TIME - NO DATA AVAILABLE")
+        logging.warning("COMMITS OVER TIME - NO DATA AVAILABLE")
         return nodata_graph
 
     # function for all data pre processing
@@ -136,7 +136,7 @@ def commits_over_time_graph(repolist, interval):
 
     fig = create_figure(df_created, interval)
 
-    logging.debug(f"COMMITS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
+    logging.warning(f"COMMITS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
     return fig
 
 

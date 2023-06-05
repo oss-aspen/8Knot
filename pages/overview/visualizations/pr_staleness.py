@@ -178,11 +178,11 @@ def new_staling_prs_graph(repolist, interval, staling_interval, stale_interval):
         df = cache.grabm(func=prq, repos=repolist)
 
     start = time.perf_counter()
-    logging.debug("PULL REQUEST STALENESS - START")
+    logging.warning("PULL REQUEST STALENESS - START")
 
     # test if there is data
     if df.empty:
-        logging.debug("PULL REQUEST STALENESS  - NO DATA AVAILABLE")
+        logging.warning("PULL REQUEST STALENESS  - NO DATA AVAILABLE")
         return nodata_graph, False
 
     # function for all data pre processing
@@ -190,7 +190,7 @@ def new_staling_prs_graph(repolist, interval, staling_interval, stale_interval):
 
     fig = create_figure(df_status, interval)
 
-    logging.debug(f"PULL REQUEST STALENESS - END - {time.perf_counter() - start}")
+    logging.warning(f"PULL REQUEST STALENESS - END - {time.perf_counter() - start}")
     return fig, False
 
 

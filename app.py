@@ -23,7 +23,7 @@ from dash import CeleryManager, Input, Output
 import worker_settings
 import os
 
-logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.DEBUG)
+logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO)
 
 """CREATE CELERY TASK QUEUE AND MANAGER"""
 celery_app = Celery(
@@ -41,7 +41,6 @@ celery_manager = CeleryManager(celery_app=celery_app)
 augur = AugurManager()
 
 if os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True":
-
     # make sure that parameters for Augur connection have been supplied.
     client_secret = os.getenv("AUGUR_CLIENT_SECRET", "")
     app_id = os.getenv("AUGUR_APP_ID", "")

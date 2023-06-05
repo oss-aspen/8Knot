@@ -180,11 +180,11 @@ def new_staling_issues_graph(repolist, interval, staling_interval, stale_interva
         df = cache.grabm(func=iq, repos=repolist)
 
     start = time.perf_counter()
-    logging.debug("ISSUES STALENESS - START")
+    logging.warning("ISSUES STALENESS - START")
 
     # test if there is data
     if df.empty:
-        logging.debug("ISSUE STALENESS - NO DATA AVAILABLE")
+        logging.warning("ISSUE STALENESS - NO DATA AVAILABLE")
         return nodata_graph, False
 
     # function for all data pre processing
@@ -192,7 +192,7 @@ def new_staling_issues_graph(repolist, interval, staling_interval, stale_interva
 
     fig = create_figure(df_status, interval)
 
-    logging.debug(f"ISSUE STALENESS - END - {time.perf_counter() - start}")
+    logging.warning(f"ISSUE STALENESS - END - {time.perf_counter() - start}")
     return fig, False
 
 

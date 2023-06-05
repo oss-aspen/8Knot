@@ -33,8 +33,8 @@ gc_unique_domains = dbc.Card(
                         dbc.PopoverBody(
                             """
                             Visualizes the population of unique commit email addresses per represented domain.\n
-                            e.g. if there are 100 commit contributors and 50 have a '@gmail.com' email address,\n
-                            and another 50 have an '@redhat.com' email address, 50 percent of of emails wll be '@gmail.com'\n
+                            e.g. if there are 100 distrinct commit contributors and 50 use an '@gmail.com' email address,\n
+                            and another 50 use an '@redhat.com' email address, 50 percent of of emails wll be '@gmail.com'\n
                             and 50% will be '@redhat.com'.
                             """
                         ),
@@ -137,11 +137,11 @@ def unique_domains_graph(repolist, num, start_date, end_date):
         df = cache.grabm(func=cmq, repos=repolist)
 
     start = time.perf_counter()
-    logging.debug(f"{VIZ_ID}- START")
+    logging.warning(f"{VIZ_ID}- START")
 
     # test if there is data
     if df.empty:
-        logging.debug(f"{VIZ_ID} - NO DATA AVAILABLE")
+        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return nodata_graph
 
     # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
@@ -149,7 +149,7 @@ def unique_domains_graph(repolist, num, start_date, end_date):
 
     fig = create_figure(df)
 
-    logging.debug(f"{VIZ_ID} - END - {time.perf_counter() - start}")
+    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
 

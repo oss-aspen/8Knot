@@ -125,11 +125,11 @@ def prs_over_time_graph(repolist, interval):
 
     # data ready.
     start = time.perf_counter()
-    logging.debug("PULL REQUESTS OVER TIME - START")
+    logging.warning("PULL REQUESTS OVER TIME - START")
 
     # test if there is data
     if df.empty:
-        logging.debug("PULL REQUESTS OVER TIME - NO DATA AVAILABLE")
+        logging.warning("PULL REQUESTS OVER TIME - NO DATA AVAILABLE")
         return nodata_graph
 
     # function for all data pre processing
@@ -137,7 +137,7 @@ def prs_over_time_graph(repolist, interval):
 
     fig = create_figure(df_created, df_closed_merged, df_open, interval)
 
-    logging.debug(f"PRS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
+    logging.warning(f"PRS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
 
     return fig
 

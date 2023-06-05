@@ -86,11 +86,11 @@ def create_first_time_contributors_graph(repolist):
         df = cache.grabm(func=ctq, repos=repolist)
 
     start = time.perf_counter()
-    logging.debug("CONTRIB_DRIVE_REPEAT_VIZ - START")
+    logging.warning("CONTRIB_DRIVE_REPEAT_VIZ - START")
 
     # test if there is data
     if df.empty:
-        logging.debug("1ST CONTRIBUTIONS - NO DATA AVAILABLE")
+        logging.warning("1ST CONTRIBUTIONS - NO DATA AVAILABLE")
         return nodata_graph, False
 
     # function for all data pre processing
@@ -98,7 +98,7 @@ def create_first_time_contributors_graph(repolist):
 
     fig = create_figure(df)
 
-    logging.debug(f"1ST_CONTRIBUTIONS_VIZ - END - {time.perf_counter() - start}")
+    logging.warning(f"1ST_CONTRIBUTIONS_VIZ - END - {time.perf_counter() - start}")
     return fig
 
 

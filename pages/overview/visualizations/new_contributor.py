@@ -132,12 +132,12 @@ def new_contributor_graph(repolist, interval):
         time.sleep(1.0)
         df = cache.grabm(func=ctq, repos=repolist)
 
-    logging.debug("TOTAL_CONTRIBUTOR_GROWTH_VIZ - START")
+    logging.warning("TOTAL_CONTRIBUTOR_GROWTH_VIZ - START")
     start = time.perf_counter()
 
     # test if there is data
     if df.empty:
-        logging.debug("TOTAL_CONTRIBUTOR_GROWTH_VIZ - NO DATA AVAILABLE")
+        logging.warning("TOTAL_CONTRIBUTOR_GROWTH_VIZ - NO DATA AVAILABLE")
         return nodata_graph
 
     # function for all data pre processing
@@ -145,7 +145,7 @@ def new_contributor_graph(repolist, interval):
 
     fig = create_figure(df, df_contribs, interval)
 
-    logging.debug(f"TOTAL_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}")
+    logging.warning(f"TOTAL_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}")
     return fig
 
 

@@ -140,11 +140,11 @@ def commit_domains_graph(repolist, num, start_date, end_date):
         df = cache.grabm(func=cq, repos=repolist)
 
     start = time.perf_counter()
-    logging.debug(f"{VIZ_ID}- START")
+    logging.warning(f"{VIZ_ID}- START")
 
     # test if there is data
     if df.empty:
-        logging.debug(f"{VIZ_ID} - NO DATA AVAILABLE")
+        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return nodata_graph
 
     # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
@@ -152,7 +152,7 @@ def commit_domains_graph(repolist, num, start_date, end_date):
 
     fig = create_figure(df)
 
-    logging.debug(f"{VIZ_ID} - END - {time.perf_counter() - start}")
+    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
 

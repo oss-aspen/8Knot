@@ -176,12 +176,12 @@ def active_drifting_contributors_graph(repolist, interval, drift_interval, away_
         time.sleep(1.0)
         df = cache.grabm(func=ctq, repos=repolist)
 
-    logging.debug(f"ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - START")
+    logging.warning(f"ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - START")
     start = time.perf_counter()
 
     # test if there is data
     if df.empty:
-        logging.debug("PULL REQUEST STALENESS - NO DATA AVAILABLE")
+        logging.warning("PULL REQUEST STALENESS - NO DATA AVAILABLE")
         return nodata_graph, False
 
     # function for all data pre processing
@@ -189,7 +189,7 @@ def active_drifting_contributors_graph(repolist, interval, drift_interval, away_
 
     fig = create_figure(df_status, interval)
 
-    logging.debug(f"ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}")
+    logging.warning(f"ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}")
     return fig, False
 
 
