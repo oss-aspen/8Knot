@@ -122,6 +122,7 @@ gc_company_core_contributors = dbc.Card(
     ],
 )
 
+
 # callback for graph info popover
 @callback(
     Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
@@ -147,7 +148,6 @@ def toggle_popover(n, is_open):
     background=True,
 )
 def compay_associated_activity_graph(repolist, contributions, contributors, start_date, end_date):
-
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=cmq, repos=repolist)
@@ -156,11 +156,11 @@ def compay_associated_activity_graph(repolist, contributions, contributors, star
         df = cache.grabm(func=cmq, repos=repolist)
 
     start = time.perf_counter()
-    logging.debug(f"{VIZ_ID}- START")
+    logging.warning(f"{VIZ_ID}- START")
 
     # test if there is data
     if df.empty:
-        logging.debug(f"{VIZ_ID} - NO DATA AVAILABLE")
+        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return nodata_graph
 
     # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
@@ -168,12 +168,11 @@ def compay_associated_activity_graph(repolist, contributions, contributors, star
 
     fig = create_figure(df)
 
-    logging.debug(f"{VIZ_ID} - END - {time.perf_counter() - start}")
+    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
 
 def process_data(df: pd.DataFrame, contributions, contributors, start_date, end_date):
-
     # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
 
@@ -223,7 +222,6 @@ def process_data(df: pd.DataFrame, contributions, contributors, start_date, end_
 
 
 def create_figure(df: pd.DataFrame):
-
     # graph generation
     fig = px.bar(df, x="domains", y="contributors", color_discrete_sequence=color_seq)
     fig.update_xaxes(rangeslider_visible=True, range=[-0.5, 15])

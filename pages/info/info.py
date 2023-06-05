@@ -129,7 +129,7 @@ layout = dbc.Container(
                 ),
                 html.P(
                     """
-                    It should be obvious that this is a close relative to contributor activity states defined above.
+                    This is a close relative to contributor activity states defined above.
                     """
                 ),
                 html.Br(),
