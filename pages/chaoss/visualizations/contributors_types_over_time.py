@@ -111,6 +111,7 @@ gc_contributors_over_time = dbc.Card(
     ],
 )
 
+
 # callback for graph info popover
 @callback(
     Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
@@ -133,7 +134,6 @@ def toggle_popover(n, is_open):
     background=True,
 )
 def create_contrib_over_time_graph(repolist, contribs, interval):
-
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=ctq, repos=repolist)
@@ -142,11 +142,11 @@ def create_contrib_over_time_graph(repolist, contribs, interval):
         df = cache.grabm(func=ctq, repos=repolist)
 
     start = time.perf_counter()
-    logging.debug("CONTRIB_DRIVE_REPEAT_VIZ - START")
+    logging.warning("CONTRIB_DRIVE_REPEAT_VIZ - START")
 
     # test if there is data
     if df.empty:
-        logging.debug("PULL REQUESTS OVER TIME - NO DATA AVAILABLE")
+        logging.warning("PULL REQUESTS OVER TIME - NO DATA AVAILABLE")
         return nodata_graph
 
     # function for all data pre processing
@@ -154,7 +154,7 @@ def create_contrib_over_time_graph(repolist, contribs, interval):
 
     fig = create_figure(df_drive_repeat, interval)
 
-    logging.debug(f"CONTRIBUTIONS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
+    logging.warning(f"CONTRIBUTIONS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
     return fig
 
 

@@ -136,6 +136,7 @@ gc_pr_staleness = dbc.Card(
     ],
 )
 
+
 # callback for graph info popover
 @callback(
     Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
@@ -160,7 +161,6 @@ def toggle_popover(n, is_open):
     background=True,
 )
 def new_staling_prs_graph(repolist, interval, staling_interval, stale_interval):
-
     # conditional for the intervals to be valid options
     if staling_interval > stale_interval:
         return dash.no_update, True
@@ -176,11 +176,11 @@ def new_staling_prs_graph(repolist, interval, staling_interval, stale_interval):
         df = cache.grabm(func=prq, repos=repolist)
 
     start = time.perf_counter()
-    logging.debug("PULL REQUEST STALENESS - START")
+    logging.warning("PULL REQUEST STALENESS - START")
 
     # test if there is data
     if df.empty:
-        logging.debug("PULL REQUEST STALENESS  - NO DATA AVAILABLE")
+        logging.warning("PULL REQUEST STALENESS  - NO DATA AVAILABLE")
         return nodata_graph, False
 
     # function for all data pre processing
@@ -188,12 +188,11 @@ def new_staling_prs_graph(repolist, interval, staling_interval, stale_interval):
 
     fig = create_figure(df_status, interval)
 
-    logging.debug(f"PULL REQUEST STALENESS - END - {time.perf_counter() - start}")
+    logging.warning(f"PULL REQUEST STALENESS - END - {time.perf_counter() - start}")
     return fig, False
 
 
 def process_data(df: pd.DataFrame, interval, staling_interval, stale_interval):
-
     # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
     df["merged"] = pd.to_datetime(df["merged"], utc=True)
@@ -231,7 +230,6 @@ def process_data(df: pd.DataFrame, interval, staling_interval, stale_interval):
 
 
 def create_figure(df_status: pd.DataFrame, interval):
-
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
@@ -290,7 +288,6 @@ def create_figure(df_status: pd.DataFrame, interval):
 
 
 def get_new_staling_stale_up_to(df, date, staling_interval, stale_interval):
-
     # drop rows that are more recent than the date limit
     df_created = df[df["created"] <= date]
 

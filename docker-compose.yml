@@ -33,7 +33,16 @@ services:
     build:
       context: .
       dockerfile: ./docker/Dockerfile.worker
-    command: ["celery", "-A", "app:celery_app", "worker", "--loglevel=INFO", "-Q", "data"]
+    command:
+      [
+        "celery",
+        "-A",
+        "app:celery_app",
+        "worker",
+        "--loglevel=WARNING",
+        "-Q",
+        "data"
+      ]
     depends_on:
       - cache
     env_file:
