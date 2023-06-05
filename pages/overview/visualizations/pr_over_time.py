@@ -188,6 +188,8 @@ def process_data(df: pd.DataFrame, interval):
         df_created["Date"] = df_created["Date"].dt.strftime("%Y-01-01")
         df_closed_merged["Date"] = df_closed_merged["Date"].dt.strftime("%Y-01-01")
 
+    df_closed_merged["closed"] = df_closed_merged["closed"] - df_closed_merged["merged"]
+
     # ----- Open PR processinging starts here ----
 
     # first and last elements of the dataframe are the
