@@ -19,9 +19,7 @@ def verify_previous_login_credentials(bearer_token, refresh_token, expiration):
     """
 
     if expiration != "" and bearer_token != "":
-
         if datetime.now() < datetime.strptime(expiration, "%Y-%m-%dT%H:%M:%S.%f"):
-
             return bearer_token, refresh_token
 
         # TODO: handle refresh if token is past expiration.
@@ -54,7 +52,6 @@ def get_user_groups(username, bearer_token):
 
     # each of the augur user groups
     for entry in g:
-
         # group has one key- the name.
         group_name: str = list(entry.keys())[0]
 
@@ -95,29 +92,29 @@ def get_admin_groups():
     admin_groups = {}
     admin_group_options = []
 
-    logging.debug("ADMIN_GROUPS: GETTING NAME")
+    logging.warning("ADMIN_GROUPS: GETTING NAME")
     # get name of admin account that linked 8knot to augur instance
     admin_name = augur.make_admin_name_request()
     if not admin_name:
         return None, None
     name = admin_name["user"]
-    logging.debug(f"ADMIN_GROUPS: NAME IS {name}")
+    logging.warning(f"ADMIN_GROUPS: NAME IS {name}")
 
-    logging.debug("ADMIN_GROUPS: GETTING GROUP NAMES")
+    logging.warning("ADMIN_GROUPS: GETTING GROUP NAMES")
     # get the names of the admin account's groups
     group_names = augur.make_admin_group_names_request()
     if not group_names:
         return None, None
     gnames = group_names["group_names"]
-    logging.debug(f"ADMIN_GROUPS: # NAMES: {len(gnames)}")
+    logging.warning(f"ADMIN_GROUPS: # NAMES: {len(gnames)}")
 
     # create an entry for each group that the admin has listed.
     for n in gnames:
-        logging.debug(f"ADMIN_GROUPS: REQUESTING GROUP FOR: {n}")
+        logging.warning(f"ADMIN_GROUPS: REQUESTING GROUP FOR: {n}")
         group = augur.make_admin_groups_request(params={"group_name": n})
 
         repo_list = group["repos"]
-        logging.debug(f"ADMIN_GROUPS: GOT REPOS FOR {n}, {len(repo_list)}")
+        logging.warning(f"ADMIN_GROUPS: GOT REPOS FOR {n}, {len(repo_list)}")
 
         # need to prepend https:// because repos in repo_list don't include
         # that part of the URL.
@@ -153,7 +150,6 @@ def parse_repolist(repo_list, prepend_to_url=""):
 
     ids = []
     for repo in repo_list:
-
         if "repo_git" in repo.keys():
             # user groups have URL under 'repo_git' key
             repo_url = repo.get("repo_git")

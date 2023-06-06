@@ -1,6 +1,7 @@
 # Other stuff
 dictionary.dic
 tmp
+.vscode
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

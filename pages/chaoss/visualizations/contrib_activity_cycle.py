@@ -89,6 +89,7 @@ gc_contrib_activity_cycle = dbc.Card(
     ],
 )
 
+
 # callback for graph info popover
 @callback(
     Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
@@ -111,7 +112,6 @@ def toggle_popover(n, is_open):
     background=True,
 )
 def contrib_activity_cycle_graph(repolist, interval):
-
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=cmq, repos=repolist)
@@ -120,11 +120,11 @@ def contrib_activity_cycle_graph(repolist, interval):
         df = cache.grabm(func=cmq, repos=repolist)
 
     start = time.perf_counter()
-    logging.debug(f"{VIZ_ID}- START")
+    logging.warning(f"{VIZ_ID}- START")
 
     # test if there is data
     if df.empty:
-        logging.debug(f"{VIZ_ID} - NO DATA AVAILABLE")
+        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return nodata_graph
 
     # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
@@ -132,12 +132,11 @@ def contrib_activity_cycle_graph(repolist, interval):
 
     fig = create_figure(df, interval)
 
-    logging.debug(f"{VIZ_ID} - END - {time.perf_counter() - start}")
+    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
 
 def process_data(df: pd.DataFrame, interval):
-
     # for this usecase we want the datetimes to be in their local values
     # tricking pandas to keep local values when UTC conversion is required for to_datetime
     df["author_timestamp"] = df["author_timestamp"].astype("str").str[:-6]
@@ -158,7 +157,12 @@ def process_data(df: pd.DataFrame, interval):
         df_final = df_hour.groupby(["Hour"])["Hour"].count()
     else:
         # combine the weekday values for author and committer
-        weekday = pd.concat([df["author_timestamp"].dt.day_name(), df["committer_timestamp"].dt.day_name()])
+        weekday = pd.concat(
+            [
+                df["author_timestamp"].dt.day_name(),
+                df["committer_timestamp"].dt.day_name(),
+            ]
+        )
         df_weekday = pd.DataFrame(weekday, columns=["Weekday"])
         df_final = df_weekday.groupby(["Weekday"])["Weekday"].count()
 
@@ -166,9 +170,16 @@ def process_data(df: pd.DataFrame, interval):
 
 
 def create_figure(df: pd.DataFrame, interval):
-
     column = "Weekday"
-    order = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+    order = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+    ]
     if interval == "H":
         column = "Hour"
 

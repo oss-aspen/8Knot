@@ -30,7 +30,7 @@ def contributors_query(self, dbmc, repos):
     --------
         dict: Results from SQL query, interpreted from pd.to_dict('records')
     """
-    logging.debug(f"{QUERY_NAME}_DATA_QUERY - START")
+    logging.warning(f"{QUERY_NAME}_DATA_QUERY - START")
 
     if len(repos) == 0:
         return None
@@ -95,6 +95,6 @@ def contributors_query(self, dbmc, repos):
         repos=repos,
         datas=pic,
     )
-    logging.debug(f"{QUERY_NAME}_DATA_QUERY - END")
+    logging.warning(f"{QUERY_NAME}_DATA_QUERY - END")
 
     return ack
