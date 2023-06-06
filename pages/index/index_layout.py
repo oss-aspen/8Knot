@@ -72,7 +72,7 @@ navbar = dbc.Navbar(
                                 height="40px",
                             ),
                             dbc.NavbarBrand(
-                                "8Knot Community Data",
+                                "8Knot",
                                 id="navbar-title",
                                 className="ms-2",
                             ),

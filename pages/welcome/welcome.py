@@ -27,148 +27,136 @@ example_fig.update_layout(
 )
 
 layout = dbc.Container(
-    [
-        dbc.Row(
-            [
-                dbc.Col(
-                    [
-                        dbc.Card(
-                            dbc.CardBody(
-                                children=[
-                                    html.H1("Welcome to 8Knot", className="box_emissions"),
-                                ]
-                            )
-                        )
+    className="welcome_container",
+    children=[
+        html.Div(
+            className="welcome_message welcome_section",
+            children=[
+                # html.H1("Welcome to 8Knot"),
+                html.Img(src="assets/logo-color.png"),
+                html.P(
+                    """
+                    Open source communities are difficult to understand. 8Knot serves community stakeholders by
+                    providing a platform to host advanced analysis of community behavior through higher-order metrics and visualizations.
+                    """
+                ),
+            ],
+        ),
+        html.Div(
+            className="welcome_content_section shadow",
+            children=[
+                html.Div(
+                    className="welcome_section_header",
+                    children=[html.P("Pages Available")],
+                ),
+                html.Div(
+                    className="welcome_section_content",
+                    children=[
+                        html.Div(
+                            className="pages_overview_container shadow",
+                            children=[
+                                html.H2("Overview"),
+                                html.P(
+                                    """
+                                    Track large community trends over time based on common contributions.
+                                   """
+                                ),
+                            ],
+                        ),
+                        html.Div(
+                            className="pages_overview_container shadow",
+                            children=[
+                                html.H2("Chaoss"),
+                                html.P("Advanced metrics defined and refined by the CHAOSS foundation."),
+                            ],
+                        ),
+                        html.Div(
+                            className="pages_overview_container shadow",
+                            children=[
+                                html.H2("Company"),
+                                html.P(
+                                    "Summarizing likely company and institution affiliation with contributor behavior."
+                                ),
+                            ],
+                        ),
+                        html.Div(
+                            className="pages_overview_container shadow",
+                            children=[
+                                html.H2("Info"),
+                                html.P("Information about visualizations and definitions of any terms used."),
+                            ],
+                        ),
                     ],
-                    width=6,
+                ),
+            ],
+        ),
+        html.Div(
+            className="welcome_content_section shadow",
+            children=[
+                html.Div(
+                    className="welcome_section_content welcome_section_instructions",
+                    children=[
+                        html.Div(
+                            className="instruction_header",
+                            children=[html.P("Highlighted Plotly.js features for enriched analysis")],
+                        ),
+                        html.Div(
+                            className="instruction_container",
+                            children=[
+                                html.Div(
+                                    className="instruction_item shadow",
+                                    children=[
+                                        html.H3("1"),
+                                        html.P(
+                                            "Click and drag inside of the graph to focus/zoom on a subset of the data."
+                                        ),
+                                        html.Div(
+                                            className="instruction_item_images",
+                                            children=[
+                                                html.Img(src="assets/click-zoom-graph.png"),
+                                                html.Img(className="arrow_icon", src="assets/rightarrow.png"),
+                                                html.Img(src="assets/zoomed-graph.png"),
+                                            ],
+                                        ),
+                                    ],
+                                ),
+                                html.Div(
+                                    className="instruction_item shadow",
+                                    children=[
+                                        html.H3("2"),
+                                        html.P("Double-click on the graph to exit focus."),
+                                        html.Div(
+                                            className="instruction_item_images",
+                                            children=[
+                                                html.Img(src="assets/zoomed-graph.png"),
+                                                html.Img(className="arrow_icon", src="assets/rightarrow.png"),
+                                                html.Img(src="assets/normal-graph.png"),
+                                            ],
+                                        ),
+                                    ],
+                                ),
+                                html.Div(
+                                    className="instruction_item shadow",
+                                    children=[
+                                        html.H3("3"),
+                                        html.P(
+                                            "Click on legend items to remove them from the graph; resets axes if necessary."
+                                        ),
+                                        html.Div(
+                                            className="instruction_item_images",
+                                            children=[
+                                                html.Img(src="assets/all-categories-graph.png"),
+                                                html.Img(className="arrow_icon", src="assets/rightarrow.png"),
+                                                html.Img(src="assets/no-stale-graph.png"),
+                                            ],
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                    ],
                 )
             ],
-            align="center",
-            justify="center",
-            style={"marginBottom": ".5%"},
-        ),
-        dbc.Row(
-            dbc.Col(
-                [
-                    dbc.Card(
-                        dbc.CardBody(
-                            [
-                                html.P(
-                                    """
-                    8Knot goes a step beyond first-order visualizations and metrics about open source communities. Based
-                    on ubiquitous Python data science and machine learning tools, the goal of this application is to make it
-                    as seamless as possible to go from model to shared insights.
-                    """
-                                ),
-                                html.P(
-                                    """
-                    An example usecase: Survival analysis models may be fit to the data of community behavior at the request of
-                    an application user. In this paradigm, the learning and serving steps of the model are defined by the
-                    application. The insights provided describe the community's behavior in an in-depth way.
-                    """
-                                ),
-                            ]
-                        )
-                    )
-                ],
-                width=8,
-            ),
-            align="center",
-            justify="center",
-            style={"marginBottom": ".5%"},
-        ),
-        dbc.Row(
-            [
-                dbc.Col(
-                    [
-                        dbc.Card(
-                            dbc.CardBody(
-                                children=[
-                                    html.H2("Using graphs:"),
-                                    html.P(
-                                        """
-                                        We use Plotly.js figures that are interactive and high performance.
-                                        Please take a moment to try out their features to enrich your analysis possibilities.
-                                        """,
-                                        className="explanation-p",
-                                    ),
-                                    html.Ul(
-                                        [
-                                            html.Li("Click and drag inside of graph to zoom."),
-                                            html.Li("Double click in graph to reset scaling."),
-                                            html.Li("Deselect datapoints by clicking them in sidebar."),
-                                        ]
-                                    ),
-                                ]
-                            )
-                        )
-                    ],
-                    width=6,
-                    align="start",
-                ),
-                dbc.Col([dcc.Graph(id="welcome_graph", figure=example_fig)], width=6),
-            ],
-            align="center",
-            style={"marginBottom": ".5%"},
-        ),
-        dbc.Row(
-            [
-                dbc.Col(
-                    [
-                        dbc.Card(
-                            dbc.CardBody(
-                                children=[
-                                    html.H2("User Accounts:"),
-                                    html.P(
-                                        """
-                                        If you're interested in analyzing the same groups of repos more than once,
-                                        consider creating a user repo group.
-                                        """
-                                    ),
-                                    html.P(
-                                        """
-                                        Assuming you've logged in, you can create user groups via the Augur frontend
-                                        and then refresh your groups. You'll now be able to find groups you've created by
-                                        searching for your username. For instance, if your augur username is 'USER' and the group you created is called
-                                        'CUSTOM_GROUP' then you'll be find your group by searching 'USER_CUSTOM_GROUP.'
-                                        """
-                                    ),
-                                ]
-                            )
-                        )
-                    ],
-                    width=6,
-                    align="start",
-                ),
-                dbc.Col(
-                    [
-                        dbc.Card(
-                            dbc.CardBody(
-                                children=[
-                                    html.H2("Login Procedure"),
-                                    html.Ol(
-                                        [
-                                            html.Li("Click 'Augur Login/Signup"),
-                                            html.Li("Create or log into your account."),
-                                            html.Li("'Authorize' the 8Knot application you're using."),
-                                            html.Li("After redirect to 8Knot, click 'Manage Groups'"),
-                                            html.Li("Create/Edit your groups by adding/removing repos."),
-                                            html.Li(
-                                                "Click 'Refresh Groups' in 8Knot to update application with your changes."
-                                            ),
-                                        ]
-                                    ),
-                                ]
-                            )
-                        )
-                    ],
-                    width=6,
-                    align="start",
-                ),
-            ],
-            align="center",
-            style={"marginBottom": ".5%"},
         ),
     ],
-    fluid=True,
 )
