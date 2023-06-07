@@ -33,7 +33,7 @@ gc_unique_domains = dbc.Card(
                         dbc.PopoverBody(
                             """
                             Visualizes the population of unique commit email addresses per represented domain.\n
-                            e.g. if there are 100 distrinct commit contributors and 50 use an '@gmail.com' email address,\n
+                            e.g. if there are 100 distinct commit contributors and 50 use an '@gmail.com' email address,\n
                             and another 50 use an '@redhat.com' email address, 50 percent of of emails wll be '@gmail.com'\n
                             and 50% will be '@redhat.com'.
                             """
