@@ -31,9 +31,13 @@ gc_commit_domains = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "This graph shows the proportions of email domains that contributors used to make commits.\n\
-                            e.g. johndoe@gmail.com as a commit author would contribute to the count of gmail.com once.\n\
-                            NOTE: the domain might not respresent if it is done as an individual or company."
+                            """
+                            Visualizes the proportion of commit activity done by specific email domains.\n
+                            e.g. if there are 100 commits and 75 commits were authored by a contributor with a\n
+                            '@gmail.com' email address, 75 percent of the chart will be represented '@gmail.com.'\n
+                            This can help to capture the relative magnitude of commit contribution by various corporate\n
+                            or institutional entities.
+                            """
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",

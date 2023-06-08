@@ -28,7 +28,12 @@ gc_commits_over_time = dbc.Card(
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody("This graph plots the amount of commits in selected time buckets."),
+                        dbc.PopoverBody(
+                            """
+                            Visualizes the number of commits added to the project.\n
+                            Commits are counted relative to a user-selected time window.
+                            """
+                        ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
                     target=f"popover-target-{PAGE}-{VIZ_ID}",  # needs to be the same as dbc.Button id
