@@ -6,7 +6,7 @@ from .visualizations.pr_metrics import gc_pr_metrics
 from .visualizations.issue_metrics import gc_issue_metrics
 
 # register the page
-dash.register_page(__name__, path="/", order=1)
+# dash.register_page(__name__, path="/", order=1)
 
 layout = dbc.Container(
     [

@@ -9,7 +9,7 @@ import logging
 # if param doesn't exist, default to False. Otherwise, use the param's booly value.
 # this determines if the log in option will be shown or not
 if os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True":
-    logging.debug("LOGIN ENABLED")
+    logging.warning("LOGIN ENABLED")
     login_navbar = [
         dbc.Row(
             [
@@ -56,7 +56,7 @@ if os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True":
         ),
     ]
 else:
-    logging.debug("LOGIN DISABLED")
+    logging.warning("LOGIN DISABLED")
     login_navbar = [html.Div()]
 
 # navbar for top of screen
@@ -72,7 +72,7 @@ navbar = dbc.Navbar(
                                 height="40px",
                             ),
                             dbc.NavbarBrand(
-                                "8Knot Community Data",
+                                "8Knot",
                                 id="navbar-title",
                                 className="ms-2",
                             ),

@@ -29,7 +29,7 @@ gc_new_contributor = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "This graph allows you to see two different views on your contributor base.\n\
+                            "Visualizes the growth of contributor base by tracking the arrival of novel contributors over time.\n\
                             Trend: This view is the total growth of contributors over time \n\
                             Month/Year: This view looks specifically at the new contributors by selected time bucket."
                         ),
@@ -125,7 +125,6 @@ def graph_title(view):
     background=True,
 )
 def new_contributor_graph(repolist, interval):
-
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=ctq, repos=repolist)
@@ -133,12 +132,12 @@ def new_contributor_graph(repolist, interval):
         time.sleep(1.0)
         df = cache.grabm(func=ctq, repos=repolist)
 
-    logging.debug("TOTAL_CONTRIBUTOR_GROWTH_VIZ - START")
+    logging.warning("TOTAL_CONTRIBUTOR_GROWTH_VIZ - START")
     start = time.perf_counter()
 
     # test if there is data
     if df.empty:
-        logging.debug("TOTAL_CONTRIBUTOR_GROWTH_VIZ - NO DATA AVAILABLE")
+        logging.warning("TOTAL_CONTRIBUTOR_GROWTH_VIZ - NO DATA AVAILABLE")
         return nodata_graph
 
     # function for all data pre processing
@@ -146,12 +145,11 @@ def new_contributor_graph(repolist, interval):
 
     fig = create_figure(df, df_contribs, interval)
 
-    logging.debug(f"TOTAL_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}")
+    logging.warning(f"TOTAL_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}")
     return fig
 
 
 def process_data(df, interval):
-
     # convert to datetime objects with consistent column name
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
     df.rename(columns={"created_at": "created"}, inplace=True)
@@ -195,7 +193,6 @@ def process_data(df, interval):
 
 
 def create_figure(df, df_contribs, interval):
-
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 

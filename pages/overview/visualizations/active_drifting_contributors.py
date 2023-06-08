@@ -30,10 +30,11 @@ gc_active_drifting_contributors = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "Select the intervals that make sense for your community!\n\
-                            <ACTIVE> contributors that have a contribution within the drifting parameter.\n\
-                            <DRIFTING> contributors that are views as drifting away from the community, they have a contribution between the two intervals.\n\
-                            <AWAY> Contributors that are considered no longer participating members of the community"
+                            """
+                            Visualizes growth of contributor population, including sub-populations\n
+                            in consideration of how recently a contributor has contributed.\n
+                            Please see definitions of 'Contributor Recency' on Info page.
+                            """
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
@@ -136,6 +137,7 @@ gc_active_drifting_contributors = dbc.Card(
     ],
 )
 
+
 # callback for graph info popover
 @callback(
     Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
@@ -160,7 +162,6 @@ def toggle_popover(n, is_open):
     background=True,
 )
 def active_drifting_contributors_graph(repolist, interval, drift_interval, away_interval):
-
     # conditional for the intervals to be valid options
     if drift_interval is None or away_interval is None:
         return dash.no_update, dash.no_update
@@ -175,12 +176,12 @@ def active_drifting_contributors_graph(repolist, interval, drift_interval, away_
         time.sleep(1.0)
         df = cache.grabm(func=ctq, repos=repolist)
 
-    logging.debug(f"ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - START")
+    logging.warning(f"ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - START")
     start = time.perf_counter()
 
     # test if there is data
     if df.empty:
-        logging.debug("PULL REQUEST STALENESS - NO DATA AVAILABLE")
+        logging.warning("PULL REQUEST STALENESS - NO DATA AVAILABLE")
         return nodata_graph, False
 
     # function for all data pre processing
@@ -188,12 +189,11 @@ def active_drifting_contributors_graph(repolist, interval, drift_interval, away_
 
     fig = create_figure(df_status, interval)
 
-    logging.debug(f"ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}")
+    logging.warning(f"ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}")
     return fig, False
 
 
 def process_data(df: pd.DataFrame, interval, drift_interval, away_interval):
-
     # convert to datetime objects with consistent column name
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
     df.rename(columns={"created_at": "created"}, inplace=True)
@@ -229,7 +229,6 @@ def process_data(df: pd.DataFrame, interval, drift_interval, away_interval):
 
 
 def create_figure(df_status: pd.DataFrame, interval):
-
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
@@ -288,7 +287,6 @@ def create_figure(df_status: pd.DataFrame, interval):
 
 
 def get_active_drifting_away_up_to(df, date, drift_interval, away_interval):
-
     # drop rows that are more recent than the date limit
     df_lim = df[df["created"] <= date]
 

@@ -148,7 +148,7 @@ class AugurManager:
 
         self.engine = engine
 
-        logging.debug("Engine returned")
+        logging.warning("Engine returned")
         return engine
 
     def run_query(self, query_string: str) -> pd.DataFrame:
@@ -228,7 +228,7 @@ class AugurManager:
 
     def multiselect_startup(self):
 
-        logging.debug(f"MULTISELECT_STARTUP")
+        logging.warning(f"MULTISELECT_STARTUP")
 
         query_string = f"""SELECT DISTINCT
                             r.repo_git,
@@ -243,7 +243,7 @@ class AugurManager:
 
         # query for search bar entry generation
         df_search_bar = self.run_query(query_string)
-        logging.debug(f"MULTISELECT_QUERY")
+        logging.warning(f"MULTISELECT_QUERY")
 
         # create a list of dictionaries for the MultiSelect dropdown
         # component on the index page.
@@ -280,7 +280,7 @@ class AugurManager:
 
         # making first selection for the search bar
         self.initial_search_option = self.multiselect_options[0]
-        logging.debug(f"MULTISELECT_FINISHED")
+        logging.warning(f"MULTISELECT_FINISHED")
 
     def repo_git_to_id(self, git):
         """Getter method for dictionary

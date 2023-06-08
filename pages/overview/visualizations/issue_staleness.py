@@ -33,9 +33,11 @@ gc_issue_staleness = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "This visualization shows how many issues have been open different buckets of time.\n\
-                            By using the number selections for staling and stale, you can see if there are issues \n\
-                            staying idly open compared to your communities normal activity standards."
+                            """
+                            Visualizes growth of Issue backlog. Differentiates sub-populations\n
+                            of issues by their 'Staleness.'\n
+                            Please see the definition of 'Staleness' on the Info page.
+                            """
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
@@ -138,6 +140,7 @@ gc_issue_staleness = dbc.Card(
     ],
 )
 
+
 # callback for graph info popover
 @callback(
     Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
@@ -162,7 +165,6 @@ def toggle_popover(n, is_open):
     background=True,
 )
 def new_staling_issues_graph(repolist, interval, staling_interval, stale_interval):
-
     # conditional for the intervals to be valid options
     if staling_interval > stale_interval:
         return dash.no_update, True
@@ -178,11 +180,11 @@ def new_staling_issues_graph(repolist, interval, staling_interval, stale_interva
         df = cache.grabm(func=iq, repos=repolist)
 
     start = time.perf_counter()
-    logging.debug("ISSUES STALENESS - START")
+    logging.warning("ISSUES STALENESS - START")
 
     # test if there is data
     if df.empty:
-        logging.debug("ISSUE STALENESS - NO DATA AVAILABLE")
+        logging.warning("ISSUE STALENESS - NO DATA AVAILABLE")
         return nodata_graph, False
 
     # function for all data pre processing
@@ -190,12 +192,11 @@ def new_staling_issues_graph(repolist, interval, staling_interval, stale_interva
 
     fig = create_figure(df_status, interval)
 
-    logging.debug(f"ISSUE STALENESS - END - {time.perf_counter() - start}")
+    logging.warning(f"ISSUE STALENESS - END - {time.perf_counter() - start}")
     return fig, False
 
 
 def process_data(df: pd.DataFrame, interval, staling_interval, stale_interval):
-
     # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
     df["closed"] = pd.to_datetime(df["closed"], utc=True)
@@ -232,7 +233,6 @@ def process_data(df: pd.DataFrame, interval, staling_interval, stale_interval):
 
 
 def create_figure(df_status: pd.DataFrame, interval):
-
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
@@ -291,7 +291,6 @@ def create_figure(df_status: pd.DataFrame, interval):
 
 
 def get_new_staling_stale_up_to(df, date, staling_interval, stale_interval):
-
     # drop rows that are more recent than the date limit
     df_created = df[df["created"] <= date]
 

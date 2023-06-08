@@ -29,9 +29,13 @@ gc_contrib_drive_repeat = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "This graph gives a break down of how many and what type of contributions\n\
-                            different types of contributors in your community make. By your community standard you can\n\
-                            have the critera of how many contributions it takes for a member to be a repeat contributor."
+                            """
+                            Visualizes the per-quarter consistency of contributors.\n
+                            A contributor is counted in an 'Action' category if they have made at least 'Contributions Required'\n
+                            contributions within the quarter. For example, if 'Contributions Required' is 2, then a contributor will\n
+                            be counted once in 'Open PR' and in 'PR Comment' if they made 2 or more PR's AND commented 2 or more times on PRs.\n
+                            Please read definition of 'Contributor Consistency' on Info page.
+                            """
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
@@ -112,6 +116,7 @@ gc_contrib_drive_repeat = dbc.Card(
     ],
 )
 
+
 # callback for graph info popover
 @callback(
     Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
@@ -125,7 +130,10 @@ def toggle_popover_1(n, is_open):
 
 
 # callback for dynamically changing the graph title
-@callback(Output(f"graph-title-{PAGE}-{VIZ_ID}", "children"), Input(f"graph-view-{PAGE}-{VIZ_ID}", "value"))
+@callback(
+    Output(f"graph-title-{PAGE}-{VIZ_ID}", "children"),
+    Input(f"graph-view-{PAGE}-{VIZ_ID}", "value"),
+)
 def graph_title(view):
     title = ""
     if view == "drive":
@@ -146,7 +154,6 @@ def graph_title(view):
     background=True,
 )
 def repeat_drive_by_graph(repolist, contribs, view):
-
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=ctq, repos=repolist)
@@ -156,11 +163,11 @@ def repeat_drive_by_graph(repolist, contribs, view):
 
     # data ready.
     start = time.perf_counter()
-    logging.debug("CONTRIB_DRIVE_REPEAT_VIZ - START")
+    logging.warning("CONTRIB_DRIVE_REPEAT_VIZ - START")
 
     # test if there is data
     if df.empty:
-        logging.debug("CONTRIB DRIVE REPEAT - NO DATA AVAILABLE")
+        logging.warning("CONTRIB DRIVE REPEAT - NO DATA AVAILABLE")
         return nodata_graph
 
     # function for all data pre processing
@@ -168,18 +175,17 @@ def repeat_drive_by_graph(repolist, contribs, view):
 
     # test if there is data
     if df_cont_subset.empty:
-        logging.debug("CONTRIB DRIVE REPEAT - NO DRIVE OR REPEAT DATA")
+        logging.warning("CONTRIB DRIVE REPEAT - NO DRIVE OR REPEAT DATA")
         return nodata_graph
 
     fig = create_figure(df_cont_subset)
 
-    logging.debug(f"CONTRIB_DRIVE_REPEAT_VIZ - END - {time.perf_counter() - start}")
+    logging.warning(f"CONTRIB_DRIVE_REPEAT_VIZ - END - {time.perf_counter() - start}")
 
     return fig
 
 
 def process_data(df, view, contribs):
-
     # convert to datetime objects with consistent column name
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
     df.rename(columns={"created_at": "created"}, inplace=True)

@@ -153,6 +153,7 @@ gc_VISUALIZATION = dbc.Card(
     ],
 )
 
+
 # callback for graph info popover
 @callback(
     Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
@@ -178,7 +179,6 @@ def toggle_popover(n, is_open):
     background=True,
 )
 def NAME_OF_VISUALIZATION_graph(repolist, interval):
-
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=QUERY_INITIALS, repos=repolist)
@@ -187,11 +187,11 @@ def NAME_OF_VISUALIZATION_graph(repolist, interval):
         df = cache.grabm(func=QUERY_INITIALS, repos=repolist)
 
     start = time.perf_counter()
-    logging.debug(f"{VIZ_ID}- START")
+    logging.warning(f"{VIZ_ID}- START")
 
     # test if there is data
     if df.empty:
-        logging.debug(f"{VIZ_ID} - NO DATA AVAILABLE")
+        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return nodata_graph
 
     # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
@@ -199,7 +199,7 @@ def NAME_OF_VISUALIZATION_graph(repolist, interval):
 
     fig = create_figure(df, interval)
 
-    logging.debug(f"{VIZ_ID} - END - {time.perf_counter() - start}")
+    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
 
@@ -221,7 +221,6 @@ def process_data(df: pd.DataFrame, interval):
 
 
 def create_figure(df: pd.DataFrame, interval):
-
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
