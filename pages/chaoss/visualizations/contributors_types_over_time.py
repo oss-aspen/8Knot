@@ -31,8 +31,12 @@ gc_contributors_over_time = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "This graph breaks down your contributors by time interval into active or repeat contributors.\n\
-                            This criteria can be selected to cater to your specfic community."
+                            """
+                            Visualizes the per-quarter consistency of contributors.\n
+                            Partitions quarterly population of contributors based on whether they make\n
+                            'Required Contributions' or more contributions.
+                            Please read definition of 'Contributor Consistency' on Info page.
+                            """
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
