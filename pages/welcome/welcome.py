@@ -4,7 +4,7 @@ import dash_bootstrap_components as dbc
 import plotly.express as px
 
 # register the page
-dash.register_page(__name__, path="/welcome", order=5)
+dash.register_page(__name__, path="/", order=1)
 
 # This is just a stand-in until we wire up a more interesting visualization.
 example_fig = px.scatter(
