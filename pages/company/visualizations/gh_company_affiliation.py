@@ -32,7 +32,11 @@ gc_gh_company_affiliation = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "This graph looks at github contributors profiles and takes in their listed company"
+                            """
+                            Visualizes Github account institution affiliation.\n
+                            Many individuals don't report an affiliated institution, but\n
+                            this count may be considered an absolute lower-bound on affiliation.
+                            """
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",

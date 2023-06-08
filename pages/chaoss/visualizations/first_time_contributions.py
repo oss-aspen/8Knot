@@ -29,8 +29,10 @@ gc_first_time_contributions = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "This graph displays how many new contributors in a repository set by quarter\n\
-                            and what activity was their first in the community."
+                            """
+                            Visualizes the arrival of net-new contributors to a project\n
+                            and differentiates them by their first in-project action.
+                            """
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",

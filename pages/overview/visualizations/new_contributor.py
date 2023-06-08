@@ -29,7 +29,7 @@ gc_new_contributor = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "This graph allows you to see two different views on your contributor base.\n\
+                            "Visualizes the growth of contributor base by tracking the arrival of novel contributors over time.\n\
                             Trend: This view is the total growth of contributors over time \n\
                             Month/Year: This view looks specifically at the new contributors by selected time bucket."
                         ),

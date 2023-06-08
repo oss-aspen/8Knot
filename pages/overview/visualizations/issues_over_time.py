@@ -29,7 +29,10 @@ gc_issues_over_time = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "This graph takes the open and close times on the issues in the selected repositories."
+                            """
+                            Visualizes the activity of issues being Opened and Closed paritioned by time-window.\n
+                            Also shows the total volume of Open issues over time.
+                            """
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",

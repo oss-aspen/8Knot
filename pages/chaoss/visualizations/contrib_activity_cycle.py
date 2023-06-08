@@ -31,9 +31,10 @@ gc_contrib_activity_cycle = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "This graph looks at the the timestamps of commits being created and\n\
-                                        when they are commited to the code base. This gives a view on the activity cycle\n\
-                                        of you contributor base."
+                            """
+                            Visualizes the distribution of Commit timestamps by Weekday or Hour.\n
+                            Helps to describe operating-hours of community code contributions.
+                            """
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",

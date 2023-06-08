@@ -30,7 +30,10 @@ gc_pr_over_time = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "This graph takes the open, close, and merge times on the pull requests in the selected repositories."
+                            """
+                            Visualizes PR behavior by tracking Created, Merged, and Closed-Not-Merged PRs over time.\n
+                            Also shows Created PR count as a trend over lifespan.
+                            """
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",

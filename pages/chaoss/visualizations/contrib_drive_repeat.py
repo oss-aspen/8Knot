@@ -29,9 +29,13 @@ gc_contrib_drive_repeat = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "This graph gives a break down of how many and what type of contributions\n\
-                            different types of contributors in your community make. By your community standard you can\n\
-                            have the critera of how many contributions it takes for a member to be a repeat contributor."
+                            """
+                            Visualizes the per-quarter consistency of contributors.\n
+                            A contributor is counted in an 'Action' category if they have made at least 'Contributions Required'\n
+                            contributions within the quarter. For example, if 'Contributions Required' is 2, then a contributor will\n
+                            be counted once in 'Open PR' and in 'PR Comment' if they made 2 or more PR's AND commented 2 or more times on PRs.\n
+                            Please read definition of 'Contributor Consistency' on Info page.
+                            """
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
