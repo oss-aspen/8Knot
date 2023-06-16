@@ -1,32 +1,14 @@
 FROM registry.access.redhat.com/ubi9/python-39
 
-# need this for the Dash app
 EXPOSE 8050
 
-# install pipenv
-# RUN pip --no-cache-dir install pipenv
+WORKDIR /8knot
 
-# create a working directory
-# RUN mkdir explorer
-
-# set that directory as working dir
-WORKDIR /explorer
-
-# environment first
-# COPY ./Pipfile.lock /explorer/
-# COPY ./Pipfile /explorer/
-
-# install required modules at system level
-# RUN pipenv install --system --deploy
-
-COPY ./requirements.txt /explorer/
+COPY ./requirements.txt /8knot/
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-# copy the contents of current file into the
-# working directory.
-COPY ./ /explorer/
+COPY ./ /8knot/
 
-# run app
 # Description of how to choose the number of workers and threads.
 # common wisdom is (2*CPU)+1 workers:
 # https://medium.com/building-the-system/gunicorn-3-means-of-concurrency-efbb547674b7

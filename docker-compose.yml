@@ -53,7 +53,10 @@ services:
     restart: always
 
   cache:
-    image: redis
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.cache
+    mem_limit: 12gb
     ports:
       - 6379:6379
     restart: always

@@ -1,0 +1,25 @@
+# grab fed 39
+from quay.io/fedora/fedora:39
+
+# update w/ security patches
+run dnf -y update
+run dnf -y upgrade
+
+# install Redis
+run dnf install -y redis
+
+# create config
+run mkdir /redis
+workdir /redis
+run touch /redis/redis.conf
+
+# echo custom params in
+run echo "" >> /redis/redis.conf
+run echo "#CUSTOM REDIS CONFIG" >> /redis/redis.conf
+run echo "maxmemory 5gb" >> /redis/redis.conf
+run echo "maxmemory-policy allkeys-lru" >> /redis/redis.conf
+
+# so that outside containers can communicate w/ the instance.
+run echo "protected-mode no" >> /redis/redis.conf
+
+cmd ["redis-server", "/redis/redis.conf"]
