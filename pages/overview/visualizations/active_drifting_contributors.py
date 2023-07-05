@@ -30,10 +30,11 @@ gc_active_drifting_contributors = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "Select the intervals that make sense for your community!\n\
-                            <ACTIVE> contributors that have a contribution within the drifting parameter.\n\
-                            <DRIFTING> contributors that are views as drifting away from the community, they have a contribution between the two intervals.\n\
-                            <AWAY> Contributors that are considered no longer participating members of the community"
+                            """
+                            Visualizes growth of contributor population, including sub-populations\n
+                            in consideration of how recently a contributor has contributed.\n
+                            Please see definitions of 'Contributor Recency' on Info page.
+                            """
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",

@@ -30,7 +30,14 @@ gc_unique_domains = dbc.Card(
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody("This graph counts the number of UNIQUE emails by domains"),
+                        dbc.PopoverBody(
+                            """
+                            Visualizes the population of unique commit email addresses per represented domain.\n
+                            e.g. if there are 100 distinct commit contributors and 50 use an '@gmail.com' email address,\n
+                            and another 50 use an '@redhat.com' email address, 50 percent of of emails wll be '@gmail.com'\n
+                            and 50% will be '@redhat.com'.
+                            """
+                        ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
                     target=f"popover-target-{PAGE}-{VIZ_ID}",  # needs to be the same as dbc.Button id

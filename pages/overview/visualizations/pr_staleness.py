@@ -31,9 +31,11 @@ gc_pr_staleness = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "This visualization shows how many pull requests have been open different buckets of time.\n\
-                            By using the number selections for staling and stale, you can see if there are \n\
-                            pull requests staying idly open compared to your communities normal activity standards."
+                            """
+                            Visualizes growth of Open Pull Request backlog. Differentiates sub-populations\n
+                            of PRs by their 'Staleness.'\n
+                            Please see the definition of 'Staleness' on the Info page.
+                            """
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
