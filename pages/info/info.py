@@ -19,6 +19,7 @@ layout = dbc.Container(
                     a given contributor could make contributions under multiple emails.
                     It is reasonable to say that an individual is a contributor if they have made one-or-more contributions
                     to an open source project.
+                    In 8Knot, we count someone as a 'contributor' if they make one or more 'contribution' as we define below.
                     """
                 ),
             ]
@@ -36,15 +37,15 @@ layout = dbc.Container(
                     """
                 ),
                 html.Br(),
-                html.H5("Examples of contributions:"),
+                html.H5("Contributions that 8Knot counts in visualizations and metrics:"),
                 html.Ul(
                     [
-                        html.Li("Creating, reviewing, commenting on a Pull Request"),
-                        html.Li("Submitting, commenting on an Issue"),
-                        html.Li("Authoring, committing a Commit"),
+                        html.Li("Pull Requests: Create, Close, Merge, Review, Comment"),
+                        html.Li("Issues: Create, Close, Comment"),
+                        html.Li("Commits: Author, Commit"),
                     ]
                 ),
-                html.H5("Examples of non-contributions:"),
+                html.H5("Non-contributions (8Knot doesn't count these):"),
                 html.Ul(
                     [
                         html.Li("Starring a project"),
