@@ -4,6 +4,7 @@ from app import celery_app
 from cache_manager.cache_manager import CacheManager as cm
 import pandas as pd
 import io
+import datetime as dt
 
 QUERY_NAME = "ISSUE"
 
@@ -65,6 +66,10 @@ def issues_query(self, dbmc, repos):
     df = df[df["pull_request_id"].isnull()]
     df = df.drop(columns="pull_request_id")
     df = df.sort_values(by="created")
+
+    # change to compatible type and remove all data that has been incorrectly formated
+    df["created"] = pd.to_datetime(df["created"], utc=True).dt.date
+    df = df[df.created < dt.date.today()]
 
     df = df.reset_index()
     df.drop("index", axis=1, inplace=True)

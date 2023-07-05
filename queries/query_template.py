@@ -4,6 +4,7 @@ from db_manager.augur_manager import AugurManager
 from app import celery_app
 from cache_manager.cache_manager import CacheManager as cm
 import io
+import datetime as dt
 
 """
 TODO:
@@ -70,6 +71,9 @@ def NAME_query(self, dbmc, repos):
     df = df.reset_index(drop=True)
 
     """
+    # change to compatible type and remove all data that has been incorrectly formated
+    df["created"] = pd.to_datetime(df["created"], utc=True).dt.date
+    df = df[df.created < dt.date.today()]
 
     pic = []
 

@@ -4,6 +4,7 @@ from app import celery_app
 import pandas as pd
 from cache_manager.cache_manager import CacheManager as cm
 import io
+import datetime as dt
 
 QUERY_NAME = "COMMITS"
 
@@ -64,6 +65,10 @@ def commits_query(self, dbmc, repos):
     dbm = AugurManager()
     dbm.load_pconfig(dbmc)
     df = dbm.run_query(query_string)
+
+    # change to compatible type and remove all data that has been incorrectly formated
+    df["author_timestamp"] = pd.to_datetime(df["author_timestamp"], utc=True).dt.date
+    df = df[df.author_timestamp < dt.date.today()]
 
     # break apart returned data per repo
     # and temporarily store in List to be

@@ -4,6 +4,7 @@ from db_manager.augur_manager import AugurManager
 from app import celery_app
 from cache_manager.cache_manager import CacheManager as cm
 import io
+import datetime as dt
 
 QUERY_NAME = "PR"
 
@@ -56,6 +57,10 @@ def prs_query(self, dbmc, repos):
     dbm = AugurManager()
     dbm.load_pconfig(dbmc)
     df = dbm.run_query(query_string)
+
+    # change to compatible type and remove all data that has been incorrectly formated
+    df["created"] = pd.to_datetime(df["created"], utc=True).dt.date
+    df = df[df.created < dt.date.today()]
 
     # sort by the date created
     df = df.sort_values(by="created")

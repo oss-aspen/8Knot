@@ -4,6 +4,7 @@ from app import celery_app
 import pandas as pd
 from cache_manager.cache_manager import CacheManager as cm
 import io
+import datetime as dt
 
 QUERY_NAME = "COMPANY"
 
@@ -62,6 +63,11 @@ def company_query(self, dbmc, repos):
 
     df["cntrb_id"] = df["cntrb_id"].astype(str)
     df = df.sort_values(by="created")
+
+    # change to compatible type and remove all data that has been incorrectly formated
+    df["created"] = pd.to_datetime(df["created"], utc=True).dt.date
+    df = df[df.created < dt.date.today()]
+
     df = df.reset_index()
     df.drop("index", axis=1, inplace=True)
 
