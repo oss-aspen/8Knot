@@ -8,6 +8,7 @@ import os
 import logging
 import sys
 import requests
+from sqlalchemy.exc import SQLAlchemyError
 
 
 class AugurManager:
@@ -16,9 +17,6 @@ class AugurManager:
 
     Attributes:
     -----------
-        pconfig : bool
-            Flag of whether pconfig list was used to load current config.
-
         engine : _engine.Engine instance
             SQLAlchemy engine with credentials to connect to Augur database.
 
@@ -43,9 +41,6 @@ class AugurManager:
             Schema credential to Augur database.
             The target schema of the database we want to access.
 
-        config_loaded : bool
-            Flag of whether configuration params for database have been loaded.
-
     Methods:
     --------
         get_engine():
@@ -55,41 +50,44 @@ class AugurManager:
         run_query(query_string):
             Runs a SQL-query against Augur database and returns resulting
             Pandas dataframe.
-
-        package_pconfig():
-            Packages current credentials into a list for transportation to workers.
-            We need to do this because _engine.Engine objects can't be pickled and
-            passed as parameters to workers via Queue objects.
-
-        load_pconfig():
-            Loads credentials for AugurManager object from a pconfig.
-            We need to do this because _engine.Engine objects can't be pickled and
-            passed as parameters to workers via Queue objects.
     """
 
-    def __init__(self):
-        self.pconfig = False
-        self.client_secret = None
-        self.session_generate_endpoint = None
-        self.user_groups_endpoint = None
+    def __init__(self, handles_oauth=False):
+        # sqlalchemy engine object
         self.engine = None
-        self.user = None
-        self.password = None
-        self.host = None
-        self.port = None
-        self.database = None
-        self.schema = None
-        self.config_loaded = False
-        self.app_id = None
 
-        # user-level endpoints
-        self.user_account_endpoint = None
-        self.user_auth_endpoint = None
+        # db connection credentials
+        # if any are unavailable, raise error.
+        try:
+            self.user = os.environ["AUGUR_USERNAME"]
+            self.password = os.environ["AUGUR_PASSWORD"]
+            self.host = os.environ["AUGUR_HOST"]
+            self.port = os.environ["AUGUR_PORT"]
+            self.database = os.environ["AUGUR_DATABASE"]
+            self.schema = os.environ["AUGUR_SCHEMA"]
+        except KeyError as ke:
+            logging.critical(f"AUGUR: Database credentials incomplete: {ke}")
+            raise KeyError(ke)
 
-        # admin-level endpoints
-        self.admin_name_endpoint = None
-        self.admin_group_names_endpoint = None
-        self.admin_groups_endpoint = None
+        # oauth endpoints have to be intact to proceed
+        if handles_oauth:
+            try:
+                # application credentials
+                self.app_id = os.environ["AUGUR_APP_ID"]
+                self.client_secret = os.environ["AUGUR_CLIENT_SECRET"]
+
+                # user-level endpoints
+                self.session_generate_endpoint = os.environ["AUGUR_SESSION_GENERATE_ENDPOINT"]
+                self.user_groups_endpoint = os.environ["AUGUR_USER_GROUPS_ENDPOINT"]
+                self.user_account_endpoint = os.environ["AUGUR_USER_ACCOUNT_ENDPOINT"]
+                self.user_auth_endpoint = os.environ["AUGUR_USER_AUTH_ENDPOINT"]
+
+                # admin-level endpoints
+                self.admin_name_endpoint = os.environ["AUGUR_ADMIN_NAME_ENDPOINT"]
+                self.admin_group_names_endpoint = os.environ["AUGUR_ADMIN_GROUP_NAMES_ENDPOINT"]
+                self.admin_groups_endpoint = os.environ["AUGUR_ADMIN_GROUPS_ENDPOINT"]
+            except KeyError as ke:
+                logging.critical(f"AUGUR: Oauth endpoints incomplete: {ke}")
 
     def get_engine(self):
         """
@@ -99,56 +97,33 @@ class AugurManager:
         --------
             _engine.Engine: SQLAlchemy engine object.
         """
-        if self.engine is not None:
+
+        # return engine immediately if it already exists
+        if self.engine:
             return self.engine
-
-        if self.config_loaded is False and not self.pconfig:
-
-            # make sure all of the environment variables are available
-            env_values = [
-                "AUGUR_USERNAME",
-                "AUGUR_PASSWORD",
-                "AUGUR_HOST",
-                "AUGUR_PORT",
-                "AUGUR_DATABASE",
-                "AUGUR_SCHEMA",
-            ]
-            for v in env_values:
-
-                if v not in os.environ:
-                    logging.critical(f'Required environment variable "{v}" not available.')
-                    return None
-
-                if os.getenv(v) is None:
-                    logging.critical(f'Required environment variable: "{v}" available but none.')
-                    return None
-
-            # have confirmed that necessary environment variables exist- proceed.
-            self.user = os.getenv("AUGUR_USERNAME")
-            self.password = os.getenv("AUGUR_PASSWORD")
-            self.host = os.getenv("AUGUR_HOST")
-            self.port = os.getenv("AUGUR_PORT")
-            self.database = os.getenv("AUGUR_DATABASE")
-            self.schema = os.getenv("AUGUR_SCHEMA")
-            self.config_loaded = True
 
         database_connection_string = "postgresql+psycopg2://{}:{}@{}:{}/{}".format(
             self.user, self.password, self.host, self.port, self.database
         )
 
-        dbschema = self.schema
+        engine = salc.create_engine(
+            database_connection_string,
+            connect_args={"options": "-csearch_path={}".format(self.schema)},
+            pool_pre_ping=True,
+        )
+
+        # verify that engine works
         try:
-            engine = salc.create_engine(
-                database_connection_string,
-                connect_args={"options": "-csearch_path={}".format(dbschema)},
-                pool_pre_ping=True,
-            )
-        except:
-            logging.critical("Could not get engine- please check parameters.")
+            # context managed connect, closes automatically
+            with engine.connect() as conn:
+                logging.warning("AUGUR: Connection to DB succeeded")
 
-        self.engine = engine
+            self.engine = engine
 
-        logging.warning("Engine returned")
+        except SQLAlchemyError as err:
+            logging.error(f"AUGUR: DB couldn't connect: {err.__cause__}")
+            raise SQLAlchemyError(err)
+
         return engine
 
     def run_query(self, query_string: str) -> pd.DataFrame:
@@ -182,52 +157,7 @@ class AugurManager:
 
         return result_df
 
-    def package_config(self):
-        """
-        Packages current credentials into a list for transportation to workers.
-        We need to do this because _engine.Engine objects can't be pickled and
-        passed as parameters to workers via Queue objects.
-
-        Returns:
-        --------
-            list(str): List of credentials to recreate same connection to Augur instance.
-        """
-        if self.config_loaded:
-            pconfig = [
-                self.user,
-                self.password,
-                self.host,
-                self.port,
-                self.database,
-                self.schema,
-            ]
-            return pconfig
-        else:
-            return None
-
-    def load_pconfig(self, pconfig: list):
-        """
-        Loads credentials for AugurManager object from a pconfig.
-        We need to do this because _engine.Engine objects can't be pickled and
-        passed as parameters to workers via Queue objects.
-
-        Args:
-        -----
-            pconfig (list): Credentials to create AugurManager object in RQ Workers.
-        """
-        self.pconfig = True
-        self.engine = None
-        self.user = pconfig[0]
-        self.password = pconfig[1]
-        self.host = pconfig[2]
-        self.port = pconfig[3]
-        self.database = pconfig[4]
-        self.schema = pconfig[5]
-        self.config_loaded = False
-        self.get_engine()
-
     def multiselect_startup(self):
-
         logging.warning(f"MULTISELECT_STARTUP")
 
         query_string = f"""SELECT DISTINCT
@@ -436,30 +366,3 @@ class AugurManager:
 
         if result.status_code == 200:
             return result.json()
-
-    def set_client_secret(self, secret):
-        self.client_secret = secret
-
-    def set_session_generate_endpoint(self, endpoint):
-        self.session_generate_endpoint = endpoint
-
-    def set_user_groups_endpoint(self, endpoint):
-        self.user_groups_endpoint = endpoint
-
-    def set_app_id(self, id):
-        self.app_id = id
-
-    def set_user_account_endpoint(self, endpoint):
-        self.user_account_endpoint = endpoint
-
-    def set_user_auth_endpoint(self, endpoint):
-        self.user_auth_endpoint = endpoint
-
-    def set_admin_name_endpoint(self, endpoint):
-        self.admin_name_endpoint = endpoint
-
-    def set_admin_group_names_endpoint(self, endpoint):
-        self.admin_group_names_endpoint = endpoint
-
-    def set_admin_groups_endpoint(self, endpoint):
-        self.admin_groups_endpoint = endpoint

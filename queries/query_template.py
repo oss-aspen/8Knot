@@ -5,6 +5,7 @@ from app import celery_app
 from cache_manager.cache_manager import CacheManager as cm
 import io
 import datetime as dt
+from sqlalchemy.exc import SQLAlchemyError
 
 """
 TODO:
@@ -28,15 +29,13 @@ QUERY_NAME = "NAME"
     retry_kwargs={"max_retries": 5},
     retry_jitter=True,
 )
-def NAME_query(self, dbmc, repos):
+def NAME_query(self, repos):
     """
     (Worker Query)
     Executes SQL query against Augur database for contributor data.
 
     Args:
     -----
-        dbmc (AugurManager): Handles connection to Augur database, executes queries and returns results.
-
         repo_ids ([str]): repos that SQL query is executed on.
 
     Returns:
@@ -57,9 +56,18 @@ def NAME_query(self, dbmc, repos):
                         repo_id in ({str(repos)[1:-1]})
                 """
 
-    # create database connection, load config, execute query above.
-    dbm = AugurManager()
-    dbm.load_pconfig(dbmc)
+    try:
+        dbm = AugurManager()
+        engine = dbm.get_engine()
+    except KeyError:
+        # noack, data wasn't successfully set.
+        logging.error(f"{QUERY_NAME}_DATA_QUERY - INCOMPLETE ENVIRONMENT")
+        return False
+    except SQLAlchemyError:
+        logging.error(f"{QUERY_NAME}_DATA_QUERY - COULDN'T CONNECT TO DB")
+        # allow retry via Celery rules.
+        raise SQLAlchemyError("DBConnect failed")
+
     df = dbm.run_query(query_string)
 
     # pandas column and format updates

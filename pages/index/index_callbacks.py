@@ -456,7 +456,7 @@ def run_queries(repos):
         not_ready = [r for r in repos if cache.exists(f, r) != 1]
 
         # add job to queue
-        j = f.apply_async(args=(augur.package_config(), not_ready), queue="data")
+        j = f.apply_async(args=[not_ready], queue="data")
 
         # add job promise to local promise list
         jobs.append(j)
