@@ -5,6 +5,7 @@ import pandas as pd
 from cache_manager.cache_manager import CacheManager as cm
 import io
 import datetime as dt
+from sqlalchemy.exc import SQLAlchemyError
 
 QUERY_NAME = "COMPANY"
 
@@ -16,15 +17,13 @@ QUERY_NAME = "COMPANY"
     retry_kwargs={"max_retries": 5},
     retry_jitter=True,
 )
-def company_query(self, dbmc, repos):
+def company_query(self, repos):
     """
     (Worker Query)
     Executes SQL query against Augur database for company affiliation data.
 
     Args:
     -----
-        dbmc (AugurManager): Handles connection to Augur database, executes queries and returns results.
-
         repo_ids ([str]): repos that SQL query is executed on.
 
     Returns:
@@ -56,9 +55,19 @@ def company_query(self, dbmc, repos):
                         c.repo_id in({str(repos)[1:-1]})
                     GROUP BY c.cntrb_id, c.created_at, c.repo_id, c.login, c.action, c.rank, con.cntrb_company
                     """
-    # create database connection, load config, execute query above.
-    dbm = AugurManager()
-    dbm.load_pconfig(dbmc)
+
+    try:
+        dbm = AugurManager()
+        engine = dbm.get_engine()
+    except KeyError:
+        # noack, data wasn't successfully set.
+        logging.error(f"{QUERY_NAME}_DATA_QUERY - INCOMPLETE ENVIRONMENT")
+        return False
+    except SQLAlchemyError:
+        logging.error(f"{QUERY_NAME}_DATA_QUERY - COULDN'T CONNECT TO DB")
+        # allow retry via Celery rules.
+        raise SQLAlchemyError("DBConnect failed")
+
     df = dbm.run_query(query_string)
 
     df["cntrb_id"] = df["cntrb_id"].astype(str)

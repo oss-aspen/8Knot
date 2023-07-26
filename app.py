@@ -15,6 +15,7 @@ from db_manager.augur_manager import AugurManager
 import dash
 import dash_bootstrap_components as dbc
 from dash_bootstrap_templates import load_figure_template
+from sqlalchemy.exc import SQLAlchemyError
 import sys
 import logging
 import plotly.io as plt_io
@@ -38,50 +39,18 @@ celery_manager = CeleryManager(celery_app=celery_app)
 
 
 """CREATE DATABASE ACCESS OBJECT AND CACHE SEARCH OPTIONS"""
-augur = AugurManager()
+use_oauth = os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True"
+try:
+    # create augur manager object. init fails if
+    # necessary environment variables aren't available.
+    augur = AugurManager(handles_oauth=use_oauth)
 
-if os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True":
-    # make sure that parameters for Augur connection have been supplied.
-    client_secret = os.getenv("AUGUR_CLIENT_SECRET", "")
-    app_id = os.getenv("AUGUR_APP_ID", "")
-    session_endpoint = os.getenv("AUGUR_SESSION_GENERATE_ENDPOINT", "")
-    groups_endpoint = os.getenv("AUGUR_USER_GROUPS_ENDPOINT", "")
-    account_endpoint = os.getenv("AUGUR_USER_ACCOUNT_ENDPOINT", "")
-    auth_endpoint = os.getenv("AUGUR_USER_AUTH_ENDPOINT", "")
-    admin_name_endpoint = os.getenv("AUGUR_ADMIN_NAME_ENDPOINT", "")
-    admin_group_names_endpoint = os.getenv("AUGUR_ADMIN_GROUP_NAMES_ENDPOINT", "")
-    admin_groups_endpoint = os.getenv("AUGUR_ADMIN_GROUPS_ENDPOINT", "")
+    # create engine. fails if test connection to DB fails.
+    engine = augur.get_engine()
 
-    if not all(
-        [
-            client_secret,
-            app_id,
-            session_endpoint,
-            groups_endpoint,
-            account_endpoint,
-            auth_endpoint,
-            admin_name_endpoint,
-            admin_group_names_endpoint,
-            admin_groups_endpoint,
-        ]
-    ):
-        logging.critical("ERROR: Client Augur credentials incomplete; can't start.")
-        sys.exit(1)
-    else:
-        augur.set_client_secret(client_secret)
-        augur.set_app_id(app_id)
-        augur.set_session_generate_endpoint(session_endpoint)
-        augur.set_user_groups_endpoint(groups_endpoint)
-        augur.set_user_account_endpoint(account_endpoint)
-        augur.set_user_auth_endpoint(auth_endpoint)
-        augur.set_admin_name_endpoint(admin_name_endpoint)
-        augur.set_admin_group_names_endpoint(admin_group_names_endpoint)
-        augur.set_admin_groups_endpoint(admin_groups_endpoint)
-
-# connect to database
-engine = augur.get_engine()
-if engine is None:
-    logging.critical("Could not get engine; check config or try later")
+except KeyError:
+    sys.exit(1)
+except SQLAlchemyError:
     sys.exit(1)
 
 # grab list of projects and orgs from Augur database.
