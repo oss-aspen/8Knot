@@ -55,10 +55,17 @@ def contributors_query(self, dbmc, repos):
     df = dbm.run_query(query_string)
 
     # update column values
-    df.loc[df["action"] == "open_pull_request", "action"] = "Open PR"
+    df.loc[df["action"] == "pull_request_open", "action"] = "PR Open"
     df.loc[df["action"] == "pull_request_comment", "action"] = "PR Comment"
+    df.loc[df["action"] == "pull_request_closed", "action"] = "PR Closed"
+    df.loc[df["action"] == "pull_request_merged", "action"] = "PR Merged"
+    df.loc[df["action"] == "pull_request_review_COMMENTED", "action"] = "PR Review"
+    df.loc[df["action"] == "pull_request_review_APPROVED", "action"] = "PR Review"
+    df.loc[df["action"] == "pull_request_review_CHANGES_REQUESTED", "action"] = "PR Review"
+    df.loc[df["action"] == "pull_request_review_DISMISSED", "action"] = "PR Review"
     df.loc[df["action"] == "issue_opened", "action"] = "Issue Opened"
     df.loc[df["action"] == "issue_closed", "action"] = "Issue Closed"
+    df.loc[df["action"] == "issue_comment", "action"] = "Issue Comment"
     df.loc[df["action"] == "commit", "action"] = "Commit"
     df["cntrb_id"] = df["cntrb_id"].astype(str)  # contributor ids to strings
     df.rename(columns={"action": "Action"}, inplace=True)
