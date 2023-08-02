@@ -8,6 +8,7 @@ from .visualizations.contrib_drive_repeat import gc_contrib_drive_repeat
 from .visualizations.first_time_contributions import gc_first_time_contributions
 from .visualizations.contributors_types_over_time import gc_contributors_over_time
 from .visualizations.contrib_activity_cycle import gc_contrib_activity_cycle
+from .visualizations.contribs_by_action import gc_contribs_by_action
 
 warnings.filterwarnings("ignore")
 
@@ -29,6 +30,13 @@ layout = dbc.Container(
             [
                 dbc.Col(gc_contributors_over_time, width=6),
                 dbc.Col(gc_contrib_activity_cycle, width=6),
+            ],
+            align="center",
+            style={"marginBottom": ".5%"},
+        ),
+        dbc.Row(
+            [
+                dbc.Col(gc_contribs_by_action, width=6),
             ],
             align="center",
             style={"marginBottom": ".5%"},
