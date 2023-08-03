@@ -31,8 +31,10 @@ gc_contribs_by_action = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            """Visualizes the number of contributors in the specified time bucket that\n
-                            preformed the action selected."""
+                            """Visualizes the number of contributors who have performed a specific action\n
+                            (have opened a PR, for example) within a specified time-window. This is different\n
+                            from counting the number of contributions (the number of PRs having been opened)-\n
+                            the focus is on the activity of distinct contributors. """
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
@@ -71,7 +73,8 @@ gc_contribs_by_action = dbc.Card(
                                             clearable=False,
                                         ),
                                         dbc.Alert(
-                                            children="Please select different action as this set has no contributions of this type'",
+                                            children="""No contributions of this type have been made.\n
+                                            Please select a different contribution type.""",
                                             id=f"check-alert-{PAGE}-{VIZ_ID}",
                                             dismissable=True,
                                             fade=False,
@@ -204,7 +207,7 @@ def create_figure(df: pd.DataFrame, interval, action):
     # creates bins with interval size and customizes the hover value for the bars
     fig.update_traces(
         xbins_size=interval,
-        hovertemplate=hover + "<br>Contributors: %{y}<br><extra></extra>",
+        hovertemplate=hover + "<br>" + action + " Contributors: %{y}<br><extra></extra>",
         marker_line_width=0.1,
         marker_line_color="black",
     )
