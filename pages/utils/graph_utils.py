@@ -52,8 +52,8 @@ def get_graph_time_values(interval):
         period = "M6"
     elif interval == "M6":  # if statement for half a year
         x_r = [str(today - dt.timedelta(weeks=624)), str(today)]
-        x_name = "Semiannuel"
-        hover = "Semiannuel: %{x}"
+        x_name = "Semiannual"
+        hover = "Semiannual: %{x}"
         period = "M12"
     else:
         period = "M12"
