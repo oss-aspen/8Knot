@@ -11,25 +11,25 @@ h3 {
 }
 
 blockquote h5 {
-    color: #AAA !important;
+  color: #aaa !important;
 }
 
 blockquote {
-    color: #8D9D92 !important;
-    font-style: normal;
-    font-size: 18px;
-    margin-left: 32px;
-    font-family: Consolas, "Times New Roman", Verdana;
-    border-left: 4px solid #787878;
-    padding-left: 8px;
+  color: #8d9d92 !important;
+  font-style: normal;
+  font-size: 18px;
+  margin-left: 32px;
+  font-family: Consolas, "Times New Roman", Verdana;
+  border-left: 4px solid #787878;
+  padding-left: 8px;
 }
 
 blockquote p {
-    margin-top: 1px;
-    margin-bottom: 1px;
-    width: auto;
-    min-width: 50px;
-    max-width: 950px;
+  margin-top: 1px;
+  margin-bottom: 1px;
+  width: auto;
+  min-width: 50px;
+  max-width: 950px;
 }
 
 /* this is to change the color for the spinner, cant be changed directly */
@@ -66,184 +66,4 @@ blockquote p {
   color: #000000 !important;
   text-shadow: none !important;
   font-weight: "normal" !important;
-}
-
-.shadow {
-  box-shadow: 5px 3px 3px rgb(53, 53, 53) !important;
-}
-
-.welcome_container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  padding: 0;
-
-  /*overrides bootstrap max width for elements at 1140px*/
-  max-width: 100%;
-}
-
-.welcome_message {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  width: 60%;
-  text-align: center;
-}
-
-.welcome_message h1 {
-  font-size: 70px;
-  color: #6c8975;
-  margin-bottom: 20px;
-}
-
-.welcome_message p {
-  font-size: 30px;
-}
-
-.welcome_message img {
-  height: 250px;
-  border-radius: 20px;
-  margin-bottom: 15px;
-}
-
-.welcome_section {
-  margin-bottom: 20px;
-}
-
-.welcome_section_header {
-  font-size: 36px;
-  color: black;
-  text-align: center;
-  background-color: #57573e;
-  border-top-left-radius: 15px;
-  border-top-right-radius: 15px;
-  margin: 20px;
-  margin-top: 0;
-  width: 100%;
-}
-
-.welcome_content_section {
-  background-color: #868662;
-  border-radius: 15px;
-  width: 95%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 20px;
-  margin-top: 20px;
-}
-
-.welcome_section_content {
-  display: flex;
-  justify-content: space-evenly;
-  padding-bottom: 20px;
-  width: 100%;
-}
-
-.pages_overview_container {
-  width: 20%;
-  background-color: #6d6d4e;
-  border-radius: 15px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  border: 1px solid rgb(39, 39, 39);
-}
-
-/*Using important because headers are styled elsewhere.*/
-.pages_overview_container h2 {
-  color: rgb(29, 29, 29) !important;
-  font-size: 24px !important;
-  text-align: center !important;
-  padding-top: 10px;
-}
-
-.pages_overview_container p {
-  color: rgb(29, 29, 29);
-  font-size: 20px;
-  text-align: left;
-  padding-left: 10px;
-  padding-right: 10px;
-}
-
-.instruction_header {
-  width: 15%;
-  border-radius: 15px;
-}
-
-.instruction_header p {
-  font-size: 36px;
-  text-align: left;
-  color: black;
-  background-color: #57573e;
-  border-radius: 15px;
-  padding: 25px;
-}
-
-/*if the content is instructions we want the y-axis*/
-.welcome_section_instructions {
-  align-items: center;
-}
-
-.instruction_container {
-  width: 75%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-}
-
-.instruction_item {
-  width: 95%;
-  background-color: #6d6d4e;
-  border-radius: 15px;
-  margin-bottom: 10px;
-  margin-top: 10px;
-  display: flex;
-  align-items: center;
-}
-
-.instruction_item h3 {
-  font-size: 104px;
-  text-align: left;
-  color: black !important;
-  width: 10%;
-  font-weight: bold;
-  margin: 15px;
-  margin-right: 25px;
-}
-
-.instruction_item p {
-  font-size: 24px;
-  text-align: left;
-  color: black;
-  width: 50%;
-  margin: 10px;
-}
-
-.instruction_item_images {
-  display: flex;
-  justify-content: center;
-  max-height: 95%;
-  max-width: 100%;
-  align-items: center;
-}
-
-.instruction_item_images img {
-  max-width: 30%;
-  max-height: 90%;
-  margin: 10px;
-}
-
-/*
-    Transitional icon that should always be pretty small.
-*/
-.arrow_icon {
-  width: 100px;
-  height: 100px;
-  background-color: transparent;
 }

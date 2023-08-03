@@ -1,0 +1,222 @@
+/*
+    CSS classes for Welcome page.
+ */
+
+.welcome_container {
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/*
+    container at the top level of welcome page
+*/
+.toplevel_welcome_div {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/*
+    8Knot logo and mission statement text.
+*/
+.welcome_callout_section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.welcome_callout_section img {
+  border-radius: 20px;
+  height: 250px;
+  width: 250px;
+  margin-bottom: 10px;
+}
+
+.welcome_callout_section p {
+  font-size: 36px;
+  text-align: center;
+  max-width: 1000px;
+  min-width: 500px;
+}
+
+/*
+    Tabs section
+*/
+.welcome_instructions_section {
+  width: 100%;
+}
+
+.tab_section_container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.card_section_container {
+  margin-top: 10px;
+  width: 95%;
+  background-color: #32383e;
+  padding: 15px 0px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+}
+
+/* Wrapper to make a div centered */
+.card_section_container_centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/*
+    Top header and paragraph on
+    card section
+*/
+.card_section_description {
+  width: 75%;
+  margin: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.card_section_description p {
+  font-size: 20px;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+/*
+    Container of row of card items
+ */
+.card_section_body {
+  display: flex;
+  justify-content: space-evenly;
+}
+
+.card_section_body_vertical {
+  flex-direction: column;
+}
+
+/*
+    Cards describing application
+ */
+.info_card {
+  margin: 5px;
+  padding: 0px 5px;
+}
+
+.info_card h2 {
+  text-align: center;
+}
+
+.info_card p {
+  font-size: 16px;
+  padding-left: 10px;
+  padding-right: 10px;
+  text-align: center;
+}
+
+/*
+    Styling for architecture components
+*/
+
+.architecture_section {
+  flex-wrap: wrap;
+}
+
+.architecture_section_part {
+  width: 45%;
+}
+
+.architecture_image {
+  display: block;
+  height: auto;
+  border-radius: 15px;
+  /* set so that items will wrap */
+  min-width: 487px;
+  min-height: 437px;
+}
+
+.architecture_description p {
+  padding-left: 10px;
+}
+
+/*
+    Styling for plotly instruction section
+*/
+.instruction_card {
+  margin: 5px;
+  padding: 0px 5px;
+}
+
+.instruction_card p {
+  font-size: 16px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.instruction_card_body {
+  width: 45%;
+  min-width: 300px;
+}
+
+.centered_img {
+  display: flex;
+  justify-content: center;
+}
+
+.plotly_instructions_section {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/*
+     For arrow-separated instruction images
+ */
+.plotly_instructions_section_img {
+  width: 30%;
+  min-width: 300px;
+}
+
+.arrow_icon {
+  width: 100px !important;
+  height: 100px;
+  background-color: transparent;
+}
+
+/*
+    For instruction cards that are
+    50/50 text and image
+ */
+.instruction_card_split {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/*
+    to prevent image from
+    overflowing its parent div.
+*/
+.instruction_image {
+  height: auto;
+  width: 100%;
+  max-width: 100%;
+}
+
+/*
+    If an image is too big,
+    scale it down slightly. */
+.scale_smaller {
+  height: 75%;
+  width: 75%;
+}
