@@ -61,7 +61,7 @@ gc_contribs_by_action = dbc.Card(
                                             options=[
                                                 {
                                                     "label": "PR Open",
-                                                    "value": "PR Open",
+                                                    "value": "PR Opened",
                                                 },
                                                 {"label": "Comment", "value": "Comment"},
                                                 {"label": "PR Review", "value": "PR Review"},
@@ -69,7 +69,7 @@ gc_contribs_by_action = dbc.Card(
                                                 {"label": "Issue Closed", "value": "Issue Closed"},
                                                 {"label": "Commit", "value": "Commit"},
                                             ],
-                                            value="PR Open",
+                                            value="PR Opened",
                                             clearable=False,
                                         ),
                                         dbc.Alert(

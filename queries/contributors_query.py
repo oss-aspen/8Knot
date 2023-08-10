@@ -38,6 +38,7 @@ def contributors_query(self, repos):
     query_string = f"""
                     SELECT
                         repo_id as id,
+                        repo_name as repo_name,
                         cntrb_id,
                         created_at,
                         login,
@@ -64,7 +65,7 @@ def contributors_query(self, repos):
     df = dbm.run_query(query_string)
 
     # update column values
-    df.loc[df["action"] == "pull_request_open", "action"] = "PR Open"
+    df.loc[df["action"] == "pull_request_open", "action"] = "PR Opened"
     df.loc[df["action"] == "pull_request_comment", "action"] = "PR Comment"
     df.loc[df["action"] == "pull_request_closed", "action"] = "PR Closed"
     df.loc[df["action"] == "pull_request_merged", "action"] = "PR Merged"
