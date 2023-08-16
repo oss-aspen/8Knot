@@ -1,33 +1,43 @@
 services:
-  web-server:
+
+  reverse-proxy:
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - app-server
+    ports:
+      - "8050:8051" # bound to host port, exposed app endpoint
+    networks:
+      - app-net
+
+  app-server:
     build:
       context: .
       dockerfile: ./docker/Dockerfile.server
     ports:
-      - 8050:8050
+      - 8050
     depends_on:
       - callback-worker
       - query-worker
-      - cache
+      - redis-cache
     env_file:
       - ./env.list
-    environment:
-      REDIS_SERVICE_HOST: cache
-      REDIS_SERVICE_PORT: 6379
     restart: always
+    networks:
+      - app-net
 
   callback-worker:
     build:
       context: .
       dockerfile: ./docker/Dockerfile.worker
     depends_on:
-      - cache
+      - redis-cache
     env_file:
       - ./env.list
-    environment:
-      REDIS_SERVICE_HOST: cache
-      REDIS_SERVICE_PORT: 6379
     restart: always
+    networks:
+      - app-net
 
   query-worker:
     build:
@@ -44,19 +54,20 @@ services:
         "data"
       ]
     depends_on:
-      - cache
+      - redis-cache
     env_file:
       - ./env.list
-    environment:
-      REDIS_SERVICE_HOST: cache
-      REDIS_SERVICE_PORT: 6379
     restart: always
+    networks:
+      - app-net
 
-  cache:
+  redis-cache:
     image: redis
     ports:
-      - 6379:6379
+      - 6379
     restart: always
+    networks:
+      - app-net
 
   flower:
     build:
@@ -65,12 +76,17 @@ services:
     depends_on:
       - callback-worker
       - query-worker
-      - cache
-      - web-server
+      - redis-cache
+      - app-server
     env_file:
       - ./env.list
-    environment:
-      REDIS_SERVICE_HOST: cache
-      REDIS_SERVICE_PORT: 6379
     ports:
       - 5555:5555
+    networks:
+      - app-net
+    profiles:
+      - monitoring # run w/ '--profile monitoring' flag to enable
+
+networks:
+  app-net:
+    driver: bridge

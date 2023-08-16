@@ -45,8 +45,8 @@ class CacheManager:
     def __init__(self, decode_value=False):
         # Redis cache for job queue and results cache
         self._redis = StrictRedis(
-            # openshift will reconcile the 'redis' naming via the dns
-            host=os.getenv("REDIS_SERVICE_HOST", "localhost"),
+            # openshift, compose will reconcile the 'redis' naming via the dns
+            host=os.getenv("REDIS_SERVICE_HOST", "redis-cache"),
             port=os.getenv("REDIS_SERVICE_PORT", "6379"),
             password=os.getenv("REDIS_PASSWORD", ""),
             decode_responses=decode_value,
