@@ -15,7 +15,8 @@ from pages.utils.job_utils import nodata_graph
 import time
 
 """
-List of variables to change:
+NOTE: VARIABLES TO CHANGE:
+
 (1) PAGE
 (2) VIZ_ID
 (3) gc_VISUALIZATION
@@ -29,12 +30,19 @@ List of variables to change:
 (10) Comments before callbacks
 (11) QUERY_USED, QUERY_NAME, QUERY_INITIALS
 
+NOTE: IMPORTING A VISUALIZATION INTO A PAGE
+(1) Include the visualization file in the visualization folder for the respective page
+(2) Import the visualization into the page_name.py file using "from .visualizations.visualization_file_name import gc_visualization_name"
+(3) Add the card into a column in a row on the page
+
 NOTE: ADDITIONAL DASH COMPONENTS FOR USER GRAPH CUSTOMIZATIONS
 
 If you add Dash components (ie dbc.Input, dbc.RadioItems, dcc.DatePickerRange...) the ids, html_for, and targets should be in the
 following format: f"component-identifier-{PAGE}-{VIZ_ID}"
 
 NOTE: If you change or add a new query, you need to do "docker system prune -af" before building again
+
+For more information, check out the new_vis_guidance.md
 """
 
 
@@ -59,7 +67,7 @@ gc_VISUALIZATION = dbc.Card(
                         dbc.PopoverBody("INSERT CONTEXT OF GRAPH HERE"),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",  # needs to be the same as dbc.Button id
+                    target=f"popover-target-{PAGE}-{VIZ_ID}",
                     placement="top",
                     is_open=False,
                 ),
