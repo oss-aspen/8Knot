@@ -17,11 +17,6 @@ import datetime as dt
 import math
 import numpy as np
 
-"""
-(5) CONTEXT OF GRAPH
-
-"""
-
 
 PAGE = "chaoss"
 VIZ_ID = "project-velocity"
@@ -38,7 +33,12 @@ gc_project_velocity = dbc.Card(
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody("INSERT CONTEXT OF GRAPH HERE"),
+                        dbc.PopoverBody(
+                            """This visualization gives a view into the development speed of a repository in\n
+                            relation to the other selected repositories. For more context of this visualization see\n
+                            https://chaoss.community/kb/metric-project-velocity/ \n
+                            https://www.cncf.io/blog/2017/06/05/30-highest-velocity-open-source-projects/ """
+                        ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
                     target=f"popover-target-{PAGE}-{VIZ_ID}",
