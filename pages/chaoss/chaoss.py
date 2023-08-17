@@ -10,7 +10,7 @@ from .visualizations.contributors_types_over_time import gc_contributors_over_ti
 from .visualizations.contrib_activity_cycle import gc_contrib_activity_cycle
 from .visualizations.contribs_by_action import gc_contribs_by_action
 from .visualizations.project_velocity import gc_project_velocity
-
+from .visualizations.contrib_importance_over_time import gc_contrib_prolificacy_over_time 
 warnings.filterwarnings("ignore")
 
 # register the page
@@ -43,6 +43,13 @@ layout = dbc.Container(
             align="center",
             style={"marginBottom": ".5%"},
         ),
+        dbc.Row(
+            [
+                dbc.Col(gc_contrib_prolificacy_over_time, width=6),
+            ], 
+            align="center",
+            style={"marginBottom": ".5%"},
+        )
     ],
     fluid=True,
 )
