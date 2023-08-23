@@ -87,7 +87,7 @@ gc_contrib_drive_repeat = dbc.Card(
                                                 "value": "repeat",
                                             },
                                             {
-                                                "label": "Drive-By",
+                                                "label": "Drive-Thru",
                                                 "value": "drive",
                                             },
                                         ],
@@ -137,7 +137,7 @@ def toggle_popover_1(n, is_open):
 def graph_title(view):
     title = ""
     if view == "drive":
-        title = "Drive-by Contributions Per Quarter"
+        title = "Drive-Thru Contributions Per Quarter"
     else:
         title = "Repeat Contributions Per Quarter"
     return title
