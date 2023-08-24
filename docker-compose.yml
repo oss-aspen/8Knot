@@ -14,7 +14,7 @@ services:
   app-server:
     build:
       context: .
-      dockerfile: ./docker/Dockerfile.server
+      dockerfile: ./docker/Dockerfile
     ports:
       - 8050
     depends_on:
@@ -30,7 +30,7 @@ services:
   callback-worker:
     build:
       context: .
-      dockerfile: ./docker/Dockerfile.worker
+      dockerfile: ./docker/Dockerfile
     depends_on:
       - redis-cache
     env_file:
@@ -42,7 +42,7 @@ services:
   query-worker:
     build:
       context: .
-      dockerfile: ./docker/Dockerfile.worker
+      dockerfile: ./docker/Dockerfile
     command:
       [
         "celery",
@@ -72,7 +72,7 @@ services:
   flower:
     build:
       context: .
-      dockerfile: ./docker/Dockerfile.flower
+      dockerfile: ./docker/Dockerfile
     depends_on:
       - callback-worker
       - query-worker

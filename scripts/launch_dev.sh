@@ -44,24 +44,25 @@ ${CONTAINER_CMD} run --rm -itd --name redis --net eightknot-network -p $REDIS_PO
 REDIS_CONTAINER_URL=$(${CONTAINER_CMD} inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' redis);
 printf "\nRedis URL is: ${REDIS_CONTAINER_URL}:${REDIS_PORT_MAP}\n";
 
-# build and run the worker pool
-${CONTAINER_CMD} build -f ./Docker/Dockerfile.worker -t worker_pool .;
+# build the container
+${CONTAINER_CMD} build -f ./Docker/Dockerfile -t eightknot-app .;
+
+# run the worker pool
 ${CONTAINER_CMD} run --rm -dit --name worker_pool \
                      --net eightknot-network \
                      --env REDIS_SERVICE_HOST=$REDIS_CONTAINER_URL \
                      --env REDIS_SERVICE_PORT=$REDIS_PORT_MAP \
                      --env-file ./env.list \
-                     worker_pool;
+                     eightknot-app;
 
-# build and run the web server
-${CONTAINER_CMD} build -f ./Docker/Dockerfile.server -t eightknot_server .;
+# run the web server
 ${CONTAINER_CMD} run --rm -it --name eightknot_server \
-                         --net eightknot-network \
-                         --env REDIS_SERVICE_HOST=$REDIS_CONTAINER_URL \
-                         --env REDIS_SERVICE_PORT=$REDIS_PORT_MAP \
-                         --env-file ./env.list \
-                         -p 8050:8050 \
-                         eightknot_server;
+                     --net eightknot-network \
+                     --env REDIS_SERVICE_HOST=$REDIS_CONTAINER_URL \
+                     --env REDIS_SERVICE_PORT=$REDIS_PORT_MAP \
+                     --env-file ./env.list \
+                     -p 8080:8080 \
+                     eightknot-app;
 
 # cleanup
 printf "\nShutting down worker pool...\n"
