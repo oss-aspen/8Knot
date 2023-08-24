@@ -1,18 +1,11 @@
 services:
 
-  # reverse-proxy:
-  #   image: docker.io/library/nginx:latest
-  #   volumes:
-  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
-  #   depends_on:
-  #     - web-server
-  #   ports:
-  #     - "8080:8080"  # bound to host port, exposed app endpoint
-
   web-server:
     build:
       context: .
       dockerfile: ./docker/Dockerfile
+    command:
+      [ "gunicorn", "--bind", ":8080", "app:server", "--workers", "1", "--threads", "2" ]
     ports:
       - 8080:8080
     depends_on:
@@ -28,13 +21,7 @@ services:
       context: .
       dockerfile: ./docker/Dockerfile
     command:
-      [
-        "celery",
-        "-A",
-        "app:celery_app",
-        "worker",
-        "--loglevel=INFO"
-      ]
+      [ "celery", "-A", "app:celery_app", "worker", "--loglevel=INFO" ]
     depends_on:
       - redis-cache
     env_file:
@@ -46,15 +33,7 @@ services:
       context: .
       dockerfile: ./docker/Dockerfile
     command:
-      [
-        "celery",
-        "-A",
-        "app:celery_app",
-        "worker",
-        "--loglevel=INFO",
-        "-Q",
-        "data"
-      ]
+      [ "celery", "-A", "app:celery_app", "worker", "--loglevel=INFO", "-Q", "data" ]
     depends_on:
       - redis-cache
     env_file:
@@ -80,12 +59,7 @@ services:
   #     context: .
   #     dockerfile: ./docker/Dockerfile
   #   command:
-  #     [
-  #       "celery",
-  #       "-A",
-  #       "app:celery_app",
-  #       "flower"
-  #     ]
+  #     [ "celery", "-A", "app:celery_app", "flower" ]
   #   depends_on:
   #     - worker-callback
   #     - worker-query
