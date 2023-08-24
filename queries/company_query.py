@@ -73,7 +73,7 @@ def company_query(self, repos):
     df["cntrb_id"] = df["cntrb_id"].astype(str)
     df = df.sort_values(by="created")
 
-    # change to compatible type and remove all data that has been incorrectly formated
+    # change to compatible type and remove all data that has been incorrectly formatted
     df["created"] = pd.to_datetime(df["created"], utc=True).dt.date
     df = df[df.created < dt.date.today()]
 
