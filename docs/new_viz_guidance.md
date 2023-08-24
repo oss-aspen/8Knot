@@ -25,7 +25,7 @@ individual visualizations are imported and further organized below.
 
 ### Visualization Template
 
-The [Visualization Template](https://github.com/oss-aspen/8Knot/blob/dev/pages/visualization_template/viz_template.py) can take you step by step on creating your new visualization with boilerplate code with the overall structure and needs of a visualization.
+The [Visualization Template](https://github.com/oss-aspen/8Knot/blob/dev/pages/visualization_template/viz_template.py) takes you step-by-step through the process of creating a new visualization.
 
 ### Data and Queries
 
@@ -36,12 +36,12 @@ visualizations. When considering creating your own visualization, please
 see whether the available queries to our database instance are sufficient.
 
 If the existing queries do not suffice:
-1. See if there is some minor changes or additional columns that could be added to
-an existing query to get the necessary data.
+1. Exhaust the possibility of making minor changes, such adding
+new columns or aggregations, to existing queries.
 2. If a completely new query is neccessary, use the [Query Template](https://github.com/oss-aspen/8Knot/blob/dev/queries/query_template.py)
 to build a new query.
 
-Note: make sure to do a "docker system prune -af" before rebuilding to be able to access any new or edited queries.
+Note: make sure to do a "docker compose down" before rebuilding to be able to access any new or edited queries.
 
 ### Importing your queries
 
