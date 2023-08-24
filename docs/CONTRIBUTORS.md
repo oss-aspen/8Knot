@@ -1,4 +1,5 @@
-## Submitting a Contribution
+# Submitting a Contribution
+
 If you are interested in making a code contribution and would like to learn more about the technologies that we use, check out the list below.
 
 1. Find an issue that you are interested in addressing or a feature that you would like to add.
@@ -18,14 +19,17 @@ If you are interested in making a code contribution and would like to learn more
 15. Celebrate your success after your pull request is merged!
 
 ## Steps to create a new visualization
+
 1. Make a copy of the [visualization template](https://github.com/oss-aspen/8Knot/blob/dev/pages/visualization_template/viz_template.py) for the visualization and put it in the folder of the [page](https://github.com/oss-aspen/8Knot/tree/dev/pages) you want to add it to
 2. Once the file is created, import the card from the visualization file to the respective page file and put it into the layout
 IF you need to add a new query:
 3. add a new query file in the queries folder, using the other existing queries as a template
 
 ## Steps to create a new page
+
 1. Add a folder to the [pages](https://github.com/sandiego-rh/explorer/tree/dev/pages) folder with a visualization folder inside and a .py for the respective page
 2. Use the other pages for format, making sure to include dash.register_page(__name__, order=)
 
 ## Where can I go for help?
+
 If you need help, you can open an issue or join our Matrix instance at https://matrix.to/#/#oss-aspen:matrix.org.
