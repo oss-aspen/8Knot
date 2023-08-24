@@ -1,6 +1,9 @@
 extends: default
 
 rules:
+  brackets:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
   comments:
     ignore: |
       openshift/cronjob/*
