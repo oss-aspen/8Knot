@@ -1,45 +1,38 @@
 services:
 
-  reverse-proxy:
-    image: nginx:latest
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - app-server
-    ports:
-      - "8050:8051" # bound to host port, exposed app endpoint
-    networks:
-      - app-net
-
-  app-server:
+  web-server:
     build:
       context: .
       dockerfile: ./docker/Dockerfile
     ports:
-      - 8050
+      - 8080:8080
     depends_on:
-      - callback-worker
-      - query-worker
+      - worker-callback
+      - worker-query
       - redis-cache
     env_file:
-      - ./env.list
+      - env.list
     restart: always
-    networks:
-      - app-net
 
-  callback-worker:
+  worker-callback:
     build:
       context: .
       dockerfile: ./docker/Dockerfile
+    command:
+      [ 
+        "celery",
+        "-A",
+        "app:celery_app",
+        "worker",
+        "--loglevel=INFO"
+      ]
     depends_on:
       - redis-cache
     env_file:
-      - ./env.list
+      - env.list
     restart: always
-    networks:
-      - app-net
 
-  query-worker:
+  worker-query:
     build:
       context: .
       dockerfile: ./docker/Dockerfile
@@ -56,37 +49,44 @@ services:
     depends_on:
       - redis-cache
     env_file:
-      - ./env.list
+      - env.list
     restart: always
-    networks:
-      - app-net
 
   redis-cache:
-    image: redis
+    image: docker.io/library/redis:6
+    command:
+      - /bin/sh
+      - -c
+      # - Double dollars, so that the variable is not expanded by Docker Compose
+      # - Surround by quotes, so that the shell does not split the password
+      # - The ${variable:?message} syntax causes shell to exit with a non-zero
+      #   code and print a message, when the variable is not set or empty
+      - redis-server --requirepass "$${REDIS_PASSWORD:?REDIS_PASSWORD variable is not set}"
+    env_file:
+      - env.list
     ports:
       - 6379
     restart: always
-    networks:
-      - app-net
 
   flower:
     build:
       context: .
       dockerfile: ./docker/Dockerfile
+    command:
+      [
+        "celery",
+        "-A",
+        "app:celery_app",
+        "flower"
+      ]
     depends_on:
-      - callback-worker
-      - query-worker
+      - worker-callback
+      - worker-query
       - redis-cache
-      - app-server
+      - web-server
     env_file:
-      - ./env.list
+      - env.list
     ports:
       - 5555:5555
-    networks:
-      - app-net
     profiles:
       - monitoring # run w/ '--profile monitoring' flag to enable
-
-networks:
-  app-net:
-    driver: bridge
