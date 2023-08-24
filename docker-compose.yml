@@ -19,7 +19,7 @@ services:
       context: .
       dockerfile: ./docker/Dockerfile
     command:
-      [ 
+      [
         "celery",
         "-A",
         "app:celery_app",
@@ -89,4 +89,4 @@ services:
     ports:
       - 5555:5555
     profiles:
-      - monitoring # run w/ '--profile monitoring' flag to enable
+      - monitoring  # run w/ '--profile monitoring' flag to enable
