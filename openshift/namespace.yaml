@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  annotations:
+    openshift.io/description: "8Knot Production Config"
+    openshift.io/display-name: "Production 8Knot"
+  labels:
+    kubernetes.io/metadata.name: prod-sandiego-explorer-osci-io
+    # security.openshift.io/scc.podSecurityLabelSync: 'true'
+  name: prod-sandiego-explorer-osci-io

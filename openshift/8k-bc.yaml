@@ -1,0 +1,57 @@
+---
+kind: ImageStream
+apiVersion: image.openshift.io/v1
+metadata:
+  annotations:
+    app.openshift.io/vcs-ref: main
+    app.openshift.io/vcs-uri: https://github.com/oss-aspen/8Knot.git
+  name: eightknot-app
+  labels:
+    app: eightknot-app
+    app.kubernetes.io/component: eightknot-app
+    app.kubernetes.io/instance: eightknot-app
+    app.kubernetes.io/name: eightknot-app
+    app.kubernetes.io/part-of: eightknot-app
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  annotations:
+    app.openshift.io/vcs-ref: main
+    app.openshift.io/vcs-uri: https://github.com/oss-aspen/8Knot.git
+  labels:
+    app: eightknot-app
+    app.kubernetes.io/component: eightknot-app
+    app.kubernetes.io/instance: eightknot-app
+    app.kubernetes.io/name: eightknot-app
+    app.kubernetes.io/part-of: eightknot-app
+    app.openshift.io/runtime: python
+    app.openshift.io/runtime-version: 3.9-ubi8
+  name: eightknot-app
+spec:
+  output:
+    to:
+      kind: ImageStreamTag
+      name: eightknot-app:latest
+  runPolicy: Serial
+  source:
+    contextDir: /
+    git:
+      ref: main
+      uri: https://github.com/oss-aspen/8Knot.git
+    type: Git
+  strategy:
+    dockerStrategy:
+      dockerfilePath: docker/Dockerfile.worker
+    type: Docker
+  triggers:
+  - generic:
+      secretReference:
+        name: eightknot-app-generic-webhook-secret
+    type: Generic
+  - github:
+      secretReference:
+        name: eightknot-app-github-webhook-secret
+    type: GitHub
+  - type: ConfigChange
+  - type: ImageChange
