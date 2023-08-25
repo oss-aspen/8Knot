@@ -67,3 +67,8 @@ blockquote p {
   text-shadow: none !important;
   font-weight: "normal" !important;
 }
+
+/* changes the color of an alert */
+.alert-warning {
+    background-color: #B5B682 !important;
+}

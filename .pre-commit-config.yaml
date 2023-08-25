@@ -9,7 +9,7 @@ repos:
       - id: name-tests-test
       - id: check-byte-order-marker
       - id: check-case-conflict
-        #- id: check-docstring-first
+      # - id: check-docstring-first
       - id: check-json
       - id: check-symlinks
       - id: detect-private-key

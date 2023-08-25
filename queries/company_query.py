@@ -22,6 +22,10 @@ def company_query(self, repos):
     (Worker Query)
     Executes SQL query against Augur database for company affiliation data.
 
+    Explorer_contributor_actions is a materialized view on the database for quicker run time and
+    may not be in your augur database. The SQL query content can be found
+    in docs/explorer_contributor_actions.sql
+
     Args:
     -----
         repo_ids ([str]): repos that SQL query is executed on.
@@ -29,6 +33,7 @@ def company_query(self, repos):
     Returns:
     --------
         dict: Results from SQL query, interpreted from pd.to_dict('records')
+
     """
     logging.warning(f"{QUERY_NAME}_DATA_QUERY - START")
 
@@ -73,7 +78,7 @@ def company_query(self, repos):
     df["cntrb_id"] = df["cntrb_id"].astype(str)
     df = df.sort_values(by="created")
 
-    # change to compatible type and remove all data that has been incorrectly formated
+    # change to compatible type and remove all data that has been incorrectly formatted
     df["created"] = pd.to_datetime(df["created"], utc=True).dt.date
     df = df[df.created < dt.date.today()]
 

@@ -1,6 +1,6 @@
 import os
 
-redis_host = "{}".format(os.getenv("REDIS_SERVICE_HOST", "localhost"))
+redis_host = "{}".format(os.getenv("REDIS_SERVICE_HOST", "redis-cache"))
 redis_port = "{}".format(os.getenv("REDIS_SERVICE_PORT", "6379"))
 redis_password = "{}@".format(os.getenv("REDIS_PASSWORD", ""))
 

@@ -22,6 +22,10 @@ def contributors_query(self, repos):
     (Worker Query)
     Executes SQL query against Augur database for contributor data.
 
+    Explorer_contributor_actions is a materialized view on the database for quicker run time and
+    may not be in your augur database. The SQL query content can be found
+    in docs/explorer_contributor_actions.sql
+
     Args:
     -----
         repo_ids ([str]): repos that SQL query is executed on.
@@ -29,6 +33,7 @@ def contributors_query(self, repos):
     Returns:
     --------
         dict: Results from SQL query, interpreted from pd.to_dict('records')
+
     """
     logging.warning(f"{QUERY_NAME}_DATA_QUERY - START")
 
@@ -38,6 +43,7 @@ def contributors_query(self, repos):
     query_string = f"""
                     SELECT
                         repo_id as id,
+                        repo_name as repo_name,
                         cntrb_id,
                         created_at,
                         login,
@@ -64,7 +70,7 @@ def contributors_query(self, repos):
     df = dbm.run_query(query_string)
 
     # update column values
-    df.loc[df["action"] == "pull_request_open", "action"] = "PR Open"
+    df.loc[df["action"] == "pull_request_open", "action"] = "PR Opened"
     df.loc[df["action"] == "pull_request_comment", "action"] = "PR Comment"
     df.loc[df["action"] == "pull_request_closed", "action"] = "PR Closed"
     df.loc[df["action"] == "pull_request_merged", "action"] = "PR Merged"

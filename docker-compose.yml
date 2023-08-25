@@ -1,76 +1,82 @@
 services:
-  web-server:
-    build:
-      context: .
-      dockerfile: ./docker/Dockerfile.server
+
+  reverse-proxy:
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - app-server
     ports:
-      - 8050:8050
-    depends_on:
-      - callback-worker
-      - query-worker
-      - cache
-    env_file:
-      - ./env.list
-    environment:
-      REDIS_SERVICE_HOST: cache
-      REDIS_SERVICE_PORT: 6379
-    restart: always
+      - "8080:8080" # bound to host port, exposed app endpoint
 
-  callback-worker:
+  app-server:
     build:
       context: .
-      dockerfile: ./docker/Dockerfile.worker
-    depends_on:
-      - cache
-    env_file:
-      - ./env.list
-    environment:
-      REDIS_SERVICE_HOST: cache
-      REDIS_SERVICE_PORT: 6379
-    restart: always
-
-  query-worker:
-    build:
-      context: .
-      dockerfile: ./docker/Dockerfile.worker
+      dockerfile: ./docker/Dockerfile
     command:
-      [
-        "celery",
-        "-A",
-        "app:celery_app",
-        "worker",
-        "--loglevel=WARNING",
-        "-Q",
-        "data"
-      ]
+      [ "gunicorn", "--bind", ":8080", "app:server", "--workers", "1", "--threads", "2" ]
+    # ports:
+    #   - 8080:8080
     depends_on:
-      - cache
+      - worker-callback
+      - worker-query
+      - redis-cache
     env_file:
       - ./env.list
-    environment:
-      REDIS_SERVICE_HOST: cache
-      REDIS_SERVICE_PORT: 6379
     restart: always
 
-  cache:
-    image: redis
-    ports:
-      - 6379:6379
-    restart: always
-
-  flower:
+  worker-callback:
     build:
       context: .
-      dockerfile: ./docker/Dockerfile.flower
+      dockerfile: ./docker/Dockerfile
+    command:
+      [ "celery", "-A", "app:celery_app", "worker", "--loglevel=INFO" ]
     depends_on:
-      - callback-worker
-      - query-worker
-      - cache
-      - web-server
+      - redis-cache
     env_file:
       - ./env.list
-    environment:
-      REDIS_SERVICE_HOST: cache
-      REDIS_SERVICE_PORT: 6379
-    ports:
-      - 5555:5555
+    restart: always
+
+  worker-query:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    command:
+      [ "celery", "-A", "app:celery_app", "worker", "--loglevel=INFO", "-Q", "data" ]
+    depends_on:
+      - redis-cache
+    env_file:
+      - ./env.list
+    restart: always
+
+  redis-cache:
+    image: docker.io/library/redis:6
+    command:
+      - /bin/sh
+      - -c
+      # - Double dollars, so that the variable is not expanded by Docker Compose
+      # - Surround by quotes, so that the shell does not split the password
+      # - The ${variable:?message} syntax causes shell to exit with a non-zero
+      #   code and print a message, when the variable is not set or empty
+      - redis-server --requirepass "$${REDIS_PASSWORD:?REDIS_PASSWORD variable is not set}"
+    env_file:
+      - ./env.list
+    restart: always
+
+  # flower:
+  #   build:
+  #     context: .
+  #     dockerfile: ./docker/Dockerfile
+  #   command:
+  #     [ "celery", "-A", "app:celery_app", "flower" ]
+  #   depends_on:
+  #     - worker-callback
+  #     - worker-query
+  #     - redis-cache
+  #     - app-server
+  #   env_file:
+  #     - ./env.list
+  #   ports:
+  #     - 5555:5555
+  #   profiles:
+  #     - monitoring  # run w/ '--profile monitoring' flag to enable
