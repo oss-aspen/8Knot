@@ -9,7 +9,7 @@ services:
     ports:
       - "8080:8080" # bound to host port, exposed app endpoint
 
-  web-server:
+  app-server:
     build:
       context: .
       dockerfile: ./docker/Dockerfile
@@ -73,7 +73,7 @@ services:
   #     - worker-callback
   #     - worker-query
   #     - redis-cache
-  #     - web-server
+  #     - app-server
   #   env_file:
   #     - ./env.list
   #   ports:
