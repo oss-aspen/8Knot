@@ -187,7 +187,7 @@ NOTE: `podman-compose` has been generally verified to work as well, but our pref
 
 8Knot is a multi-container application.
 
-The web-server, worker-pool, and redis-cache containers communicate with one another via docker network.
+The app-server, worker-pool, and redis-cache containers communicate with one another via docker network.
 
 All of the build/tear-down is done with `docker-compose`.
 
