@@ -1,13 +1,22 @@
 services:
 
+  reverse-proxy:
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - app-server
+    ports:
+      - "8080:8080" # bound to host port, exposed app endpoint
+
   web-server:
     build:
       context: .
       dockerfile: ./docker/Dockerfile
     command:
       [ "gunicorn", "--bind", ":8080", "app:server", "--workers", "1", "--threads", "2" ]
-    ports:
-      - 8080:8080
+    # ports:
+    #   - 8080:8080
     depends_on:
       - worker-callback
       - worker-query
