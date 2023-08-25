@@ -1,0 +1,87 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    image.openshift.io/triggers: '[{"from":{"kind":"ImageStreamTag","name":"redis:6-el8","namespace":"openshift"},"fieldPath":"spec.template.spec.containers[?(@.name==\"redis\")].image","pause":"false"}]'
+  labels:
+    app.kubernetes.io/part-of: eightknot-app
+  name: eightknot-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: eightknot-redis
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        name: eightknot-redis
+    spec:
+      containers:
+        - envFrom:
+            - secretRef:
+                name: eightknot-redis
+          image: image-registry.openshift-image-registry.svc:5000/openshift/redis:6-el8
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 6379
+            timeoutSeconds: 1
+          name: eightknot-redis
+          ports:
+            - containerPort: 6379
+              protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -i
+                - -c
+                - test "$(redis-cli -h 127.0.0.1 -a $REDIS_PASSWORD ping)" == "PONG"
+            failureThreshold: 3
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              memory: 4Gi
+          volumeMounts:
+            - mountPath: /var/lib/redis/data
+              name: eightknot-redis-data
+      restartPolicy: Always
+      volumes:
+        - emptyDir: {}
+          name: eightknot-redis-data
+  triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+          - redis
+        from:
+          kind: ImageStreamTag
+          name: redis:6-el8
+          namespace: openshift
+      type: ImageChange
+    - type: ConfigChange
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/part-of: eightknot-app
+  name: eightknot-redis
+spec:
+  ports:
+  - name: redis
+    port: 6379
+    protocol: TCP
+    targetPort: 6379
+  selector:
+    name: eightknot-redis
