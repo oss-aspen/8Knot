@@ -139,6 +139,7 @@ The credentials below are valid, so you can copy and use them to access a develo
     AUGUR_SCHEMA=augur_data
     AUGUR_USERNAME=eightknot
     8KNOT_DEBUG=True
+    REDIS_PASSWORD=1234
 ```
 
 If you have a companion Augur front end application you'll need to set the following credentials in the env.list as well.
@@ -219,6 +220,8 @@ To clean up the stopped containers, run:
 ```bash
 docker compose down
 ```
+
+The application should be available locally at 'http://localhost:8080'
 
 ---
 
