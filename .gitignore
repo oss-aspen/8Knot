@@ -151,3 +151,4 @@ Makefile
 run_compose.sh
 csvs_to_feather.ipynb
 debug_contrib.ipynb
+.vscode

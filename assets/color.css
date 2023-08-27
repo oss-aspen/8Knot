@@ -1,13 +1,51 @@
+/* Seaside Mountain Autumn */
+:root {
+    --color-bg: #201D24;
+    --color-bg-contrast: #4C3839;
+    --color-bg-alt: #353d32;
+    --color-bg-contrast-alt: black;
+    --color-fg: #E8EDF3;
+    --color-fg-contrast: #A7C7E0;
+    --color-accent: #EC6A39;
+    --color-accent-contrast: #CE957A;
+    --color-accent-alt: #295c2b;
+    --color-notice: #FCAE10;
+
+    --bs-body-bg: var(--color-bg);
+    --bs-body-fg: var(--color-fg);
+}
+
+
 h2,
 h4,
 h5,
 h6 {
-  color: #8d9d92 !important;
+    color: var(--color-fg) !important;
 }
 
 h1,
 h3 {
-  color: #436755 !important;
+    color: var(--color-fg-contrast) !important;
+}
+
+body {
+    color: var(--color-fg);
+    background-color: var(--color-bg);
+    /* add padding to make room for the fixed navbar at the bottom of the page */
+    padding-bottom: 70px;
+}
+
+.bg-primary {
+    --bs-bg-opacity: 1;
+    background-color: var(--color-accent-alt) !important;
+}
+
+.card {
+    background-color: var(--color-bg-alt);
+}
+
+.card-header {
+    background-color: var(--color-bg-contrast)
 }
 
 blockquote h5 {
@@ -33,42 +71,180 @@ blockquote p {
 }
 
 /* this is to change the color for the spinner, cant be changed directly */
-.dash-spinner.dash-default-spinner {
-  filter: contrast(1.2) hue-rotate(308deg) grayscale(0.76) !important;
+/* .dash-spinner.dash-default-spinner {
+    filter: contrast(1.2) hue-rotate(308deg) grayscale(0.76) !important;
+} */
+
+/* Change spinner color */
+.dash-cube-side {
+    filter: hue-rotate(220deg) blur(3px) saturate(200%) brightness(150%);
 }
 
-.explanation-p {
-  width: auto;
-  min-width: 50px;
-  max-width: 550px;
+[class^=dash-default-spinner-rect] {
+    background: var(--color-accent) !important;
+    /* The loading animation is unexpectedly dark for some reason */
+    filter: opacity(100%) !important;
+}
+
+#data-badge {
+    background-color: var(--color-fg-contrast) !important;
+    color: var(--color-bg);
 }
 
 .navbar-brand {
-  color: #436755 !important;
+    color: var(--color-fg) !important;
 }
 
-.metric_data {
-  color: #000000 !important;
-  text-shadow: none !important;
-  padding-bottom: 15px !important;
+.navbar-dark .navbar-nav .nav-link.active,
+.navbar-dark .navbar-nav .show>.nav-link {
+    background-color: var(--color-bg-contrast);
+    color: var(--color-fg)
 }
 
-.box_emissions {
-  background-color: #505050;
-  color: #505050;
-  margin: 2px;
-  box-shadow: 4px 4px 4px rgb(33, 33, 33);
-  justify-content: center;
-  text-align: center;
+.navbar-dark .navbar-nav .nav-link:focus,
+.navbar-dark .navbar-nav .nav-link:hover {
+    background: var(--color-accent);
+    color: var(--color-bg-contrast-alt);
 }
 
-.glace_headers {
-  color: #000000 !important;
-  text-shadow: none !important;
-  font-weight: "normal" !important;
+.navbar-dark .navbar-nav .nav-link {
+    color: var(--color-fg);
 }
+
+div.col-auto:nth-child(1)>img:nth-child(1) {
+    background-color: var(--color-fg-contrast);
+    border-radius: .5rem;
+}
+
 
 /* changes the color of an alert */
 .alert-warning {
     background-color: #B5B682 !important;
+/* fix vertical misalignmnet and errant right border of navbar title */
+#navbar-title {
+    border-right: none;
+    line-height: 100%;
+    vertical-align: middle;
+}
+
+.metric_data {
+    color: var(--color-fg) !important;
+    text-shadow: none !important;
+    padding-bottom: 15px !important;
+}
+
+.alert-info {
+    background-color: var(--color-accent);
+    color: var(--color-bg);
+}
+
+/* affix the bottom navbar to the bottom of the page */
+nav.navbar:nth-child(3) {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    left: 0;
+}
+
+/* add space between the two rows in the "Pull Requests" card */
+.justify-content-around {
+    margin-top: .9rem;
+}
+
+/* Change search textbox color */
+#projects {
+    background-color: var(--color-fg) !important;
+    color: var(--color-bg) !important;
+}
+
+.mantine-tzgcu0 {
+    color: var(--color-bg);
+}
+
+/* Change search box tag color */
+.mantine-1ewvdq9 {
+    background-color: var(--color-accent-contrast);
+    color: var(--color-bg-alt-contrast);
+}
+
+.btn-primary,
+.btn-secondary {
+    background: var(--color-bg-contrast);
+    border-color: var(--color-bg);
+    margin-right: .5rem;
+}
+
+.btn-primary:hover,
+.btn-secondary:hover {
+    background: var(--color-accent) !important;
+    color: var(--color-bg-contrast-alt);
+}
+
+.btn-primary:focus,
+.btn-secondary:focus {
+    background: var(--color-bg-contrast) !important;
+    color: var(--color-fg);
+}
+
+.popover,
+.popover-body {
+    background-color: var(--color-accent-contrast);
+    color: var(--color-bg-contrast-alt);
+}
+
+.popover-header {
+    background-color: var(--color-accent);
+}
+
+.popover-header::before {
+    border-bottom: transparent !important;
+}
+
+.popover-arrow::after {
+    border-top-color: var(--color-accent) !important;
+    border-bottom-color: var(--color-accent) !important;
+}
+
+/* spot fix contrast issues on metric charts */
+/* *really* needs to be handled app-side */
+.selector-text {
+    fill: var(--color-bg-contrast-alt) !important;
+}
+
+.selector-rect {
+    fill: var(--color-fg-contrast) !important;
+}
+
+.main-svg {
+    background: transparent !important;
+}
+
+rect[class="bg"] {
+    fill: var(--color-bg) !important;
+}
+
+.dbc input::placeholder {
+    font-weight: bold;
+    color: var(--color-fg) !important;
+    background-color: inherit !important;
+}
+
+/* add space before the "Looking for more information" header at the bottom of the home page */
+.align-items-baseline {
+    margin-top: 1rem;
+}
+
+.box_emissions {
+    background-color: var(--color-bg);
+    color: var(--color-fg);
+    margin: 2px;
+    box-shadow: 4px 4px 4px var(--color-bg);
+    justify-content: center;
+    text-align: center;
+}
+
+.glace_headers {
+    color: var(--color-fg) !important;
+    text-shadow: none !important;
+    font-weight: normal !important;
 }
