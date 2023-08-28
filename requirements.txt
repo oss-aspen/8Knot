@@ -57,3 +57,4 @@ dash-mantine-components
 pyarrow
 fuzzywuzzy
 python-Levenshtein
+flask-login

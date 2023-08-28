@@ -21,6 +21,7 @@ services:
       - worker-callback
       - worker-query
       - redis-cache
+      - redis-users
     env_file:
       - ./env.list
     restart: always
@@ -33,6 +34,7 @@ services:
       [ "celery", "-A", "app:celery_app", "worker", "--loglevel=INFO" ]
     depends_on:
       - redis-cache
+      - redis-users
     env_file:
       - ./env.list
     restart: always
@@ -49,7 +51,23 @@ services:
       - ./env.list
     restart: always
 
+  # for data blob caching
   redis-cache:
+    image: docker.io/library/redis:6
+    command:
+      - /bin/sh
+      - -c
+      # - Double dollars, so that the variable is not expanded by Docker Compose
+      # - Surround by quotes, so that the shell does not split the password
+      # - The ${variable:?message} syntax causes shell to exit with a non-zero
+      #   code and print a message, when the variable is not set or empty
+      - redis-server --requirepass "$${REDIS_PASSWORD:?REDIS_PASSWORD variable is not set}"
+    env_file:
+      - ./env.list
+    restart: always
+
+  # for user session storage
+  redis-users:
     image: docker.io/library/redis:6
     command:
       - /bin/sh
