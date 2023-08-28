@@ -38,7 +38,7 @@ see whether the available queries to our database instance are sufficient.
 If the existing queries do not suffice:
 1. Exhaust the possibility of making minor changes, such adding
 new columns or aggregations, to existing queries.
-2. If a completely new query is neccessary, use the [Query Template](https://github.com/oss-aspen/8Knot/blob/dev/queries/query_template.py)
+2. If a completely new query is necessary, use the [Query Template](https://github.com/oss-aspen/8Knot/blob/dev/queries/query_template.py)
 to build a new query.
 
 Note: make sure to do a "docker compose down" before rebuilding to be able to access any new or edited queries.
