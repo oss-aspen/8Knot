@@ -42,10 +42,16 @@ patches:
         value: 2
   - target:
       kind: Deployment
-      name: eightknot-app-query
+      name: eightknot-worker-query
     patch: |-
       - op: add
         path: /spec/replicas
+        value: 2
+  - target:
+      kind: HorizontalPodAutoscaler
+    patch: |-
+      - op: add
+        path: /spec/minReplicas
         value: 2
   - target:
       kind: Ingress
