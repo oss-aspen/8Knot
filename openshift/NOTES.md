@@ -27,7 +27,9 @@ kustomize build openshift/overlays/prod
 NOTE: labels allow selection of similar objects
 
 ```
+oc get all -l development=true
 oc get all -l app=eightknot-app
+
 oc get secrets -l app=eightknot-app
 ```
 
