@@ -59,17 +59,6 @@ spec:
       volumes:
         - emptyDir: {}
           name: eightknot-redis-data
-  triggers:
-    - imageChangeParams:
-        automatic: true
-        containerNames:
-          - redis
-        from:
-          kind: ImageStreamTag
-          name: redis:6-el8
-          namespace: openshift
-      type: ImageChange
-    - type: ConfigChange
 ---
 apiVersion: v1
 kind: Service
