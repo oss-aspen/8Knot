@@ -27,6 +27,27 @@ patches:
         path: /metadata/name
         value: "prod-sandiego-explorer-osci-io"
   - target:
+      kind: Deployment
+      name: eightknot-app-server
+    patch: |-
+      - op: add
+        path: /spec/replicas
+        value: 2
+  - target:
+      kind: Deployment
+      name: eightknot-worker-callback
+    patch: |-
+      - op: add
+        path: /spec/replicas
+        value: 2
+  - target:
+      kind: Deployment
+      name: eightknot-app-query
+    patch: |-
+      - op: add
+        path: /spec/replicas
+        value: 2
+  - target:
       kind: Ingress
       name: eightknot-app-server
     patch: |-

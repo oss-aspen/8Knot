@@ -9,6 +9,7 @@ commonLabels:
 
 resources:
   - 8k-app-server.yaml
+  - 8k-autoscale.yaml
   - 8k-bc.yaml
   - 8k-redis.yaml
   - 8k-worker-callback.yaml
