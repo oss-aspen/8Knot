@@ -8,25 +8,20 @@ metadata:
     app.openshift.io/vcs-uri: https://github.com/oss-aspen/8Knot.git
     image.openshift.io/triggers: '[{"from":{"kind":"ImageStreamTag","name":"eightknot-app:latest"},"fieldPath":"spec.template.spec.containers[?(@.name==\"eightknot-app\")].image","pause":"false"}]'
   labels:
-    app: eightknot-worker-query
-    app.kubernetes.io/component: eightknot-worker-query
-    app.kubernetes.io/instance: eightknot-worker-query
+    name: eightknot-worker-query
     app.kubernetes.io/name: eightknot-worker-query
-    app.kubernetes.io/part-of: eightknot-app
-    app.openshift.io/runtime: python
-    app.openshift.io/runtime-version: 3.9-ubi8
   name: eightknot-worker-query
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: eightknot-worker-query
+      name: eightknot-worker-query
   strategy:
     type: RollingUpdate
   template:
     metadata:
       labels:
-        app: eightknot-worker-query
+        name: eightknot-worker-query
     spec:
       containers:
       - command:
@@ -42,4 +37,10 @@ spec:
         ports:
         - containerPort: 8080
           protocol: TCP
-        resources: {}
+        resources:
+          limits:
+            cpu: 200m
+            memory: 1Gi
+          requests:
+            cpu: 100m
+            memory: 512Mi

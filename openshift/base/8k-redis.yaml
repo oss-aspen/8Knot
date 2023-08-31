@@ -5,7 +5,8 @@ metadata:
   annotations:
     image.openshift.io/triggers: '[{"from":{"kind":"ImageStreamTag","name":"redis:6-el8","namespace":"openshift"},"fieldPath":"spec.template.spec.containers[?(@.name==\"redis\")].image","pause":"false"}]'
   labels:
-    app.kubernetes.io/part-of: eightknot-app
+    name: eightknot-redis
+    app.kubernetes.io/name: eightknot-redis
   name: eightknot-redis
 spec:
   replicas: 1
@@ -52,6 +53,8 @@ spec:
           resources:
             limits:
               memory: 4Gi
+            requests:
+              memory: 128Mi
           volumeMounts:
             - mountPath: /var/lib/redis/data
               name: eightknot-redis-data
