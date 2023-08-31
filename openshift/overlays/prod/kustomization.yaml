@@ -4,6 +4,9 @@ kind: Kustomization
 # commonAnnotations:
 #   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 
+commonLabels:
+  production: "true"
+
 namespace: prod-sandiego-explorer-osci-io
 
 resources:
