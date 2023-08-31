@@ -7,7 +7,7 @@ services:
     depends_on:
       - app-server
     ports:
-      - "8080:8080" # bound to host port, exposed app endpoint
+      - "8080:8080"  # bound to host port, exposed app endpoint
 
   app-server:
     build:
