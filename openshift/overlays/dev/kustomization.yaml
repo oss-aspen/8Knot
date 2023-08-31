@@ -4,6 +4,8 @@ kind: Kustomization
 # commonAnnotations:
 #   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 
+namespace: dev-sandiego-explorer-osci-io
+
 resources:
   - ../../base
 
@@ -23,15 +25,21 @@ patches:
         value: "dev-sandiego-explorer-osci-io"
   - target:
       kind: Ingress
-      name: eightknot-app
+      name: eightknot-app-server
     patch: |-
+      - op: replace
+        path: /metadata/annotations/kubernetes.io~1tls-acme
+        value: "true"
       - op: replace
         path: /spec/rules/0/host
         value: dev.eightknot.osci.io
   - target:
       kind: Route
-      name: eightknot-app
+      name: eightknot-app-server
     patch: |-
+      - op: replace
+        path: /metadata/annotations/kubernetes.io~1tls-acme
+        value: "true"
       - op: replace
         path: /spec/host
         value: dev.eightknot.osci.io
