@@ -31,6 +31,12 @@ oc get all -l app=eightknot-app
 oc get secrets -l app=eightknot-app
 ```
 
+Cleanup
+
+```
+oc delete -k openshift/overlays/dev
+```
+
 ## Secret management
 
 You may need to update the following secrets with your account info:
