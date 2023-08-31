@@ -2,10 +2,10 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 commonLabels:
-    app: eightknot-app
-    app.kubernetes.io/component: eightknot-app
-    app.kubernetes.io/instance: eightknot-app
-    app.kubernetes.io/part-of: eightknot-app
+  app: eightknot-app
+  app.kubernetes.io/component: eightknot-app
+  app.kubernetes.io/instance: eightknot-app
+  app.kubernetes.io/part-of: eightknot-app
 
 resources:
   - 8k-app-server.yaml
