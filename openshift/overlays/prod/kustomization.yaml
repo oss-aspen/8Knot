@@ -25,14 +25,14 @@ patches:
         value: "prod-sandiego-explorer-osci-io"
   - target:
       kind: Ingress
-      name: eightknot-app
+      name: eightknot-app-server
     patch: |-
       - op: add
         path: /spec/rules/0/host
         value: eightknot.osci.io
   - target:
       kind: Route
-      name: eightknot-app
+      name: eightknot-app-server
     patch: |-
       - op: add
         path: /spec/host
