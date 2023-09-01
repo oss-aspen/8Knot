@@ -7,6 +7,7 @@ import plotly.express as px
 from .sections.general_section import layout as general_tab_contents
 from .sections.plotly_section import layout as plotly_tab_contents
 from .sections.augur_login_section import layout as augur_tab_contents
+from .sections.user_group_section import layout as group_tab_contents
 
 # register the page
 dash.register_page(__name__, path="/", order=1)
@@ -51,6 +52,11 @@ layout = dbc.Container(
                                     label="Your Augur Account",
                                     value="auguraccount",
                                     children=[augur_tab_contents],
+                                ),
+                                dcc.Tab(
+                                    label="Adding a User Group",
+                                    value="usergroup",
+                                    children=[group_tab_contents],
                                 ),
                             ],
                         ),
