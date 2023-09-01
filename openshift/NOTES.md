@@ -1,5 +1,10 @@
 # Additional Notes
 
+## Endpoints
+
+- https://dev.eightknot.osci.io
+- https://eightknot.osci.io
+
 ## Quick start
 
 Choose your deployment
