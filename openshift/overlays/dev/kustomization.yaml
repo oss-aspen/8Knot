@@ -46,3 +46,10 @@ patches:
       - op: replace
         path: /spec/host
         value: dev.eightknot.osci.io
+  # - target:
+  #     kind: Deployment
+  #     name: eightknot-redis
+  #   patch: |-
+  #     - op: replace
+  #       path: /spec/template/spec/containers/0/volumeMounts/0/name
+  #       value: empty
