@@ -14,6 +14,35 @@ resources:
 
 patches:
   - target:
+      kind: BuildConfig
+    patch: |-
+      - op: replace
+        path: /spec/source/git/ref
+        value: "dev"
+  # - target:
+  #     kind: Deployment
+  #     name: eightknot-redis
+  #   patch: |-
+  #     - op: replace
+  #       path: /spec/template/spec/containers/0/volumeMounts/0/name
+  #       value: empty
+  - target:
+      kind: HorizontalPodAutoscaler
+    patch: |-
+      - op: add
+        path: /spec/maxReplicas
+        value: 2
+  - target:
+      kind: Ingress
+      name: eightknot-app-server
+    patch: |-
+      - op: replace
+        path: /metadata/annotations/kubernetes.io~1tls-acme
+        value: "true"
+      - op: replace
+        path: /spec/rules/0/host
+        value: dev.eightknot.osci.io
+  - target:
       kind: Namespace
       name: sandbox
     patch: |-
@@ -27,16 +56,6 @@ patches:
         path: /metadata/name
         value: "dev-sandiego-explorer-osci-io"
   - target:
-      kind: Ingress
-      name: eightknot-app-server
-    patch: |-
-      - op: replace
-        path: /metadata/annotations/kubernetes.io~1tls-acme
-        value: "true"
-      - op: replace
-        path: /spec/rules/0/host
-        value: dev.eightknot.osci.io
-  - target:
       kind: Route
       name: eightknot-app-server
     patch: |-
@@ -46,10 +65,3 @@ patches:
       - op: replace
         path: /spec/host
         value: dev.eightknot.osci.io
-  # - target:
-  #     kind: Deployment
-  #     name: eightknot-redis
-  #   patch: |-
-  #     - op: replace
-  #       path: /spec/template/spec/containers/0/volumeMounts/0/name
-  #       value: empty
