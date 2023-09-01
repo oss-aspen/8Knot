@@ -14,19 +14,6 @@ resources:
 
 patches:
   - target:
-      kind: Namespace
-      name: sandbox
-    patch: |-
-      - op: replace
-        path: /metadata/annotations/openshift.io~1description
-        value: "8Knot Production Deployment"
-      - op: replace
-        path: /metadata/annotations/openshift.io~1display-name
-        value: "Production 8Knot"
-      - op: replace
-        path: /metadata/name
-        value: "prod-sandiego-explorer-osci-io"
-  - target:
       kind: Deployment
       name: eightknot-app-server
     patch: |-
@@ -60,6 +47,19 @@ patches:
       - op: add
         path: /spec/rules/0/host
         value: eightknot.osci.io
+  - target:
+      kind: Namespace
+      name: sandbox
+    patch: |-
+      - op: replace
+        path: /metadata/annotations/openshift.io~1description
+        value: "8Knot Production Deployment"
+      - op: replace
+        path: /metadata/annotations/openshift.io~1display-name
+        value: "Production 8Knot"
+      - op: replace
+        path: /metadata/name
+        value: "prod-sandiego-explorer-osci-io"
   - target:
       kind: Route
       name: eightknot-app-server
