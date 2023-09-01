@@ -39,7 +39,7 @@ patches:
     patch: |-
       - op: add
         path: /spec/replicas
-        value: 2
+        value: 3
   - target:
       kind: Deployment
       name: eightknot-worker-query
