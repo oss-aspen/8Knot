@@ -57,11 +57,14 @@ spec:
               memory: 128Mi
           volumeMounts:
             - mountPath: /var/lib/redis/data
-              name: eightknot-redis-data
+              name: redis-data
       restartPolicy: Always
       volumes:
-        - emptyDir: {}
-          name: eightknot-redis-data
+        - name: empty
+          emptyDir: {}
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: eightknot-redis-data
 ---
 apiVersion: v1
 kind: Service
@@ -77,3 +80,15 @@ spec:
     targetPort: 6379
   selector:
     name: eightknot-redis
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: eightknot-redis-data
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 4Gi
+  volumeMode: Filesystem
