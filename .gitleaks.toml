@@ -7,7 +7,7 @@
     # Ignore example secrets
     '''openshift\/base\/secret-.*.ya?ml$''',
   ]
-        
+
   # Ignore based on any subset of the line
   regexes = [
     # Ignore lines containing the following
