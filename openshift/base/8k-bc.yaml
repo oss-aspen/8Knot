@@ -34,7 +34,7 @@ spec:
     type: Git
   strategy:
     dockerStrategy:
-      dockerfilePath: docker/Dockerfile.worker
+      dockerfilePath: docker/Dockerfile
     type: Docker
   triggers:
   - generic:
