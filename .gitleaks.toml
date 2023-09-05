@@ -1,0 +1,17 @@
+[allowlist]
+  description = "Global Allowlist"
+
+  # Ignore based on any subset of the file path
+  paths = [
+
+    # Ignore example secrets
+    '''openshift\/base\/secret-.*.ya?ml$''',
+  ]
+
+  # Ignore based on any subset of the line
+  regexes = [
+    # Ignore lines containing the following
+    '''secretpassword''',
+    '''REDIS_PASSWORD''',
+    '''REDIS.*_HOST''',
+  ]

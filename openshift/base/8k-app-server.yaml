@@ -8,25 +8,20 @@ metadata:
     app.openshift.io/vcs-uri: https://github.com/oss-aspen/8Knot.git
     image.openshift.io/triggers: '[{"from":{"kind":"ImageStreamTag","name":"eightknot-app:latest"},"fieldPath":"spec.template.spec.containers[?(@.name==\"eightknot-app\")].image","pause":"false"}]'
   labels:
-    app: eightknot-app-server
-    app.kubernetes.io/component: eightknot-app-server
-    app.kubernetes.io/instance: eightknot-app-server
+    name: eightknot-app-server
     app.kubernetes.io/name: eightknot-app-server
-    app.kubernetes.io/part-of: eightknot-app
-    app.openshift.io/runtime: python
-    app.openshift.io/runtime-version: 3.9-ubi8
   name: eightknot-app-server
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: eightknot-app-server
+      name: eightknot-app-server
   strategy:
     type: RollingUpdate
   template:
     metadata:
       labels:
-        app: eightknot-app-server
+        name: eightknot-app-server
     spec:
       containers:
         - command:
@@ -71,11 +66,11 @@ spec:
             failureThreshold: 3
           resources:
             limits:
-              cpu: 200m
-            #     memory: 1Gi
+              cpu: 300m
+              memory: 256Mi
             requests:
-              cpu: 100m
-          #     memory: 512Mi
+              cpu: 50m
+              memory: 150Mi
 ---
 apiVersion: v1
 kind: Service
@@ -107,3 +102,21 @@ spec:
   tls:
     insecureEdgeTerminationPolicy: Redirect
     termination: edge
+# for a more k8s generic deployment you could use ingress
+# ---
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: eightknot-app-server
+# spec:
+#   rules:
+#     - host: ''
+#       http:
+#         paths:
+#           - path: /
+#             pathType: Prefix
+#             backend:
+#               service:
+#                 name: eightknot-app-server
+#                 port:
+#                   number: 8080

@@ -5,7 +5,8 @@ metadata:
   annotations:
     image.openshift.io/triggers: '[{"from":{"kind":"ImageStreamTag","name":"redis:6-el8","namespace":"openshift"},"fieldPath":"spec.template.spec.containers[?(@.name==\"redis\")].image","pause":"false"}]'
   labels:
-    app.kubernetes.io/part-of: eightknot-app
+    name: eightknot-redis
+    app.kubernetes.io/name: eightknot-redis
   name: eightknot-redis
 spec:
   replicas: 1
@@ -52,24 +53,18 @@ spec:
           resources:
             limits:
               memory: 4Gi
+            requests:
+              memory: 128Mi
           volumeMounts:
             - mountPath: /var/lib/redis/data
-              name: eightknot-redis-data
+              name: redis-data
       restartPolicy: Always
       volumes:
-        - emptyDir: {}
-          name: eightknot-redis-data
-  triggers:
-    - imageChangeParams:
-        automatic: true
-        containerNames:
-          - redis
-        from:
-          kind: ImageStreamTag
-          name: redis:6-el8
-          namespace: openshift
-      type: ImageChange
-    - type: ConfigChange
+        - name: empty
+          emptyDir: {}
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: eightknot-redis-data
 ---
 apiVersion: v1
 kind: Service
@@ -85,3 +80,15 @@ spec:
     targetPort: 6379
   selector:
     name: eightknot-redis
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: eightknot-redis-data
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 4Gi
+  volumeMode: Filesystem
