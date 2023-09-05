@@ -132,12 +132,12 @@ You will need credentials of the following form, named `env.list`, at the top-le
 The credentials below are valid, so you can copy and use them to access a development instance of Augur.
 
 ```
-    AUGUR_DATABASE=astros
+    AUGUR_DATABASE=graphish
     AUGUR_HOST=chaoss.tv
-    AUGUR_PASSWORD=!xpk98T6?bK
+    AUGUR_PASSWORD=cableTV99!
     AUGUR_PORT=5432
     AUGUR_SCHEMA=augur_data
-    AUGUR_USERNAME=eightknot
+    AUGUR_USERNAME=coup
     8KNOT_DEBUG=True
     REDIS_PASSWORD=1234
 ```
