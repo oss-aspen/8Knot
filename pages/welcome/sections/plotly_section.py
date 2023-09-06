@@ -114,7 +114,7 @@ layout = html.Div(
                                 html.H2("4. Plotly Toolbar"),
                                 html.P(
                                     """Hover over the top right corner to see Plotly tool options.
-                                    Options availible: Download image, Zoom, Pan, Box Select, Lasso
+                                    Options available: Download image, Zoom, Pan, Box Select, Lasso
                                     Select, Zoom in, Zoom out, Autoscale, and Reset Axis.
                                     """
                                 ),

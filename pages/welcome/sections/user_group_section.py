@@ -20,7 +20,7 @@ layout = html.Div(
                                     """
                             User groups are customizable groups of organization or repositories that are accessible each time you
                             log in. Adding repositories and organizations to a user group also triggers collection if they are not
-                            already populated in Augur. These intructions assume you are logged into your Augur account.
+                            already populated in Augur. These intructions assume you are logged in to your Augur account.
                             """
                                 ),
                             ],
@@ -121,7 +121,7 @@ layout = html.Div(
                                         html.H2("4. Click Refresh Groups"),
                                         html.P(
                                             """
-                                                Once you add your new group, go back to the 8Knot front end and click
+                                                Once you have created or edited your groups, go back to the 8Knot front end and click
                                                 "Refresh Groups" to be able to be able to search for your group in the 8Knot
                                                 front end. Note: if any of the repositories are new to the database they will not
                                                 be included in the group until collection finishes.
