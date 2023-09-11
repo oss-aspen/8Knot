@@ -7,7 +7,7 @@ kind: Kustomization
 commonLabels:
   production: "true"
 
-namespace: eightknot-prod
+namespace: prod-eightknot
 
 resources:
   - ../../base

@@ -7,7 +7,7 @@ kind: Kustomization
 commonLabels:
   development: "true"
 
-namespace: eightknot-dev
+namespace: dev-eightknot
 
 resources:
   - ../../base
