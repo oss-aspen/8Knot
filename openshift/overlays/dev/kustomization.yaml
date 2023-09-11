@@ -7,7 +7,7 @@ kind: Kustomization
 commonLabels:
   development: "true"
 
-namespace: dev-sandiego-explorer-osci-io
+namespace: eightknot-dev
 
 resources:
   - ../../base
