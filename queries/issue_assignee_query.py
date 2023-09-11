@@ -14,12 +14,12 @@ TODO:
 'NAME' should be the same as QUERY_NAME
 (3) paste SQL query in the query_string
 (4) insert any necessary df column name or format changed under the pandas column and format updates comment
-(5) reset df index if #4 is performed via "df = df.reset_index(drop=True)"
+(5) reset df index if #3 is performed via "df = df.reset_index(drop=True)"
 (6) go to index/index_callbacks.py and import the NAME_query as a unqiue acronym and add it to the QUERIES list
 (7) delete this list when completed
 """
 
-QUERY_NAME = "NAME"
+QUERY_NAME = "ISSUE_ASSIGNEE"
 
 
 @celery_app.task(
@@ -29,7 +29,7 @@ QUERY_NAME = "NAME"
     retry_kwargs={"max_retries": 5},
     retry_jitter=True,
 )
-def NAME_query(self, repos):
+def issue_assignee_query(self, repos):
     """
     (Worker Query)
     Executes SQL query against Augur database for contributor data.
@@ -49,10 +49,21 @@ def NAME_query(self, repos):
 
     query_string = f"""
                     SELECT
-
+                        i.issue_id,
+                        r.repo_id,
+                        i.created_at as created,
+                        i.closed_at as closed,
+                        ie.created_at AS assign_date,
+                        ie.action AS assign,
+                        ie.cntrb_id AS assignee
                     FROM
-
+                        issues i,
+                        repo r,
+                        issue_events ie
                     WHERE
+                        r.repo_id = i.repo_id AND
+                        i.issue_id = ie.issue_id AND
+                        ie.action IN ('unassigned', 'assigned') AND
                         repo_id in ({str(repos)[1:-1]})
                 """
 
@@ -71,6 +82,8 @@ def NAME_query(self, repos):
     df = dbm.run_query(query_string)
 
     # pandas column and format updates
+    df["assignee"] = df["assignee"].astype(str)
+
     """Commonly used df updates:
 
     df["cntrb_id"] = df["cntrb_id"].astype(str)  # contributor ids to strings
@@ -109,7 +122,7 @@ def NAME_query(self, repos):
 
     # 'ack' is a boolean of whether data was set correctly or not.
     ack = cm_o.setm(
-        func=NAME_query,
+        func=issue_assignee_query,
         repos=repos,
         datas=pic,
     )
