@@ -65,7 +65,6 @@ The file-structure of our application is intuitive. Non-application files are om
 +-- ~other files~
 </pre>
 
-
 The application 'Dash' instance is defined in the 'app.py' file, as is the app.server object that our WSGI server uses, and the manager for the task-queue.
 
 The 'Dash' application instance imports the application's base layout from the '/pages/index/index_layout.py' file. The logic to process user input to components laid out in this file (search bar, page selectors) is defined in '/pages/index/index_callbacks.py.'
