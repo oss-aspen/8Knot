@@ -14,6 +14,7 @@ from .visualizations.new_contributor import gc_new_contributor
 from .visualizations.issue_staleness import gc_issue_staleness
 from .visualizations.pr_staleness import gc_pr_staleness
 from .visualizations.pr_over_time import gc_pr_over_time
+from .visualizations.cntrb_pr_assignment import gc_cntrib_pr_assignment
 
 
 # register the page
@@ -46,9 +47,7 @@ layout = dbc.Container(
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
-            [
-                dbc.Col(gc_commits_over_time, width=6),
-            ],
+            [dbc.Col(gc_commits_over_time, width=6), dbc.Col(gc_cntrib_pr_assignment, width=6)],
             align="center",
             style={"marginBottom": ".5%"},
         ),
