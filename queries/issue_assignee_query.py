@@ -7,18 +7,6 @@ import io
 import datetime as dt
 from sqlalchemy.exc import SQLAlchemyError
 
-"""
-TODO:
-(1) update QUERY_NAME
-(2) update 'NAME_query' found in function definition and in the function call that sets the 'ack' variable below.
-'NAME' should be the same as QUERY_NAME
-(3) paste SQL query in the query_string
-(4) insert any necessary df column name or format changed under the pandas column and format updates comment
-(5) reset df index if #3 is performed via "df = df.reset_index(drop=True)"
-(6) go to index/index_callbacks.py and import the NAME_query as a unqiue acronym and add it to the QUERIES list
-(7) delete this list when completed
-"""
-
 QUERY_NAME = "ISSUE_ASSIGNEE"
 
 
@@ -50,7 +38,7 @@ def issue_assignee_query(self, repos):
     query_string = f"""
                     SELECT
                         i.issue_id,
-                        r.repo_id,
+                        r.repo_id as id,
                         i.created_at as created,
                         i.closed_at as closed,
                         ie.created_at AS assign_date,
@@ -64,7 +52,7 @@ def issue_assignee_query(self, repos):
                         r.repo_id = i.repo_id AND
                         i.issue_id = ie.issue_id AND
                         ie.action IN ('unassigned', 'assigned') AND
-                        repo_id in ({str(repos)[1:-1]})
+                        r.repo_id in ({str(repos)[1:-1]})
                 """
 
     try:
@@ -81,17 +69,10 @@ def issue_assignee_query(self, repos):
 
     df = dbm.run_query(query_string)
 
-    # pandas column and format updates
+    # id as string and slice to remove excess 0s
     df["assignee"] = df["assignee"].astype(str)
+    df["assignee"] = df["assignee"].str[:13]
 
-    """Commonly used df updates:
-
-    df["cntrb_id"] = df["cntrb_id"].astype(str)  # contributor ids to strings
-    df = df.sort_values(by="created")
-    df = df.reset_index()
-    df = df.reset_index(drop=True)
-
-    """
     # change to compatible type and remove all data that has been incorrectly formated
     df["created"] = pd.to_datetime(df["created"], utc=True).dt.date
     df = df[df.created < dt.date.today()]

@@ -15,27 +15,10 @@ from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
 
-"""
+PAGE = "overview"
+VIZ_ID = "cntrib_issue-assignment"
 
-
-NOTE: ADDITIONAL DASH COMPONENTS FOR USER GRAPH CUSTOMIZATIONS
-
-If you add Dash components (ie dbc.Input, dbc.RadioItems, dcc.DatePickerRange...) the ids, html_for, and targets should be in the
-following format: f"component-identifier-{PAGE}-{VIZ_ID}"
-
-NOTE: If you change or add a new query, you need to do "docker system prune -af" before building again
-
-For more information, check out the new_vis_guidance.md
-"""
-
-
-# TODO: Remove unused imports and edit strings and variables in all CAPS
-# TODO: Remove comments specific for the template
-
-PAGE = "overview"  # EDIT FOR CURRENT PAGE
-VIZ_ID = "issue-assignment"  # UNIQUE IDENTIFIER FOR VIZUALIZATION
-
-gc_issue_assignment = dbc.Card(
+gc_cntrib_issue_assignment = dbc.Card(
     [
         dbc.CardBody(
             [
@@ -47,7 +30,13 @@ gc_issue_assignment = dbc.Card(
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody("INSERT CONTEXT OF GRAPH HERE"),
+                        dbc.PopoverBody(
+                            """
+                            Visualizes the delta number of issue assignments for each contributor \n
+                            that meets the assignment criteria. This can help understand the workload'\n
+                            distribution between each contributor or maintainer over time.
+                            """
+                        ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
                     target=f"popover-target-{PAGE}-{VIZ_ID}",
@@ -73,7 +62,7 @@ gc_issue_assignment = dbc.Card(
                                         min=1,
                                         max=250,
                                         step=1,
-                                        value=40,
+                                        value=10,
                                         size="sm",
                                     ),
                                     className="me-2",
@@ -107,7 +96,7 @@ gc_issue_assignment = dbc.Card(
                                                 {"label": "Month", "value": "M"},
                                                 {"label": "Year", "value": "Y"},
                                             ],
-                                            value="M",
+                                            value="W",
                                             inline=True,
                                         ),
                                     ]
@@ -156,7 +145,7 @@ def toggle_popover(n, is_open):
     ],
     background=True,
 )
-def issue_assignment_graph(repolist, interval, assign_req):
+def cntrib_issue_assignment_graph(repolist, interval, assign_req):
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=iaq, repos=repolist)
@@ -172,7 +161,6 @@ def issue_assignment_graph(repolist, interval, assign_req):
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return nodata_graph
 
-    # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
     df = process_data(df, interval, assign_req)
 
     fig = create_figure(df, interval)
@@ -225,19 +213,30 @@ def process_data(df: pd.DataFrame, interval, assign_req):
     dates = pd.date_range(start=earliest, end=latest, freq=interval, inclusive="both")
 
     # df for issue assignments in date intervals
-    df_assign = dates.to_frame(index=False, name="Date")
+    df_assign = dates.to_frame(index=False, name="start_date")
 
+    # offset end date column by interval
+    if interval == "D":
+        df_assign["end_date"] = df_assign.start_date + pd.DateOffset(days=1)
+    elif interval == "W":
+        df_assign["end_date"] = df_assign.start_date + pd.DateOffset(weeks=1)
+    elif interval == "M":
+        df_assign["end_date"] = df_assign.start_date + pd.DateOffset(months=1)
+    else:
+        df_assign["end_date"] = df_assign.start_date + pd.DateOffset(years=1)
+
+    # iterates through contributors and dates for assignment values
     for contrib in contributors:
         df_assign[contrib] = df_assign.apply(
-            lambda row: issue_assignment(df, row.Date, contrib),
+            lambda row: issue_assignment(df, row.start_date, row.end_date, contrib),
             axis=1,
         )
 
     # formatting for graph generation
     if interval == "M":
-        df_assign["Date"] = df_assign["Date"].dt.strftime("%Y-%m")
+        df_assign["start_date"] = df_assign["start_date"].dt.strftime("%Y-%m")
     elif interval == "Y":
-        df_assign["Date"] = df_assign["Date"].dt.year
+        df_assign["start_date"] = df_assign["start_date"].dt.year
 
     return df_assign
 
@@ -245,23 +244,29 @@ def process_data(df: pd.DataFrame, interval, assign_req):
 def create_figure(df: pd.DataFrame, interval):
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
-    contribs = df.columns.tolist()[1:]
+
+    # list of contributors for plot
+    contribs = df.columns.tolist()[2:]
 
     # making a line graph if the bin-size is small enough.
     if interval == "D":
+
+        # list of lines for plot
         lines = []
+
+        # iterate through colors for lines
         marker_val = 0
+
+        # loop to create lines for each contributors
         for contrib in contribs:
-            line = (
-                go.Scatter(
-                    name=contrib,
-                    x=df["Date"],
-                    y=df[contrib],
-                    mode="lines",
-                    showlegend=True,
-                    hovertemplate="Issues Assigned: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
-                    marker=dict(color=color_seq[marker_val]),
-                ),
+            line = go.Scatter(
+                name=contrib,
+                x=df["start_date"],
+                y=df[contrib],
+                mode="lines",
+                showlegend=True,
+                hovertemplate="Issues Assigned: %{y}<br>%{x|%b %d, %Y}",
+                marker=dict(color=color_seq[marker_val]),
             )
             lines.append(line)
             marker_val = (marker_val + 1) % 6
@@ -269,34 +274,43 @@ def create_figure(df: pd.DataFrame, interval):
     else:
         fig = px.bar(
             df,
-            x="Date",
+            x="start_date",
             y=contribs,
             color_discrete_sequence=color_seq,
         )
 
         # edit hover values
-        fig.update_traces(hovertemplate=hover + "<br>Issues: %{y}<br>" + "<extra></extra>")
+        fig.update_traces(hovertemplate=hover + "<br>Issues Assigned: %{y}<br>")
 
+        fig.update_xaxes(
+            showgrid=True,
+            ticklabelmode="period",
+            dtick=period,
+            rangeslider_yaxis_rangemode="match",
+            range=x_r,
+        )
+
+    # layout specifics for both styles of plots
     fig.update_layout(
         xaxis_title="Time",
         yaxis_title="Issue Assignments",
-        legend_title="Contriutor ID",
+        legend_title="Contributor ID",
         font=dict(size=14),
     )
 
     return fig
 
 
-def issue_assignment(df, date, contrib):
+def issue_assignment(df, start_date, end_date, contrib):
 
     # drop rows not by contrib
     df = df[df["assignee"] == contrib]
 
-    # drop rows that are more recent than the date limit
-    df_created = df[df["created"] <= date]
+    # drop rows that are more recent than the end date
+    df_created = df[df["created"] <= end_date]
 
-    # drop rows that have been closed before date
-    df_in_range = df_created[df_created["closed"] > date]
+    # drop rows that have been closed before start date
+    df_in_range = df_created[df_created["closed"] > start_date]
 
     # include rows that have a null closed value
     df_in_range = pd.concat([df_in_range, df_created[df_created.closed.isnull()]])
@@ -304,14 +318,14 @@ def issue_assignment(df, date, contrib):
     # get all issue unassignments
     df_unassign = df_in_range[df_in_range["assign"] == "unassigned"]
 
-    # drop rows that have been unassigned more recent than the date limit
-    df_unassign = df_unassign[df_unassign["assign_date"] <= date]
+    # drop rows that have been unassigned more recent than the end date
+    df_unassign = df_unassign[df_unassign["assign_date"] <= end_date]
 
     # get all issue assignments
     df_assigned = df_in_range[df_in_range["assign"] == "assigned"]
 
-    # drop rows that have been assigned more recent than the date limit
-    df_assigned = df_assigned[df_assigned["assign_date"] <= date]
+    # drop rows that have been assigned more recent than the end date
+    df_assigned = df_assigned[df_assigned["assign_date"] <= end_date]
 
     # return the different of assignments and unassignments
     return df_assigned.shape[0] - df_unassign.shape[0]
