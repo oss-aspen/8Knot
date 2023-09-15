@@ -40,7 +40,7 @@ def pr_assignee_query(self, repos):
                         pr.pr_created_at AS created,
                         pr.pr_closed_at as closed,
                         pre.created_at AS assign_date,
-                        pre.action AS assign,
+                        pre.action AS assignment_action,
                         pre.cntrb_id AS assignee
                     FROM
                         pull_requests pr,

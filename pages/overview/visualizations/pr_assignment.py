@@ -23,7 +23,7 @@ gc_pr_assignment = dbc.Card(
         dbc.CardBody(
             [
                 html.H3(
-                    "Pull Request Review Assignment",
+                    "Pull Request Review Status Counts",
                     className="card-title",
                     style={"textAlign": "center"},
                 ),
@@ -239,6 +239,11 @@ def create_figure(df: pd.DataFrame, interval):
 
 
 def pr_assignment(df, start_date, end_date):
+    """
+    This function takes a start and a end date and determines how many
+    pull requests that are open during that time interval that are assigned or
+    unassigned for review.
+    """
 
     # drop rows that are more recent than the end date
     df_created = df[df["created"] <= end_date]
@@ -250,13 +255,13 @@ def pr_assignment(df, start_date, end_date):
     df_in_range = pd.concat([df_in_range, df_created[df_created.closed.isnull()]])
 
     # get all pr unassignments
-    df_unassign = df_in_range[df_in_range["assign"] == "unassigned"]
+    df_unassign = df_in_range[df_in_range["assignment_action"] == "unassigned"]
 
     # drop rows that have been unassigned more recent than the end date
     df_unassign = df_unassign[df_unassign["assign_date"] <= end_date]
 
     # get all pr assignments
-    df_assigned = df_in_range[df_in_range["assign"] == "assigned"]
+    df_assigned = df_in_range[df_in_range["assignment_action"] == "assigned"]
 
     # drop rows that have been assigned more recent than the end date
     df_assigned = df_assigned[df_assigned["assign_date"] <= end_date]
