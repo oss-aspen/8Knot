@@ -33,8 +33,7 @@ gc_cntrib_pr_assignment = dbc.Card(
                         dbc.PopoverBody(
                             """
                             Visualizes the delta number of pull request review assignments for each \n
-                            contributor that meets the assignment criteria. This can help understand the'\n
-                            workload distribution between each contributor or maintainer over time.
+                            contributor that meets the assignment criteria.
                             """
                         ),
                     ],
@@ -179,8 +178,11 @@ def process_data(df: pd.DataFrame, interval, assign_req):
     # order values chronologically by created date
     df = df.sort_values(by="created", axis=0, ascending=True)
 
+    # drop all issues that have no assignments
+    df = df[~df.assignment_action.isnull()]
+
     # df of rows that are assignments
-    df_contrib = df[df["assign"] == "assigned"]
+    df_contrib = df[df["assignment_action"] == "assigned"]
 
     # count the assignments total for each contributor
     df_contrib = (
@@ -299,6 +301,11 @@ def create_figure(df: pd.DataFrame, interval):
 
 
 def pr_assignment(df, start_date, end_date, contrib):
+    """
+    This function takes a start and an end date and determines how many
+    prs that are open during that time interval and are currently assigned
+    to the contributor.
+    """
 
     # drop rows not by contrib
     df = df[df["assignee"] == contrib]
@@ -313,13 +320,13 @@ def pr_assignment(df, start_date, end_date, contrib):
     df_in_range = pd.concat([df_in_range, df_created[df_created.closed.isnull()]])
 
     # get all pr unassignments
-    df_unassign = df_in_range[df_in_range["assign"] == "unassigned"]
+    df_unassign = df_in_range[df_in_range["assignment_action"] == "unassigned"]
 
     # drop rows that have been unassigned more recent than the end date
     df_unassign = df_unassign[df_unassign["assign_date"] <= end_date]
 
     # get all pr assignments
-    df_assigned = df_in_range[df_in_range["assign"] == "assigned"]
+    df_assigned = df_in_range[df_in_range["assignment_action"] == "assigned"]
 
     # drop rows that have been assigned more recent than the end date
     df_assigned = df_assigned[df_assigned["assign_date"] <= end_date]
