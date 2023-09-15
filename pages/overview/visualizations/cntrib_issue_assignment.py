@@ -179,7 +179,7 @@ def process_data(df: pd.DataFrame, interval, assign_req):
     df = df.sort_values(by="created", axis=0, ascending=True)
 
     # drop all issues that have no assignments
-    df[~df.assignment_action.isnull()]
+    df = df[~df.assignment_action.isnull()]
 
     # df of rows that are assignments
     df_contrib = df[df["assignment_action"] == "assigned"]
