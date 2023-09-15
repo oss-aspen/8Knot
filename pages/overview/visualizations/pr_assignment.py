@@ -260,6 +260,9 @@ def pr_assignment(df, start_date, end_date):
     # drop rows that have been unassigned more recent than the end date
     df_unassign = df_unassign[df_unassign["assign_date"] <= end_date]
 
+    # include rows that have a null assignment value, therefore never assigned
+    df_unassign = pd.concat([df_unassign, df_in_range[df_in_range.assignment_action.isnull()]])
+
     # get all pr assignments
     df_assigned = df_in_range[df_in_range["assignment_action"] == "assigned"]
 
