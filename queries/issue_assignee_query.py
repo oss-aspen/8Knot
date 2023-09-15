@@ -40,7 +40,7 @@ def issue_assignee_query(self, repos):
                         i.created_at as created,
                         i.closed_at as closed,
                         ie.created_at AS assign_date,
-                        ie.action AS assign,
+                        ie.action AS assignment_action,
                         ie.cntrb_id AS assignee
                     FROM
                         issues i,
