@@ -4,11 +4,13 @@
     --color-bg-contrast: #4C3839;
     --color-bg-alt: #353d32;
     --color-bg-contrast-alt: black;
+    --color-bg-tertiary: #323232;
     --color-fg: #E8EDF3;
     --color-fg-contrast: #A7C7E0;
     --color-accent: #EC6A39;
     --color-accent-contrast: #CE957A;
     --color-accent-alt: #295c2b;
+    --color-accent-alt-contrast: #1f3720;
     --color-notice: #FCAE10;
 
     --bs-body-bg: var(--color-bg);
@@ -243,5 +245,25 @@ rect[class="bg"] {
     color: var(--color-fg) !important;
     text-shadow: none !important;
     font-weight: normal !important;
+}
 
+/* Change tab pane colors on Welcome page */
+.card_section_container {
+    background-color: var(--color-accent-alt);
+}
+
+.dbc .tab {
+    background-color: var(--color-bg) !important;
+}
+
+.tab_section_container, .dbc .tab--selected {
+    background-color: var(--color-bg-tertiary) !important;
+    color: var(--color-fg) !important;
+}
+
+/* Fix text contrast on "Info" page, also change font to match other pages */
+blockquote p, blockquote h5, blockquote li {
+    color: var(--color-fg) !important;
+    /* The serif font in blockquotes is jarring compared to the sans font used everywhere else */
+    font-family: var(--bs-body-font-family);
 }
