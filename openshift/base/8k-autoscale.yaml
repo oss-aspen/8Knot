@@ -1,0 +1,75 @@
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: eightknot-app-server
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: eightknot-app-server
+  minReplicas: 1
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          averageUtilization: 80
+          type: Utilization
+    # - type: Resource
+    #   resource:
+    #     name: memory
+    #     target:
+    #       averageUtilization: 85
+    #       type: Utilization
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: eightknot-worker-callback
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: eightknot-worker-callback
+  minReplicas: 1
+  maxReplicas: 20
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          averageUtilization: 60
+          type: Utilization
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          averageUtilization: 95
+          type: Utilization
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: eightknot-worker-query
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: eightknot-worker-query
+  minReplicas: 1
+  maxReplicas: 8
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          averageUtilization: 60
+          type: Utilization
+    # - type: Resource
+    #   resource:
+    #     name: memory
+    #     target:
+    #       averageUtilization: 85
+    #       type: Utilization

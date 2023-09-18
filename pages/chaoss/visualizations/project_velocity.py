@@ -280,8 +280,6 @@ def process_data(
     if end_date is not None:
         df = df[df.created_at <= end_date]
 
-    print(df.head())
-
     # df to hold value of unique contributors for each repo
     df_cntrbs = pd.DataFrame(df.groupby("repo_name")["cntrb_id"].nunique()).rename(
         columns={"cntrb_id": "num_unique_contributors"}
