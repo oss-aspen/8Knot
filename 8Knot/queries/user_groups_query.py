@@ -5,7 +5,7 @@ from cache_manager.cache_manager import CacheManager as cm
 import io
 import datetime as dt
 from sqlalchemy.exc import SQLAlchemyError
-from redis import StrictRedis
+import redis
 import json
 
 # DEBUGGING
@@ -32,7 +32,7 @@ def user_groups_query(self, user_id):
     """
     logging.warning(f"{QUERY_NAME}_DATA_QUERY - START")
 
-    users_cache = StrictRedis(
+    users_cache = redis.StrictRedis(
         host="redis-users", port=6379, password=os.getenv("REDIS_PASSWORD", "")
     )
 

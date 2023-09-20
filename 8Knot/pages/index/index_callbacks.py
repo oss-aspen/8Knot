@@ -21,7 +21,6 @@ from queries.pr_assignee_query import pr_assignee_query as praq
 from queries.issue_assignee_query import issue_assignee_query as iaq
 from queries.user_groups_query import user_groups_query as ugq
 import redis
-from redis import StrictRedis
 import flask
 
 
@@ -52,11 +51,16 @@ def kick_off_group_collection(url, n_clicks):
     """
     if current_user.is_authenticated:
         user_id = current_user.get_id()
-        users_cache = StrictRedis(
+        users_cache = redis.StrictRedis(
             host="redis-users",
             port=6379,
             password=os.getenv("REDIS_PASSWORD", ""),
         )
+        try:
+            users_cache.ping()
+        except redis.exceptions.ConnectionError:
+            logging.error("GROUP-COLLECTION: Could not connect to users-cache.")
+            return dash.no_update
 
         # TODO: check how old groups are. If they're pretty old (threshold tbd) then requery
 
@@ -119,13 +123,16 @@ def login_username_button(url):
         if current_user.is_authenticated:
             logging.warning(f"LOGINBUTTON: USER LOGGED IN {current_user}")
             # TODO: implement more permanent interface
-            users_cache = StrictRedis(
+            users_cache = redis.StrictRedis(
                 host="redis-users",
                 port=6379,
                 password=os.getenv("REDIS_PASSWORD", ""),
             )
-
-            # TODO: Ping Redis, catch error and return no login
+            try:
+                users_cache.ping()
+            except redis.exceptions.ConnectionError:
+                logging.error("USERNAME: Could not connect to users-cache.")
+                return dash.no_update
 
             user_id = current_user.get_id()
             user_info = json.loads(users_cache.get(user_id))
@@ -177,12 +184,17 @@ def dynamic_multiselect_options(user_in: str, selections):
     if current_user.is_authenticated:
         logging.warning(f"LOGINBUTTON: USER LOGGED IN {current_user}")
         # TODO: implement more permanent interface
-        users_cache = StrictRedis(
+        users_cache = redis.StrictRedis(
             host="redis-users",
             port=6379,
             password=os.getenv("REDIS_PASSWORD", ""),
             decode_responses=True,
         )
+        try:
+            users_cache.ping()
+        except redis.exceptions.ConnectionError:
+            logging.error("MULTISELECT: Could not connect to users-cache.")
+            return dash.no_update
 
         try:
             if users_cache.exists(f"{current_user.get_id()}_group_options"):
@@ -245,12 +257,17 @@ def multiselect_values_to_repo_ids(n_clicks, user_vals):
     if current_user.is_authenticated:
         logging.warning(f"LOGINBUTTON: USER LOGGED IN {current_user}")
         # TODO: implement more permanent interface
-        users_cache = StrictRedis(
+        users_cache = redis.StrictRedis(
             host="redis-users",
             port=6379,
             password=os.getenv("REDIS_PASSWORD", ""),
             decode_responses=True,
         )
+        try:
+            users_cache.ping()
+        except redis.exceptions.ConnectionError:
+            logging.error("SEARCH-BUTTON: Could not connect to users-cache.")
+            return dash.no_update
 
         try:
             if users_cache.exists(f"{current_user.get_id()}_groups"):

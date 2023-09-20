@@ -6,7 +6,7 @@ from flask_login import (
     login_user,
     UserMixin,
 )
-from redis import StrictRedis
+import redis
 from flask import url_for, redirect, abort, session, request, flash, current_app
 import logging
 import json
@@ -47,11 +47,16 @@ def configure_server_login(server):
 
     @login.user_loader
     def load_user(id):
-        users_cache = StrictRedis(
+        users_cache = redis.StrictRedis(
             host="redis-users",
             port=6379,
             password=os.getenv("REDIS_PASSWORD", ""),
         )
+        try:
+            users_cache.ping()
+        except redis.exceptions.ConnectionError:
+            logging.error("LOAD_USER: Could not connect to users-cache.")
+            return None
 
         # return the JSON of a user that was set in the Redis instance
         if users_cache.exists(id):
@@ -66,6 +71,11 @@ def configure_server_login(server):
             port=6379,
             password=os.getenv("REDIS_PASSWORD", ""),
         )
+        try:
+            users_cache.ping()
+        except redis.exceptions.ConnectionError:
+            logging.error("LOGOUT: Could not connect to users-cache.")
+            return redirect("/")
 
         if current_user.is_authenticated:
             c_id = current_user.get_id()
@@ -78,11 +88,16 @@ def configure_server_login(server):
 
     @server.route("/login/")
     def oauth2_authorize():
-        users_cache = StrictRedis(
+        users_cache = redis.StrictRedis(
             host="redis-users",
             port=6379,
             password=os.getenv("REDIS_PASSWORD", ""),
         )
+        try:
+            users_cache.ping()
+        except redis.exceptions.ConnectionError:
+            logging.error("LOGIN: Could not connect to users-cache.")
+            return redirect("/")
 
         provider = os.environ.get("OAUTH_CLIENT_NAME")
 
@@ -111,11 +126,16 @@ def configure_server_login(server):
 
     @server.route("/authorize/")
     def oauth2_callback():
-        users_cache = StrictRedis(
+        users_cache = redis.StrictRedis(
             host="redis-users",
             port=6379,
             password=os.getenv("REDIS_PASSWORD", ""),
         )
+        try:
+            users_cache.ping()
+        except redis.exceptions.ConnectionError:
+            logging.error("AUTHORIZE: Could not connect to users-cache.")
+            return redirect("/")
 
         provider = os.environ.get("OAUTH_CLIENT_NAME")
 
