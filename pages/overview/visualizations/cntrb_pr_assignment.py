@@ -32,8 +32,9 @@ gc_cntrib_pr_assignment = dbc.Card(
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
                             """
-                            Visualizes the delta number of pull request review assignments for each \n
-                            contributor that meets the assignment criteria.
+                            Visualizes number of pull request reviews assigned to each each contributor\n
+                            in the specifed time bucket. The visualization only includes contributors\n
+                            that meet the user inputed the assignment criteria.
                             """
                         ),
                     ],
@@ -305,6 +306,24 @@ def pr_assignment(df, start_date, end_date, contrib):
     This function takes a start and an end date and determines how many
     prs that are open during that time interval and are currently assigned
     to the contributor.
+
+    Args:
+    -----
+        df : Pandas Dataframe
+            Dataframe with issue assignment actions of the assignees
+
+        start_date : Datetime Timestamp
+            Timestamp of the start time of the time interval
+
+        end_date : Datetime Timestamp
+            Timestamp of the end time of the time interval
+
+        contrib : str
+            contrb_id for the contributor
+
+    Returns:
+    --------
+        int: Number of assignments to the contributor in the time window
     """
 
     # drop rows not by contrib
