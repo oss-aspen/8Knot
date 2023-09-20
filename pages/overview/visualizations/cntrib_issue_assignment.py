@@ -32,8 +32,9 @@ gc_cntrib_issue_assignment = dbc.Card(
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
                             """
-                            Visualizes the delta number of issue assignments for each contributor \n
-                            that meets the assignment criteria.
+                            Visualizes number of issue assigned to each each contributor in the\n
+                            specifed time bucket. The visualization only includes contributors that\n
+                            that meet the user inputed the assignment criteria.
                             """
                         ),
                     ],
@@ -305,6 +306,24 @@ def issue_assignment(df, start_date, end_date, contrib):
     This function takes a start and an end date and determines how many
     issues that are open during that time interval and are currently assigned
     to the contributor.
+
+    Args:
+    -----
+        df : Pandas Dataframe
+            Dataframe with issue assignment actions of the assignees
+
+        start_date : Datetime Timestamp
+            Timestamp of the start time of the time interval
+
+        end_date : Datetime Timestamp
+            Timestamp of the end time of the time interval
+
+        contrib : str
+            contrb_id for the contributor
+
+    Returns:
+    --------
+        int: Number of assignments to the contributor in the time window
     """
 
     # drop rows not by contrib
@@ -313,20 +332,14 @@ def issue_assignment(df, start_date, end_date, contrib):
     # drop rows that are more recent than the end date
     df_created = df[df["created"] <= end_date]
 
-    # drop rows that have been closed before start date
-    df_in_range = df_created[df_created["closed"] > start_date]
+    # Keep issues that were either still open after the 'start_date' or that have not been closed.
+    df_in_range = df_created[df_created["closed"] > start_date | df_created["closed"].isnull()]
 
-    # include rows that have a null closed value
-    df_in_range = pd.concat([df_in_range, df_created[df_created.closed.isnull()]])
+    # get all issue unassignments and drop rows that have been unassigned more recent than the end date
+    df_unassign = df_in_range[df_in_range["assignment_action"] == "unassigned" | df_unassign["assign_date"] <= end_date]
 
-    # get all issue unassignments
-    df_unassign = df_in_range[df_in_range["assignment_action"] == "unassigned"]
-
-    # drop rows that have been unassigned more recent than the end date
-    df_unassign = df_unassign[df_unassign["assign_date"] <= end_date]
-
-    # get all issue assignments
-    df_assigned = df_in_range[df_in_range["assignment_action"] == "assigned"]
+    # get all issue assignments and drop rows that have been assigned more recent than the end date
+    df_assigned = df_in_range[df_in_range["assignment_action"] == "assigned" | df_assigned["assign_date"] <= end_date]
 
     # drop rows that have been assigned more recent than the end date
     df_assigned = df_assigned[df_assigned["assign_date"] <= end_date]
