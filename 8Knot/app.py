@@ -23,9 +23,7 @@ from db_manager.augur_manager import AugurManager
 import _login
 from _celery import celery_app, celery_manager
 
-logging.basicConfig(
-    format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO
-)
+logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO)
 
 
 """CREATE DATABASE ACCESS OBJECT AND CACHE SEARCH OPTIONS"""

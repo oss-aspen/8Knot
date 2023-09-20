@@ -65,9 +65,7 @@ def kick_off_group_collection(url, n_clicks):
         # TODO: check how old groups are. If they're pretty old (threshold tbd) then requery
 
         # check if groups are not already cached, or if the refresh-button was pressed
-        if not users_cache.exists(f"{user_id}_groups") or (
-            dash.ctx.triggered_id == "refresh-button"
-        ):
+        if not users_cache.exists(f"{user_id}_groups") or (dash.ctx.triggered_id == "refresh-button"):
             # kick off celery task to collect groups
             # on query worker queue,
             return [ugq.apply_async(args=[user_id], queue="data").id]
@@ -197,13 +195,9 @@ def dynamic_multiselect_options(user_in: str, selections):
 
         try:
             if users_cache.exists(f"{current_user.get_id()}_group_options"):
-                options = options + json.loads(
-                    users_cache.get(f"{current_user.get_id()}_group_options")
-                )
+                options = options + json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
         except redis.exceptions.ConnectionError:
-            logging.error(
-                "Searchbar: couldn't connect to Redis for user group options."
-            )
+            logging.error("Searchbar: couldn't connect to Redis for user group options.")
 
     # if the number of options changes then we're
     # adding AUGUR_ entries somewhere.
@@ -270,14 +264,10 @@ def multiselect_values_to_repo_ids(n_clicks, user_vals):
 
         try:
             if users_cache.exists(f"{current_user.get_id()}_groups"):
-                user_groups = json.loads(
-                    users_cache.get(f"{current_user.get_id()}_groups")
-                )
+                user_groups = json.loads(users_cache.get(f"{current_user.get_id()}_groups"))
                 logging.warning(f"USERS Groups: {type(user_groups)}, {user_groups}")
         except redis.exceptions.ConnectionError:
-            logging.error(
-                "Searchbar: couldn't connect to Redis for user group options."
-            )
+            logging.error("Searchbar: couldn't connect to Redis for user group options.")
 
     group_repos = [user_groups[g] for g in names if not augur.is_org(g)]
     # flatten list repo_ids in orgs to 1D
