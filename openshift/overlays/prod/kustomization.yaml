@@ -7,7 +7,7 @@ kind: Kustomization
 commonLabels:
   production: "true"
 
-namespace: prod-sandiego-explorer-osci-io
+namespace: prod-eightknot
 
 resources:
   - ../../base
