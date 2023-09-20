@@ -275,43 +275,6 @@ class AugurManager:
         """
         return self.multiselect_options
 
-    def auth_to_bearer_token(self, auth_token):
-        """Large parts of code written by John McGinness, University of Missouri
-
-        Returns:
-            _type_: _description_
-        """
-
-        auth_params = {"code": auth_token, "grant_type": "code"}
-
-        response = self.make_authenticated_request(params=auth_params)
-
-        if response.status_code == 200:
-            data = response.json()
-            if data.get("status") == "Validated":
-                return (
-                    data["username"],
-                    data["access_token"],
-                    data["expires"],
-                    data["refresh_token"],
-                )
-            else:
-                logging.critical(f"AUGUR-MANAGER FAILURE: Couldn't get Bearer Token, response not Validated.")
-                return None, None, None, None
-        else:
-            logging.critical(f"AUGUR-MANAGER FAILURE: Couldn't get Bearer Token, non-200 status.")
-            return None, None, None, None
-
-    def make_authenticated_request(self, headers={}, params={}):
-        """Large parts of code written by John McGinness, University of Missouri
-
-        Returns:
-            _type_: _description_
-        """
-        headers["Authorization"] = f"Client {self.client_secret}"
-
-        return requests.post(self.session_generate_endpoint, headers=headers, params=params)
-
     def make_user_request(self, access_token, headers={}, params={}):
         """Large parts of code written by John McGinness, University of Missouri
 
