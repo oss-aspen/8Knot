@@ -1,0 +1,122 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    alpha.image.policy.openshift.io/resolve-names: "*"
+    app.openshift.io/route-disabled: "false"
+    app.openshift.io/vcs-ref: main
+    app.openshift.io/vcs-uri: https://github.com/oss-aspen/8Knot.git
+    image.openshift.io/triggers: '[{"from":{"kind":"ImageStreamTag","name":"eightknot-app:latest"},"fieldPath":"spec.template.spec.containers[?(@.name==\"eightknot-app\")].image","pause":"false"}]'
+  labels:
+    name: eightknot-app-server
+    app.kubernetes.io/name: eightknot-app-server
+  name: eightknot-app-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: eightknot-app-server
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        name: eightknot-app-server
+    spec:
+      containers:
+        - command:
+            [
+              "gunicorn",
+              "--bind",
+              ":8080",
+              "app:server",
+              "--workers",
+              "1",
+              "--threads",
+              "2",
+            ]
+          envFrom:
+            - secretRef:
+                name: augur-config
+            - secretRef:
+                name: eightknot-redis
+          image: eightknot-app:latest
+          imagePullPolicy: Always
+          name: eightknot-app
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+              scheme: HTTP
+            timeoutSeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+              scheme: HTTP
+            timeoutSeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          resources:
+            limits:
+              cpu: 300m
+              memory: 256Mi
+            requests:
+              cpu: 50m
+              memory: 150Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/part-of: eightknot-app
+  name: eightknot-app-server
+spec:
+  ports:
+    - name: web
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: eightknot-app-server
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app.kubernetes.io/part-of: eightknot-app
+  name: eightknot-app-server
+spec:
+  port:
+    targetPort: web
+  to:
+    kind: ""
+    name: eightknot-app-server
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+# for a more k8s generic deployment you could use ingress
+# ---
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: eightknot-app-server
+# spec:
+#   rules:
+#     - host: ''
+#       http:
+#         paths:
+#           - path: /
+#             pathType: Prefix
+#             backend:
+#               service:
+#                 name: eightknot-app-server
+#                 port:
+#                   number: 8080
