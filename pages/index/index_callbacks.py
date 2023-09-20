@@ -29,7 +29,6 @@ from pages.index.login_help import (
 # list of queries to be run
 QUERIES = [iq, cq, cnq, prq, cmq, iaq, praq]
 
-
 # check if login has been enabled in config
 login_enabled = os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True"
 

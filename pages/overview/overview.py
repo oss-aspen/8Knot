@@ -15,8 +15,9 @@ from .visualizations.issue_staleness import gc_issue_staleness
 from .visualizations.pr_staleness import gc_pr_staleness
 from .visualizations.pr_over_time import gc_pr_over_time
 from .visualizations.cntrib_issue_assignment import gc_cntrib_issue_assignment
-from .visualizations.pr_assignment import gc_pr_assignment
 from .visualizations.issue_assignment import gc_issue_assignment
+from .visualizations.pr_assignment import gc_pr_assignment
+from .visualizations.cntrb_pr_assignment import gc_cntrib_pr_assignment
 
 # register the page
 dash.register_page(__name__, path="/overview", order=2)
@@ -57,12 +58,19 @@ layout = dbc.Container(
         ),
         dbc.Row(
             [
-                dbc.Col(gc_commits_over_time, width=6),
+                dbc.Col(gc_cntrib_pr_assignment, width=6),
                 dbc.Col(gc_pr_assignment, width=6),
             ],
             align="center",
             style={"marginBottom": ".5%"},
         ),
+        dbc.Row(
+              [
+                  dbc.Col(gc_commits_over_time, width=6),
+              ],
+              align="center",
+              style={"marginBottom": ".5%"},
+          ),
     ],
     fluid=True,
 )
