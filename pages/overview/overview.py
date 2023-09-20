@@ -54,7 +54,7 @@ layout = dbc.Container(
             align="center",
             style={"marginBottom": ".5%"},
         ),
-      dbc.Row(
+        dbc.Row(
             [
                 dbc.Col(gc_issue_assignment, width=6),
             ],
