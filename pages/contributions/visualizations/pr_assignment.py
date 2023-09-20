@@ -15,7 +15,7 @@ from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
 
-PAGE = "overview"
+PAGE = "contributions"
 VIZ_ID = "pr_assignment"
 
 gc_pr_assignment = dbc.Card(
