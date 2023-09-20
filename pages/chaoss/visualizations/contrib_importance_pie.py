@@ -126,10 +126,8 @@ gc_contrib_importance_pie = dbc.Card(
                                             id=f"patterns-{PAGE}-{VIZ_ID}",
                                             placeholder="Bot filter values",
                                             data=[
-                                                {"value": "potential-bot-filter", "label": "potential-bot-filter"},
                                                 {"value": "bot", "label": "bot"},
                                             ],
-                                            style={"background-color": "#333"},
                                             creatable=True,
                                             searchable=True,
                                         ),
