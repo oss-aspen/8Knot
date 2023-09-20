@@ -108,6 +108,35 @@ layout = html.Div(
                                 ),
                             ],
                         ),
+                        html.Div(
+                            className="instruction_card",
+                            children=[
+                                html.H2("4. Plotly Toolbar"),
+                                html.P(
+                                    """Hover over the top right corner to see Plotly tool options.
+                                    Options available: Download image, Zoom, Pan, Box Select, Lasso
+                                    Select, Zoom in, Zoom out, Autoscale, and Reset Axis.
+                                    """
+                                ),
+                                html.Div(
+                                    className="plotly_instructions_section",
+                                    children=[
+                                        html.Img(
+                                            className="plotly_instructions_section_img",
+                                            src="assets/welcome_plotly_section/graph-wide-shot.png",
+                                        ),
+                                        html.Img(
+                                            className="arrow_icon",
+                                            src="assets/welcome_plotly_section/rightarrow.png",
+                                        ),
+                                        html.Img(
+                                            className="plotly_instructions_section_img",
+                                            src="assets/welcome_plotly_section/graph-with-plotly-tools.png",
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
                     ],
                 ),
             ],

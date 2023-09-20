@@ -7,7 +7,7 @@ import io
 import datetime as dt
 from sqlalchemy.exc import SQLAlchemyError
 
-QUERY_NAME = "ISSUE_ASSIGNEE"
+QUERY_NAME = "PR_ASSIGNEE"
 
 
 @celery_app.task(
@@ -17,11 +17,10 @@ QUERY_NAME = "ISSUE_ASSIGNEE"
     retry_kwargs={"max_retries": 5},
     retry_jitter=True,
 )
-def issue_assignee_query(self, repos):
+def pr_assignee_query(self, repos):
     """
     (Worker Query)
     Executes SQL query against Augur database for contributor data.
-
     Args:
     -----
         repo_ids ([str]): repos that SQL query is executed on.
@@ -36,21 +35,21 @@ def issue_assignee_query(self, repos):
 
     query_string = f"""
                     SELECT
-                        i.issue_id,
-                        i.repo_id AS id,
-                        i.created_at as created,
-                        i.closed_at as closed,
-                        ie.created_at AS assign_date,
-                        ie.action AS assignment_action,
-                        ie.cntrb_id AS assignee
+                        pr.pull_request_id,
+                        pr.repo_id AS id,
+                        pr.pr_created_at AS created,
+                        pr.pr_closed_at as closed,
+                        pre.created_at AS assign_date,
+                        pre.action AS assignment_action,
+                        pre.cntrb_id AS assignee
                     FROM
-                        issues i
+                        pull_requests pr
                     LEFT OUTER JOIN
-                        issue_events ie
+                        pull_request_events pre
                     ON
-                        i.issue_id = ie.issue_id AND
-                        ie.action IN ('unassigned', 'assigned') AND
-                        i.repo_id IN ({str(repos)[1:-1]})
+                        pr.pull_request_id = pre.pull_request_id AND
+                        pre.action IN ('unassigned', 'assigned') AND
+                        pr.repo_id in ({str(repos)[1:-1]})
                 """
 
     try:
@@ -101,7 +100,7 @@ def issue_assignee_query(self, repos):
 
     # 'ack' is a boolean of whether data was set correctly or not.
     ack = cm_o.setm(
-        func=issue_assignee_query,
+        func=pr_assignee_query,
         repos=repos,
         datas=pic,
     )
