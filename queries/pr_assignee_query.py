@@ -25,7 +25,6 @@ def pr_assignee_query(self, repos):
     Args:
     -----
         repo_ids ([str]): repos that SQL query is executed on.
-
     Returns:
     --------
         dict: Results from SQL query, interpreted from pd.to_dict('records')
