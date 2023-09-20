@@ -241,33 +241,48 @@ def create_figure(df: pd.DataFrame, interval):
 def pr_assignment(df, start_date, end_date):
     """
     This function takes a start and a end date and determines how many
-    pull requests that are open during that time interval that are assigned or
-    unassigned for review.
+    prs in that time interval are assigned and unassigned.
+
+    Args:
+    -----
+        df : Pandas Dataframe
+            Dataframe with pr assignment actions of the assignees
+
+        start_date : Datetime Timestamp
+            Timestamp of the start time of the time interval
+
+        end_date : Datetime Timestamp
+            Timestamp of the end time of the time interval
+
+    Returns:
+    --------
+        int, int: Number of assigned and unassigned prs in the time window
     """
 
     # drop rows that are more recent than the end date
     df_created = df[df["created"] <= end_date]
 
-    # drop rows that have been closed before start date
-    df_in_range = df_created[df_created["closed"] > start_date]
+    # Keep prs that were either still open after the 'start_date' or that have not been closed.
+    df_in_range = df_created[(df_created["closed"] > start_date) | (df_created["closed"].isnull())]
 
-    # include rows that have a null closed value
-    df_in_range = pd.concat([df_in_range, df_created[df_created.closed.isnull()]])
+    # number of prs open in time interval
+    num_prs_open = df_in_range["pull_request_id"].nunique()
 
-    # get all pr unassignments
-    df_unassign = df_in_range[df_in_range["assignment_action"] == "unassigned"]
+    # get all pr review unassignments and drop rows that have been unassigned more recent than the end date
+    num_unassigned_actions = df_in_range[
+        (df_in_range["assignment_action"] == "unassigned") & (df_in_range["assign_date"] <= end_date)
+    ].shape[0]
 
-    # drop rows that have been unassigned more recent than the end date
-    df_unassign = df_unassign[df_unassign["assign_date"] <= end_date]
+    # get all issue assignments and drop rows that have been assigned more recent than the end date
+    num_assigned_actions = df_in_range[
+        (df_in_range["assignment_action"] == "assigned") & (df_in_range["assign_date"] <= end_date)
+    ].shape[0]
 
-    # include rows that have a null assignment value, therefore never assigned
-    df_unassign = pd.concat([df_unassign, df_in_range[df_in_range.assignment_action.isnull()]])
+    # number of assigned prs during the time interval
+    num_prs_assigned = num_assigned_actions - num_unassigned_actions
 
-    # get all pr assignments
-    df_assigned = df_in_range[df_in_range["assignment_action"] == "assigned"]
+    # number of unassigned prs during the time interval
+    num_prs_unassigned = num_prs_open - num_prs_assigned
 
-    # drop rows that have been assigned more recent than the end date
-    df_assigned = df_assigned[df_assigned["assign_date"] <= end_date]
-
-    # return the number of assignments and unassignments
-    return df_assigned.shape[0], df_unassign.shape[0]
+    # return the number of assigned and unassigned prs
+    return num_prs_assigned, num_prs_unassigned
