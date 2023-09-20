@@ -5,27 +5,25 @@ from dash import callback
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
-import datetime as dt
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, color_seq
-from queries.issues_query import issues_query as iq
 from pages.utils.job_utils import nodata_graph
-from cache_manager.cache_manager import CacheManager as cm
-import io
+from queries.prs_query import prs_query as prq
 import time
+import io
+from cache_manager.cache_manager import CacheManager as cm
 
-PAGE = "overview"
-VIZ_ID = "issue-staleness"
+PAGE = "contributions"
+VIZ_ID = "pr-staleness"
 
-
-gc_issue_staleness = dbc.Card(
+gc_pr_staleness = dbc.Card(
     [
         dbc.CardBody(
             [
                 html.H3(
-                    "Issue Activity- Staleness",
+                    "Pull Request Activity- Staleness",
                     className="card-title",
                     style={"textAlign": "center"},
                 ),
@@ -34,14 +32,14 @@ gc_issue_staleness = dbc.Card(
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
                             """
-                            Visualizes growth of Issue backlog. Differentiates sub-populations\n
-                            of issues by their 'Staleness.'\n
+                            Visualizes growth of Open Pull Request backlog. Differentiates sub-populations\n
+                            of PRs by their 'Staleness.'\n
                             Please see the definition of 'Staleness' on the Info page.
                             """
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",
+                    target=f"popover-target-{PAGE}-{VIZ_ID}",  # needs to be the same as dbc.Button id
                     placement="top",
                     is_open=False,
                 ),
@@ -88,16 +86,16 @@ gc_issue_staleness = dbc.Card(
                                     className="me-2",
                                     width=1,
                                 ),
-                                dbc.Alert(
-                                    children="Please ensure that 'Days Until Staling' is less than 'Days Until Stale'",
-                                    id=f"check-alert-{PAGE}-{VIZ_ID}",
-                                    dismissable=True,
-                                    fade=False,
-                                    is_open=False,
-                                    color="warning",
-                                ),
                             ],
                             align="center",
+                        ),
+                        dbc.Alert(
+                            children="Please ensure that 'Days Until Staling' is less than 'Days Until Stale'",
+                            id=f"check-alert-{PAGE}-{VIZ_ID}",
+                            dismissable=True,
+                            fade=False,
+                            is_open=False,
+                            color="warning",
                         ),
                         dbc.Row(
                             [
@@ -164,7 +162,7 @@ def toggle_popover(n, is_open):
     ],
     background=True,
 )
-def new_staling_issues_graph(repolist, interval, staling_interval, stale_interval):
+def new_staling_prs_graph(repolist, interval, staling_interval, stale_interval):
     # conditional for the intervals to be valid options
     if staling_interval > stale_interval:
         return dash.no_update, True
@@ -174,17 +172,17 @@ def new_staling_issues_graph(repolist, interval, staling_interval, stale_interva
 
     # wait for data to asynchronously download and become available.
     cache = cm()
-    df = cache.grabm(func=iq, repos=repolist)
+    df = cache.grabm(func=prq, repos=repolist)
     while df is None:
         time.sleep(1.0)
-        df = cache.grabm(func=iq, repos=repolist)
+        df = cache.grabm(func=prq, repos=repolist)
 
     start = time.perf_counter()
-    logging.warning("ISSUES STALENESS - START")
+    logging.warning("PULL REQUEST STALENESS - START")
 
     # test if there is data
     if df.empty:
-        logging.warning("ISSUE STALENESS - NO DATA AVAILABLE")
+        logging.warning("PULL REQUEST STALENESS  - NO DATA AVAILABLE")
         return nodata_graph, False
 
     # function for all data pre processing
@@ -192,13 +190,14 @@ def new_staling_issues_graph(repolist, interval, staling_interval, stale_interva
 
     fig = create_figure(df_status, interval)
 
-    logging.warning(f"ISSUE STALENESS - END - {time.perf_counter() - start}")
+    logging.warning(f"PULL REQUEST STALENESS - END - {time.perf_counter() - start}")
     return fig, False
 
 
 def process_data(df: pd.DataFrame, interval, staling_interval, stale_interval):
     # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
+    df["merged"] = pd.to_datetime(df["merged"], utc=True)
     df["closed"] = pd.to_datetime(df["closed"], utc=True)
 
     # order values chronologically by creation date
@@ -212,7 +211,7 @@ def process_data(df: pd.DataFrame, interval, staling_interval, stale_interval):
     # generating buckets beginning to the end of time by the specified interval
     dates = pd.date_range(start=earliest, end=latest, freq=interval, inclusive="both")
 
-    # df for new, staling, and stale issues for time interval
+    # df for new, staling, and stale prs for time interval
     df_status = dates.to_frame(index=False, name="Date")
 
     # dynamically apply the function to all dates defined in the date_range to create df_status
@@ -246,7 +245,7 @@ def create_figure(df_status: pd.DataFrame, interval):
                     y=df_status["New"],
                     mode="lines",
                     showlegend=True,
-                    hovertemplate="Issues New: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
+                    hovertemplate="PRs New: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
                     marker=dict(color=color_seq[0]),
                 ),
                 go.Scatter(
@@ -255,7 +254,7 @@ def create_figure(df_status: pd.DataFrame, interval):
                     y=df_status["Staling"],
                     mode="lines",
                     showlegend=True,
-                    hovertemplate="Issues Staling: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
+                    hovertemplate="PRs Staling: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
                     marker=dict(color=color_seq[3]),
                 ),
                 go.Scatter(
@@ -264,7 +263,7 @@ def create_figure(df_status: pd.DataFrame, interval):
                     y=df_status["Stale"],
                     mode="lines",
                     showlegend=True,
-                    hovertemplate="Issues Stale: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
+                    hovertemplate="PRs Stale: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
                     marker=dict(color=color_seq[5]),
                 ),
             ]
@@ -278,11 +277,11 @@ def create_figure(df_status: pd.DataFrame, interval):
         )
 
         # edit hover values
-        fig.update_traces(hovertemplate=hover + "<br>Issues: %{y}<br>" + "<extra></extra>")
+        fig.update_traces(hovertemplate=hover + "<br>PRs: %{y}<br>" + "<extra></extra>")
 
     fig.update_layout(
         xaxis_title="Time",
-        yaxis_title="Issues",
+        yaxis_title="Pull Requests",
         legend_title="Type",
         font=dict(size=14),
     )
@@ -306,10 +305,10 @@ def get_new_staling_stale_up_to(df, date, staling_interval, stale_interval):
     # time difference for the amount of days before the threshold date
     stale_days = date - relativedelta(days=+stale_interval)
 
-    # issuess still open at the specified date
+    # PRs still open at the specified date
     numTotal = df_in_range.shape[0]
 
-    # num of currently open issues that have been create in the last staling_value amount of days
+    # num of currently open PRs that have been create in the last staling_value amount of days
     numNew = df_in_range[df_in_range["created"] >= staling_days].shape[0]
 
     staling = df_in_range[df_in_range["created"] > stale_days]

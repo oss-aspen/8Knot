@@ -16,7 +16,7 @@ import time
 import datetime as dt
 from fuzzywuzzy import fuzz
 
-PAGE = "company"
+PAGE = "affiliation"
 VIZ_ID = "gh-company-affiliation"
 
 gc_gh_company_affiliation = dbc.Card(

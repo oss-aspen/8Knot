@@ -15,15 +15,15 @@ from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
 
-PAGE = "company"
-VIZ_ID = "unique-domains"
+PAGE = "affiliation"
+VIZ_ID = "company-core-contributors"
 
-gc_unique_domains = dbc.Card(
+gc_company_core_contributors = dbc.Card(
     [
         dbc.CardBody(
             [
                 html.H3(
-                    "Unique Contributor Email Domains",
+                    "Company Core Contributors",
                     className="card-title",
                     style={"textAlign": "center"},
                 ),
@@ -31,12 +31,12 @@ gc_unique_domains = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            """
-                            Visualizes the population of unique commit email addresses per represented domain.\n
-                            e.g. if there are 100 distinct commit contributors and 50 use an '@gmail.com' email address,\n
-                            and another 50 use an '@redhat.com' email address, 50 percent of of emails wll be '@gmail.com'\n
-                            and 50% will be '@redhat.com'.
-                            """
+                            "This graph counts the number of core contributions that COULD be linked to each company.\n\
+                            The methodology behind this is to take each associated email to someones github account\n\
+                            and link the contributions to each as it is unknown which initity the actvity was done for.\n\
+                            Then the graph groups contributions by contributors and filters by contributors that are core.\n\
+                            Contributions required is the amount of contributions necessary to be consider a core contributor\n\
+                            Core Contributors required is the amount of core contributors needed to have the domain listed."
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
@@ -52,13 +52,31 @@ gc_unique_domains = dbc.Card(
                         dbc.Row(
                             [
                                 dbc.Label(
-                                    "Contributors Required:",
+                                    "Contributions Required:",
                                     html_for=f"contributions-required-{PAGE}-{VIZ_ID}",
                                     width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     dbc.Input(
                                         id=f"contributions-required-{PAGE}-{VIZ_ID}",
+                                        type="number",
+                                        min=1,
+                                        max=100,
+                                        step=1,
+                                        value=10,
+                                        size="sm",
+                                    ),
+                                    className="me-2",
+                                    width=2,
+                                ),
+                                dbc.Label(
+                                    "Core Contributors Required:",
+                                    html_for=f"contributors-required-{PAGE}-{VIZ_ID}",
+                                    width={"size": "auto"},
+                                ),
+                                dbc.Col(
+                                    dbc.Input(
+                                        id=f"contributors-required-{PAGE}-{VIZ_ID}",
                                         type="number",
                                         min=1,
                                         max=50,
@@ -124,12 +142,13 @@ def toggle_popover(n, is_open):
     [
         Input("repo-choices", "data"),
         Input(f"contributions-required-{PAGE}-{VIZ_ID}", "value"),
+        Input(f"contributors-required-{PAGE}-{VIZ_ID}", "value"),
         Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "start_date"),
         Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "end_date"),
     ],
     background=True,
 )
-def unique_domains_graph(repolist, num, start_date, end_date):
+def compay_associated_activity_graph(repolist, contributions, contributors, start_date, end_date):
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=cmq, repos=repolist)
@@ -146,7 +165,7 @@ def unique_domains_graph(repolist, num, start_date, end_date):
         return nodata_graph
 
     # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
-    df = process_data(df, num, start_date, end_date)
+    df = process_data(df, contributions, contributors, start_date, end_date)
 
     fig = create_figure(df)
 
@@ -154,7 +173,7 @@ def unique_domains_graph(repolist, num, start_date, end_date):
     return fig
 
 
-def process_data(df: pd.DataFrame, num, start_date, end_date):
+def process_data(df: pd.DataFrame, contributions, contributors, start_date, end_date):
     # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
 
@@ -167,8 +186,15 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
     if end_date is not None:
         df = df[df.created <= end_date]
 
+    # groups contributions by countributor id and counts, created column now hold the number
+    # of contributions for its respective contributor
+    df = df.groupby(["cntrb_id", "email_list"], as_index=False)[["created"]].count()
+
+    # filters out contributors that dont meet the core contribution threshhold
+    df = df[df.created >= contributions]
+
     # creates list of unique emails and flattens list result
-    emails = df.email_list.str.split(" , ").explode("email_list").unique().tolist()
+    emails = df.email_list.str.split(" , ").explode("email_list").tolist()
 
     # remove any entries not in email format
     emails = [x for x in emails if "@" in x]
@@ -179,17 +205,17 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
     # creates df of domains and counts
     df = pd.DataFrame(email_domains, columns=["domains"]).value_counts().to_frame().reset_index()
 
-    df = df.rename(columns={0: "occurences"})
+    df = df.rename(columns={0: "contributors"})
 
     # changes the name of the company if under a certain threshold
-    df.loc[df.occurences <= num, "domains"] = "Other"
+    df.loc[df.contributors <= contributors, "domains"] = "Other"
 
     # groups others together for final counts
     df = (
-        df.groupby(by="domains")["occurences"]
+        df.groupby(by="domains")["contributors"]
         .sum()
         .reset_index()
-        .sort_values(by=["occurences"], ascending=False)
+        .sort_values(by=["contributors"], ascending=False)
         .reset_index(drop=True)
     )
 
@@ -198,11 +224,17 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
 
 def create_figure(df: pd.DataFrame):
     # graph generation
-    fig = px.pie(df, names="domains", values="occurences", color_discrete_sequence=color_seq)
+    fig = px.bar(df, x="domains", y="contributors", color_discrete_sequence=color_seq)
+    fig.update_xaxes(rangeslider_visible=True, range=[-0.5, 15])
+    fig.update_layout(
+        xaxis_title="Domains",
+        yaxis_title="Core Contributors",
+        bargroupgap=0.1,
+        margin_b=40,
+        font=dict(size=14),
+    )
     fig.update_traces(
-        textposition="inside",
-        textinfo="percent+label",
-        hovertemplate="%{label} <br>Contributions: %{value}<br><extra></extra>",
+        hovertemplate="%{label} <br>Contributors: %{value}<br><extra></extra>",
     )
 
     return fig

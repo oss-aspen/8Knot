@@ -8,22 +8,22 @@ import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import color_seq
-from queries.commits_query import commits_query as cq
+from queries.company_query import company_query as cmq
 import io
 from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
 
-PAGE = "company"
-VIZ_ID = "commit-domains"
+PAGE = "affiliation"
+VIZ_ID = "company-associated-activity"
 
-gc_commit_domains = dbc.Card(
+gc_company_associated_activity = dbc.Card(
     [
         dbc.CardBody(
             [
                 html.H3(
-                    "Commit Activity by Domain",
+                    "Company Associated Activity",
                     className="card-title",
                     style={"textAlign": "center"},
                 ),
@@ -32,11 +32,19 @@ gc_commit_domains = dbc.Card(
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
                             """
-                            Visualizes the proportion of commit activity done by specific email domains.\n
-                            e.g. if there are 100 commits and 75 commits were authored by a contributor with a\n
-                            '@gmail.com' email address, 75 percent of the chart will be represented '@gmail.com.'\n
-                            This can help to capture the relative magnitude of commit contribution by various corporate\n
-                            or institutional entities.
+                            For non-commit contributions (see definition of Contribution on Info page)\n
+                            we only know which contributor account contributed. We don't know which email,\n
+                            and therefore which possible institution the contribution represented.\n
+                            e.g. if we know that a PR comment was made by JaneDoe, and they have a '@redhat.com' and\n
+                            an '@gmail.com' email, we don't know whether they contributed individually\n
+                            or as a representative of an instituion. Therefore, we lower-bound the contribution\n
+                            of representation by counting each contribution as being made by ALL of the contributors\n
+                            linked email domains.\n
+                            This graph can therefore be interpreted as 'The minimum number of individuals who have\n
+                            been associated with each domain.'\n
+                            e.g. If there are 100 contributions and 20 contributors, and each contributor has an '@redhat.com'\n
+                            email associated with their account and one other random email, '@redhat.com' will be counted 100 times\n
+                            and the other contributor emails will also total a count of 100.\n
                             """
                         ),
                     ],
@@ -58,17 +66,15 @@ gc_commit_domains = dbc.Card(
                                     width={"size": "auto"},
                                 ),
                                 dbc.Col(
-                                    [
-                                        dbc.Input(
-                                            id=f"company-contributions-required-{PAGE}-{VIZ_ID}",
-                                            type="number",
-                                            min=1,
-                                            max=100,
-                                            step=1,
-                                            value=10,
-                                            size="sm",
-                                        ),
-                                    ],
+                                    dbc.Input(
+                                        id=f"company-contributions-required-{PAGE}-{VIZ_ID}",
+                                        type="number",
+                                        min=1,
+                                        max=100,
+                                        step=1,
+                                        value=10,
+                                        size="sm",
+                                    ),
                                     className="me-2",
                                     width=2,
                                 ),
@@ -132,13 +138,26 @@ def toggle_popover(n, is_open):
     ],
     background=True,
 )
-def commit_domains_graph(repolist, num, start_date, end_date):
+def compay_associated_activity_graph(repolist, num, start_date, end_date):
+    """Each contribution is associated with a contributor. That contributor can be associated with
+
+    more than one different email. Hence each contribution is associated with all of the emails that a contributor has historically used.
+
+    We don't always know which email (and therefore which organization) a contributor is affiliated with at contribution
+
+    time, so we choose to count all of their possible affiliations via their email list. e.g. if "Jane Doe" is associated with "gmail.com"
+
+    and "yahoo.com" and they have 5 contributions, "gmail.com" and "yahoo.com" would be counted 5 times each. We assume that relatively few people
+
+    will have many emails. We acknowledge that this will almost always contribute to an overcount but will never undercount."
+    """
+
     # wait for data to asynchronously download and become available.
     cache = cm()
-    df = cache.grabm(func=cq, repos=repolist)
+    df = cache.grabm(func=cmq, repos=repolist)
     while df is None:
         time.sleep(1.0)
-        df = cache.grabm(func=cq, repos=repolist)
+        df = cache.grabm(func=cmq, repos=repolist)
 
     start = time.perf_counter()
     logging.warning(f"{VIZ_ID}- START")
@@ -158,22 +177,20 @@ def commit_domains_graph(repolist, num, start_date, end_date):
 
 
 def process_data(df: pd.DataFrame, num, start_date, end_date):
-    # TODO: create docstring
-
     # convert to datetime objects rather than strings
-    df["author_timestamp"] = pd.to_datetime(df["author_timestamp"], utc=True)
+    df["created"] = pd.to_datetime(df["created"], utc=True)
 
-    # order values chronologically by author_timestamp date earliest to latest
-    df = df.sort_values(by="author_timestamp", axis=0, ascending=True)
+    # order values chronologically by COLUMN_TO_SORT_BY date
+    df = df.sort_values(by="created", axis=0, ascending=True)
 
     # filter values based on date picker
     if start_date is not None:
-        df = df[df.author_timestamp >= start_date]
+        df = df[df.created >= start_date]
     if end_date is not None:
-        df = df[df.author_timestamp <= end_date]
+        df = df[df.created <= end_date]
 
     # creates list of emails for each contribution and flattens list result
-    emails = df.author_email.tolist()
+    emails = df.email_list.str.split(" , ").explode("email_list").tolist()
 
     # remove any entries not in email format
     emails = [x for x in emails if "@" in x]
@@ -203,11 +220,17 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
 
 def create_figure(df: pd.DataFrame):
     # graph generation
-    fig = px.pie(df, names="domains", values="occurrences", color_discrete_sequence=color_seq)
+    fig = px.bar(df, x="domains", y="occurrences", color_discrete_sequence=color_seq)
+    fig.update_xaxes(rangeslider_visible=True, range=[-0.5, 15])
+    fig.update_layout(
+        xaxis_title="Domains",
+        yaxis_title="Contributions",
+        bargroupgap=0.1,
+        margin_b=40,
+        font=dict(size=14),
+    )
     fig.update_traces(
-        textposition="inside",
-        textinfo="percent+label",
-        hovertemplate="%{label} <br>Commits: %{value}<br><extra></extra>",
+        hovertemplate="%{label} <br>Contributions: %{value}<br><extra></extra>",
     )
 
     return fig
