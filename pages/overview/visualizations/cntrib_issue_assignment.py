@@ -33,7 +33,7 @@ gc_cntrib_issue_assignment = dbc.Card(
                         dbc.PopoverBody(
                             """
                             Visualizes number of issue assigned to each each contributor in the\n
-                            specifed time bucket. The visualization only includes contributors that\n
+                            specifed time bucket. The visualization only includes contributors\n
                             that meet the user inputed the assignment criteria.
                             """
                         ),
@@ -332,17 +332,18 @@ def issue_assignment(df, start_date, end_date, contrib):
     # drop rows that are more recent than the end date
     df_created = df[df["created"] <= end_date]
 
-    # Keep issues that were either still open after the 'start_date' or that have not been closed.
-    df_in_range = df_created[df_created["closed"] > start_date | df_created["closed"].isnull()]
+    # Keep prs that were either still open after the 'start_date' or that have not been closed.
+    df_in_range = df_created[(df_created["closed"] > start_date) | (df_created["closed"].isnull())]
 
-    # get all issue unassignments and drop rows that have been unassigned more recent than the end date
-    df_unassign = df_in_range[df_in_range["assignment_action"] == "unassigned" | df_unassign["assign_date"] <= end_date]
+    # get all pr review unassignments and drop rows that have been unassigned more recent than the end date
+    df_unassign = df_in_range[
+        (df_in_range["assignment_action"] == "unassigned") & (df_in_range["assign_date"] <= end_date)
+    ]
 
-    # get all issue assignments and drop rows that have been assigned more recent than the end date
-    df_assigned = df_in_range[df_in_range["assignment_action"] == "assigned" | df_assigned["assign_date"] <= end_date]
-
-    # drop rows that have been assigned more recent than the end date
-    df_assigned = df_assigned[df_assigned["assign_date"] <= end_date]
+    # get all pr review assignments and drop rows that have been assigned more recent than the end date
+    df_assigned = df_in_range[
+        (df_in_range["assignment_action"] == "assigned") & (df_in_range["assign_date"] <= end_date)
+    ]
 
     # return the different of assignments and unassignments
     return df_assigned.shape[0] - df_unassign.shape[0]
