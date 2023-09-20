@@ -17,30 +17,15 @@ import logging
 import dash
 from sqlalchemy.exc import SQLAlchemyError
 import plotly.io as plt_io
-from celery import Celery
-from dash import CeleryManager
 import dash_bootstrap_components as dbc
-from dash_bootstrap_templates import load_figure_template
+import dash_bootstrap_templates as dbt
 from db_manager.augur_manager import AugurManager
-import worker_settings
 import _login
+from _celery import celery_app, celery_manager
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO
 )
-
-"""CREATE CELERY TASK QUEUE AND MANAGER"""
-celery_app = Celery(
-    __name__,
-    broker=worker_settings.REDIS_URL,
-    backend=worker_settings.REDIS_URL,
-)
-
-celery_app.conf.update(
-    task_time_limit=84600, task_acks_late=True, task_track_started=True
-)
-
-celery_manager = CeleryManager(celery_app=celery_app)
 
 
 """CREATE DATABASE ACCESS OBJECT AND CACHE SEARCH OPTIONS"""
@@ -67,7 +52,7 @@ import pages.index.index_callbacks as index_callbacks
 
 
 """SET STYLING FOR APPLICATION"""
-load_figure_template(["sandstone", "minty", "slate"])
+dbt.load_figure_template(["sandstone", "minty", "slate"])
 
 # stylesheet with the .dbc class, this is a complement to the dash bootstrap templates, credit AnnMarieW
 dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css"
@@ -109,9 +94,3 @@ app.layout = layout
 
 if os.getenv("8KNOT_DEBUG", "False") == "True":
     app.enable_dev_tools(dev_tools_ui=True, dev_tools_hot_reload=False)
-
-if __name__ == "__main__":
-    print(
-        "We've deprecated the Flask/Dash debug webserver.\
-         Please use gunicorn to run application or docker/podman compose."
-    )
