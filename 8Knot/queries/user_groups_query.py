@@ -32,9 +32,7 @@ def user_groups_query(self, user_id):
     """
     logging.warning(f"{QUERY_NAME}_DATA_QUERY - START")
 
-    users_cache = redis.StrictRedis(
-        host="redis-users", port=6379, password=os.getenv("REDIS_PASSWORD", "")
-    )
+    users_cache = redis.StrictRedis(host="redis-users", port=6379, password=os.getenv("REDIS_PASSWORD", ""))
 
     # checks connection to Redis, raises redis.exceptions.ConnectionError if connection fails.
     # returns True if connection succeeds.
@@ -47,17 +45,11 @@ def user_groups_query(self, user_id):
         user = json.loads(users_cache.get(user_id))
 
     # query groups and options from Augur
-    users_groups, users_options = get_user_groups(
-        user["username"], user["access_token"]
-    )
+    users_groups, users_options = get_user_groups(user["username"], user["access_token"])
 
     # stores groups and options in cache
-    groups_set = users_cache.set(
-        name=f"{user_id}_groups", value=json.dumps(users_groups)
-    )
-    options_set = users_cache.set(
-        name=f"{user_id}_group_options", value=json.dumps(users_options)
-    )
+    groups_set = users_cache.set(name=f"{user_id}_groups", value=json.dumps(users_groups))
+    options_set = users_cache.set(name=f"{user_id}_group_options", value=json.dumps(users_options))
 
     # returns success of operation
     return bool(groups_set and options_set)
@@ -108,9 +100,7 @@ def get_user_groups(username, bearer_token):
 
         # searchbar options
         # user's groups are prefixed w/ username to guarantee uniqueness in searchbar
-        users_group_options.append(
-            {"value": lower_name, "label": f"{username}: {group_name}"}
-        )
+        users_group_options.append({"value": lower_name, "label": f"{username}: {group_name}"})
 
     return users_groups, users_group_options
 

@@ -25,9 +25,7 @@ if os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True":
                                 ]
                             ),
                             dbc.NavItem(
-                                dbc.NavLink(
-                                    "Refresh Groups", id="refresh-button", disabled=True
-                                ),
+                                dbc.NavLink("Refresh Groups", id="refresh-button", disabled=True),
                             ),
                             dbc.NavItem(
                                 dbc.NavLink(
@@ -91,9 +89,7 @@ navbar = dbc.Navbar(
                         [
                             dbc.Nav(
                                 [
-                                    dbc.NavLink(
-                                        page["name"], href=page["path"], active="exact"
-                                    )
+                                    dbc.NavLink(page["name"], href=page["path"], active="exact")
                                     for page in dash.page_registry.values()
                                     if page["module"] != "pages.not_found_404"
                                 ],
@@ -252,11 +248,7 @@ layout = dbc.Container(
                         ),
                         search_bar,
                         dcc.Loading(
-                            children=[
-                                html.Div(
-                                    id="results-output-container", className="mb-4"
-                                )
-                            ],
+                            children=[html.Div(id="results-output-container", className="mb-4")],
                             color="#119DFF",
                             type="dot",
                             fullscreen=True,
