@@ -163,7 +163,6 @@ def login_username_button(url):
     [Input("projects", "searchValue")],
     [
         State("projects", "value"),
-        # State("augur_user_group_options_dash_persistence", "data"),
     ],
 )
 def dynamic_multiselect_options(user_in: str, selections):
