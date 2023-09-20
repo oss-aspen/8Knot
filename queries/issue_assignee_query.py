@@ -21,6 +21,7 @@ def issue_assignee_query(self, repos):
     """
     (Worker Query)
     Executes SQL query against Augur database for contributor data.
+
     Args:
     -----
         repo_ids ([str]): repos that SQL query is executed on.
