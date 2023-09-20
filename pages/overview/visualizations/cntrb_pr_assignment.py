@@ -332,23 +332,18 @@ def pr_assignment(df, start_date, end_date, contrib):
     # drop rows that are more recent than the end date
     df_created = df[df["created"] <= end_date]
 
-    # drop rows that have been closed before start date
-    df_in_range = df_created[df_created["closed"] > start_date]
+    # Keep issues that were either still open after the 'start_date' or that have not been closed.
+    df_in_range = df_created[(df_created["closed"] > start_date) | (df_created["closed"].isnull())]
 
-    # include rows that have a null closed value
-    df_in_range = pd.concat([df_in_range, df_created[df_created.closed.isnull()]])
+    # get all issue unassignments and drop rows that have been unassigned more recent than the end date
+    df_unassign = df_in_range[
+        (df_in_range["assignment_action"] == "unassigned") & (df_in_range["assign_date"] <= end_date)
+    ]
 
-    # get all pr unassignments
-    df_unassign = df_in_range[df_in_range["assignment_action"] == "unassigned"]
-
-    # drop rows that have been unassigned more recent than the end date
-    df_unassign = df_unassign[df_unassign["assign_date"] <= end_date]
-
-    # get all pr assignments
-    df_assigned = df_in_range[df_in_range["assignment_action"] == "assigned"]
-
-    # drop rows that have been assigned more recent than the end date
-    df_assigned = df_assigned[df_assigned["assign_date"] <= end_date]
+    # get all issue assignments and drop rows that have been assigned more recent than the end date
+    df_assigned = df_in_range[
+        (df_in_range["assignment_action"] == "assigned") & (df_in_range["assign_date"] <= end_date)
+    ]
 
     # return the different of assignments and unassignments
     return df_assigned.shape[0] - df_unassign.shape[0]
