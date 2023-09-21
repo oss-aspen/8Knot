@@ -14,7 +14,7 @@ from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
 
-PAGE = "chaoss"
+PAGE = "contributors"
 VIZ_ID = "contrib-activity-cycle"
 
 

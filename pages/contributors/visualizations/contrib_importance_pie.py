@@ -17,7 +17,7 @@ from pages.utils.job_utils import nodata_graph
 import time
 import random
 
-PAGE = "chaoss"
+PAGE = "contributors"
 VIZ_ID = "contrib-importance-pie"
 
 gc_contrib_importance_pie = dbc.Card(
