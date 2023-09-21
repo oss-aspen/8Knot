@@ -25,7 +25,9 @@ if os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True":
                                 ]
                             ),
                             dbc.NavItem(
-                                dbc.NavLink("Refresh Groups", id="refresh-button", disabled=True),
+                                dcc.Loading(
+                                    dbc.NavLink("Refresh Groups", id="refresh-button", disabled=False),
+                                )
                             ),
                             dbc.NavItem(
                                 dbc.NavLink(

@@ -65,12 +65,12 @@ layout = dbc.Container(
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
-              [
-                  dbc.Col(gc_commits_over_time, width=6),
-              ],
-              align="center",
-              style={"marginBottom": ".5%"},
-          ),
+            [
+                dbc.Col(gc_commits_over_time, width=6),
+            ],
+            align="center",
+            style={"marginBottom": ".5%"},
+        ),
     ],
     fluid=True,
 )
