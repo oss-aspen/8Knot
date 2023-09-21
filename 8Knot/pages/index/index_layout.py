@@ -25,9 +25,15 @@ if os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True":
                                 ]
                             ),
                             dbc.NavItem(
+<<<<<<< HEAD
                                 dbc.NavLink(
                                     "Refresh Groups", id="refresh-button", disabled=True
                                 ),
+=======
+                                dcc.Loading(
+                                    dbc.NavLink("Refresh Groups", id="refresh-button", disabled=False),
+                                )
+>>>>>>> 51dd25c (updated route redirections)
                             ),
                             dbc.NavItem(
                                 dbc.NavLink(

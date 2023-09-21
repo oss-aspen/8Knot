@@ -39,7 +39,7 @@ def configure_server_login(server):
 
     # create flask-login object
     login = LoginManager(server)
-    login.login_view = "index"
+    login.login_view = "/"
 
     class User(UserMixin):
         def __init__(self, id):
@@ -66,7 +66,7 @@ def configure_server_login(server):
 
     @server.route("/logout/")
     def logout():
-        users_cache = StrictRedis(
+        users_cache = redis.StrictRedis(
             host="redis-users",
             port=6379,
             password=os.getenv("REDIS_PASSWORD", ""),
@@ -102,7 +102,7 @@ def configure_server_login(server):
         provider = os.environ.get("OAUTH_CLIENT_NAME")
 
         if not current_user.is_anonymous:
-            return redirect(url_for("index"))
+            return redirect("/")
 
         provider_data = current_app.config["OAUTH2_PROVIDERS"].get(provider)
         if provider_data is None:
@@ -140,7 +140,7 @@ def configure_server_login(server):
         provider = os.environ.get("OAUTH_CLIENT_NAME")
 
         if not current_user.is_anonymous:
-            return redirect(url_for("index"))
+            return redirect("/")
 
         provider_data = current_app.config["OAUTH2_PROVIDERS"].get(provider)
         if provider_data is None:
@@ -151,7 +151,7 @@ def configure_server_login(server):
             for k, v in request.args.items():
                 if k.startswith("error"):
                     flash(f"{k}: {v}")
-            return redirect(url_for("index"))
+            return redirect("/")
 
         # make sure that the state parameter matches the one we created in the
         # authorization request
