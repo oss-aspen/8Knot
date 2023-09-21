@@ -15,6 +15,8 @@ from queries.commits_query import commits_query as cq
 from queries.contributors_query import contributors_query as cnq
 from queries.prs_query import prs_query as prq
 from queries.company_query import company_query as cmq
+from queries.pr_assignee_query import pr_assignee_query as praq
+from queries.issue_assignee_query import issue_assignee_query as iaq
 
 # DONE: imported other functions
 from pages.index.login_help import (
@@ -25,7 +27,7 @@ from pages.index.login_help import (
 
 
 # list of queries to be run
-QUERIES = [iq, cq, cnq, prq, cmq]
+QUERIES = [iq, cq, cnq, prq, cmq, iaq, praq]
 
 # check if login has been enabled in config
 login_enabled = os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True"
