@@ -15,7 +15,7 @@ from pages.utils.job_utils import nodata_graph
 import time
 
 
-PAGE = "chaoss"
+PAGE = "contributors"
 VIZ_ID = "contribs-by-action"
 
 gc_contribs_by_action = dbc.Card(

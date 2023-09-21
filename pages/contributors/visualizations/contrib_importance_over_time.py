@@ -18,7 +18,7 @@ import time
 import datetime as dt
 from scipy import stats
 
-PAGE = "chaoss"  
+PAGE = "contributors"  
 VIZ_ID = "contrib-prolificacy-over-time"  
 
 gc_contrib_prolificacy_over_time = dbc.Card(

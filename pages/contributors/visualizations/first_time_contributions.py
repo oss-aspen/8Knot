@@ -13,7 +13,7 @@ import io
 import time
 from pages.utils.job_utils import nodata_graph
 
-PAGE = "chaoss"
+PAGE = "contributors"
 VIZ_ID = "first-time-contribution"
 
 gc_first_time_contributions = dbc.Card(

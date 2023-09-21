@@ -14,7 +14,7 @@ from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
 
-PAGE = "overview"
+PAGE = "contributors"
 VIZ_ID = "active-drifting-contributors"
 
 gc_active_drifting_contributors = dbc.Card(

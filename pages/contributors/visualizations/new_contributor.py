@@ -13,7 +13,7 @@ from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
 
-PAGE = "overview"
+PAGE = "contributors"
 VIZ_ID = "new-contributor"
 
 gc_new_contributor = dbc.Card(

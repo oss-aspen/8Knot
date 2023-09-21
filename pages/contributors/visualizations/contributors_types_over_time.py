@@ -15,7 +15,7 @@ import time
 import io
 from cache_manager.cache_manager import CacheManager as cm
 
-PAGE = "chaoss"
+PAGE = "contributors"
 VIZ_ID = "contrib-types-over-time"
 
 gc_contributors_over_time = dbc.Card(
