@@ -1,9 +1,11 @@
 from dash import dcc, html
 import dash
 import dash_bootstrap_components as dbc
+import warnings
 
-# register the page
-dash.register_page(__name__, path="/info", order=6)
+warnings.filterwarnings("ignore")
+
+dash.register_page(__name__, path="/info")
 
 layout = dbc.Container(
     [

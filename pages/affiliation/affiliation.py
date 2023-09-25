@@ -12,9 +12,7 @@ from .visualizations.commit_domains import gc_commit_domains
 
 warnings.filterwarnings("ignore")
 
-# register the page
-dash.register_page(__name__, path="/company", order=4)
-
+dash.register_page(__name__, path="/affiliation")
 
 layout = dbc.Container(
     [
@@ -37,7 +35,6 @@ layout = dbc.Container(
         dbc.Row(
             [
                 dbc.Col(gc_gh_company_affiliation, width=6),
-                # dbc.Col(gc_compay_core_contributors, width=6),
             ],
             align="center",
             style={"marginBottom": ".5%"},

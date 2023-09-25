@@ -1,6 +1,7 @@
 from dash import html, dcc
 import dash
 import dash_bootstrap_components as dbc
+import warnings
 
 # import the visualization cards
 from .visualizations.commits_over_time import gc_commits_over_time
@@ -13,8 +14,9 @@ from .visualizations.issue_assignment import gc_issue_assignment
 from .visualizations.pr_assignment import gc_pr_assignment
 from .visualizations.cntrb_pr_assignment import gc_cntrib_pr_assignment
 
-# register the page
-dash.register_page(__name__, path="/contributions", order=2)
+warnings.filterwarnings("ignore")
+
+dash.register_page(__name__, path="/contributions")
 
 layout = dbc.Container(
     [

@@ -83,9 +83,19 @@ navbar = dbc.Navbar(
                         [
                             dbc.Nav(
                                 [
-                                    dbc.NavLink(page["name"], href=page["path"], active="exact")
-                                    for page in dash.page_registry.values()
-                                    if page["module"] != "pages.not_found_404"
+                                    dbc.NavLink("Welcome", href="/", active="exact"),
+                                    dbc.NavLink("Contributions", href="/contributions", active="exact"),
+                                    dbc.DropdownMenu(
+                                        [
+                                            dbc.DropdownMenuItem("By Action", href="/contributors/action"),
+                                            dbc.DropdownMenuItem("By Type", href="/contributors/type"),
+                                        ],
+                                        label="Contributors",
+                                        nav=True,
+                                    ),
+                                    dbc.NavLink("Affiliation", href="/affiliation", active="exact"),
+                                    dbc.NavLink("CHAOSS", href="/chaoss", active="exact"),
+                                    dbc.NavLink("Info", href="/info", active="exact"),
                                 ],
                                 navbar=True,
                             )
