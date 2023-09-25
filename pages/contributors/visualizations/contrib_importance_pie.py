@@ -3,6 +3,7 @@ import dash
 from dash import dcc
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
+import dash_mantine_components as dmc
 from dash.exceptions import PreventUpdate
 import plotly.graph_objects as go
 import pandas as pd
@@ -122,17 +123,14 @@ gc_contrib_importance_pie = dbc.Card(
                                 ),
                                 dbc.Col(
                                     [
-                                        dcc.Dropdown(
+                                        dmc.MultiSelect(
                                             id=f"patterns-{PAGE}-{VIZ_ID}",
-                                            options=[
-                                                {"value": "potential-bot-filter", "label": "potential-bot-filter"},
+                                            placeholder="Bot filter values",
+                                            data=[
+                                                {"value": "bot", "label": "bot"},
                                             ],
-                                            value=["potential-bot-filter"],
-                                            multi=True,
+                                            creatable=True,
                                             searchable=True,
-                                        ),
-                                        dcc.Store(
-                                            id=f"keyword-{PAGE}-{VIZ_ID}",  #  keeps track of keys inputted into dcc.Dropdown
                                         ),
                                     ],
                                     className="me-2",
@@ -180,56 +178,6 @@ def toggle_popover(n, is_open):
 def graph_title(k, action_type):
     title = f"Top {k} Contributors by {action_type}"
     return title
-
-
-# callback to update dropdown menu with user-inputted keywords
-@callback(
-    Output(f"patterns-{PAGE}-{VIZ_ID}", "options"),
-    Output(f"keyword-{PAGE}-{VIZ_ID}", "data"),
-    Input(f"patterns-{PAGE}-{VIZ_ID}", "search_value"),
-    State(f"patterns-{PAGE}-{VIZ_ID}", "options"),
-    State(f"keyword-{PAGE}-{VIZ_ID}", "data"),
-    prevent_initial_call=True,
-)
-def dropdown_menu(key, options, previous_key):
-    """
-    Adapted from https://community.plotly.com/t/allow-user-to-create-new-options-in-dcc-dropdown/8408/6
-    The list of options for patterns to look for in contributor logins is updated at every key stroke.
-    Suppose 'github' is added as an option. By default the list of options is updated to [gi, git, gith, githu, github].
-    In order to prevent redundancy, the list of options and the user-inputted keyword is updated such that
-    only the final keyword, 'github' is added to the list of options.
-
-    :param key: A String representing the current key that the user has inputted into dcc.Dropdown
-    :param options: A list of Strings with patterns to filter out contributors by in their login
-    :param previous_key: A String representing the previous key that the user has inputted into dcc.Dropdown
-
-    returns updated list of options and new keyword
-    """
-    n = len(key)
-    try:
-        n_previous = len(previous_key)
-    except:
-        pass
-
-    if previous_key is None and n > 0:
-        # initialize the keyword by adding first key pressed to options
-        options += [{"label": key, "value": key}]
-    elif n > n_previous and n_previous > 0:
-        # if more keys are pressed, remove the previous key and update option with the current key
-        options = options[:-1] + [{"label": key, "value": key}]
-    elif n < n_previous and n_previous > 0:
-        # if the current key / keyword is less than the previous key / keyword
-        if n > 0:
-            # if more keys are pressed, remove the previous key and update option with the current key
-            options = options[:-1] + [{"label": key, "value": key}]
-        else:
-            # if no keys are pressed, do not update options
-            if n < n_previous - 1:
-                key = None
-            else:
-                # if user deletes all inputs, remove all options
-                options = options[:-1]
-    return options, key
 
 
 # callback for contrib-importance graph
