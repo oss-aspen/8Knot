@@ -31,10 +31,21 @@ layout = html.Div(
                         html.Div(
                             className="info_card",
                             children=[
-                                html.H2("Overview"),
+                                html.H2("Contributions"),
                                 html.P(
                                     """
-                                    Track large community trends over time based on common contributions
+                                    Track large community trends over time based on contribution types
+                                   """
+                                ),
+                            ],
+                        ),
+                        html.Div(
+                            className="info_card",
+                            children=[
+                                html.H2("Contributors"),
+                                html.P(
+                                    """
+                                    Track trends based on contributors, broken down by ...
                                    """
                                 ),
                             ],
@@ -49,7 +60,7 @@ layout = html.Div(
                         html.Div(
                             className="info_card",
                             children=[
-                                html.H2("Company"),
+                                html.H2("Affiliation"),
                                 html.P(
                                     "Summarize likely company and institution affiliation with contributor behavior"
                                 ),
