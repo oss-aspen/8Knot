@@ -12,7 +12,7 @@ from .visualizations.new_contributor import gc_new_contributor
 
 warnings.filterwarnings("ignore")
 
-dash.register_page(__name__, path="/contributors/type")
+dash.register_page(__name__, path="/contributors/behavior")
 
 layout = dbc.Container(
     [

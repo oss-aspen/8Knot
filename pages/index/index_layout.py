@@ -87,8 +87,10 @@ navbar = dbc.Navbar(
                                     dbc.NavLink("Contributions", href="/contributions", active="exact"),
                                     dbc.DropdownMenu(
                                         [
-                                            dbc.DropdownMenuItem("By Action", href="/contributors/action"),
-                                            dbc.DropdownMenuItem("By Type", href="/contributors/type"),
+                                            dbc.DropdownMenuItem("Behavior", href="/contributors/behavior"),
+                                            dbc.DropdownMenuItem(
+                                                "Contribution Types", href="/contributors/contribution_types"
+                                            ),
                                         ],
                                         label="Contributors",
                                         nav=True,

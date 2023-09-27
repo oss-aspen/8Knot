@@ -45,7 +45,7 @@ layout = html.Div(
                                 html.H2("Contributors"),
                                 html.P(
                                     """
-                                    Track trends based on contributors, broken down by ...
+                                    Track trends based on contributors, broken down by behavior and contribution types
                                    """
                                 ),
                             ],

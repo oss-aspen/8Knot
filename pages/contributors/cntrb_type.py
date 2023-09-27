@@ -11,7 +11,7 @@ from .visualizations.contrib_importance_over_time import gc_contrib_prolificacy_
 
 warnings.filterwarnings("ignore")
 
-dash.register_page(__name__, path="/contributors/action")
+dash.register_page(__name__, path="/contributors/contribution_types")
 
 layout = dbc.Container(
     [
