@@ -26,7 +26,11 @@ def configure_server_login(server):
     Returns:
         Flask.server: Server configured w/ Flask-Login
     """
+
+    # sets a parameter that's used for cryptographic session cookie signing.
     server.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
+
+    # writes OAuth parameters to the app config.
     server.config["OAUTH2_PROVIDERS"] = {
         os.environ.get("OAUTH_CLIENT_NAME"): {
             "client_id": os.environ.get("OAUTH_CLIENT_ID"),
@@ -42,11 +46,26 @@ def configure_server_login(server):
     login.login_view = "/"
 
     class User(UserMixin):
+        """
+        Basic user class expected by Flask-Login
+        flow.
+        """
+
         def __init__(self, id):
             self.id = id
 
     @login.user_loader
     def load_user(id):
+        """
+            Loads user from session into User object
+            if the user's session exists.
+
+        Args:
+            id (int): ID from session cookie to lookup user in user sessions.
+
+        Returns:
+            User | None: User object if user ID in session, None otherwise.
+        """
         users_cache = redis.StrictRedis(
             host="redis-users",
             port=6379,
@@ -66,6 +85,17 @@ def configure_server_login(server):
 
     @server.route("/logout/")
     def logout():
+        """
+            If the user is signed in, removes the user
+            from the user sessions cache and logs the user
+            out via Flask-Login flow.
+
+        Args:
+            None
+        Returns:
+            None
+
+        """
         users_cache = redis.StrictRedis(
             host="redis-users",
             port=6379,
@@ -88,6 +118,15 @@ def configure_server_login(server):
 
     @server.route("/login/")
     def oauth2_authorize():
+        """
+            Redirects the user's browser to the registered
+            OAuth provider Authorization site.
+
+        Args:
+            None
+        Returns:
+            None
+        """
         users_cache = redis.StrictRedis(
             host="redis-users",
             port=6379,
@@ -126,6 +165,15 @@ def configure_server_login(server):
 
     @server.route("/authorize/")
     def oauth2_callback():
+        """
+            Target of redirection from OAuth provider authorization server.
+            Performs OAuth flow to get access_token and refresh_token.
+
+        Args:
+            None
+        Returns:
+            None
+        """
         users_cache = redis.StrictRedis(
             host="redis-users",
             port=6379,
