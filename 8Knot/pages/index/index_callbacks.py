@@ -3,12 +3,14 @@ import re
 import os
 import time
 import logging
+import json
 from celery.result import AsyncResult
 import dash_bootstrap_components as dbc
 import dash
-from dash import html, callback
+from dash import callback
 from dash.dependencies import Input, Output, State
 from app import augur
+from flask_login import current_user
 from cache_manager.cache_manager import CacheManager as cm
 from queries.issues_query import issues_query as iq
 from queries.commits_query import commits_query as cq
@@ -17,13 +19,9 @@ from queries.prs_query import prs_query as prq
 from queries.company_query import company_query as cmq
 from queries.pr_assignee_query import pr_assignee_query as praq
 from queries.issue_assignee_query import issue_assignee_query as iaq
-
-# DONE: imported other functions
-from pages.index.login_help import (
-    verify_previous_login_credentials,
-    get_user_groups,
-    get_admin_groups,
-)
+from queries.user_groups_query import user_groups_query as ugq
+import redis
+import flask
 
 
 # list of queries to be run
@@ -34,6 +32,51 @@ login_enabled = os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True"
 
 
 @callback(
+    [Output("user-group-loading-signal", "data")],
+    [Input("url", "href"), Input("refresh-button", "n_clicks")],
+)
+def kick_off_group_collection(url, n_clicks):
+    """Schedules a Celery task to collect user groups.
+    Sends a message via localStorage that will kick off a background callback
+    which waits for the Celery task to finish.
+
+    if refresh-groups clicked, forces group reload.
+
+    Args:
+        url (str): browser page URL
+        n_clicks (_type_): number 'refresh_groups' button has been clicked.
+
+    Returns:
+        int: ID of Celery task that has started for group collection.
+    """
+    if current_user.is_authenticated:
+        user_id = current_user.get_id()
+        users_cache = redis.StrictRedis(
+            host="redis-users",
+            port=6379,
+            password=os.getenv("REDIS_PASSWORD", ""),
+        )
+        try:
+            users_cache.ping()
+        except redis.exceptions.ConnectionError:
+            logging.error("GROUP-COLLECTION: Could not connect to users-cache.")
+            return dash.no_update
+
+        # TODO: check how old groups are. If they're pretty old (threshold tbd) then requery
+
+        # check if groups are not already cached, or if the refresh-button was pressed
+        if not users_cache.exists(f"{user_id}_groups") or (dash.ctx.triggered_id == "refresh-button"):
+            # kick off celery task to collect groups
+            # on query worker queue,
+            return [ugq.apply_async(args=[user_id], queue="data").id]
+        else:
+            return dash.no_update
+    else:
+        # user anonymous
+        return dash.no_update
+
+
+@callback(
     [
         Output("nav-login-container", "children"),
         Output("login-popover", "is_open"),
@@ -41,10 +84,9 @@ login_enabled = os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True"
         Output("logout-button", "disabled"),
         Output("manage-group-button", "disabled"),
     ],
-    Input("augur_username_dash_persistence", "data"),
-    State("login-succeeded", "data"),
+    Input("url", "href"),
 )
-def login_username_button(username, login_succeeded):
+def login_username_button(url):
     """Sets logged-in-status component in top left of page.
 
     If a non-null username is known then we're logged in so we provide
@@ -61,29 +103,49 @@ def login_username_button(username, login_succeeded):
         _type_: _description_
     """
 
-    buttons_disabled = True
+    navlink = [
+        dbc.NavLink(
+            "Augur log in/sign up",
+            href="/login/",
+            id="login-navlink",
+            active=True,
+            # communicating with the underlying Flask server
+            external_link=True,
+        ),
+    ]
 
-    if username:
-        navlink = [
-            dbc.NavItem(
-                dbc.NavLink(
-                    f"{username}",
-                    href=augur.user_account_endpoint,
-                    id="login-navlink",
-                    disabled=True,
+    buttons_disabled = True
+    login_succeeded = True
+
+    if current_user:
+        if current_user.is_authenticated:
+            logging.warning(f"LOGINBUTTON: USER LOGGED IN {current_user}")
+            # TODO: implement more permanent interface
+            users_cache = redis.StrictRedis(
+                host="redis-users",
+                port=6379,
+                password=os.getenv("REDIS_PASSWORD", ""),
+            )
+            try:
+                users_cache.ping()
+            except redis.exceptions.ConnectionError:
+                logging.error("USERNAME: Could not connect to users-cache.")
+                return dash.no_update
+
+            user_id = current_user.get_id()
+            user_info = json.loads(users_cache.get(user_id))
+
+            navlink = [
+                dbc.NavItem(
+                    dbc.NavLink(
+                        f"{user_info['username']}",
+                        href=augur.user_account_endpoint,
+                        id="login-navlink",
+                        disabled=True,
+                    ),
                 ),
-            ),
-        ]
-        buttons_disabled = False
-    else:
-        navlink = [
-            dbc.NavLink(
-                "Augur log in/sign up",
-                href=augur.user_auth_endpoint,
-                id="login-navlink",
-                active=True,
-            ),
-        ]
+            ]
+            buttons_disabled = False
 
     return (
         navlink,
@@ -95,166 +157,13 @@ def login_username_button(username, login_succeeded):
 
 
 @callback(
-    [
-        Output("augur_username_dash_persistence", "data"),
-        Output("augur_user_bearer_token_dash_persistence", "data"),
-        Output("augur_token_expiration_dash_persistence", "data"),
-        Output("augur_refresh_token_dash_persistence", "data"),
-        Output("augur_user_groups_dash_persistence", "data"),
-        Output("augur_user_group_options_dash_persistence", "data"),
-        Output("is-client-startup", "data"),
-        Output("url", "search"),
-        Output("login-succeeded", "data"),
-    ],
-    [
-        Input("url", "href"),
-        State("url", "search"),
-        State("is-client-startup", "data"),
-        State("augur_username_dash_persistence", "data"),
-        State("augur_user_bearer_token_dash_persistence", "data"),
-        State("augur_token_expiration_dash_persistence", "data"),
-        State("augur_refresh_token_dash_persistence", "data"),
-    ],
-)
-def get_augur_user_preferences(
-    this_url,
-    search_val,
-    is_client_startup,
-    username,
-    bearer_token,
-    expiration,
-    refresh_token,
-):
-    """Handles logging in when the user navigates to application.
-
-    If the user is navigating to application with a fresh tab, the app
-    tries to log in with credentials (bearer token) if they're present and valid.
-
-    If credentials are valid and user is logged in, user's groups are retrieved from
-    Augur front-end and stored in their session.
-
-    This function will be invoked any time a page is switched in the app, including when
-    the application is accessed via redirect from Augur or on refresh.
-
-    Args:
-        this_url (str): current full href
-        search_val (str): query strings to HREF
-        refresh_groups (bool): whether we should refresh user's preferences
-        username (str): stored username
-        bearer_token (str): stored bearer token
-        expiration (str): bearer token expiration date
-        refresh (str): refresh token for bearer token
-
-    Raises:
-        dash.exceptions.PreventUpdate: if we're just switching between pages, don't update anything
-
-    Returns:
-        augur_username_dash_persistence (str): username
-        augur_user_bearer_token_dash_persistence (str): bearer token
-        augur_token_expiration_dash_persistence (str): bearer token expiration
-        augur_refresh_token_dash_persistence (str): refresh token for bearer token
-        augur_user_groups_dash_persistence (str): user's groups
-        augur_user_group_options_dash_persistence (str): possible groups from source DB
-        refresh-groups (bool): whether we should refresh user's preferences
-        search_val (str): query strings to HREF- remove on login to fix refresh bug
-        login-succeeded (bool):
-    """
-
-    # used to extract auth from URL
-    code_pattern = re.compile(r"\?code=([0-9A-z]+)", re.IGNORECASE)
-
-    # output values when login isn't possible
-    no_login = [
-        "",  # username
-        "",  # bearer token
-        "",  # bearer token expiration
-        "",  # refresh token
-        {},  # user groups
-        [],  # user group options
-        False,  # fetch groups?
-        "",  # search (code_val) removed once logged in
-    ]
-    # ^note about 'search' above- we're removing it when this function returns
-    # so that on refresh the logic below won't trigger another login try if the
-    # user tries to refresh while still on the page redirected-to from Augur authorization.
-
-    # URL-triggered callback
-    auth_code_match = re.search(code_pattern, search_val)
-
-    # always go through this path if login not enabled
-    if (not is_client_startup and not auth_code_match) or (not login_enabled):
-        logging.warning("LOGIN: Page Switch")
-        raise dash.exceptions.PreventUpdate
-
-    if auth_code_match:
-        logging.warning("LOGIN: Redirect from Augur; Code pattern in href")
-        # the user has just redirected from Augur so we know
-        # that we need to get their new credentials.
-
-        auth = auth_code_match.group(1)
-
-        # use the auth token to get the bearer token
-        username, bearer_token, expiration, refresh_token = augur.auth_to_bearer_token(auth)
-
-        # if we try to log in with the auth token we just get and the login fails, we
-        # tell the user with a popover and do nothing.
-
-        if not all([username, bearer_token, expiration, refresh_token]):
-            return no_login + [False]
-
-        # expiration should be a future time not a duration
-        expiration = datetime.now() + timedelta(seconds=expiration)
-
-    elif is_client_startup:
-        logging.warning("LOGIN: STARTUP - GETTING ADMIN GROUPS")
-        # try to get admin groups
-        admin_groups, admin_group_options = get_admin_groups()
-
-        no_login[4] = admin_groups
-        no_login[5] = admin_group_options
-
-        logging.warning("LOGIN: STARTUP - ADMIN GROUPS SET")
-
-        if expiration and bearer_token:
-            checked_bt, checked_rt = verify_previous_login_credentials(bearer_token, refresh_token, expiration)
-            if not all([checked_bt, checked_rt]):
-                return no_login + [True]
-            logging.warning("LOGIN: Warm startup; preexisting credentials available")
-        else:
-            logging.warning("LOGIN: Cold Startup; no credentials available")
-            return no_login + [True]
-
-    # get groups for admin and user from front-end
-    user_groups, user_group_options = get_user_groups(username, bearer_token)
-    admin_groups, admin_group_options = get_admin_groups()
-
-    # combine admin and user groups
-    user_groups.update(admin_groups)
-    user_group_options += admin_group_options
-
-    logging.warning("LOGIN: Success")
-    return (
-        username,
-        bearer_token,
-        expiration,
-        refresh_token,
-        user_groups,
-        user_group_options,
-        False,  # refresh_groups
-        "",  # reset search to empty post-login
-        True,  # login succeeded
-    )
-
-
-@callback(
     [Output("projects", "data")],
     [Input("projects", "searchValue")],
     [
         State("projects", "value"),
-        State("augur_user_group_options_dash_persistence", "data"),
     ],
 )
-def dynamic_multiselect_options(user_in: str, selections, augur_groups):
+def dynamic_multiselect_options(user_in: str, selections):
     """
     Ref: https://dash.plotly.com/dash-core-components/dropdown#dynamic-options
 
@@ -268,7 +177,27 @@ def dynamic_multiselect_options(user_in: str, selections, augur_groups):
         return dash.no_update
 
     options = augur.get_multiselect_options().copy()
-    options = options + augur_groups
+
+    if current_user.is_authenticated:
+        logging.warning(f"LOGINBUTTON: USER LOGGED IN {current_user}")
+        # TODO: implement more permanent interface
+        users_cache = redis.StrictRedis(
+            host="redis-users",
+            port=6379,
+            password=os.getenv("REDIS_PASSWORD", ""),
+            decode_responses=True,
+        )
+        try:
+            users_cache.ping()
+        except redis.exceptions.ConnectionError:
+            logging.error("MULTISELECT: Could not connect to users-cache.")
+            return dash.no_update
+
+        try:
+            if users_cache.exists(f"{current_user.get_id()}_group_options"):
+                options = options + json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
+        except redis.exceptions.ConnectionError:
+            logging.error("Searchbar: couldn't connect to Redis for user group options.")
 
     # if the number of options changes then we're
     # adding AUGUR_ entries somewhere.
@@ -298,10 +227,9 @@ def dynamic_multiselect_options(user_in: str, selections, augur_groups):
     [
         Input("search", "n_clicks"),
         State("projects", "value"),
-        State("augur_user_groups_dash_persistence", "data"),
     ],
 )
-def multiselect_values_to_repo_ids(n_clicks, user_vals, user_groups):
+def multiselect_values_to_repo_ids(n_clicks, user_vals):
     if not user_vals:
         logging.warning("NOTHING SELECTED IN SEARCH BAR")
         raise dash.exceptions.PreventUpdate
@@ -317,6 +245,29 @@ def multiselect_values_to_repo_ids(n_clicks, user_vals, user_groups):
     # flatten list repo_ids in orgs to 1D
     org_repos = [v for l in org_repos for v in l]
     logging.warning(f"ORG_REPOS: {org_repos}")
+
+    user_groups = []
+    if current_user.is_authenticated:
+        logging.warning(f"LOGINBUTTON: USER LOGGED IN {current_user}")
+        # TODO: implement more permanent interface
+        users_cache = redis.StrictRedis(
+            host="redis-users",
+            port=6379,
+            password=os.getenv("REDIS_PASSWORD", ""),
+            decode_responses=True,
+        )
+        try:
+            users_cache.ping()
+        except redis.exceptions.ConnectionError:
+            logging.error("SEARCH-BUTTON: Could not connect to users-cache.")
+            return dash.no_update
+
+        try:
+            if users_cache.exists(f"{current_user.get_id()}_groups"):
+                user_groups = json.loads(users_cache.get(f"{current_user.get_id()}_groups"))
+                logging.warning(f"USERS Groups: {type(user_groups)}, {user_groups}")
+        except redis.exceptions.ConnectionError:
+            logging.error("Searchbar: couldn't connect to Redis for user group options.")
 
     group_repos = [user_groups[g] for g in names if not augur.is_org(g)]
     # flatten list repo_ids in orgs to 1D

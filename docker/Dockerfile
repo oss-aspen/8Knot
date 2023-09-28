@@ -9,7 +9,7 @@ RUN pip3 install --no-cache-dir -U pip setuptools && \
 
 # copy the contents of current file into the
 # working directory.
-COPY ./ /opt/app-root/src/
+COPY ./8Knot/ /opt/app-root/src/
 
 # run flower
 # CMD [ "celery", "-A", "app:celery_app", "flower" ]

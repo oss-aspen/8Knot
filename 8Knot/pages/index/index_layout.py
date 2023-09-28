@@ -38,7 +38,13 @@ if os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True":
                                 ),
                             ),
                             dbc.NavItem(
-                                dbc.NavLink("Log out", id="logout-button", disabled=True),
+                                dbc.NavLink(
+                                    "Log out",
+                                    id="logout-button",
+                                    disabled=True,
+                                    href="/logout/",
+                                    external_link=True,
+                                ),
                             ),
                             dbc.Popover(
                                 children="Login Failed",
@@ -84,18 +90,30 @@ navbar = dbc.Navbar(
                             dbc.Nav(
                                 [
                                     dbc.NavLink("Welcome", href="/", active="exact"),
-                                    dbc.NavLink("Contributions", href="/contributions", active="exact"),
+                                    dbc.NavLink(
+                                        "Contributions",
+                                        href="/contributions",
+                                        active="exact",
+                                    ),
                                     dbc.DropdownMenu(
                                         [
-                                            dbc.DropdownMenuItem("Behavior", href="/contributors/behavior"),
                                             dbc.DropdownMenuItem(
-                                                "Contribution Types", href="/contributors/contribution_types"
+                                                "Behavior",
+                                                href="/contributors/behavior",
+                                            ),
+                                            dbc.DropdownMenuItem(
+                                                "Contribution Types",
+                                                href="/contributors/contribution_types",
                                             ),
                                         ],
                                         label="Contributors",
                                         nav=True,
                                     ),
-                                    dbc.NavLink("Affiliation", href="/affiliation", active="exact"),
+                                    dbc.NavLink(
+                                        "Affiliation",
+                                        href="/affiliation",
+                                        active="exact",
+                                    ),
                                     dbc.NavLink("CHAOSS", href="/chaoss", active="exact"),
                                     dbc.NavLink("Info", href="/info", active="exact"),
                                 ],
@@ -239,18 +257,7 @@ layout = dbc.Container(
         dcc.Store(id="repo-choices", storage_type="session", data=[]),
         # components to store job-ids for the worker queue
         dcc.Store(id="job-ids", storage_type="session", data=[]),
-        dcc.Store(id="is-client-startup", storage_type="session", data=True),
-        dcc.Store(id="augur_user_groups_dash_persistence", storage_type="session", data={}),
-        dcc.Store(
-            id="augur_user_group_options_dash_persistence",
-            storage_type="session",
-            data=[],
-        ),
-        dcc.Store(id="augur_user_bearer_token_dash_persistence", storage_type="local", data=""),
-        dcc.Store(id="augur_username_dash_persistence", storage_type="local", data=""),
-        dcc.Store(id="augur_refresh_token_dash_persistence", storage_type="local", data=""),
-        dcc.Store(id="augur_token_expiration_dash_persistence", storage_type="local", data=""),
-        dcc.Store(id="login-succeeded", data=True),
+        dcc.Store(id="user-group-loading-signal", data="", storage_type="memory"),
         dcc.Location(id="url"),
         navbar,
         dbc.Row(
