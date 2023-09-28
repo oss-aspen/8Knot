@@ -25,15 +25,7 @@ if os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True":
                                 ]
                             ),
                             dbc.NavItem(
-<<<<<<< HEAD
-                                dbc.NavLink(
-                                    "Refresh Groups", id="refresh-button", disabled=True
-                                ),
-=======
-                                dcc.Loading(
-                                    dbc.NavLink("Refresh Groups", id="refresh-button", disabled=False),
-                                )
->>>>>>> 51dd25c (updated route redirections)
+                                dbc.NavLink("Refresh Groups", id="refresh-button", disabled=True),
                             ),
                             dbc.NavItem(
                                 dbc.NavLink(
@@ -122,9 +114,7 @@ navbar = dbc.Navbar(
                                         href="/affiliation",
                                         active="exact",
                                     ),
-                                    dbc.NavLink(
-                                        "CHAOSS", href="/chaoss", active="exact"
-                                    ),
+                                    dbc.NavLink("CHAOSS", href="/chaoss", active="exact"),
                                     dbc.NavLink("Info", href="/info", active="exact"),
                                 ],
                                 navbar=True,
@@ -282,11 +272,7 @@ layout = dbc.Container(
                         ),
                         search_bar,
                         dcc.Loading(
-                            children=[
-                                html.Div(
-                                    id="results-output-container", className="mb-4"
-                                )
-                            ],
+                            children=[html.Div(id="results-output-container", className="mb-4")],
                             color="#119DFF",
                             type="dot",
                             fullscreen=True,
