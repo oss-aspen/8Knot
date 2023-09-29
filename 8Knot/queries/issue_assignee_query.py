@@ -22,6 +22,10 @@ def issue_assignee_query(self, repos):
     (Worker Query)
     Executes SQL query against Augur database for contributor data.
 
+    Explorer_issue_assignments is a materialized view on the database for quicker run time and
+    may not be in your augur database. The SQL query content can be found
+    in docs/materialized_views/explorer_issue_assignments.sql
+
     Args:
     -----
         repo_ids ([str]): repos that SQL query is executed on.
@@ -36,21 +40,11 @@ def issue_assignee_query(self, repos):
 
     query_string = f"""
                     SELECT
-                        i.issue_id,
-                        i.repo_id AS id,
-                        i.created_at as created,
-                        i.closed_at as closed,
-                        ie.created_at AS assign_date,
-                        ie.action AS assignment_action,
-                        ie.cntrb_id AS assignee
+                        *
                     FROM
-                        issues i
-                    LEFT OUTER JOIN
-                        issue_events ie
-                    ON
-                        i.issue_id = ie.issue_id AND
-                        ie.action IN ('unassigned', 'assigned') AND
-                        i.repo_id IN ({str(repos)[1:-1]})
+                        explorer_issue_assignments
+                    WHERE
+                        repo_id in ({str(repos)[1:-1]})
                 """
 
     try:
