@@ -296,6 +296,8 @@ def process_data(df, patterns, threshold, window_width, step_size, start_date, e
     (
         df_final["Commit"],
         df_final["Issue Opened"],
+        df_final["Issue Comment"],
+        df_final["Issue Closed"],
         df_final["PR Opened"],
         df_final["PR Comment"],
         df_final["PR Review"],
@@ -309,49 +311,82 @@ def process_data(df, patterns, threshold, window_width, step_size, start_date, e
 
 
 def create_figure(df_final, step_size):
+    # create custom data to update the hovertemplate with the action type and start and end dates of a given time window
+    action_types = [[action_type] * len(df_final) for action_type in df_final.columns[2:]]
+    time_window = list(df_final["period_from"].dt.strftime("%b %d, %Y") + " - " + df_final["period_to"].dt.strftime("%b %d, %Y"))
+
     # create plotly express line graph
     fig = go.Figure(
         [
-            go.Scatter(
-                name="Commit",
-                x=df_final["period_from"],
-                y=df_final["Commit"],
-                mode="lines",
-                showlegend=True,
-                marker=dict(color=color_seq[0]),
-            ),
-            go.Scatter(
-                name="Issue Opened",
-                x=df_final["period_from"],
-                y=df_final["Issue Opened"],
-                mode="lines",
-                showlegend=True,
-                marker=dict(color=color_seq[1]),
-            ),
-            go.Scatter(
-                name="PR Opened",
-                x=df_final["period_from"],
-                y=df_final["PR Opened"],
-                mode="lines",
-                showlegend=True,
-                marker=dict(color=color_seq[2]),
-            ),
-            go.Scatter(
-                name="PR Request Comment",
-                x=df_final["period_from"],
-                y=df_final["PR Comment"],
-                mode="lines",
-                showlegend=True,
-                marker=dict(color=color_seq[3]),
-            ),
-            go.Scatter(
-                name="PR Request Review",
-                x=df_final["period_from"],
-                y=df_final["PR Review"],
-                mode="lines",
-                showlegend=True,
-                marker=dict(color=color_seq[4]),
-            ),
+            go.Scatter(name="Commit",
+                       x=df_final["period_from"],
+                       y = df_final["Commit"],
+                       text=action_types[0],
+                       customdata=time_window,
+                       mode="lines",
+                       showlegend=True,
+                       marker=dict(color=color_seq[0])
+                       ),
+
+            go.Scatter(name="Issue Opened",
+                       x=df_final["period_from"],
+                       y=df_final["Issue Opened"],
+                       text=action_types[1],
+                       customdata=time_window,
+                       mode="lines",
+                       showlegend=True,
+                       marker=dict(color=color_seq[1])
+                       ),
+
+            go.Scatter(name="Issue Comment",
+                       x=df_final["period_from"],
+                       y=df_final["Issue Comment"],
+                       text=action_types[2],
+                       customdata=time_window,
+                       mode="lines",
+                       showlegend=True,
+                       marker=dict(color=color_seq[2])
+                       ),
+
+            go.Scatter(name="Issue Closed",
+                       x=df_final["period_from"],
+                       y=df_final["Issue Closed"],
+                       text=action_types[3],
+                       customdata=time_window,
+                       mode="lines",
+                       showlegend=True,
+                       marker=dict(color=color_seq[3])
+                       ),
+
+            go.Scatter(name="PR Opened",
+                       x=df_final["period_from"],
+                       y=df_final["PR Opened"],
+                       text=action_types[4],
+                       customdata=time_window,
+                       mode="lines",
+                       showlegend=True,
+                       marker=dict(color=color_seq[4])
+                       ),
+
+            go.Scatter(name="PR Comment",
+                       x=df_final["period_from"],
+                       y=df_final["PR Comment"],
+                       text=action_types[5],
+                       customdata=time_window,
+                       mode="lines",
+                       showlegend=True,
+                       marker=dict(color=color_seq[5])
+                       ),
+
+            go.Scatter(name="PR Review",
+                       x=df_final["period_from"],
+                       y=df_final["PR Review"],
+                       text=action_types[6],
+                       customdata=time_window,
+                       mode="lines",
+                       showlegend=True,
+                       marker=dict(color=color_seq[0])
+                       )
         ],
     )
 
@@ -370,7 +405,7 @@ def create_figure(df_final, step_size):
     # hover template styling
     fig.update_traces(
         textposition="top right",
-        hovertemplate="Date: %{x}" + "<br>Contributor prolificacy: %{y}<br><extra></extra>",
+        hovertemplate="%{text}" + "<br>Date: %{customdata}" + "<br>Contributor Prolificacy: %{y}<br><extra></extra>",
     )
 
     # layout syling
@@ -385,14 +420,13 @@ def create_figure(df_final, step_size):
 
     return fig
 
-
 def cntrb_prolificacy_over_time(df, period_from, period_to, window_width, threshold):
     # subset df such that the rows correspond to the window of time defined by period from and period to
     time_mask = (df["created_at"] >= period_from) & (df["created_at"] <= period_to)
     df_in_range = df.loc[time_mask]
 
     # initialize varibles to store contributor prolificacy accoding to action type
-    commit, issueOpened, prOpened, prReview, prComment = None, None, None, None, None
+    commit, issueOpened, issueComment, issueClosed, prOpened, prReview, prComment = None, None, None, None, None, None, None
 
     # count the number of contributions each contributor has made according each action type
     df_count_cntrbs = df_in_range.groupby(["Action", "cntrb_id"])["cntrb_id"].count().to_frame()
@@ -403,12 +437,13 @@ def cntrb_prolificacy_over_time(df, period_from, period_to, window_width, thresh
 
     commit = calc_cntrb_prolificacy(df_count_cntrbs, "Commit", threshold)
     issueOpened = calc_cntrb_prolificacy(df_count_cntrbs, "Issue Opened", threshold)
+    issueComment = calc_cntrb_prolificacy(df_count_cntrbs, "Issue Comment", threshold)
+    issueClosed = calc_cntrb_prolificacy(df_count_cntrbs, "Issue Closed", threshold)
     prOpened = calc_cntrb_prolificacy(df_count_cntrbs, "PR Opened", threshold)
     prReview = calc_cntrb_prolificacy(df_count_cntrbs, "PR Review", threshold)
     prComment = calc_cntrb_prolificacy(df_count_cntrbs, "PR Comment", threshold)
 
-    return commit, issueOpened, prOpened, prReview, prComment
-
+    return commit, issueOpened, issueComment, issueClosed, prOpened, prReview, prComment
 
 def calc_cntrb_prolificacy(df, action_type, threshold):
     # if the df is empty return None
