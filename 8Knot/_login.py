@@ -67,7 +67,7 @@ def configure_server_login(server):
             User | None: User object if user ID in session, None otherwise.
         """
         users_cache = redis.StrictRedis(
-            host="redis-users",
+            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
             port=6379,
             password=os.getenv("REDIS_PASSWORD", ""),
         )
@@ -97,7 +97,7 @@ def configure_server_login(server):
 
         """
         users_cache = redis.StrictRedis(
-            host="redis-users",
+            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
             port=6379,
             password=os.getenv("REDIS_PASSWORD", ""),
         )
@@ -128,7 +128,7 @@ def configure_server_login(server):
             None
         """
         users_cache = redis.StrictRedis(
-            host="redis-users",
+            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
             port=6379,
             password=os.getenv("REDIS_PASSWORD", ""),
         )
@@ -175,7 +175,7 @@ def configure_server_login(server):
             None
         """
         users_cache = redis.StrictRedis(
-            host="redis-users",
+            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
             port=6379,
             password=os.getenv("REDIS_PASSWORD", ""),
         )

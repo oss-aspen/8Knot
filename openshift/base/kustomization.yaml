@@ -14,6 +14,7 @@ resources:
   - 8k-redis.yaml
   - 8k-worker-callback.yaml
   - 8k-worker-query.yaml
+  - 8k-redis-users.yaml
   # - namespace.yaml
   - secret-augur.yaml
   - secret-redis.yaml

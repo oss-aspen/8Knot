@@ -24,7 +24,7 @@ def contributors_query(self, repos):
 
     Explorer_contributor_actions is a materialized view on the database for quicker run time and
     may not be in your augur database. The SQL query content can be found
-    in docs/explorer_contributor_actions.sql
+    in docs/materialized_views/explorer_contributor_actions.sql
 
     Args:
     -----
