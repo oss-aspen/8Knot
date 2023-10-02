@@ -52,7 +52,7 @@ def kick_off_group_collection(url, n_clicks):
     if current_user.is_authenticated:
         user_id = current_user.get_id()
         users_cache = redis.StrictRedis(
-            host="redis-users",
+            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
             port=6379,
             password=os.getenv("REDIS_PASSWORD", ""),
         )
@@ -122,7 +122,7 @@ def login_username_button(url):
             logging.warning(f"LOGINBUTTON: USER LOGGED IN {current_user}")
             # TODO: implement more permanent interface
             users_cache = redis.StrictRedis(
-                host="redis-users",
+                host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
                 port=6379,
                 password=os.getenv("REDIS_PASSWORD", ""),
             )
@@ -182,7 +182,7 @@ def dynamic_multiselect_options(user_in: str, selections):
         logging.warning(f"LOGINBUTTON: USER LOGGED IN {current_user}")
         # TODO: implement more permanent interface
         users_cache = redis.StrictRedis(
-            host="redis-users",
+            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
             port=6379,
             password=os.getenv("REDIS_PASSWORD", ""),
             decode_responses=True,
@@ -251,7 +251,7 @@ def multiselect_values_to_repo_ids(n_clicks, user_vals):
         logging.warning(f"LOGINBUTTON: USER LOGGED IN {current_user}")
         # TODO: implement more permanent interface
         users_cache = redis.StrictRedis(
-            host="redis-users",
+            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
             port=6379,
             password=os.getenv("REDIS_PASSWORD", ""),
             decode_responses=True,

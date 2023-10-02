@@ -32,7 +32,11 @@ def user_groups_query(self, user_id):
     """
     logging.warning(f"{QUERY_NAME}_DATA_QUERY - START")
 
-    users_cache = redis.StrictRedis(host="redis-users", port=6379, password=os.getenv("REDIS_PASSWORD", ""))
+    users_cache = redis.StrictRedis(
+        host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
+        port=6379,
+        password=os.getenv("REDIS_PASSWORD", ""),
+    )
 
     # checks connection to Redis, raises redis.exceptions.ConnectionError if connection fails.
     # returns True if connection succeeds.
