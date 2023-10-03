@@ -42,9 +42,9 @@ def issue_assignee_query(self, repos):
                     SELECT
                         *
                     FROM
-                        explorer_issue_assignments
+                        explorer_issue_assignments ia
                     WHERE
-                        repo_id in ({str(repos)[1:-1]})
+                        ia.id in ({str(repos)[1:-1]})
                 """
 
     try:
