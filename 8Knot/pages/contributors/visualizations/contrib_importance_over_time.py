@@ -248,7 +248,7 @@ def create_contrib_prolificacy_over_time_graph(
     # test if there is data
     if df.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
-        return nodata_graph
+        return nodata_graph, False
 
     # if the step size is greater than window width raise Alert
     if step_size > window_width:
