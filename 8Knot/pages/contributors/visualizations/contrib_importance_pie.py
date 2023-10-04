@@ -149,7 +149,7 @@ gc_contrib_importance_pie = dbc.Card(
                                             max_date_allowed=dt.date.today(),
                                             initial_visible_month=dt.date(dt.date.today().year, 1, 1),
                                             clearable=True,
-                                        ),     
+                                        ),
                                     ],
                                 ),
                                 dbc.Col(
@@ -166,8 +166,8 @@ gc_contrib_importance_pie = dbc.Card(
                                 ),
                             ],
                             align="center",
-                            justify="between",   
-                        )
+                            justify="between",
+                        ),
                     ]
                 ),
             ]
@@ -246,12 +246,12 @@ def process_data(df: pd.DataFrame, action_type, top_k, patterns, start_date, end
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
 
     # order values chronologically by created_at date
-    df = df.sort_values(by='created_at', ascending=True)
+    df = df.sort_values(by="created_at", ascending=True)
 
-    # filter values based on date picker 
-    if start_date is not None: 
-        df = df[df.created_at >= start_date] 
-    if end_date is not None: 
+    # filter values based on date picker
+    if start_date is not None:
+        df = df[df.created_at >= start_date]
+    if end_date is not None:
         df = df[df.created_at <= end_date]
 
     # subset the df such that it only contains rows where the Action column value is the action type
@@ -268,7 +268,7 @@ def process_data(df: pd.DataFrame, action_type, top_k, patterns, start_date, end
 
     # sort rows according to amount of contributions from greatest to least
     df.sort_values(by="cntrb_id", ascending=False, inplace=True)
-    df= df.reset_index()
+    df = df.reset_index()
 
     # rename Action column to action_type
     df = df.rename(columns={"Action": action_type})
@@ -289,6 +289,7 @@ def process_data(df: pd.DataFrame, action_type, top_k, patterns, start_date, end
     df = df.append({"cntrb_id": "Other", action_type: t_sum - df_sum}, ignore_index=True)
 
     return df
+
 
 def create_figure(df: pd.DataFrame, action_type):
     # create plotly express pie chart
