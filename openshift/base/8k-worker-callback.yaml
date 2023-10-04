@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    alpha.image.policy.openshift.io/resolve-names: '*'
+    app.openshift.io/route-disabled: "false"
+    app.openshift.io/vcs-ref: main
+    app.openshift.io/vcs-uri: https://github.com/oss-aspen/8Knot.git
+    image.openshift.io/triggers: '[{"from":{"kind":"ImageStreamTag","name":"eightknot-app:latest"},"fieldPath":"spec.template.spec.containers[?(@.name==\"eightknot-app\")].image","pause":"false"}]'
+  labels:
+    name: eightknot-worker-callback
+    app.kubernetes.io/name: eightknot-worker-callback
+  name: eightknot-worker-callback
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: eightknot-worker-callback
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        name: eightknot-worker-callback
+    spec:
+      containers:
+      - command:
+          [ "celery", "-A", "app:celery_app", "worker", "--loglevel=INFO", "-c", "4" ]
+        envFrom:
+        - secretRef:
+            name: augur-config
+        - secretRef:
+            name: eightknot-redis
+        image: eightknot-app:latest
+        imagePullPolicy: Always
+        name: eightknot-app
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 600m
+            memory: 1Gi
+          requests:
+            cpu: 100m
+            memory: 600Mi

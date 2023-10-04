@@ -1,0 +1,445 @@
+from dash import html, dcc, callback
+import dash
+from dash import dcc
+import dash_bootstrap_components as dbc
+import dash_mantine_components as dmc
+from dash.dependencies import Input, Output, State
+import plotly.graph_objects as go
+import pandas as pd
+import logging
+from dateutil.relativedelta import *  # type: ignore
+import plotly.express as px
+from pages.utils.graph_utils import get_graph_time_values, color_seq
+from queries.contributors_query import contributors_query as ctq
+import io
+from cache_manager.cache_manager import CacheManager as cm
+from pages.utils.job_utils import nodata_graph
+import time
+import datetime as dt
+from scipy import stats
+
+PAGE = "contributors"
+VIZ_ID = "contrib-prolificacy-over-time"
+
+gc_contrib_prolificacy_over_time = dbc.Card(
+    [
+        dbc.CardBody(
+            [
+                html.H3(
+                    id=f"graph-title-{PAGE}-{VIZ_ID}",
+                    className="card-title",
+                    style={"textAlign": "center"},
+                ),
+                dbc.Popover(
+                    [
+                        dbc.PopoverHeader("Graph Info:"),
+                        dbc.PopoverBody(
+                            """
+                                        This analysis is also referred to as "Bus Factor". For each action type, visualizes
+                                        the smallest group of contributors who account for a user-inputted percentage
+                                        of the total number of contributions. By default, the threshold is set to 50%.
+                                        Thus, the visualization will show the number of contributors who account for
+                                        50% of all contributions made, per action type. Suppose two individuals authored
+                                        50% of the commits, then the contributor prolificacy is 2. Analysis is done over
+                                        a time range, and snapshots of the time range are set according to window width
+                                        and step size. By default, window width and step size are set to 6 months.
+                                        Thus, contributor prolificacy is calculated for each non-overlapping 6-month
+                                        snapshot of the time range provided. Optionally, contributors who have 'bot' or
+                                        any custom keyword(s) in their logins can be filtered out. Please note that gaps
+                                        in the graph indicate that no contributions of a specific action type(s) were made
+                                        during that time period.
+                                        """
+                        ),
+                    ],
+                    id=f"popover-{PAGE}-{VIZ_ID}",
+                    target=f"popover-target-{PAGE}-{VIZ_ID}",  # needs to be the same as dbc.Button id
+                    placement="top",
+                    is_open=False,
+                ),
+                dcc.Loading(
+                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
+                ),
+                dbc.Form(
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Label(
+                                    "Threshold:",
+                                    html_for=f"threshold-{PAGE}-{VIZ_ID}",
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        dcc.Slider(
+                                            id=f"threshold-{PAGE}-{VIZ_ID}",
+                                            min=10,
+                                            max=95,
+                                            value=50,
+                                            marks={i: f"{i}%" for i in range(10, 100, 5)},
+                                        ),
+                                    ],
+                                    className="me-2",
+                                    width=10,
+                                ),
+                            ],
+                            align="center",
+                        ),
+                        dbc.Row(
+                            [
+                                dbc.Label(
+                                    "Window Width:",
+                                    html_for=f"window-width-{PAGE}-{VIZ_ID}",
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    dbc.Input(
+                                        id=f"window-width-{PAGE}-{VIZ_ID}",
+                                        type="number",
+                                        min=1,
+                                        max=12,
+                                        step=1,
+                                        value=6,
+                                        size="sm",
+                                    ),
+                                    className="me-2",
+                                    width=1,
+                                ),
+                                dbc.Label(
+                                    "Step Size:",
+                                    html_for=f"step-size-{PAGE}-{VIZ_ID}",
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    dbc.Input(
+                                        id=f"step-size-{PAGE}-{VIZ_ID}",
+                                        type="number",
+                                        min=1,
+                                        max=12,
+                                        step=1,
+                                        value=6,
+                                        size="sm",
+                                    ),
+                                    className="me-2",
+                                    width=1,
+                                ),
+                                dbc.Alert(
+                                    children="Please ensure that 'Step Size' is less than or equal to 'Window Size'",
+                                    id=f"check-alert-{PAGE}-{VIZ_ID}",
+                                    dismissable=True,
+                                    fade=False,
+                                    is_open=False,
+                                    color="warning",
+                                ),
+                            ],
+                            align="center",
+                        ),
+                        dbc.Row(
+                            [
+                                dbc.Label(
+                                    "Filter Out Contributors with Keyword(s) in Login:",
+                                    html_for=f"patterns-{PAGE}-{VIZ_ID}",
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        dmc.MultiSelect(
+                                            id=f"patterns-{PAGE}-{VIZ_ID}",
+                                            placeholder="Bot filter values",
+                                            data=[
+                                                {"value": "bot", "label": "bot"},
+                                            ],
+                                            style={"background-color": "#333"},
+                                            creatable=True,
+                                            searchable=True,
+                                        ),
+                                    ],
+                                    className="me-2",
+                                ),
+                            ],
+                            align="center",
+                        ),
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    dcc.DatePickerRange(
+                                        id=f"date-picker-range-{PAGE}-{VIZ_ID}",
+                                        min_date_allowed=dt.date(2005, 1, 1),
+                                        max_date_allowed=dt.date.today(),
+                                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                                        clearable=True,
+                                    ),
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.Button(
+                                            "About Graph",
+                                            id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                            color="secondary",
+                                            size="sm",
+                                        ),
+                                    ],
+                                    width="auto",
+                                    style={"paddingTop": ".5em"},
+                                ),
+                            ],
+                            align="center",
+                            justify="between",
+                        ),
+                    ]
+                ),
+            ]
+        )
+    ],
+)
+
+# callback for graph info popover
+@callback(
+    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
+    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
+    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
+)
+def toggle_popover(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
+
+# callback for dynamically changing the graph title
+@callback(
+    Output(f"graph-title-{PAGE}-{VIZ_ID}", "children"),
+    Input(f"window-width-{PAGE}-{VIZ_ID}", "value"),
+)
+def graph_title(window_width):
+    title = f"Contributor Prolificacy in {window_width} Month Windows"
+    return title
+
+
+# callback for contrib-prolificacy-over-time graph
+@callback(
+    Output(f"{PAGE}-{VIZ_ID}", "figure"),
+    Output(f"check-alert-{PAGE}-{VIZ_ID}", "is_open"),
+    [
+        Input("repo-choices", "data"),
+        Input(f"patterns-{PAGE}-{VIZ_ID}", "value"),
+        Input(f"threshold-{PAGE}-{VIZ_ID}", "value"),
+        Input(f"window-width-{PAGE}-{VIZ_ID}", "value"),
+        Input(f"step-size-{PAGE}-{VIZ_ID}", "value"),
+        Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "start_date"),
+        Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "end_date"),
+    ],
+    background=True,
+)
+def create_contrib_prolificacy_over_time_graph(
+    repolist, patterns, threshold, window_width, step_size, start_date, end_date
+):
+    # main function for all data pre processing
+    cache = cm()
+    df = cache.grabm(func=ctq, repos=repolist)
+
+    while df is None:
+        time.sleep(1.0)
+        df = cache.grabm(func=ctq, repos=repolist)
+
+    # data ready.
+    start = time.perf_counter()
+    logging.warning(f"{VIZ_ID}- START")
+
+    # test if there is data
+    if df.empty:
+        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
+        return nodata_graph, False
+
+    # if the step size is greater than window width raise Alert
+    if step_size > window_width:
+        return dash.no_update, True
+
+    df_final = process_data(df, patterns, threshold, window_width, step_size, start_date, end_date)
+
+    fig = create_figure(df_final, step_size)
+
+    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
+    return fig, False
+
+
+def process_data(df, patterns, threshold, window_width, step_size, start_date, end_date):
+
+    # convert to datetime objects rather than strings
+    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
+
+    # order values chronologically by created_at date
+    df = df.sort_values(by="created_at", ascending=True)
+
+    # if the start_date and/or the end date is not specified set them to the beginning and most recent created_at date
+    if start_date is None:
+        start_date = df["created_at"].min()
+    if end_date is None:
+        end_date = df["created_at"].max()
+
+    if patterns:
+        # remove rows where Login column value contains the substring 'bot'
+        patterns_mask = df["login"].str.contains("|".join(patterns), na=False)
+        df = df[~patterns_mask]
+
+    # threshold is an integer value eg. 10, 20,..., 90 since dcc.Slider only accepts integers as values
+    # divide by 100 to convert it to a decimal representation of a percentage eg. 0.10, 0.20,..., 0.90
+    threshold = threshold / 100
+
+    # create bins with a size equivalent to the the step size starting from the start date up to the end date
+    period_from = pd.date_range(start=start_date, end=end_date, freq=f"{step_size}m", inclusive="both")
+    # store the period_from dates in a df
+    df_final = period_from.to_frame(index=False, name="period_from")
+    # calculate the end of each interval and store the values in a column named period_from
+    df_final["period_to"] = df_final["period_from"] + pd.DateOffset(months=window_width)
+
+    # dynamically calculate the contributor prolificacy over time for each of the action times and store results in df_final
+    (
+        df_final["Commit"],
+        df_final["Issue Opened"],
+        df_final["PR Opened"],
+        df_final["PR Comment"],
+        df_final["PR Review"],
+    ) = zip(
+        *df_final.apply(
+            lambda row: cntrb_prolificacy_over_time(df, row.period_from, row.period_to, window_width, threshold), axis=1
+        )
+    )
+
+    return df_final
+
+
+def create_figure(df_final, step_size):
+    # create plotly express line graph
+    fig = go.Figure(
+        [
+            go.Scatter(
+                name="Commit",
+                x=df_final["period_from"],
+                y=df_final["Commit"],
+                mode="lines",
+                showlegend=True,
+                marker=dict(color=color_seq[0]),
+            ),
+            go.Scatter(
+                name="Issue Opened",
+                x=df_final["period_from"],
+                y=df_final["Issue Opened"],
+                mode="lines",
+                showlegend=True,
+                marker=dict(color=color_seq[1]),
+            ),
+            go.Scatter(
+                name="PR Opened",
+                x=df_final["period_from"],
+                y=df_final["PR Opened"],
+                mode="lines",
+                showlegend=True,
+                marker=dict(color=color_seq[2]),
+            ),
+            go.Scatter(
+                name="PR Request Comment",
+                x=df_final["period_from"],
+                y=df_final["PR Comment"],
+                mode="lines",
+                showlegend=True,
+                marker=dict(color=color_seq[3]),
+            ),
+            go.Scatter(
+                name="PR Request Review",
+                x=df_final["period_from"],
+                y=df_final["PR Review"],
+                mode="lines",
+                showlegend=True,
+                marker=dict(color=color_seq[4]),
+            ),
+        ],
+    )
+
+    # define x-axis and y-axis titles and intialize first x-axis tick to start at the user-inputted start_date
+    start_date = min(df_final["period_from"])
+
+    # update xaxes to display ticks, only show ticks every other year
+    fig.update_xaxes(
+        showgrid=True,
+        ticklabelmode="period",
+        tickangle=0,
+        dtick=f"M24",
+        tickformat="%b %Y",
+    )
+
+    # hover template styling
+    fig.update_traces(
+        textposition="top right",
+        hovertemplate="Date: %{x}" + "<br>Contributor prolificacy: %{y}<br><extra></extra>",
+    )
+
+    # layout syling
+    fig.update_layout(
+        xaxis_title=f"Timeline (stepsize = {step_size} months)",
+        xaxis=dict(tick0=start_date),
+        yaxis_title="Contributor Prolificacy",
+        font=dict(size=14),
+        margin_b=40,
+        legend_title="Action Type",
+    )
+
+    return fig
+
+
+def cntrb_prolificacy_over_time(df, period_from, period_to, window_width, threshold):
+    # subset df such that the rows correspond to the window of time defined by period from and period to
+    time_mask = (df["created_at"] >= period_from) & (df["created_at"] <= period_to)
+    df_in_range = df.loc[time_mask]
+
+    # initialize varibles to store contributor prolificacy accoding to action type
+    commit, issueOpened, prOpened, prReview, prComment = None, None, None, None, None
+
+    # count the number of contributions each contributor has made according each action type
+    df_count_cntrbs = df_in_range.groupby(["Action", "cntrb_id"])["cntrb_id"].count().to_frame()
+    df_count_cntrbs = df_count_cntrbs.rename(columns={"cntrb_id": "count"}).reset_index()
+
+    # pivot df such that the column names correspond to the different action types, index is the cntrb_ids, and the values are the number of contributions of each contributor
+    df_count_cntrbs = df_count_cntrbs.pivot(index="cntrb_id", columns="Action", values="count")
+
+    commit = calc_cntrb_prolificacy(df_count_cntrbs, "Commit", threshold)
+    issueOpened = calc_cntrb_prolificacy(df_count_cntrbs, "Issue Opened", threshold)
+    prOpened = calc_cntrb_prolificacy(df_count_cntrbs, "PR Opened", threshold)
+    prReview = calc_cntrb_prolificacy(df_count_cntrbs, "PR Review", threshold)
+    prComment = calc_cntrb_prolificacy(df_count_cntrbs, "PR Comment", threshold)
+
+    return commit, issueOpened, prOpened, prReview, prComment
+
+
+def calc_cntrb_prolificacy(df, action_type, threshold):
+    # if the df is empty return None
+    if df.empty:
+        return None
+
+    # if the specified action type is not in the dfs' cols return None
+    if action_type not in df.columns:
+        return None
+
+    # sort rows in df based on number of contributions from greatest to least
+    df = df.sort_values(by=action_type, ascending=False)
+
+    # calculate the threshold amount of contributions
+    thresh_cntrbs = df[action_type].sum() * threshold
+
+    # drop rows where the cntrb_id is None
+    mask = df.index.get_level_values("cntrb_id") == None
+    df = df[~mask]
+
+    # initilize running sum of contributors who make up contributor prolificacy
+    cntrb_prolificacy = 0
+
+    # initialize running sum of contributions
+    running_sum = 0
+
+    for _, row in df.iterrows():
+        running_sum += row[action_type]  # update the running sum by the number of contributions a contributor has made
+        cntrb_prolificacy += 1  # update contributor prolificacy
+        # if the running sum of contributions is greater than or equal to the threshold amount, break
+        if running_sum >= thresh_cntrbs:
+            break
+
+    return cntrb_prolificacy

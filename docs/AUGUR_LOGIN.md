@@ -1,16 +1,18 @@
 # **8Knot+Augur User Sessions**
 
 ## **Intro**
+
 ---
 
 With this feature, users can:
+
 1. Create an account on an Augur database frontend page.
 2. Organize repos and orgs into named groups in Augur, specific to their user account.
 3. Log in to to Augur via 8Knot and see aggregate visualizations of their named groups.
 4. See the groups created by the Augur user who registered the 8Knot application with the Augur frontend.
 
-
 ## **Roles**
+
 ---
 
 There are three personas required for this integration:
@@ -20,22 +22,27 @@ There are three personas required for this integration:
 3. The application user (User).
 
 The job of the application owner (Admin) is to:
+
 1. Log into the Augur front-end with credentials intended for Admin-level access
 2. Create repo groups in their profile for the consumption of other users logging into the Augur frontend via the same 8Knot instance
 3. Provide the 'client_secret' and 'application_id' values to the Dep role
 
 In turn, the job of the application deployer (Dep) is to:
+
 1. Receive the 'client_secret' and 'application_id' credentials from the Admin
 2. Use those credentials to link 8Knot instance to Augur frontend as described below
 
 Finally, the job of the application user (User) is to:
+
 1. Access the deployed application
 2. Click the 'Log In' button which will redirect to the Augur front end
 3. Create their own groups of repos
 4. Navigate back to the 8Knot app they were using and refresh the app
 
 ## **Setup 8Knot to enable Login and user and admin groups**
+
 ---
+
 1. Clone [github.com/oss-aspen/8Knot/dev] (Dep)
    - We use a docker compose multi-container application build strategy.
    - Ports 8050 (*Dash*) and 6379 (*Redis*) are assumed to be available. If this isn't possible, modifications to the docker-compose.yml file may be necessary.
@@ -73,7 +80,9 @@ Finally, the job of the application user (User) is to:
     - The first six environment variables are used to connect to database, not for front-end. Instructions to get these credentials are in the project README.md file.
 
 ## **8Knot at Runtime**
+
 ---
+
 - Assuming that you have 8Knot booted and available.
 
 - Log into Augur with 'Login' button in the top right of the page.

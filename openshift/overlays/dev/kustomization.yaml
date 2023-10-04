@@ -1,0 +1,67 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# commonAnnotations:
+#   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+
+commonLabels:
+  development: "true"
+
+namespace: dev-eightknot
+
+resources:
+  - ../../base
+
+patches:
+  - target:
+      kind: BuildConfig
+    patch: |-
+      - op: replace
+        path: /spec/source/git/ref
+        value: "dev"
+  # - target:
+  #     kind: Deployment
+  #     name: eightknot-redis
+  #   patch: |-
+  #     - op: replace
+  #       path: /spec/template/spec/containers/0/volumeMounts/0/name
+  #       value: empty
+  - target:
+      kind: HorizontalPodAutoscaler
+    patch: |-
+      - op: add
+        path: /spec/maxReplicas
+        value: 2
+  - target:
+      kind: Ingress
+      name: eightknot-app-server
+    patch: |-
+      - op: replace
+        path: /metadata/annotations/kubernetes.io~1tls-acme
+        value: "true"
+      - op: replace
+        path: /spec/rules/0/host
+        value: dev.eightknot.osci.io
+  - target:
+      kind: Namespace
+      name: sandbox
+    patch: |-
+      - op: replace
+        path: /metadata/annotations/openshift.io~1description
+        value: "8Knot Dev Deployment"
+      - op: replace
+        path: /metadata/annotations/openshift.io~1display-name
+        value: "Development 8Knot"
+      - op: replace
+        path: /metadata/name
+        value: "dev-sandiego-explorer-osci-io"
+  - target:
+      kind: Route
+      name: eightknot-app-server
+    patch: |-
+      - op: replace
+        path: /metadata/annotations/kubernetes.io~1tls-acme
+        value: "true"
+      - op: replace
+        path: /spec/host
+        value: dev.eightknot.osci.io

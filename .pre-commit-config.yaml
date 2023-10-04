@@ -9,7 +9,7 @@ repos:
       - id: name-tests-test
       - id: check-byte-order-marker
       - id: check-case-conflict
-        #- id: check-docstring-first
+      # - id: check-docstring-first
       - id: check-json
       - id: check-symlinks
       - id: detect-private-key
@@ -27,6 +27,7 @@ repos:
     hooks:
       - id: check-toml
       - id: check-yaml
+        args: [--allow-multiple-documents]
       - id: end-of-file-fixer
       - id: trailing-whitespace
 

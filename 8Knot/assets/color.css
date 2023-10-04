@@ -1,0 +1,74 @@
+h2,
+h4,
+h5,
+h6 {
+  color: #8d9d92 !important;
+}
+
+h1,
+h3 {
+  color: #436755 !important;
+}
+
+blockquote h5 {
+  color: #aaa !important;
+}
+
+blockquote {
+  color: #8d9d92 !important;
+  font-style: normal;
+  font-size: 18px;
+  margin-left: 32px;
+  font-family: Consolas, "Times New Roman", Verdana;
+  border-left: 4px solid #787878;
+  padding-left: 8px;
+}
+
+blockquote p {
+  margin-top: 1px;
+  margin-bottom: 1px;
+  width: auto;
+  min-width: 50px;
+  max-width: 950px;
+}
+
+/* this is to change the color for the spinner, cant be changed directly */
+.dash-spinner.dash-default-spinner {
+  filter: contrast(1.2) hue-rotate(308deg) grayscale(0.76) !important;
+}
+
+.explanation-p {
+  width: auto;
+  min-width: 50px;
+  max-width: 550px;
+}
+
+.navbar-brand {
+  color: #436755 !important;
+}
+
+.metric_data {
+  color: #000000 !important;
+  text-shadow: none !important;
+  padding-bottom: 15px !important;
+}
+
+.box_emissions {
+  background-color: #505050;
+  color: #505050;
+  margin: 2px;
+  box-shadow: 4px 4px 4px rgb(33, 33, 33);
+  justify-content: center;
+  text-align: center;
+}
+
+.glace_headers {
+  color: #000000 !important;
+  text-shadow: none !important;
+  font-weight: "normal" !important;
+}
+
+/* changes the color of an alert */
+.alert-warning {
+    background-color: #B5B682 !important;
+}
