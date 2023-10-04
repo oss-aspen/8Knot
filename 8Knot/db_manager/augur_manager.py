@@ -55,6 +55,7 @@ class AugurManager:
     def __init__(self, handles_oauth=False):
         # sqlalchemy engine object
         self.engine = None
+        self.initial_search_option = None
 
         # db connection credentials
         # if any are unavailable, raise error.
@@ -208,8 +209,6 @@ class AugurManager:
         # self.repo_id_to_repo_git = {value: key for (key, value) in self.repo_git_to_repo_id.items()}
         self.repo_id_to_repo_git = pd.Series(df_repo_git_id.repo_git.values, index=df_repo_git_id["repo_id"]).to_dict()
 
-        # making first selection for the search bar
-        self.initial_search_option = self.multiselect_options[0]
         logging.warning(f"MULTISELECT_FINISHED")
 
     def repo_git_to_id(self, git):
@@ -259,11 +258,27 @@ class AugurManager:
         return org in self.org_names
 
     def initial_multiselect_option(self):
-        """Getter method on first multiselect option
+        """Getter method for the initial multiselect option.
+            May be overwritten by the environment.
 
         Returns:
             dict(value, label): first thing the multiselect will represent on startup
         """
+        if self.initial_search_option is None:
+            # default the initial multiselect option to the
+            # first item in the list of options.
+            self.initial_search_option = self.multiselect_options[0]
+
+            if os.getenv("DEFAULT_SEARCHBAR_LABEL"):
+                logging.warning("INITIAL SEARCHBAR OPTION: DEFAULT OVERWRITTEN")
+
+                # search through available options for the specified overwriting default.
+                for opt in self.multiselect_options:
+                    if os.getenv("DEFAULT_SEARCHBAR_LABEL") == opt["label"]:
+                        logging.warning(f"INITIAL SEARCHBAR OPTION: NEW DEFAULT: {opt}")
+                        self.initial_search_option = opt
+                        break
+
         return self.initial_search_option
 
     def get_multiselect_options(self):
