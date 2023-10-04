@@ -213,7 +213,7 @@ def create_figure(df_cont_subset):
     # creates bins with 3 month size and customizes the hover value for the bars
     fig.update_traces(
         xbins_size="M3",
-        hovertemplate="Date: %{x}" + "<br>Amount: %{y}<br><extra></extra>",
+        hovertemplate="Date: %{x}" + "<br>Amount: %{y}",
     )
 
     # update xaxes to align for the 3 month bin size

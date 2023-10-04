@@ -42,9 +42,9 @@ def pr_assignee_query(self, repos):
                     SELECT
                         *
                     FROM
-                        explorer_pr_assignments
+                        explorer_pr_assignments pa
                     WHERE
-                        repo_id in ({str(repos)[1:-1]})
+                        pa.id in ({str(repos)[1:-1]})
                 """
 
     try:

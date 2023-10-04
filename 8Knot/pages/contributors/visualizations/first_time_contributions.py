@@ -91,7 +91,7 @@ def create_first_time_contributors_graph(repolist):
     # test if there is data
     if df.empty:
         logging.warning("1ST CONTRIBUTIONS - NO DATA AVAILABLE")
-        return nodata_graph, False
+        return nodata_graph
 
     # function for all data pre processing
     df = process_data(df)
@@ -123,7 +123,7 @@ def create_figure(df):
     # creates bins with 3 month size and customizes the hover value for the bars
     fig.update_traces(
         xbins_size="M3",
-        hovertemplate="Date: %{x}" + "<br>Amount: %{y}<br><extra></extra>",
+        hovertemplate="Date: %{x}" + "<br>Amount: %{y}",
     )
 
     # update xaxes to align for the 3 month bin size

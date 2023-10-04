@@ -159,7 +159,7 @@ def cntrib_issue_assignment_graph(repolist, interval, assign_req):
     # test if there is data
     if df.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
-        return nodata_graph
+        return nodata_graph, False
 
     df = process_data(df, interval, assign_req)
 

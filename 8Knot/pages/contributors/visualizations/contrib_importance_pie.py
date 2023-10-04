@@ -2,9 +2,8 @@ from dash import html, dcc, callback
 import dash
 from dash import dcc
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output, State
 import dash_mantine_components as dmc
-from dash.exceptions import PreventUpdate
+from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
 import logging
@@ -16,7 +15,7 @@ import io
 from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
-import random
+import datetime as dt
 
 PAGE = "contributors"
 VIZ_ID = "contrib-importance-pie"
@@ -71,6 +70,8 @@ gc_contrib_importance_pie = dbc.Card(
                                             options=[
                                                 {"label": "Commit", "value": "Commit"},
                                                 {"label": "Issue Opened", "value": "Issue Opened"},
+                                                {"label": "Issue Comment", "value": "Issue Comment"},
+                                                {"label": "Issue Closed", "value": "Issue Closed"},
                                                 {"label": "PR Open", "value": "PR Open"},
                                                 {"label": "PR Review", "value": "PR Review"},
                                                 {"label": "PR Comment", "value": "PR Comment"},
@@ -135,6 +136,22 @@ gc_contrib_importance_pie = dbc.Card(
                                     ],
                                     className="me-2",
                                 ),
+                            ],
+                            align="center",
+                        ),
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    [
+                                        dcc.DatePickerRange(
+                                            id=f"date-picker-range-{PAGE}-{VIZ_ID}",
+                                            min_date_allowed=dt.date(2005, 1, 1),
+                                            max_date_allowed=dt.date.today(),
+                                            initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                                            clearable=True,
+                                        ),
+                                    ],
+                                ),
                                 dbc.Col(
                                     [
                                         dbc.Button(
@@ -149,6 +166,7 @@ gc_contrib_importance_pie = dbc.Card(
                                 ),
                             ],
                             align="center",
+                            justify="between",
                         ),
                     ]
                 ),
@@ -187,12 +205,14 @@ def graph_title(k, action_type):
     [
         Input("repo-choices", "data"),
         Input(f"action-type-{PAGE}-{VIZ_ID}", "value"),
-        Input(f"patterns-{PAGE}-{VIZ_ID}", "value"),
         Input(f"top-k-contributors-{PAGE}-{VIZ_ID}", "value"),
+        Input(f"patterns-{PAGE}-{VIZ_ID}", "value"),
+        Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "start_date"),
+        Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "end_date"),
     ],
     background=True,
 )
-def create_top_k_cntrbs_graph(repolist, action_type, patterns, top_k):
+def create_top_k_cntrbs_graph(repolist, action_type, top_k, patterns, start_date, end_date):
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=ctq, repos=repolist)
@@ -213,7 +233,7 @@ def create_top_k_cntrbs_graph(repolist, action_type, patterns, top_k):
         return dash.no_update, True
 
     # function for all data pre processing
-    df = process_data(df, action_type, patterns, top_k)
+    df = process_data(df, action_type, top_k, patterns, start_date, end_date)
 
     fig = create_figure(df, action_type)
 
@@ -221,15 +241,27 @@ def create_top_k_cntrbs_graph(repolist, action_type, patterns, top_k):
     return fig, False
 
 
-def process_data(df: pd.DataFrame, action_type, patterns, top_k):
+def process_data(df: pd.DataFrame, action_type, top_k, patterns, start_date, end_date):
+    # convert to datetime objects rather than strings
+    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
+
+    # order values chronologically by created_at date
+    df = df.sort_values(by="created_at", ascending=True)
+
+    # filter values based on date picker
+    if start_date is not None:
+        df = df[df.created_at >= start_date]
+    if end_date is not None:
+        df = df[df.created_at <= end_date]
+
     # subset the df such that it only contains rows where the Action column value is the action type
     df = df[df["Action"].str.contains(action_type)]
 
     # option to filter out potential bots
     if patterns:
         # remove rows where login column value contains any keyword in patterns
-        mask = df["login"].str.contains("|".join(patterns), na=False)
-        df = df[~mask]
+        patterns_mask = df["login"].str.contains("|".join(patterns), na=False)
+        df = df[~patterns_mask]
 
     # count the number of contributions for each contributor
     df = (df.groupby("cntrb_id")["Action"].count()).to_frame()
