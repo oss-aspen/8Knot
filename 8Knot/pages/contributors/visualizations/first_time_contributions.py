@@ -91,7 +91,7 @@ def create_first_time_contributors_graph(repolist):
     # test if there is data
     if df.empty:
         logging.warning("1ST CONTRIBUTIONS - NO DATA AVAILABLE")
-        return nodata_graph, False
+        return nodata_graph
 
     # function for all data pre processing
     df = process_data(df)
