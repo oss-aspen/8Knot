@@ -59,12 +59,13 @@ dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.mi
 plt_io.templates["custom_dark"] = plt_io.templates["slate"]
 plt_io.templates["custom_dark"]["layout"]["colorway"] = [
     "#B5B682",  # sage
-    "#c0bc5d",  # olive green
-    "#6C8975",  # xanadu
-    "#485B4E",  # feldgrau (dark green)
-    "#3c582d",  # hunter green
-    "#376D39",
-]  # dartmouth green
+    "#c0bc5d",  # citron (yellow-ish)
+    "#6C8975",  # reseda green
+    "#D9AE8E",  # buff (pale pink)
+    "#FFBF51",  # xanthous (orange-ish)
+    "#C7A5A5",  # rosy brown
+]
+
 plt_io.templates.default = "custom_dark"
 
 
