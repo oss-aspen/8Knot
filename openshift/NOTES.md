@@ -7,6 +7,13 @@
 - https://dev.eightknot.osci.io
 - https://eightknot.osci.io
 
+## Note
+
+If acme isn't working (SSL) make sure that the route
+has been configured to expect its existence:
+
+https://gitlab.com/osci/ansible-role-openshift/-/blob/main/route/templates/route.yml?ref_type=heads#L6
+
 ## Quick start
 
 Choose your deployment
