@@ -64,3 +64,6 @@ url
 utils
 yaml
 yml
+ansible
+gitlab
+SSL
