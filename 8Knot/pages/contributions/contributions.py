@@ -28,14 +28,14 @@ layout = dbc.Container(
             align="center",
             style={"marginBottom": ".5%"},
         ),
-        dbc.Row(
-            [
-                dbc.Col(gc_cntrib_pr_assignment, width=6),
-                dbc.Col(gc_pr_assignment, width=6),
-            ],
-            align="center",
-            style={"marginBottom": ".5%"},
-        ),
+        # dbc.Row(
+        #     [
+        #         dbc.Col(gc_cntrib_pr_assignment, width=6),
+        #         dbc.Col(gc_pr_assignment, width=6),
+        #     ],
+        #     align="center",
+        #     style={"marginBottom": ".5%"},
+        # ), # ASSIGNMENT DEREG
         dbc.Row(
             [
                 dbc.Col(gc_issue_staleness, width=6),
@@ -44,14 +44,14 @@ layout = dbc.Container(
             align="center",
             style={"marginBottom": ".5%"},
         ),
-        dbc.Row(
-            [
-                dbc.Col(gc_cntrib_issue_assignment, width=6),
-                dbc.Col(gc_issue_assignment, width=6),
-            ],
-            align="center",
-            style={"marginBottom": ".5%"},
-        ),
+        # dbc.Row(
+        #     [
+        #         dbc.Col(gc_cntrib_issue_assignment, width=6),
+        #         dbc.Col(gc_issue_assignment, width=6),
+        #     ],
+        #     align="center",
+        #     style={"marginBottom": ".5%"},
+        # ), # ASSIGNMENT DEREG
         dbc.Row(
             [
                 dbc.Col(gc_commits_over_time, width=6),
