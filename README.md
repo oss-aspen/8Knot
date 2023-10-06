@@ -139,6 +139,7 @@ The credentials below are valid, so you can copy and use them to access a develo
     AUGUR_USERNAME=coup
     8KNOT_DEBUG=True
     REDIS_PASSWORD=1234
+    DEFAULT_SEARCHBAR_LABEL=chaoss
 ```
 
 If you have a companion Augur front end application you'll need to set the following credentials in the env.list as well.

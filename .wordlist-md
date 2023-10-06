@@ -43,6 +43,7 @@ oc
 openshift
 orgs
 osci
+OpenShift
 oss
 pre
 py
@@ -63,3 +64,6 @@ url
 utils
 yaml
 yml
+ansible
+gitlab
+SSL
