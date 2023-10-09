@@ -72,3 +72,7 @@ blockquote p {
 .alert-warning {
     background-color: #B5B682 !important;
 }
+
+.mantine-MultiSelect-values {
+  background-color: #272b30;
+}
