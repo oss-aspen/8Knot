@@ -130,7 +130,7 @@ gc_contrib_importance_pie = dbc.Card(
                                             data=[
                                                 {"value": "bot", "label": "bot"},
                                             ],
-                                            classNames={"values": "viz-values"},
+                                            classNames={"values": "dmc-multiselect-custom"},
                                             creatable=True,
                                             searchable=True,
                                         ),

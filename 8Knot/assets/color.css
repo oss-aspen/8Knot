@@ -74,6 +74,6 @@ blockquote p {
 }
 
 /* updates background of the dmc-multiselect in visualizations */
-.viz-values {
+.dmc-multiselect-custom {
   background-color: #272b30;
 }
