@@ -247,7 +247,7 @@ def create_figure(df_status: pd.DataFrame, interval):
                     mode="lines",
                     showlegend=True,
                     hovertemplate="Issues New: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
-                    marker=dict(color=color_seq[0]),
+                    marker=dict(color=color_seq[1]),
                 ),
                 go.Scatter(
                     name="Staling",
@@ -256,7 +256,7 @@ def create_figure(df_status: pd.DataFrame, interval):
                     mode="lines",
                     showlegend=True,
                     hovertemplate="Issues Staling: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
-                    marker=dict(color=color_seq[3]),
+                    marker=dict(color=color_seq[5]),
                 ),
                 go.Scatter(
                     name="Stale",
@@ -265,7 +265,7 @@ def create_figure(df_status: pd.DataFrame, interval):
                     mode="lines",
                     showlegend=True,
                     hovertemplate="Issues Stale: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
-                    marker=dict(color=color_seq[5]),
+                    marker=dict(color=color_seq[2]),
                 ),
             ]
         )
@@ -274,7 +274,7 @@ def create_figure(df_status: pd.DataFrame, interval):
             df_status,
             x="Date",
             y=["New", "Staling", "Stale"],
-            color_discrete_sequence=color_seq,
+            color_discrete_sequence=[color_seq[1], color_seq[5], color_seq[2]],
         )
 
         # edit hover values

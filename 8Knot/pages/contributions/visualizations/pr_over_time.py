@@ -230,7 +230,7 @@ def create_figure(
         opacity=0.9,
         hovertemplate=hover + "<br>Created: %{y}<br>" + "<extra></extra>",
         offsetgroup=0,
-        marker=dict(color=color_seq[0]),
+        marker=dict(color=color_seq[2]),
         name="Created",
     )
     fig.add_bar(

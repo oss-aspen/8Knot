@@ -195,7 +195,7 @@ def create_figure(df: pd.DataFrame, interval):
                     mode="lines",
                     showlegend=True,
                     hovertemplate="Issues Assigned: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
-                    marker=dict(color=color_seq[0]),
+                    marker=dict(color=color_seq[2]),
                 ),
                 go.Scatter(
                     name="Unassigned",
@@ -213,7 +213,7 @@ def create_figure(df: pd.DataFrame, interval):
             df,
             x="start_date",
             y=["Assigned", "Unassigned"],
-            color_discrete_sequence=[color_seq[0], color_seq[3]],
+            color_discrete_sequence=[color_seq[2], color_seq[3]],
         )
 
         # edit hover values
