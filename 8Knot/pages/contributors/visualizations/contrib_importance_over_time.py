@@ -148,7 +148,7 @@ gc_contrib_prolificacy_over_time = dbc.Card(
                                             data=[
                                                 {"value": "bot", "label": "bot"},
                                             ],
-                                            style={"background-color": "#333"},
+                                            classNames={"values": "viz-values"},
                                             creatable=True,
                                             searchable=True,
                                         ),
