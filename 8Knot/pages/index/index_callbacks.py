@@ -20,12 +20,13 @@ from queries.company_query import company_query as cmq
 from queries.pr_assignee_query import pr_assignee_query as praq
 from queries.issue_assignee_query import issue_assignee_query as iaq
 from queries.user_groups_query import user_groups_query as ugq
+from queries.pr_response_query import pr_response_query as prr
 import redis
 import flask
 
 
 # list of queries to be run
-QUERIES = [iq, cq, cnq, prq, cmq, iaq, praq]
+QUERIES = [iq, cq, cnq, prq, cmq, iaq, praq, prr]
 
 # check if login has been enabled in config
 login_enabled = os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True"
