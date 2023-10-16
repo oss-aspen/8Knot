@@ -6,6 +6,7 @@ import dash_mantine_components as dmc
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
+import numpy as np
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
@@ -19,9 +20,9 @@ import datetime as dt
 from scipy import stats
 
 PAGE = "contributors"
-VIZ_ID = "contrib-prolificacy-over-time"
+VIZ_ID = "lottery-factor-over-time"
 
-gc_contrib_prolificacy_over_time = dbc.Card(
+gc_lottery_factor_over_time = dbc.Card(
     [
         dbc.CardBody(
             [
@@ -211,11 +212,11 @@ def toggle_popover(n, is_open):
     Input(f"window-width-{PAGE}-{VIZ_ID}", "value"),
 )
 def graph_title(window_width):
-    title = f"Contributor Prolificacy in {window_width} Month Windows"
+    title = f"Lottery Factor: {window_width} Month Windows"
     return title
 
 
-# callback for contrib-prolificacy-over-time graph
+# callback for lottery-factor-over-time graph
 @callback(
     Output(f"{PAGE}-{VIZ_ID}", "figure"),
     Output(f"check-alert-{PAGE}-{VIZ_ID}", "is_open"),
@@ -256,7 +257,7 @@ def create_contrib_prolificacy_over_time_graph(
 
     df_final = process_data(df, patterns, threshold, window_width, step_size, start_date, end_date)
 
-    fig = create_figure(df_final, step_size)
+    fig = create_figure(df_final, threshold, step_size)
 
     logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig, False
@@ -310,12 +311,21 @@ def process_data(df, patterns, threshold, window_width, step_size, start_date, e
     return df_final
 
 
-def create_figure(df_final, step_size):
-    # create custom data to update the hovertemplate with the action type and start and end dates of a given time window
-    action_types = [[action_type] * len(df_final) for action_type in df_final.columns[2:]]
+def create_figure(df_final, threshold, step_size):
+    # create custom data to update the hovertemplate with the action type and start and end dates of a given time window in addition to the lottery factor
+    # make a nested list of plural action types so that it is gramatically correct in the updated hover info eg. Commit -> Commits and PR Opened -> PRs Opened
+    action_types = [
+        [action_type[:2] + "s" + action_type[2:]] * len(df_final)
+        if action_type == "PR Opened"
+        else [action_type[:5] + "s" + action_type[5:]] * len(df_final)
+        if action_type == "Issue Opened" or action_type == "Issue Closed"
+        else [action_type + "s"] * len(df_final)
+        for action_type in df_final.columns[2:]
+    ]
     time_window = list(
         df_final["period_from"].dt.strftime("%b %d, %Y") + " - " + df_final["period_to"].dt.strftime("%b %d, %Y")
     )
+    customdata = np.stack(([threshold] * len(df_final), time_window), axis=-1)
 
     # create plotly express line graph
     fig = go.Figure(
@@ -325,7 +335,7 @@ def create_figure(df_final, step_size):
                 x=df_final["period_from"],
                 y=df_final["Commit"],
                 text=action_types[0],
-                customdata=time_window,
+                customdata=customdata,
                 mode="lines",
                 showlegend=True,
                 marker=dict(color=color_seq[0]),
@@ -335,7 +345,7 @@ def create_figure(df_final, step_size):
                 x=df_final["period_from"],
                 y=df_final["Issue Opened"],
                 text=action_types[1],
-                customdata=time_window,
+                customdata=customdata,
                 mode="lines",
                 showlegend=True,
                 marker=dict(color=color_seq[1]),
@@ -345,7 +355,7 @@ def create_figure(df_final, step_size):
                 x=df_final["period_from"],
                 y=df_final["Issue Comment"],
                 text=action_types[2],
-                customdata=time_window,
+                customdata=customdata,
                 mode="lines",
                 showlegend=True,
                 marker=dict(color=color_seq[2]),
@@ -355,7 +365,7 @@ def create_figure(df_final, step_size):
                 x=df_final["period_from"],
                 y=df_final["Issue Closed"],
                 text=action_types[3],
-                customdata=time_window,
+                customdata=customdata,
                 mode="lines",
                 showlegend=True,
                 marker=dict(color=color_seq[3]),
@@ -365,7 +375,7 @@ def create_figure(df_final, step_size):
                 x=df_final["period_from"],
                 y=df_final["PR Opened"],
                 text=action_types[4],
-                customdata=time_window,
+                customdata=customdata,
                 mode="lines",
                 showlegend=True,
                 marker=dict(color=color_seq[4]),
@@ -375,7 +385,7 @@ def create_figure(df_final, step_size):
                 x=df_final["period_from"],
                 y=df_final["PR Comment"],
                 text=action_types[5],
-                customdata=time_window,
+                customdata=customdata,
                 mode="lines",
                 showlegend=True,
                 marker=dict(color=color_seq[5]),
@@ -385,7 +395,7 @@ def create_figure(df_final, step_size):
                 x=df_final["period_from"],
                 y=df_final["PR Review"],
                 text=action_types[6],
-                customdata=time_window,
+                customdata=customdata,
                 mode="lines",
                 showlegend=True,
                 marker=dict(color=color_seq[0]),
@@ -408,14 +418,14 @@ def create_figure(df_final, step_size):
     # hover template styling
     fig.update_traces(
         textposition="top right",
-        hovertemplate="%{text}" + "<br>Date: %{customdata}" + "<br>Contributor Prolificacy: %{y}<br><extra></extra>",
+        hovertemplate="%{y} people contributing to<br>%{customdata[0]}% of %{text} from<br>%{customdata[1]}<br><extra></extra>",
     )
 
-    # layout syling
+    # layout styling
     fig.update_layout(
         xaxis_title=f"Timeline (stepsize = {step_size} months)",
         xaxis=dict(tick0=start_date),
-        yaxis_title="Contributor Prolificacy",
+        yaxis_title="Lottery Factor",
         font=dict(size=14),
         margin_b=40,
         legend_title="Action Type",
@@ -447,18 +457,18 @@ def cntrb_prolificacy_over_time(df, period_from, period_to, window_width, thresh
     # pivot df such that the column names correspond to the different action types, index is the cntrb_ids, and the values are the number of contributions of each contributor
     df_count_cntrbs = df_count_cntrbs.pivot(index="cntrb_id", columns="Action", values="count")
 
-    commit = calc_cntrb_prolificacy(df_count_cntrbs, "Commit", threshold)
-    issueOpened = calc_cntrb_prolificacy(df_count_cntrbs, "Issue Opened", threshold)
-    issueComment = calc_cntrb_prolificacy(df_count_cntrbs, "Issue Comment", threshold)
-    issueClosed = calc_cntrb_prolificacy(df_count_cntrbs, "Issue Closed", threshold)
-    prOpened = calc_cntrb_prolificacy(df_count_cntrbs, "PR Opened", threshold)
-    prReview = calc_cntrb_prolificacy(df_count_cntrbs, "PR Review", threshold)
-    prComment = calc_cntrb_prolificacy(df_count_cntrbs, "PR Comment", threshold)
+    commit = calc_lottery_factor(df_count_cntrbs, "Commit", threshold)
+    issueOpened = calc_lottery_factor(df_count_cntrbs, "Issue Opened", threshold)
+    issueComment = calc_lottery_factor(df_count_cntrbs, "Issue Comment", threshold)
+    issueClosed = calc_lottery_factor(df_count_cntrbs, "Issue Closed", threshold)
+    prOpened = calc_lottery_factor(df_count_cntrbs, "PR Opened", threshold)
+    prReview = calc_lottery_factor(df_count_cntrbs, "PR Review", threshold)
+    prComment = calc_lottery_factor(df_count_cntrbs, "PR Comment", threshold)
 
     return commit, issueOpened, issueComment, issueClosed, prOpened, prReview, prComment
 
 
-def calc_cntrb_prolificacy(df, action_type, threshold):
+def calc_lottery_factor(df, action_type, threshold):
     # if the df is empty return None
     if df.empty:
         return None
@@ -478,16 +488,16 @@ def calc_cntrb_prolificacy(df, action_type, threshold):
     df = df[~mask]
 
     # initilize running sum of contributors who make up contributor prolificacy
-    cntrb_prolificacy = 0
+    lottery_factor = 0
 
     # initialize running sum of contributions
     running_sum = 0
 
     for _, row in df.iterrows():
         running_sum += row[action_type]  # update the running sum by the number of contributions a contributor has made
-        cntrb_prolificacy += 1  # update contributor prolificacy
+        lottery_factor += 1  # update contributor prolificacy
         # if the running sum of contributions is greater than or equal to the threshold amount, break
         if running_sum >= thresh_cntrbs:
             break
 
-    return cntrb_prolificacy
+    return lottery_factor
