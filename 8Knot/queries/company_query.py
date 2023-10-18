@@ -75,7 +75,10 @@ def company_query(self, repos):
 
     df = dbm.run_query(query_string)
 
+    # reformat cntrb_id
     df["cntrb_id"] = df["cntrb_id"].astype(str)
+    df["cntrb_id"] = df["cntrb_id"].str[:15]
+
     df = df.sort_values(by="created")
 
     # change to compatible type and remove all data that has been incorrectly formatted

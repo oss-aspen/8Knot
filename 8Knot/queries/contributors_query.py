@@ -82,8 +82,11 @@ def contributors_query(self, repos):
     df.loc[df["action"] == "issue_closed", "action"] = "Issue Closed"
     df.loc[df["action"] == "issue_comment", "action"] = "Issue Comment"
     df.loc[df["action"] == "commit", "action"] = "Commit"
-    df["cntrb_id"] = df["cntrb_id"].astype(str)  # contributor ids to strings
     df.rename(columns={"action": "Action"}, inplace=True)
+
+    # reformat cntrb_id
+    df["cntrb_id"] = df["cntrb_id"].astype(str)
+    df["cntrb_id"] = df["cntrb_id"].str[:15]
 
     # change to compatible type and remove all data that has been incorrectly formated
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True).dt.date
