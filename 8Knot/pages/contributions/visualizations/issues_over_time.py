@@ -211,7 +211,7 @@ def create_figure(df_created: pd.DataFrame, df_closed: pd.DataFrame, df_open: pd
         opacity=0.9,
         hovertemplate=hover + "<br>Created: %{y}<br>" + "<extra></extra>",
         offsetgroup=0,
-        marker=dict(color=color_seq[0]),
+        marker=dict(color=color_seq[2]),
         name="Created",
     )
     fig.add_bar(
@@ -220,7 +220,7 @@ def create_figure(df_created: pd.DataFrame, df_closed: pd.DataFrame, df_open: pd
         opacity=0.9,
         hovertemplate=hover + "<br>Closed: %{y}<br>" + "<extra></extra>",
         offsetgroup=1,
-        marker=dict(color=color_seq[3]),
+        marker=dict(color=color_seq[4]),
         name="Closed",
     )
     fig.update_xaxes(

@@ -284,6 +284,7 @@ layout = dbc.Container(
                                 color="#436755",
                                 className="me-1",
                                 style={"marginBottom": ".5%"},
+                                text_color="dark",
                             ),
                             type="cube",
                             color="#436755",

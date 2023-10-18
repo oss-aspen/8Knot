@@ -231,7 +231,7 @@ def create_figure(df_drive_repeat, interval):
         x="Date",
         y=["Repeat", "Drive"],
         labels={"x": x_name, "y": "Contributors"},
-        color_discrete_sequence=[color_seq[1], color_seq[4]],
+        color_discrete_sequence=[color_seq[1], color_seq[2]],
     )
     fig.update_traces(
         hovertemplate=hover + "<br>Contributors: %{y}<br><extra></extra>",

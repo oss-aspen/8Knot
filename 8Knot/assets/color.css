@@ -2,12 +2,12 @@ h2,
 h4,
 h5,
 h6 {
-  color: #8d9d92 !important;
+  color: #b5b683 !important;
 }
 
 h1,
 h3 {
-  color: #436755 !important;
+  color: #6b8976 !important;
 }
 
 blockquote h5 {
@@ -44,7 +44,7 @@ blockquote p {
 }
 
 .navbar-brand {
-  color: #436755 !important;
+  color: #6b8976 !important;
 }
 
 .metric_data {
@@ -71,4 +71,9 @@ blockquote p {
 /* changes the color of an alert */
 .alert-warning {
     background-color: #B5B682 !important;
+}
+
+/* updates background of the dmc-multiselect in visualizations */
+.dmc-multiselect-custom {
+  background-color: #272b30;
 }
