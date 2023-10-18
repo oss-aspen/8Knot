@@ -74,6 +74,7 @@ def NAME_query(self, repos):
     """Commonly used df updates:
 
     df["cntrb_id"] = df["cntrb_id"].astype(str)  # contributor ids to strings
+    df["cntrb_id"] = df["cntrb_id"].str[:15]
     df = df.sort_values(by="created")
     df = df.reset_index()
     df = df.reset_index(drop=True)

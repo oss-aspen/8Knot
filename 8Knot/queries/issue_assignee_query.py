@@ -63,7 +63,7 @@ def issue_assignee_query(self, repos):
 
     # id as string and slice to remove excess 0s
     df["assignee"] = df["assignee"].astype(str)
-    df["assignee"] = df["assignee"].str[:13]
+    df["assignee"] = df["assignee"].str[:15]
 
     # change to compatible type and remove all data that has been incorrectly formated
     df["created"] = pd.to_datetime(df["created"], utc=True).dt.date
