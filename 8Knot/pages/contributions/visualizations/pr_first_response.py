@@ -153,7 +153,8 @@ def process_data(df: pd.DataFrame, num_days):
     # df for open prs and responded to prs in time interval
     df_pr_responses = dates.to_frame(index=False, name="Date")
 
-    # aplies function to get the amount of open and responded to prs for each day
+    # every day, count the number of PRs that are open on that day and the number of
+    # those that were responded to within num_days of their opening
     df_pr_responses["Open"], df_pr_responses["Response"] = zip(
         *df_pr_responses.apply(
             lambda row: get_open_response(df, row.Date, num_days),
@@ -199,8 +200,26 @@ def create_figure(df: pd.DataFrame, num_days):
     return fig
 
 
-# for each day, this function calculates the amount of open prs and responses
 def get_open_response(df, date, num_days):
+    """
+    This function takes a date and determines how many
+    prs in that time interval are opened and if they have a response within num_days.
+
+    Args:
+    -----
+        df : Pandas Dataframe
+            Dataframe with pr assignment actions of the assignees
+
+        date : Datetime Timestamp
+            Timestamp of the date
+
+        num_days : int
+            number of days that a response should be within
+
+    Returns:
+    --------
+        int, int: Number of opened and responded to prs within num_days on the day
+    """
     # drop rows that are more recent than the date limit
     df_created = df[df["pr_created_at"] <= date]
 

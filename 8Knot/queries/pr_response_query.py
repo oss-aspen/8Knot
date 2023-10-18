@@ -23,7 +23,9 @@ def pr_response_query(self, repos):
     Executes SQL query against Augur database for contributor data.
 
     This query gets the time to first response on a pr if it exists,
-    if not the earliest_msg_timestamp is null
+    if not the earliest_msg_timestamp is null. It takes in the data
+    of the comments (messages) on prs and pr reviews and only keeps
+    the earliest message for each pr if it exists.
 
     Args:
     -----
