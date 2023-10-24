@@ -20,7 +20,7 @@ If you are interested in making a code contribution and would like to learn more
 
 ## Steps to create a new visualization
 
-1. Make a copy of the [visualization template](https://github.com/oss-aspen/8Knot/blob/dev/pages/visualization_template/viz_template.py) for the visualization and put it in the folder of the [page](https://github.com/oss-aspen/8Knot/tree/dev/pages) you want to add it to
+1. Make a copy of the [visualization template](https://github.com/oss-aspen/8Knot/blob/dev/8Knot/pages/visualization_template/viz_template.py) for the visualization and put it in the folder of the [page](https://github.com/oss-aspen/8Knot/tree/dev/8Knot/pages) you want to add it to
 2. Once the file is created, import the card from the visualization file to the respective page file and put it into the layout
 IF you need to add a new query:
 3. add a new query file in the queries folder, using the other existing queries as a template
