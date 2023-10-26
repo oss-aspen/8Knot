@@ -31,8 +31,8 @@ gc_pr_first_response = dbc.Card(
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
                             """
-                            Visualizes number of pull requests that are open over time compared to\n
-                            the number who have gotten a response in the user inputted amoutn of days.
+                            Compares the volume of PRs being opened against the number of those PRs that \n
+                            receive at least one response within the parameterized timeframe after being opened.
                             """
                         ),
                     ],
@@ -66,7 +66,7 @@ gc_pr_first_response = dbc.Card(
                                     width=1,
                                 ),
                                 dbc.Col(
-                                    width=8,
+                                    width=6,
                                 ),
                                 dbc.Col(
                                     dbc.Button(
@@ -138,9 +138,16 @@ def pr_first_response_graph(repolist, num_days):
 def process_data(df: pd.DataFrame, num_days):
 
     # convert to datetime objects rather than strings
-    df["earliest_msg_timestamp"] = pd.to_datetime(df["earliest_msg_timestamp"], utc=True)
+    df["msg_timestamp"] = pd.to_datetime(df["msg_timestamp"], utc=True)
     df["pr_created_at"] = pd.to_datetime(df["pr_created_at"], utc=True)
     df["pr_closed_at"] = pd.to_datetime(df["pr_closed_at"], utc=True)
+
+    # drop messages from the pr creator
+    df = df[df["cntrb_id"] != df["msg_cntrb_id"]]
+
+    # sort in ascending earlier and only get ealiest value
+    df = df.sort_values(by="msg_timestamp", axis=0, ascending=True)
+    df = df.drop_duplicates(subset="pull_request_id", keep="first")
 
     # first and last elements of the dataframe are the
     # earliest and latest events respectively
@@ -233,7 +240,7 @@ def get_open_response(df, date, num_days):
     df_open["response_by"] = df_open["pr_created_at"] + pd.DateOffset(days=num_days)
 
     # Inlcude only the prs that msg timestamp is before the responded by time
-    df_response = df_open[df_open["earliest_msg_timestamp"] < df_open["response_by"]]
+    df_response = df_open[df_open["msg_timestamp"] < df_open["response_by"]]
 
     # generates number of columns ie open prs
     num_open = df_open.shape[0]
