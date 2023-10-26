@@ -22,10 +22,9 @@ def pr_response_query(self, repos):
     (Worker Query)
     Executes SQL query against Augur database for contributor data.
 
-    This query gets the time to first response on a pr if it exists,
-    if not the earliest_msg_timestamp is null. It takes in the data
-    of the comments (messages) on prs and pr reviews and only keeps
-    the earliest message for each pr if it exists.
+    This query gets the messages that are in response to a pr if any exists,
+    if not the msg_timestamp is null. It takes in the data
+    of the comments (messages) on prs and pr reviews for each pr if it exists.
 
     Args:
     -----
@@ -44,7 +43,9 @@ def pr_response_query(self, repos):
                     SELECT
                         pr.pull_request_id,
                         pr.repo_id AS ID,
-                        min(M.msg_timestamp) AS earliest_msg_timestamp,
+                        pr.pr_augur_contributor_id AS cntrb_id,
+                        M.msg_timestamp,
+                        M.msg_cntrb_id,
                         pr.pr_created_at,
                         pr.pr_closed_at
                     FROM
@@ -53,7 +54,8 @@ def pr_response_query(self, repos):
                         (
                             SELECT
                                 prr.pull_request_id AS pull_request_id,
-                                m.msg_timestamp AS msg_timestamp
+                                m.msg_timestamp AS msg_timestamp,
+                                m.cntrb_id AS msg_cntrb_id
                             FROM
                                 pull_request_review_message_ref prrmr,
                                 pull_requests pr,
@@ -66,7 +68,8 @@ def pr_response_query(self, repos):
                             UNION ALL
                             SELECT
                                 prmr.pull_request_id AS pull_request_id,
-                                m.msg_timestamp AS msg_timestamp
+                                m.msg_timestamp AS msg_timestamp,
+                                m.cntrb_id AS msg_cntrb_id
                             FROM
                                 pull_request_message_ref prmr,
                                 pull_requests pr,
@@ -79,11 +82,6 @@ def pr_response_query(self, repos):
                             M.pull_request_id = pr.pull_request_id
                     WHERE
                         pr.repo_id in ({str(repos)[1:-1]})
-                    GROUP BY
-                        pr.pull_request_id,
-                        pr.repo_id,
-                        pr.pr_created_at,
-                        pr.pr_closed_at
                 """
 
     try:
@@ -99,6 +97,13 @@ def pr_response_query(self, repos):
         raise SQLAlchemyError("DBConnect failed")
 
     df = dbm.run_query(query_string)
+
+    # reformat cntrb_id
+    df["cntrb_id"] = df["cntrb_id"].astype(str)
+    df["cntrb_id"] = df["cntrb_id"].str[:15]
+
+    df["msg_cntrb_id"] = df["msg_cntrb_id"].astype(str)
+    df["msg_cntrb_id"] = df["msg_cntrb_id"].str[:15]
 
     # change to compatible type and remove all data that has been incorrectly formated
     df["pr_created_at"] = pd.to_datetime(df["pr_created_at"], utc=True).dt.date
