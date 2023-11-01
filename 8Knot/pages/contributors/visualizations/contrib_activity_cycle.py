@@ -9,8 +9,7 @@ from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import color_seq
 from queries.commits_query import commits_query as cmq
-import io
-from cache_manager.cache_manager import CacheManager as cm
+import cache_manager.cache_facade as cf
 from pages.utils.job_utils import nodata_graph
 import time
 
@@ -114,14 +113,18 @@ def toggle_popover(n, is_open):
 )
 def contrib_activity_cycle_graph(repolist, interval):
     # wait for data to asynchronously download and become available.
-    cache = cm()
-    df = cache.grabm(func=cmq, repos=repolist)
-    while df is None:
-        time.sleep(1.0)
-        df = cache.grabm(func=cmq, repos=repolist)
+    while not_cached := cf.get_uncached(func_name=cmq.__name__, repolist=repolist):
+        logging.warning(f"COMMITS_OVER_TIME_VIZ - WAITING ON DATA TO BECOME AVAILABLE")
+        time.sleep(0.5)
 
     start = time.perf_counter()
     logging.warning(f"{VIZ_ID}- START")
+
+    # GET ALL DATA FROM POSTGRES CACHE
+    df = cf.retrieve_from_cache(
+        tablename=cmq.__name__,
+        repolist=repolist,
+    )
 
     # test if there is data
     if df.empty:

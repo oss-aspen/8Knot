@@ -10,7 +10,7 @@ import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, color_seq
 from queries.QUERY_NAME import QUERY_NAME as QUERY_INITIALS
 import io
-from cache_manager.cache_manager import CacheManager as cm
+import cache_manager.cache_facade as cf
 from pages.utils.job_utils import nodata_graph
 import time
 
@@ -29,6 +29,9 @@ NOTE: VARIABLES TO CHANGE:
 (9) COLUMN_TO_SORT_BY
 (10) Comments before callbacks
 (11) QUERY_USED, QUERY_NAME, QUERY_INITIALS
+
+NOTE: Data queried from Augur is a Postgres->Postgres transaction. If the data that resides in cache requires a pre-processing
+        step before it can be used in analysis, it will likely reside in 8Knot/8Knot/pages/utils/preprocessing_utils.py, but "your mileage my vary".
 
 NOTE: IMPORTING A VISUALIZATION INTO A PAGE
 (1) Include the visualization file in the visualization folder for the respective page
@@ -190,14 +193,18 @@ def toggle_popover(n, is_open):
 )
 def NAME_OF_VISUALIZATION_graph(repolist, interval):
     # wait for data to asynchronously download and become available.
-    cache = cm()
-    df = cache.grabm(func=QUERY_INITIALS, repos=repolist)
-    while df is None:
-        time.sleep(1.0)
-        df = cache.grabm(func=QUERY_INITIALS, repos=repolist)
+    while not_cached := cf.get_uncached(func_name=QUERY_INITIALS.__name__, repolist=repolist):
+        logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
+        time.sleep(0.5)
 
+    logging.warning(f"{VIZ_ID} - START")
     start = time.perf_counter()
-    logging.warning(f"{VIZ_ID}- START")
+
+    # GET ALL DATA FROM POSTGRES CACHE
+    df = cf.retrieve_from_cache(
+        tablename=QUERY_INITIALS.__name__,
+        repolist=repolist,
+    )
 
     # test if there is data
     if df.empty:

@@ -5,14 +5,12 @@ from dash import callback
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
-import datetime as dt
 import logging
 from pages.utils.graph_utils import get_graph_time_values, color_seq
-import io
 from pages.utils.job_utils import nodata_graph
 from queries.prs_query import prs_query as prq
-from cache_manager.cache_manager import CacheManager as cm
 import time
+import cache_manager.cache_facade as cf
 
 PAGE = "contributions"
 VIZ_ID = "prs-over-time"
@@ -117,15 +115,19 @@ def toggle_popover(n, is_open):
 )
 def prs_over_time_graph(repolist, interval):
     # wait for data to asynchronously download and become available.
-    cache = cm()
-    df = cache.grabm(func=prq, repos=repolist)
-    while df is None:
-        time.sleep(1.0)
-        df = cache.grabm(func=prq, repos=repolist)
+    while not_cached := cf.get_uncached(func_name=prq.__name__, repolist=repolist):
+        logging.warning(f"PULL REQUESTS OVER TIME - WAITING ON DATA TO BECOME AVAILABLE")
+        time.sleep(0.5)
 
     # data ready.
     start = time.perf_counter()
     logging.warning("PULL REQUESTS OVER TIME - START")
+
+    # GET ALL DATA FROM POSTGRES CACHE
+    df = cf.retrieve_from_cache(
+        tablename=prq.__name__,
+        repolist=repolist,
+    )
 
     # test if there is data
     if df.empty:

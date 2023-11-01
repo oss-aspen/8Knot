@@ -12,6 +12,7 @@ from dash.dependencies import Input, Output, State
 from app import augur
 from flask_login import current_user
 from cache_manager.cache_manager import CacheManager as cm
+import cache_manager.cache_facade as cf
 from queries.issues_query import issues_query as iq
 from queries.commits_query import commits_query as cq
 from queries.contributors_query import contributors_query as cnq
@@ -350,11 +351,11 @@ def wait_queries(job_ids):
     # results before we exit.
 
     while True:
-        logging.warning([j.status for j in jobs])
+        logging.warning([(j.name, j.status) for j in jobs])
 
         # jobs are either all ready
         if all(j.successful() for j in jobs):
-            logging.warning([j.status for j in jobs])
+            logging.warning([(j.name, j.status) for j in jobs])
             jobs = [j.forget() for j in jobs]
             return "Data Ready", "#b5b683"
 
@@ -389,8 +390,7 @@ def wait_queries(job_ids):
 def run_queries(repos):
     """
     Executes queries defined in /queries against Augur
-    instance for input Repos; caches results in redis per
-    (query_function,repo) pair.
+    instance for input Repos; caches results in Postgres.
 
     Args:
         repos ([int]): repositories we collect data for.
@@ -407,7 +407,10 @@ def run_queries(repos):
 
     for f in funcs:
         # only download repos that aren't currently in cache
-        not_ready = [r for r in repos if cache.exists(f, r) != 1]
+        not_ready = cf.get_uncached(f.__name__, repos)
+        if len(not_ready) == 0:
+            logging.warning(f"{f.__name__} - NO DISPATCH - ALL REPOS IN CACHE")
+            continue
 
         # add job to queue
         j = f.apply_async(args=[not_ready], queue="data")
