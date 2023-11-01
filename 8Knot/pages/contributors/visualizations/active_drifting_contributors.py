@@ -8,12 +8,12 @@ import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, color_seq
-from queries.contributors_query import contributors_query as ctq
-import io
-from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
 import app
+from queries.contributors_query import contributors_query as ctq
+import pages.utils.preprocessing_utils as preproc_utils
+import cache_manager.cache_facade as cf
 
 PAGE = "contributors"
 VIZ_ID = "active-drifting-contributors"
@@ -163,7 +163,9 @@ def toggle_popover(n, is_open):
     ],
     background=True,
 )
-def active_drifting_contributors_graph(repolist, interval, drift_interval, away_interval, bot_switch):
+def active_drifting_contributors_graph(
+    repolist, interval, drift_interval, away_interval, bot_switch
+):
     # conditional for the intervals to be valid options
     if drift_interval is None or away_interval is None:
         return dash.no_update, dash.no_update
@@ -172,18 +174,24 @@ def active_drifting_contributors_graph(repolist, interval, drift_interval, away_
         return dash.no_update, True
 
     # wait for data to asynchronously download and become available.
-    cache = cm()
-    df = cache.grabm(func=ctq, repos=repolist)
-    while df is None:
-        time.sleep(1.0)
-        df = cache.grabm(func=ctq, repos=repolist)
+    while not_cached := cf.get_uncached(func_name=ctq.__name__, repolist=repolist):
+        logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
+        time.sleep(0.5)
 
-    logging.warning(f"ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - START")
+    logging.warning(f"{VIZ_ID} - START")
     start = time.perf_counter()
+
+    # GET ALL DATA FROM POSTGRES CACHE
+    df = cf.retrieve_from_cache(
+        tablename=ctq.__name__,
+        repolist=repolist,
+    )
+
+    df = preproc_utils.contributors_df_action_naming(df)
 
     # test if there is data
     if df.empty:
-        logging.warning("PULL REQUEST STALENESS - NO DATA AVAILABLE")
+        logging.warning("ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH - NO DATA AVAILABLE")
         return nodata_graph, False
 
     # remove bot data
@@ -195,7 +203,9 @@ def active_drifting_contributors_graph(repolist, interval, drift_interval, away_
 
     fig = create_figure(df_status, interval)
 
-    logging.warning(f"ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}")
+    logging.warning(
+        f"ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}"
+    )
     return fig, False
 
 
@@ -220,7 +230,9 @@ def process_data(df: pd.DataFrame, interval, drift_interval, away_interval):
     # dynamically apply the function to all dates defined in the date_range to create df_status
     df_status["Active"], df_status["Drifting"], df_status["Away"] = zip(
         *df_status.apply(
-            lambda row: get_active_drifting_away_up_to(df, row.Date, drift_interval, away_interval),
+            lambda row: get_active_drifting_away_up_to(
+                df, row.Date, drift_interval, away_interval
+            ),
             axis=1,
         )
     )
@@ -280,7 +292,9 @@ def create_figure(df_status: pd.DataFrame, interval):
         )
 
         # edit hover values
-        fig.update_traces(hovertemplate=hover + "<br>Contributors: %{y}<br>" + "<extra></extra>")
+        fig.update_traces(
+            hovertemplate=hover + "<br>Contributors: %{y}<br>" + "<extra></extra>"
+        )
 
     fig.update_layout(
         xaxis_title="Time",

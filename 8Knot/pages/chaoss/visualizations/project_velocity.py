@@ -9,14 +9,14 @@ from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, color_seq
 from queries.contributors_query import contributors_query as ctq
-import io
-from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
 import math
 import numpy as np
 import app
+import pages.utils.preprocessing_utils as preproc_utils
+import cache_manager.cache_facade as cf
 
 
 PAGE = "chaoss"
@@ -180,7 +180,9 @@ gc_project_velocity = dbc.Card(
                                         id=f"date-picker-range-{PAGE}-{VIZ_ID}",
                                         min_date_allowed=dt.date(2005, 1, 1),
                                         max_date_allowed=dt.date.today(),
-                                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                                        initial_visible_month=dt.date(
+                                            dt.date.today().year, 1, 1
+                                        ),
                                         clearable=True,
                                     ),
                                     width="auto",
@@ -237,18 +239,32 @@ def toggle_popover(n, is_open):
     background=True,
 )
 def project_velocity_graph(
-    repolist, log, i_o_weight, i_c_weight, pr_o_weight, pr_m_weight, pr_c_weight, start_date, end_date, bot_switch
+    repolist,
+    log,
+    i_o_weight,
+    i_c_weight,
+    pr_o_weight,
+    pr_m_weight,
+    pr_c_weight,
+    start_date,
+    end_date,
+    bot_switch,
 ):
-
     # wait for data to asynchronously download and become available.
-    cache = cm()
-    df = cache.grabm(func=ctq, repos=repolist)
-    while df is None:
-        time.sleep(1.0)
-        df = cache.grabm(func=ctq, repos=repolist)
+    while not_cached := cf.get_uncached(func_name=ctq.__name__, repolist=repolist):
+        logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
+        time.sleep(0.5)
 
+    logging.warning(f"{VIZ_ID} - START")
     start = time.perf_counter()
-    logging.warning(f"{VIZ_ID}- START")
+
+    # GET ALL DATA FROM POSTGRES CACHE
+    df = cf.retrieve_from_cache(
+        tablename=ctq.__name__,
+        repolist=repolist,
+    )
+
+    df = preproc_utils.contributors_df_action_naming(df)
 
     # test if there is data
     if df.empty:
@@ -260,7 +276,16 @@ def project_velocity_graph(
         df = df[~df["cntrb_id"].isin(app.bots_list)]
 
     # function for all data pre processing
-    df = process_data(df, start_date, end_date, i_o_weight, i_c_weight, pr_o_weight, pr_m_weight, pr_c_weight)
+    df = process_data(
+        df,
+        start_date,
+        end_date,
+        i_o_weight,
+        i_c_weight,
+        pr_o_weight,
+        pr_m_weight,
+        pr_c_weight,
+    )
 
     fig = create_figure(df, log)
 
@@ -278,7 +303,6 @@ def process_data(
     pr_m_weight,
     pr_c_weight,
 ):
-
     # convert to datetime objects rather than strings
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
 
@@ -308,7 +332,9 @@ def process_data(
 
     # log of commits and contribs
     df_consolidated["log_num_commits"] = df_consolidated["Commit"].apply(math.log)
-    df_consolidated["log_num_contrib"] = df_consolidated["num_unique_contributors"].apply(math.log)
+    df_consolidated["log_num_contrib"] = df_consolidated[
+        "num_unique_contributors"
+    ].apply(math.log)
 
     # column to hold the weighted values of pr and issues actions summed together
     df_consolidated["prs_issues_actions_weighted"] = (
@@ -320,13 +346,14 @@ def process_data(
     )
 
     # column for log value of pr and issue actions
-    df_consolidated["log_prs_issues_actions_weighted"] = df_consolidated["prs_issues_actions_weighted"].apply(math.log)
+    df_consolidated["log_prs_issues_actions_weighted"] = df_consolidated[
+        "prs_issues_actions_weighted"
+    ].apply(math.log)
 
     return df_consolidated
 
 
 def create_figure(df: pd.DataFrame, log):
-
     y_axis = "prs_issues_actions_weighted"
     y_title = "Weighted PR/Issue Actions"
     if log:
@@ -340,7 +367,13 @@ def create_figure(df: pd.DataFrame, log):
         y=y_axis,
         color="repo_name",
         size="log_num_contrib",
-        hover_data=["repo_name", "Commit", "PR Opened", "Issue Opened", "num_unique_contributors"],
+        hover_data=[
+            "repo_name",
+            "Commit",
+            "PR Opened",
+            "Issue Opened",
+            "num_unique_contributors",
+        ],
         color_discrete_sequence=color_seq,
     )
 

@@ -1,4 +1,18 @@
 services:
+  db-init:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    command: ["python3", "./cache_manager/db_init.py"]
+    depends_on:
+      - postgres-cache
+    env_file:
+      - ./env.list
+    # sometimes, postgres-cache isn't spun up before this starts.
+    # so it'll fail. We want this to restart when it fails, because
+    # postgres will be ready eventually. we don't want it to restart
+    # after it succeeds. give it 1000 attempts I guess.
+    restart: on-failure:1000
 
   reverse-proxy:
     image: nginx:latest
@@ -7,14 +21,23 @@ services:
     depends_on:
       - app-server
     ports:
-      - "8080:8080"  # bound to host port, exposed app endpoint
+      - "8080:8080" # bound to host port, exposed app endpoint
 
   app-server:
     build:
       context: .
       dockerfile: ./docker/Dockerfile
     command:
-      [ "gunicorn", "--bind", ":8080", "app:server", "--workers", "1", "--threads", "2" ]
+      [
+        "gunicorn",
+        "--bind",
+        ":8080",
+        "app:server",
+        "--workers",
+        "1",
+        "--threads",
+        "2",
+      ]
     # ports:
     #   - 8080:8080
     depends_on:
@@ -22,6 +45,8 @@ services:
       - worker-query
       - redis-cache
       - redis-users
+      - postgres-cache
+      - db-init
     env_file:
       - ./env.list
     restart: always
@@ -30,11 +55,11 @@ services:
     build:
       context: .
       dockerfile: ./docker/Dockerfile
-    command:
-      [ "celery", "-A", "app:celery_app", "worker", "--loglevel=INFO" ]
+    command: ["celery", "-A", "app:celery_app", "worker", "--loglevel=INFO"]
     depends_on:
       - redis-cache
       - redis-users
+      - postgres-cache
     env_file:
       - ./env.list
     restart: always
@@ -44,9 +69,18 @@ services:
       context: .
       dockerfile: ./docker/Dockerfile
     command:
-      [ "celery", "-A", "app:celery_app", "worker", "--loglevel=INFO", "-Q", "data" ]
+      [
+        "celery",
+        "-A",
+        "app:celery_app",
+        "worker",
+        "--loglevel=INFO",
+        "-Q",
+        "data",
+      ]
     depends_on:
       - redis-cache
+      - postgres-cache
     env_file:
       - ./env.list
     restart: always
@@ -80,6 +114,23 @@ services:
     env_file:
       - ./env.list
     restart: always
+
+  postgres-cache:
+    image: docker.io/library/postgres:16
+    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+    volumes:
+      - ./postgres.conf:/etc/postgresql/postgresql.conf:ro
+    #   - postgres-cache:/var/lib/postgresql/data
+    # environment:
+    #   # the password we use shouldn't matter because DB is only reachable via
+    #   # internal network.
+    #   - POSTGRES_PASSWORD=password123
+    env_file:
+      - ./env.list
+    restart: always
+
+volumes:
+  postgres-cache:
 
   # flower:
   #   build:

@@ -8,11 +8,11 @@ import logging
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, color_seq
 from queries.contributors_query import contributors_query as ctq
-import io
-from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
 import app
+import pages.utils.preprocessing_utils as preproc_utils
+import cache_manager.cache_facade as cf
 
 PAGE = "contributors"
 VIZ_ID = "new-contributor"
@@ -128,14 +128,20 @@ def graph_title(view):
 )
 def new_contributor_graph(repolist, interval, bot_switch):
     # wait for data to asynchronously download and become available.
-    cache = cm()
-    df = cache.grabm(func=ctq, repos=repolist)
-    while df is None:
-        time.sleep(1.0)
-        df = cache.grabm(func=ctq, repos=repolist)
+    while not_cached := cf.get_uncached(func_name=ctq.__name__, repolist=repolist):
+        logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
+        time.sleep(0.5)
 
-    logging.warning("TOTAL_CONTRIBUTOR_GROWTH_VIZ - START")
+    logging.warning(f"{VIZ_ID} - START")
     start = time.perf_counter()
+
+    # GET ALL DATA FROM POSTGRES CACHE
+    df = cf.retrieve_from_cache(
+        tablename=ctq.__name__,
+        repolist=repolist,
+    )
+
+    df = preproc_utils.contributors_df_action_naming(df)
 
     # test if there is data
     if df.empty:
@@ -151,7 +157,9 @@ def new_contributor_graph(repolist, interval, bot_switch):
 
     fig = create_figure(df, df_contribs, interval)
 
-    logging.warning(f"TOTAL_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}")
+    logging.warning(
+        f"TOTAL_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}"
+    )
     return fig
 
 
@@ -180,10 +188,16 @@ def process_data(df, interval):
         return df, None
 
     # get the count of new contributors in the desired interval in pandas period format, sort index to order entries
-    created_range = pd.to_datetime(df["created"]).dt.to_period(interval).value_counts().sort_index()
+    created_range = (
+        pd.to_datetime(df["created"]).dt.to_period(interval).value_counts().sort_index()
+    )
 
     # converts to data frame object and creates date column from period values
-    df_contribs = created_range.to_frame().reset_index().rename(columns={"index": "Date", "created": "contribs"})
+    df_contribs = (
+        created_range.to_frame()
+        .reset_index()
+        .rename(columns={"index": "Date", "created": "contribs"})
+    )
 
     # converts date column to a datetime object, converts to string first to handle period information
     df_contribs["Date"] = pd.to_datetime(df_contribs["Date"].astype(str))
@@ -203,8 +217,12 @@ def create_figure(df, df_contribs, interval):
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
     if interval == -1:
-        fig = px.line(df, x="created", y=df.index, color_discrete_sequence=[color_seq[3]])
-        fig.update_traces(hovertemplate="Contributors: %{y}<br>%{x|%b %d, %Y} <extra></extra>")
+        fig = px.line(
+            df, x="created", y=df.index, color_discrete_sequence=[color_seq[3]]
+        )
+        fig.update_traces(
+            hovertemplate="Contributors: %{y}<br>%{x|%b %d, %Y} <extra></extra>"
+        )
     else:
         fig = px.bar(
             df_contribs,

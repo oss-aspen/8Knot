@@ -12,8 +12,7 @@ from pages.utils.graph_utils import get_graph_time_values, color_seq
 from pages.utils.job_utils import nodata_graph
 from queries.prs_query import prs_query as prq
 import time
-import io
-from cache_manager.cache_manager import CacheManager as cm
+import cache_manager.cache_facade as cf
 
 PAGE = "contributions"
 VIZ_ID = "pr-staleness"
@@ -171,14 +170,18 @@ def new_staling_prs_graph(repolist, interval, staling_interval, stale_interval):
         return dash.no_update, dash.no_update
 
     # wait for data to asynchronously download and become available.
-    cache = cm()
-    df = cache.grabm(func=prq, repos=repolist)
-    while df is None:
-        time.sleep(1.0)
-        df = cache.grabm(func=prq, repos=repolist)
+    while not_cached := cf.get_uncached(func_name=prq.__name__, repolist=repolist):
+        logging.warning(f"PULL REQUESTS STALENESS - WAITING ON DATA TO BECOME AVAILABLE")
+        time.sleep(0.5)
 
     start = time.perf_counter()
     logging.warning("PULL REQUEST STALENESS - START")
+
+    # GET ALL DATA FROM POSTGRES CACHE
+    df = cf.retrieve_from_cache(
+        tablename=prq.__name__,
+        repolist=repolist,
+    )
 
     # test if there is data
     if df.empty:

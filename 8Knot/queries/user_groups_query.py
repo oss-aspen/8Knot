@@ -9,8 +9,6 @@ import redis
 import json
 import os
 
-QUERY_NAME = "USER_GROUPS_QUERY"
-
 
 @celery_app.task(
     bind=True,
@@ -30,7 +28,7 @@ def user_groups_query(self, user_id):
     --------
         bool: Success of getting groups
     """
-    logging.warning(f"{QUERY_NAME}_DATA_QUERY - START")
+    logging.warning(f"{user_groups_query.__name__} COLLECTION - START")
 
     users_cache = redis.StrictRedis(
         host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),

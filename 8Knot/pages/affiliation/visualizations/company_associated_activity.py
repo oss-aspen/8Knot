@@ -9,12 +9,11 @@ from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import color_seq
 from queries.company_query import company_query as cmq
-import io
-from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
 import app
+import cache_manager.cache_facade as cf
 
 PAGE = "affiliation"
 VIZ_ID = "company-associated-activity"
@@ -89,7 +88,9 @@ gc_company_associated_activity = dbc.Card(
                                         id=f"date-picker-range-{PAGE}-{VIZ_ID}",
                                         min_date_allowed=dt.date(2005, 1, 1),
                                         max_date_allowed=dt.date.today(),
-                                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                                        initial_visible_month=dt.date(
+                                            dt.date.today().year, 1, 1
+                                        ),
                                         clearable=True,
                                     ),
                                     width="auto",
@@ -155,14 +156,18 @@ def compay_associated_activity_graph(repolist, num, start_date, end_date, bot_sw
     """
 
     # wait for data to asynchronously download and become available.
-    cache = cm()
-    df = cache.grabm(func=cmq, repos=repolist)
-    while df is None:
-        time.sleep(1.0)
-        df = cache.grabm(func=cmq, repos=repolist)
+    while not_cached := cf.get_uncached(func_name=cmq.__name__, repolist=repolist):
+        logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
+        time.sleep(0.5)
 
     start = time.perf_counter()
     logging.warning(f"{VIZ_ID}- START")
+
+    # GET ALL DATA FROM POSTGRES CACHE
+    df = cf.retrieve_from_cache(
+        tablename=cmq.__name__,
+        repolist=repolist,
+    )
 
     # test if there is data
     if df.empty:
@@ -205,7 +210,12 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
     email_domains = [x[x.rindex("@") + 1 :] for x in emails]
 
     # creates df of domains and counts
-    df = pd.DataFrame(email_domains, columns=["domains"]).value_counts().to_frame().reset_index()
+    df = (
+        pd.DataFrame(email_domains, columns=["domains"])
+        .value_counts()
+        .to_frame()
+        .reset_index()
+    )
 
     df = df.rename(columns={0: "occurrences"})
 

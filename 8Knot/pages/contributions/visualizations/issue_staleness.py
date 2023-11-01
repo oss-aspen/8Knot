@@ -12,9 +12,8 @@ import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, color_seq
 from queries.issues_query import issues_query as iq
 from pages.utils.job_utils import nodata_graph
-from cache_manager.cache_manager import CacheManager as cm
-import io
 import time
+import cache_manager.cache_facade as cf
 
 PAGE = "contributions"
 VIZ_ID = "issue-staleness"
@@ -173,11 +172,20 @@ def new_staling_issues_graph(repolist, interval, staling_interval, stale_interva
         return dash.no_update, dash.no_update
 
     # wait for data to asynchronously download and become available.
-    cache = cm()
-    df = cache.grabm(func=iq, repos=repolist)
-    while df is None:
-        time.sleep(1.0)
-        df = cache.grabm(func=iq, repos=repolist)
+
+    while not_cached := cf.get_uncached(func_name=iq.__name__, repolist=repolist):
+        logging.warning(f"ISSUES STALENESS - WAITING ON DATA TO BECOME AVAILABLE")
+        time.sleep(0.5)
+
+    # data ready.
+    start = time.perf_counter()
+    logging.warning("ISSUES STALENESS - START")
+
+    # GET ALL DATA FROM POSTGRES CACHE
+    df = cf.retrieve_from_cache(
+        tablename=iq.__name__,
+        repolist=repolist,
+    )
 
     start = time.perf_counter()
     logging.warning("ISSUES STALENESS - START")

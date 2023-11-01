@@ -9,13 +9,12 @@ from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import color_seq
 from queries.company_query import company_query as cmq
-import io
-from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
 from fuzzywuzzy import fuzz
 import app
+import cache_manager.cache_facade as cf
 
 PAGE = "affiliation"
 VIZ_ID = "gh-company-affiliation"
@@ -80,7 +79,9 @@ gc_gh_company_affiliation = dbc.Card(
                                         id=f"date-picker-range-{PAGE}-{VIZ_ID}",
                                         min_date_allowed=dt.date(2005, 1, 1),
                                         max_date_allowed=dt.date.today(),
-                                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                                        initial_visible_month=dt.date(
+                                            dt.date.today().year, 1, 1
+                                        ),
                                         clearable=True,
                                     ),
                                     width="auto",
@@ -133,15 +134,18 @@ def toggle_popover(n, is_open):
 )
 def gh_company_affiliation_graph(repolist, num, start_date, end_date, bot_switch):
     # wait for data to asynchronously download and become available.
-    cache = cm()
-    df = cache.grabm(func=cmq, repos=repolist)
-    while df is None:
-        time.sleep(1.0)
-        df = cache.grabm(func=cmq, repos=repolist)
+    while not_cached := cf.get_uncached(func_name=cmq.__name__, repolist=repolist):
+        logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
+        time.sleep(0.5)
 
     start = time.perf_counter()
     logging.warning(f"{VIZ_ID}- START")
 
+    # GET ALL DATA FROM POSTGRES CACHE
+    df = cf.retrieve_from_cache(
+        tablename=cmq.__name__,
+        repolist=repolist,
+    )
     # test if there is data
     if df.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
@@ -185,7 +189,9 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
     df["company_name"] = df.index
     df = df.reset_index()
     df["company_name"] = df["company_name"].astype(str)
-    df = df.rename(columns={"index": "orginal_name", "cntrb_company": "contribution_count"})
+    df = df.rename(
+        columns={"index": "orginal_name", "cntrb_company": "contribution_count"}
+    )
 
     # applies fuzzy matching comparing all rows to each other
     df["match"] = df.apply(lambda row: fuzzy_match(df, row["company_name"]), axis=1)
@@ -231,7 +237,9 @@ def fuzzy_match(df, name):
     necessary for the loop to change the company name if there is a match. 70 is the match value
     threshold for the partial ratio to be considered a match
     """
-    matches = df.apply(lambda row: (fuzz.partial_ratio(row["company_name"], name) >= 70), axis=1)
+    matches = df.apply(
+        lambda row: (fuzz.partial_ratio(row["company_name"], name) >= 70), axis=1
+    )
     return [i for i, x in enumerate(matches) if x]
 
 
