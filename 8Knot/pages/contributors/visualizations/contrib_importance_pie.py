@@ -195,7 +195,7 @@ def toggle_popover(n, is_open):
     Input(f"action-type-{PAGE}-{VIZ_ID}", "value"),
 )
 def graph_title(k, action_type):
-    title = f"Top {k} Contributors by {action_type}"
+    title = f"Lottery Factor: Top {k} Contributors by {action_type}"
     return title
 
 
