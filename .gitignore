@@ -147,7 +147,7 @@ output_time.txt
 output.dat
 env.sh
 dump.rdb
-env.list
+# env.list
 Makefile
 run_compose.sh
 csvs_to_feather.ipynb
