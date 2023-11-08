@@ -42,6 +42,8 @@ following format: f"component-identifier-{PAGE}-{VIZ_ID}"
 
 NOTE: If you change or add a new query, you need to do "docker system prune -af" before building again
 
+NOTE: If you use an alert or take code from a visualization that uses one, make sure to update returns accordingly in the NAME_OF_VISUALIZATION_graph
+
 For more information, check out the new_vis_guidance.md
 """
 
