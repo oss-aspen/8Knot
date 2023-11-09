@@ -61,9 +61,10 @@ gc_pr_first_response = dbc.Card(
                                         max=120,
                                         step=1,
                                         value=2,
+                                        size="sm",
                                     ),
                                     className="me-2",
-                                    width=1,
+                                    width=2,
                                 ),
                                 dbc.Col(
                                     width=6,
