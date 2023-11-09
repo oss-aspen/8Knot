@@ -90,6 +90,8 @@ navbar = dbc.Navbar(
                             dbc.Nav(
                                 [
                                     dbc.NavLink("Welcome", href="/", active="exact"),
+                                    dbc.NavLink("Funding", href="/funding", active="exact"),
+                                    dbc.NavLink("Starter Health", href="/starterHealth", active="exact"),
                                     dbc.NavLink("Info", href="/info", active="exact"),
                                 ],
                                 navbar=True,
