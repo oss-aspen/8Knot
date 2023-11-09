@@ -67,7 +67,7 @@ gc_contributors_over_time = dbc.Card(
                                         size="sm",
                                     ),
                                     className="me-2",
-                                    width=1,
+                                    width=2,
                                 ),
                             ],
                             align="center",
