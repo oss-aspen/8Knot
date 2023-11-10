@@ -115,6 +115,7 @@ navbar = dbc.Navbar(
                                         active="exact",
                                     ),
                                     dbc.NavLink("CHAOSS", href="/chaoss", active="exact"),
+                                    dbc.NavLink("Group 6", href="/group6", active="exact"),
                                     dbc.NavLink("Info", href="/info", active="exact"),
                                 ],
                                 navbar=True,
