@@ -77,3 +77,8 @@ blockquote p {
 .dmc-multiselect-custom {
   background-color: #272b30;
 }
+
+/* updates popover size to allow more text per line */
+.popover {
+  max-width: 500px;
+}
