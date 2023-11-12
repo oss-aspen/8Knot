@@ -50,14 +50,14 @@ For more information, check out the new_vis_guidance.md
 # TODO: Remove comments specific for the template
 
 PAGE = "new_tab"  # EDIT FOR CURRENT PAGE
-VIZ_ID = "time_to_first_response"  # UNIQUE IDENTIFIER FOR VIZUALIZATION
+VIZ_ID = "organizational_influence"  # UNIQUE IDENTIFIER FOR VIZUALIZATION
 
-gc_time_to_first_response = dbc.Card(
+gc_organizational_influence = dbc.Card(
     [
         dbc.CardBody(
             [
                 html.H3(
-                    "Time to First Response",
+                    "Organizational Influence",
                     className="card-title",
                     style={"textAlign": "center"},
                 ),
