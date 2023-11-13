@@ -65,7 +65,7 @@ gc_active_drifting_contributors = dbc.Card(
                                         size="sm",
                                     ),
                                     className="me-2",
-                                    width=1,
+                                    width=2,
                                 ),
                                 dbc.Label(
                                     "Months Until Away:",
@@ -83,7 +83,7 @@ gc_active_drifting_contributors = dbc.Card(
                                         size="sm",
                                     ),
                                     className="me-2",
-                                    width=1,
+                                    width=2,
                                 ),
                                 dbc.Alert(
                                     children="Please ensure that 'Months Until Drifting' is less than 'Months Until Away'",

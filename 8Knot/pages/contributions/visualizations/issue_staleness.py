@@ -68,7 +68,7 @@ gc_issue_staleness = dbc.Card(
                                         size="sm",
                                     ),
                                     className="me-2",
-                                    width=1,
+                                    width=2,
                                 ),
                                 dbc.Label(
                                     "Days Until Stale:",
@@ -86,7 +86,7 @@ gc_issue_staleness = dbc.Card(
                                         size="sm",
                                     ),
                                     className="me-2",
-                                    width=1,
+                                    width=2,
                                 ),
                                 dbc.Alert(
                                     children="Please ensure that 'Days Until Staling' is less than 'Days Until Stale'",
