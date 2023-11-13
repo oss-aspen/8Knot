@@ -60,6 +60,13 @@ layout = html.Div(
                         html.Div(
                             className="info_card",
                             children=[
+                                html.H2("Group 5"),
+                                html.P("Placeholder"),
+                            ],
+                        ),
+                        html.Div(
+                            className="info_card",
+                            children=[
                                 html.H2("Affiliation"),
                                 html.P(
                                     "Summarize likely company and institution affiliation with contributor behavior"

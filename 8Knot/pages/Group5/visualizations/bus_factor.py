@@ -15,14 +15,14 @@ from pages.utils.job_utils import nodata_graph
 import time
 
 PAGE = "Group5"
-VIZ_ID = "active-drifting-contributors"
+VIZ_ID = "bus_factor"
 
-gc_active_drifting_contributors = dbc.Card(
+bus_factor = dbc.Card(
     [
         dbc.CardBody(
             [
                 html.H3(
-                    "Placeholder",
+                    "Bus Factor",
                     className="card-title",
                     style={"textAlign": "center"},
                 ),
@@ -31,9 +31,7 @@ gc_active_drifting_contributors = dbc.Card(
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
                             """
-                            Visualizes growth of contributor population, including sub-populations\n
-                            in consideration of how recently a contributor has contributed.\n
-                            Please see definitions of 'Contributor Recency' on Info page.
+                            Placeholder
                             """
                         ),
                     ],
