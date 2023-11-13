@@ -41,6 +41,7 @@ def prs_query(self, repos):
                         r.repo_name,
                         pr.pull_request_id AS pull_request,
                         pr.pr_src_number,
+                        pr.pr_augur_contributor_id AS cntrb_id,
                         pr.pr_created_at AS created,
                         pr.pr_closed_at AS closed,
                         pr.pr_merged_at  AS merged
@@ -69,6 +70,10 @@ def prs_query(self, repos):
     # change to compatible type and remove all data that has been incorrectly formated
     df["created"] = pd.to_datetime(df["created"], utc=True).dt.date
     df = df[df.created < dt.date.today()]
+
+    # reformat cntrb_id
+    df["cntrb_id"] = df["cntrb_id"].astype(str)
+    df["cntrb_id"] = df["cntrb_id"].str[:15]
 
     # sort by the date created
     df = df.sort_values(by="created")

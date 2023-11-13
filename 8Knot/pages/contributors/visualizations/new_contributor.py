@@ -12,6 +12,7 @@ import io
 from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
+import app
 
 PAGE = "contributors"
 VIZ_ID = "new-contributor"
@@ -121,10 +122,11 @@ def graph_title(view):
     [
         Input("repo-choices", "data"),
         Input(f"date-interval-{PAGE}-{VIZ_ID}", "value"),
+        Input("bot-switch", "value"),
     ],
     background=True,
 )
-def new_contributor_graph(repolist, interval):
+def new_contributor_graph(repolist, interval, bot_switch):
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=ctq, repos=repolist)
@@ -139,6 +141,10 @@ def new_contributor_graph(repolist, interval):
     if df.empty:
         logging.warning("TOTAL_CONTRIBUTOR_GROWTH_VIZ - NO DATA AVAILABLE")
         return nodata_graph
+
+    # remove bot data
+    if bot_switch:
+        df = df[~df["cntrb_id"].isin(app.bots_list)]
 
     # function for all data pre processing
     df, df_contribs = process_data(df, interval)

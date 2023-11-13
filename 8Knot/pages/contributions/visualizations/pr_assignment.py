@@ -14,6 +14,7 @@ from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
+import app
 
 PAGE = "contributions"
 VIZ_ID = "pr_assignment"
@@ -105,10 +106,10 @@ def toggle_popover(n, is_open):
 # callback for pull request review assignment graph
 @callback(
     Output(f"{PAGE}-{VIZ_ID}", "figure"),
-    [Input("repo-choices", "data"), Input(f"date-radio-{PAGE}-{VIZ_ID}", "value")],
+    [Input("repo-choices", "data"), Input(f"date-radio-{PAGE}-{VIZ_ID}", "value"), Input("bot-switch", "value")],
     background=True,
 )
-def pr_assignment_graph(repolist, interval):
+def pr_assignment_graph(repolist, interval, bot_switch):
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=praq, repos=repolist)
@@ -123,6 +124,13 @@ def pr_assignment_graph(repolist, interval):
     if df.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return nodata_graph
+
+    # remove assignment data if assigned to a bot
+    if bot_switch:
+        df["bot"] = df["assignee"].isin(app.bots_list)
+        df.loc[df.bot == True, "assign_date"] = None
+        df.loc[df.bot == True, "assignment_action"] = None
+        df.loc[df.bot == True, "assignee"] = None
 
     df = process_data(df, interval)
 

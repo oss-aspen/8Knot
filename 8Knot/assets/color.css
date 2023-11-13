@@ -77,3 +77,7 @@ blockquote p {
 .dmc-multiselect-custom {
   background-color: #272b30;
 }
+
+.botlist-filter-switch:checked {
+  background-color: #6b8976;
+}

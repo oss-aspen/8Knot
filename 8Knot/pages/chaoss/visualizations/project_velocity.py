@@ -16,6 +16,7 @@ import time
 import datetime as dt
 import math
 import numpy as np
+import app
 
 
 PAGE = "chaoss"
@@ -231,11 +232,12 @@ def toggle_popover(n, is_open):
         Input(f"pr-closed-weight-{PAGE}-{VIZ_ID}", "value"),
         Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "start_date"),
         Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "end_date"),
+        Input("bot-switch", "value"),
     ],
     background=True,
 )
 def project_velocity_graph(
-    repolist, log, i_o_weight, i_c_weight, pr_o_weight, pr_m_weight, pr_c_weight, start_date, end_date
+    repolist, log, i_o_weight, i_c_weight, pr_o_weight, pr_m_weight, pr_c_weight, start_date, end_date, bot_switch
 ):
 
     # wait for data to asynchronously download and become available.
@@ -252,6 +254,10 @@ def project_velocity_graph(
     if df.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return nodata_graph
+
+    # remove bot data
+    if bot_switch:
+        df = df[~df["cntrb_id"].isin(app.bots_list)]
 
     # function for all data pre processing
     df = process_data(df, start_date, end_date, i_o_weight, i_c_weight, pr_o_weight, pr_m_weight, pr_c_weight)

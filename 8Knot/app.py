@@ -22,6 +22,7 @@ import dash_bootstrap_templates as dbt
 from db_manager.augur_manager import AugurManager
 import _login
 from _celery import celery_app, celery_manager
+import _bots as bots
 
 logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO)
 
@@ -93,3 +94,6 @@ app.layout = layout
 
 if os.getenv("8KNOT_DEBUG", "False") == "True":
     app.enable_dev_tools(dev_tools_ui=True, dev_tools_hot_reload=False)
+
+"""GITHUB BOTS LIST"""
+bots_list = bots.get_bots_list()
