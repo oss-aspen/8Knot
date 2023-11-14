@@ -109,11 +109,11 @@ navbar = dbc.Navbar(
                                         label="Contributors",
                                         nav=True,
                                     ),
-                                    dbc.NavLink(
-                                        "Affiliation",
-                                        href="/affiliation",
-                                        active="exact",
-                                    ),
+                                    # dbc.NavLink(
+                                    #     "Affiliation",
+                                    #     href="/affiliation",
+                                    #     active="exact",
+                                    # ),
                                     dbc.NavLink("CHAOSS", href="/chaoss", active="exact"),
                                     dbc.NavLink("CHAOSS_New", href="/chaoss_new", active="exact"),
                                     dbc.NavLink("Info", href="/info", active="exact"),
