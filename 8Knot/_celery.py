@@ -15,6 +15,7 @@ celery_app = Celery(
     backend=REDIS_URL,
 )
 
-celery_app.conf.update(task_time_limit=84600, task_acks_late=True, task_track_started=True)
+# tasks have 30 minutes to execute before they're killed.
+celery_app.conf.update(task_time_limit=1800, task_acks_late=True, task_track_started=True)
 
 celery_manager = CeleryManager(celery_app=celery_app)
