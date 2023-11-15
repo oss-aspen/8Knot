@@ -18,6 +18,7 @@ from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
 from dash.exceptions import PreventUpdate
+import app
 
 PAGE = "codebase"
 VIZ_ID = "cntrb-file-heatmap"
@@ -212,10 +213,11 @@ def directory_dropdown(repo_id):
     [
         Input(f"repo-{PAGE}-{VIZ_ID}", "value"),
         Input(f"directory-{PAGE}-{VIZ_ID}", "value"),
+        Input("bot-switch", "value"),
     ],
     background=True,
 )
-def cntrb_file_heatmap_graph(repo_id, directory):
+def cntrb_file_heatmap_graph(repo_id, directory, bot_switch):
     # wait for data to asynchronously download and become available.
     cache = cm()
 
@@ -244,7 +246,7 @@ def cntrb_file_heatmap_graph(repo_id, directory):
         return nodata_graph
 
     # function for all data pre processing
-    df = process_data(df_file, df_actions, df_file_cntbs, directory)
+    df = process_data(df_file, df_actions, df_file_cntbs, directory, bot_switch)
 
     fig = create_figure(df)
 
@@ -252,7 +254,7 @@ def cntrb_file_heatmap_graph(repo_id, directory):
     return fig
 
 
-def process_data(df_file: pd.DataFrame, df_actions: pd.DataFrame, df_file_cntbs: pd.DataFrame, directory):
+def process_data(df_file: pd.DataFrame, df_actions: pd.DataFrame, df_file_cntbs: pd.DataFrame, directory, bot_switch):
 
     # strings to hold the values for each column (always the same for every row of this query)
     repo_name = df_file["repo_name"].iloc[0]
@@ -283,11 +285,17 @@ def process_data(df_file: pd.DataFrame, df_actions: pd.DataFrame, df_file_cntbs:
     # replace nan with empty string to avoid errors in list comprehension
     df_file.cntrb_ids.fillna("", inplace=True)
 
-    # reformat cntrb_ids to list
-    df_file["cntrb_ids"] = df_file.apply(
-        lambda row: [x for x in row.cntrb_ids],
-        axis=1,
-    )
+    # reformat cntrb_ids to list and remove bots if filter is on
+    if bot_switch:
+        df_file["cntrb_ids"] = df_file.apply(
+            lambda row: [x for x in row.cntrb_ids if x not in app.bots_list],
+            axis=1,
+        )
+    else:
+        df_file["cntrb_ids"] = df_file.apply(
+            lambda row: [x for x in row.cntrb_ids],
+            axis=1,
+        )
 
     # determine directory level to use in later step
     level = directory.count("/")
