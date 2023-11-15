@@ -81,3 +81,7 @@ blockquote p {
 .botlist-filter-switch:checked {
   background-color: #6b8976;
 }
+/* updates popover size to allow more text per line */
+.popover {
+  max-width: 500px;
+}
