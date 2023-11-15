@@ -97,6 +97,7 @@
 .card_section_body {
   display: flex;
   justify-content: space-evenly;
+  flex-wrap: wrap;
 }
 
 .card_section_body_vertical {
@@ -109,6 +110,7 @@
 .info_card {
   margin: 5px;
   padding: 0px 5px;
+  width: 30%;
 }
 
 .info_card h2 {

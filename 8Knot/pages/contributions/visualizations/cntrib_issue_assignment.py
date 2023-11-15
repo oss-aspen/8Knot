@@ -66,7 +66,7 @@ gc_cntrib_issue_assignment = dbc.Card(
                                         size="sm",
                                     ),
                                     className="me-2",
-                                    width=1,
+                                    width=2,
                                 ),
                                 dbc.Alert(
                                     children="No contributors meet assignment requirement",

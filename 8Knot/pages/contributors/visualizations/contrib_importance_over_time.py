@@ -103,7 +103,7 @@ gc_lottery_factor_over_time = dbc.Card(
                                         size="sm",
                                     ),
                                     className="me-2",
-                                    width=1,
+                                    width=2,
                                 ),
                                 dbc.Label(
                                     "Step Size:",
@@ -121,7 +121,7 @@ gc_lottery_factor_over_time = dbc.Card(
                                         size="sm",
                                     ),
                                     className="me-2",
-                                    width=1,
+                                    width=2,
                                 ),
                                 dbc.Alert(
                                     children="Please ensure that 'Step Size' is less than or equal to 'Window Size'",

@@ -1,8 +1,9 @@
 name: Build and Push Image
-on:  # yamllint disable-line rule:truthy
-  push:
-    branches:
-      - dev
+  #on:  # yamllint disable-line rule:truthy
+  #  push:
+  #    branches:
+  #      - dev
+on: workflow_dispatch # disable automatic workflow execution
 
 jobs:
   build:
