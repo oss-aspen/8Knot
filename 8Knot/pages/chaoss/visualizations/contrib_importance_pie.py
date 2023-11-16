@@ -16,6 +16,7 @@ from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
+import app
 
 PAGE = "chaoss"
 VIZ_ID = "contrib-importance-pie"
@@ -210,10 +211,11 @@ def graph_title(k, action_type):
         Input(f"patterns-{PAGE}-{VIZ_ID}", "value"),
         Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "start_date"),
         Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "end_date"),
+        Input("bot-switch", "value"),
     ],
     background=True,
 )
-def create_top_k_cntrbs_graph(repolist, action_type, top_k, patterns, start_date, end_date):
+def create_top_k_cntrbs_graph(repolist, action_type, top_k, patterns, start_date, end_date, bot_switch):
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=ctq, repos=repolist)
@@ -232,6 +234,10 @@ def create_top_k_cntrbs_graph(repolist, action_type, top_k, patterns, start_date
     # checks if there is a contribution of a specfic action type in repo set
     if not df["Action"].str.contains(action_type).any():
         return dash.no_update, True
+
+    # remove bot data
+    if bot_switch:
+        df = df[~df["cntrb_id"].isin(app.bots_list)]
 
     # function for all data pre processing
     df = process_data(df, action_type, top_k, patterns, start_date, end_date)

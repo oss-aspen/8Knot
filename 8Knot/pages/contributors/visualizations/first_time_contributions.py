@@ -12,6 +12,7 @@ from cache_manager.cache_manager import CacheManager as cm
 import io
 import time
 from pages.utils.job_utils import nodata_graph
+import app
 
 PAGE = "contributors"
 VIZ_ID = "first-time-contribution"
@@ -74,10 +75,11 @@ def toggle_popover(n, is_open):
     Output(f"{PAGE}-{VIZ_ID}", "figure"),
     [
         Input("repo-choices", "data"),
+        Input("bot-switch", "value"),
     ],
     background=True,
 )
-def create_first_time_contributors_graph(repolist):
+def create_first_time_contributors_graph(repolist, bot_switch):
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=ctq, repos=repolist)
@@ -92,6 +94,10 @@ def create_first_time_contributors_graph(repolist):
     if df.empty:
         logging.warning("1ST CONTRIBUTIONS - NO DATA AVAILABLE")
         return nodata_graph
+
+    # remove bot data
+    if bot_switch:
+        df = df[~df["cntrb_id"].isin(app.bots_list)]
 
     # function for all data pre processing
     df = process_data(df)

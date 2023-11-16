@@ -43,6 +43,8 @@ def issues_query(self, repos):
                         i.issue_id AS issue,
                         i.gh_issue_number AS issue_number,
                         i.gh_issue_id AS gh_issue,
+                        i.reporter_id,
+                        i.cntrb_id AS issue_closer,
                         i.created_at AS created,
                         i.closed_at AS closed,
                         i.pull_request_id
@@ -75,6 +77,13 @@ def issues_query(self, repos):
     # change to compatible type and remove all data that has been incorrectly formated
     df["created"] = pd.to_datetime(df["created"], utc=True).dt.date
     df = df[df.created < dt.date.today()]
+
+    # reformat reporter_id and issue_closer
+    df["reporter_id"] = df["reporter_id"].astype(str)
+    df["reporter_id"] = df["reporter_id"].str[:15]
+
+    df["issue_closer"] = df["issue_closer"].astype(str)
+    df["issue_closer"] = df["issue_closer"].str[:15]
 
     df = df.reset_index()
     df.drop("index", axis=1, inplace=True)

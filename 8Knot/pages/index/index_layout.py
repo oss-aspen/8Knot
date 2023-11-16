@@ -176,80 +176,80 @@ navbar_bottom = dbc.NavbarSimple(
 
 search_bar = html.Div(
     [
-        html.Div(
+        dbc.Stack(
             [
-                dmc.MultiSelect(
-                    id="projects",
-                    searchable=True,
-                    clearable=True,
-                    nothingFound="No matching repos/orgs.",
-                    variant="filled",
-                    debounce=100,
-                    data=[augur.initial_multiselect_option()],
-                    value=[augur.initial_multiselect_option()["value"]],
-                    style={"fontSize": 16},
+                html.Div(
+                    [
+                        dmc.MultiSelect(
+                            id="projects",
+                            searchable=True,
+                            clearable=True,
+                            nothingFound="No matching repos/orgs.",
+                            variant="filled",
+                            debounce=100,
+                            data=[augur.initial_multiselect_option()],
+                            value=[augur.initial_multiselect_option()["value"]],
+                            style={"fontSize": 16},
+                        ),
+                        dbc.Alert(
+                            children='Please ensure that your spelling is correct. \
+                                If your selection definitely isn\'t present, please request that \
+                                it be loaded using the help button "REPO/ORG Request" \
+                                in the bottom right corner of the screen.',
+                            id="help-alert",
+                            dismissable=True,
+                            fade=True,
+                            is_open=False,
+                            color="info",
+                        ),
+                        dbc.Alert(
+                            children="List of repos",
+                            id="repo-list-alert",
+                            dismissable=True,
+                            fade=True,
+                            is_open=False,
+                            color="light",
+                            # if number of repos is large, render as a scrolling window
+                            style={"overflow-y": "scroll", "max-height": "440px"},
+                        ),
+                    ],
+                    style={
+                        "width": "50%",
+                        "paddingRight": "10px",
+                    },
                 ),
-                dbc.Alert(
-                    children='Please ensure that your spelling is correct. \
-                        If your selection definitely isn\'t present, please request that \
-                        it be loaded using the help button "REPO/ORG Request" \
-                        in the bottom right corner of the screen.',
-                    id="help-alert",
-                    dismissable=True,
-                    fade=True,
-                    is_open=False,
-                    color="info",
+                dbc.Button(
+                    "Search",
+                    id="search",
+                    n_clicks=0,
+                    size="md",
                 ),
-                dbc.Alert(
-                    children="List of repos",
-                    id="repo-list-alert",
-                    dismissable=True,
-                    fade=True,
-                    is_open=False,
-                    color="light",
-                    # if number of repos is large, render as a scrolling window
-                    style={"overflow-y": "scroll", "max-height": "440px"},
+                dbc.Button(
+                    "Help",
+                    id="search-help",
+                    n_clicks=0,
+                    size="md",
+                ),
+                dbc.Button(
+                    "Repo List",
+                    id="repo-list-button",
+                    n_clicks=0,
+                    size="md",
+                ),
+                dbc.Switch(
+                    id="bot-switch",
+                    label="Github Bot Filter",
+                    value=True,
+                    input_class_name="botlist-filter-switch",
+                    style={"fontSize": 18},
                 ),
             ],
+            direction="horizontal",
             style={
-                "width": "50%",
-                "display": "table-cell",
-                "verticalAlign": "middle",
-                "paddingRight": "10px",
+                "width": "70%",
             },
         ),
-        dbc.Button(
-            "Search",
-            id="search",
-            n_clicks=0,
-            size="md",
-        ),
-        dbc.Button(
-            "Help",
-            id="search-help",
-            n_clicks=0,
-            size="md",
-            style={
-                "verticalAlign": "top",
-                "display": "table-cell",
-            },
-        ),
-        dbc.Button(
-            "Repo List",
-            id="repo-list-button",
-            n_clicks=0,
-            size="md",
-            style={
-                "verticalAlign": "top",
-                "display": "table-cell",
-            },
-        ),
-    ],
-    style={
-        "align": "right",
-        "display": "table",
-        "width": "60%",
-    },
+    ]
 )
 
 layout = dbc.Container(
