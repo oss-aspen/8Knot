@@ -5,6 +5,7 @@ import warnings
 
 # import visualization cards
 from .visualizations.cntrb_file_heatmap import gc_cntrb_file_heatmap
+from .visualizations.contribution_file_heatmap import gc_contribution_file_heatmap
 
 warnings.filterwarnings("ignore")
 
@@ -15,6 +16,13 @@ layout = dbc.Container(
         dbc.Row(
             [
                 dbc.Col(gc_cntrb_file_heatmap, width=12),
+            ],
+            align="center",
+            style={"marginBottom": ".5%"},
+        ),
+        dbc.Row(
+            [
+                dbc.Col(gc_contribution_file_heatmap, width=12),
             ],
             align="center",
             style={"marginBottom": ".5%"},

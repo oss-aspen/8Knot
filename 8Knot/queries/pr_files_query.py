@@ -7,7 +7,7 @@ import io
 import datetime as dt
 from sqlalchemy.exc import SQLAlchemyError
 
-QUERY_NAME = "CNTRB_PER_FILE"
+QUERY_NAME = "PR_FILE"
 
 
 @celery_app.task(
@@ -17,10 +17,10 @@ QUERY_NAME = "CNTRB_PER_FILE"
     retry_kwargs={"max_retries": 5},
     retry_jitter=True,
 )
-def cntrb_per_file_query(self, repos):
+def pr_file_query(self, repos):
     """
     (Worker Query)
-    Executes SQL query against Augur database to get contributors per file data.
+    Executes SQL query against Augur database for file pull request data.
 
     Args:
     -----
@@ -36,17 +36,16 @@ def cntrb_per_file_query(self, repos):
         return None
 
     query_string = f"""
-                SELECT
-                    prf.pr_file_path as file_path,
-                    pr.repo_id as ID,
-                    string_agg(DISTINCT CAST(pr.pr_augur_contributor_id AS varchar(15)), ',') AS cntrb_ids
-                FROM
-                    pull_requests pr,
-                    pull_request_files prf
-                WHERE
-                    pr.pull_request_id = prf.pull_request_id AND
-                    pr.repo_id in ({str(repos)[1:-1]})
-                GROUP BY prf.pr_file_path, pr.repo_id
+                    SELECT
+                        prf.pr_file_path as file_path,
+                        pr.pull_request_id AS pull_request,
+                        pr.repo_id as id
+                    FROM
+                        pull_requests pr,
+                        pull_request_files prf
+                    WHERE
+                        pr.pull_request_id = prf.pull_request_id AND
+                        pr.repo_id in ({str(repos)[1:-1]})
                 """
 
     try:
@@ -62,11 +61,6 @@ def cntrb_per_file_query(self, repos):
         raise SQLAlchemyError("DBConnect failed")
 
     df = dbm.run_query(query_string)
-
-    # pandas column and format updates
-    df["cntrb_ids"] = df["cntrb_ids"].str.split(",")
-    df = df.reset_index()
-    df.drop("index", axis=1, inplace=True)
 
     pic = []
 
@@ -94,7 +88,7 @@ def cntrb_per_file_query(self, repos):
 
     # 'ack' is a boolean of whether data was set correctly or not.
     ack = cm_o.setm(
-        func=cntrb_per_file_query,
+        func=pr_file_query,
         repos=repos,
         datas=pic,
     )
