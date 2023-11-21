@@ -18,9 +18,9 @@ import time
 import datetime as dt
 
 PAGE = "starterHealth"
-VIZ_ID = "contrib-importance-pie"
+VIZ_ID = "bus_factor"
 
-gc_contrib_importance_pie = dbc.Card(
+gc_bus_factor = dbc.Card(
     [
         dbc.CardBody(
             [
