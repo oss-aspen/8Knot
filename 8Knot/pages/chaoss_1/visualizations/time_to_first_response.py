@@ -34,10 +34,8 @@ time_to_first_response = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            """This visualization gives a view into the makeup of the contributers of a project\n
-                            by the number of total commits they are making, to give insight into the overall health\n
-                            of the maintainence of the project.\n
-                            https://chaoss.community/kb/metric-bus-factor/
+                            """This metric shows on average how longe it takes for there to be any sort of response to a pull request.\n
+                            https://chaoss.community/kb/metric-time-to-first-response/
                             """
                         ),
                     ],
@@ -49,123 +47,127 @@ time_to_first_response = dbc.Card(
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
-                dbc.Form(
-                    [
-                        dbc.Row(
+                dbc.Form( [
+                    dbc.Row( [
+                        dbc.Col(
                             [
-                                dbc.Label(
-                                    "Action Type:",
-                                    html_for=f"action-type-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
-                                dbc.Col(
-                                    [
-                                        dcc.Dropdown(
-                                            id=f"action-type-{PAGE}-{VIZ_ID}",
-                                            options=[
-                                                {"label": "Commit", "value": "Commit"},
-                                                {"label": "Issue Opened", "value": "Issue Opened"},
-                                                {"label": "Issue Comment", "value": "Issue Comment"},
-                                                {"label": "Issue Closed", "value": "Issue Closed"},
-                                                {"label": "PR Open", "value": "PR Open"},
-                                                {"label": "PR Review", "value": "PR Review"},
-                                                {"label": "PR Comment", "value": "PR Comment"},
-                                            ],
-                                            value="Commit",
-                                            clearable=False,
-                                        ),
-                                        dbc.Alert(
-                                            children="""No contributions of this type have been made.\n
-                                            Please select a different contribution type.""",
-                                            id=f"check-alert-{PAGE}-{VIZ_ID}",
-                                            dismissable=True,
-                                            fade=False,
-                                            is_open=False,
-                                            color="warning",
-                                        ),
-                                    ],
-                                    className="me-2",
-                                    width=3,
-                                ),
-                                dbc.Label(
-                                    "Top K Contributors:",
-                                    html_for=f"top-k-contributors-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
-                                dbc.Col(
-                                    [
-                                        dbc.Input(
-                                            id=f"top-k-contributors-{PAGE}-{VIZ_ID}",
-                                            type="number",
-                                            min=2,
-                                            max=100,
-                                            step=1,
-                                            value=10,
-                                            size="sm",
-                                        ),
-                                    ],
-                                    className="me-2",
-                                    width=2,
+                                dbc.Button(
+                                    "About Graph",
+                                    id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                    color="secondary",
+                                    size="sm",
                                 ),
                             ],
-                            align="center",
+                            width="auto",
+                            style={"paddingTop": ".5em"},
                         ),
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Filter Out Contributors with Keyword(s) in Login:",
-                                    html_for=f"patterns-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
-                                dbc.Col(
-                                    [
-                                        dmc.MultiSelect(
-                                            id=f"patterns-{PAGE}-{VIZ_ID}",
-                                            placeholder="Bot filter values",
-                                            data=[
-                                                {"value": "bot", "label": "bot"},
-                                            ],
-                                            classNames={"values": "dmc-multiselect-custom"},
-                                            creatable=True,
-                                            searchable=True,
-                                        ),
-                                    ],
-                                    className="me-2",
-                                ),
-                            ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
-                                dbc.Col(
-                                    [
-                                        dcc.DatePickerRange(
-                                            id=f"date-picker-range-{PAGE}-{VIZ_ID}",
-                                            min_date_allowed=dt.date(2005, 1, 1),
-                                            max_date_allowed=dt.date.today(),
-                                            initial_visible_month=dt.date(dt.date.today().year, 1, 1),
-                                            clearable=True,
-                                        ),
-                                    ],
-                                ),
-                                dbc.Col(
-                                    [
-                                        dbc.Button(
-                                            "About Graph",
-                                            id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                            color="secondary",
-                                            size="sm",
-                                        ),
-                                    ],
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
-                                ),
-                            ],
-                            align="center",
-                            justify="between",
-                        ),
-                    ]
-                ),
+                    ])
+                ] )
+                # dbc.Form(
+                #     [
+                #         dbc.Row(
+                #             [
+                #                 dbc.Label(
+                #                     "Action Type:",
+                #                     html_for=f"action-type-{PAGE}-{VIZ_ID}",
+                #                     width="auto",
+                #                 ),
+                #                 dbc.Col(
+                #                     [
+                #                         dcc.Dropdown(
+                #                             id=f"action-type-{PAGE}-{VIZ_ID}",
+                #                             options=[
+                #                                 {"label": "Commit", "value": "Commit"},
+                #                                 {"label": "Issue Opened", "value": "Issue Opened"},
+                #                                 {"label": "Issue Comment", "value": "Issue Comment"},
+                #                                 {"label": "Issue Closed", "value": "Issue Closed"},
+                #                                 {"label": "PR Open", "value": "PR Open"},
+                #                                 {"label": "PR Review", "value": "PR Review"},
+                #                                 {"label": "PR Comment", "value": "PR Comment"},
+                #                             ],
+                #                             value="Commit",
+                #                             clearable=False,
+                #                         ),
+                #                         dbc.Alert(
+                #                             children="""No contributions of this type have been made.\n
+                #                             Please select a different contribution type.""",
+                #                             id=f"check-alert-{PAGE}-{VIZ_ID}",
+                #                             dismissable=True,
+                #                             fade=False,
+                #                             is_open=False,
+                #                             color="warning",
+                #                         ),
+                #                     ],
+                #                     className="me-2",
+                #                     width=3,
+                #                 ),
+                #                 # dbc.Label(
+                #                 #     "Top K Contributors:",
+                #                 #     html_for=f"top-k-contributors-{PAGE}-{VIZ_ID}",
+                #                 #     width="auto",
+                #                 # ),
+                #                 # dbc.Col(
+                #                 #     [
+                #                 #         dbc.Input(
+                #                 #             id=f"top-k-contributors-{PAGE}-{VIZ_ID}",
+                #                 #             type="number",
+                #                 #             min=2,
+                #                 #             max=100,
+                #                 #             step=1,
+                #                 #             value=10,
+                #                 #             size="sm",
+                #                 #         ),
+                #                 #     ],
+                #                 #     className="me-2",
+                #                 #     width=2,
+                #                 # ),
+                #             ],
+                #             align="center",
+                #         ),
+                #         # dbc.Row(
+                #         #     [
+                #         #         dbc.Label(
+                #         #             "Filter Out Contributors with Keyword(s) in Login:",
+                #         #             html_for=f"patterns-{PAGE}-{VIZ_ID}",
+                #         #             width="auto",
+                #         #         ),
+                #         #         dbc.Col(
+                #         #             [
+                #         #                 dmc.MultiSelect(
+                #         #                     id=f"patterns-{PAGE}-{VIZ_ID}",
+                #         #                     placeholder="Bot filter values",
+                #         #                     data=[
+                #         #                         {"value": "bot", "label": "bot"},
+                #         #                     ],
+                #         #                     classNames={"values": "dmc-multiselect-custom"},
+                #         #                     creatable=True,
+                #         #                     searchable=True,
+                #         #                 ),
+                #         #             ],
+                #         #             className="me-2",
+                #         #         ),
+                #         #     ],
+                #         #     align="center",
+                #         # ),
+                #         # dbc.Row(
+                #         #     [
+                #         #         dbc.Col(
+                #         #             [
+                #         #                 dcc.DatePickerRange(
+                #         #                     id=f"date-picker-range-{PAGE}-{VIZ_ID}",
+                #         #                     min_date_allowed=dt.date(2005, 1, 1),
+                #         #                     max_date_allowed=dt.date.today(),
+                #         #                     initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                #         #                     clearable=True,
+                #         #                 ),
+                #         #             ],
+                #         #         ),
+                #         #     ],
+                #         #     align="center",
+                #         #     justify="between",
+                #         # ),
+                #     ]
+                # ),
             ]
         )
     ],
@@ -186,30 +188,28 @@ def toggle_popover(n, is_open):
 # callback for dynamically changing the graph title
 @callback(
     Output(f"graph-title-{PAGE}-{VIZ_ID}", "children"),
-    Input(f"top-k-contributors-{PAGE}-{VIZ_ID}", "value"),
+    #Input(f"top-k-contributors-{PAGE}-{VIZ_ID}", "value"),
     Input(f"action-type-{PAGE}-{VIZ_ID}", "value"),
 )
-def graph_title(k, action_type):
-    title = f"Lottery Factor: Top {k} Contributors by {action_type}"
+def graph_title(action_type):
+    title = f"Time between pull request and first response back"
     return title
 
 
 # callback for contrib-importance graph
 @callback(
     Output(f"{PAGE}-{VIZ_ID}", "figure"),
-    Output(f"check-alert-{PAGE}-{VIZ_ID}", "is_open"),
     [
         Input("repo-choices", "data"),
-        Input(f"action-type-{PAGE}-{VIZ_ID}", "value"),
-        Input(f"top-k-contributors-{PAGE}-{VIZ_ID}", "value"),
-        Input(f"patterns-{PAGE}-{VIZ_ID}", "value"),
-        Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "start_date"),
-        Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "end_date"),
+        # Input(f"action-type-{PAGE}-{VIZ_ID}", "value"),
+        # Input(f"top-k-contributors-{PAGE}-{VIZ_ID}", "value"),
+        # Input(f"patterns-{PAGE}-{VIZ_ID}", "value"),
+        # Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "start_date"),
+        # Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "end_date"),
     ],
     background=True,
 )
-def bus_factor_graph(repolist, action_type, top_k, patterns, start_date, end_date):
-    print("!"* 1000)
+def bus_factor_graph(repolist):
     # wait for data to asynchronously download and become available.
     cache = cm()
     df1 = cache.grabm(func=prrq, repos=repolist)
@@ -231,17 +231,15 @@ def bus_factor_graph(repolist, action_type, top_k, patterns, start_date, end_dat
     fig = create_figure(df)
 
     logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
-    return fig, False
+    return fig
 
 
 def process_data(df1: pd.DataFrame, df2: pd.DataFrame,):
-    print(df1.columns.tolist())
-    print(df2.columns.tolist())
     df1['msg_timestamp'] = pd.to_datetime(df1['msg_timestamp'])
     df2['created'] = pd.to_datetime(df2['created'])
     
     # Get the first response
-    df1_sorted = df1.sort_values(by=['msg_timestamp'], ascending=True).groupby('pull_request_id').first().reset_index()
+    df1_sorted = df1.sort_values(by=['msg_timestamp'], ascending=False).groupby('pull_request_id').first().reset_index()
 
     # Merge dataframes on 'pull_request_id'
     merged_df = pd.merge(df1_sorted, df2, how='inner', left_on='pull_request_id', right_on='pull_request')
