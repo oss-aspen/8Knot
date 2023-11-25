@@ -25,6 +25,7 @@ gc_bus_factor_pie = dbc.Card(
         dbc.CardBody(
             [
                 html.H3(
+                    "Bus Factor",
                     id=f"Bus Factor",
                     className="card-title",
                     style={"textAlign": "center"},

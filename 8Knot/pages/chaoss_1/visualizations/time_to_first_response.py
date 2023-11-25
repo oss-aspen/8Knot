@@ -26,6 +26,7 @@ time_to_first_response = dbc.Card(
         dbc.CardBody(
             [
                 html.H3(
+                    "Time to First Response",
                     id=f"Bus Factor",
                     className="card-title",
                     style={"textAlign": "center"},
