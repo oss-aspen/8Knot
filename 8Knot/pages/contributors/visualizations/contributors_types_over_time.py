@@ -8,12 +8,12 @@ import logging
 import numpy as np
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, color_seq
-
 from pages.utils.job_utils import nodata_graph
 from queries.contributors_query import contributors_query as ctq
 import time
 import io
 from cache_manager.cache_manager import CacheManager as cm
+import app
 
 PAGE = "contributors"
 VIZ_ID = "contrib-types-over-time"
@@ -67,7 +67,7 @@ gc_contributors_over_time = dbc.Card(
                                         size="sm",
                                     ),
                                     className="me-2",
-                                    width=1,
+                                    width=2,
                                 ),
                             ],
                             align="center",
@@ -134,10 +134,11 @@ def toggle_popover(n, is_open):
         Input("repo-choices", "data"),
         Input(f"contributions-required-{PAGE}-{VIZ_ID}", "value"),
         Input(f"date-interval-{PAGE}-{VIZ_ID}", "value"),
+        Input("bot-switch", "value"),
     ],
     background=True,
 )
-def create_contrib_over_time_graph(repolist, contribs, interval):
+def create_contrib_over_time_graph(repolist, contribs, interval, bot_switch):
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=ctq, repos=repolist)
@@ -152,6 +153,10 @@ def create_contrib_over_time_graph(repolist, contribs, interval):
     if df.empty:
         logging.warning("PULL REQUESTS OVER TIME - NO DATA AVAILABLE")
         return nodata_graph
+
+    # remove bot data
+    if bot_switch:
+        df = df[~df["cntrb_id"].isin(app.bots_list)]
 
     # function for all data pre processing
     df_drive_repeat = process_data(df, interval, contribs)

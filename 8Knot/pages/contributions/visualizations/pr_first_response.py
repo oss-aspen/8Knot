@@ -13,6 +13,7 @@ import io
 from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
+import app
 
 PAGE = "contributions"
 VIZ_ID = "pr-first-response"
@@ -61,9 +62,10 @@ gc_pr_first_response = dbc.Card(
                                         max=120,
                                         step=1,
                                         value=2,
+                                        size="sm",
                                     ),
                                     className="me-2",
-                                    width=1,
+                                    width=2,
                                 ),
                                 dbc.Col(
                                     width=6,
@@ -108,10 +110,11 @@ def toggle_popover(n, is_open):
     [
         Input("repo-choices", "data"),
         Input(f"response-days-{PAGE}-{VIZ_ID}", "value"),
+        Input("bot-switch", "value"),
     ],
     background=True,
 )
-def pr_first_response_graph(repolist, num_days):
+def pr_first_response_graph(repolist, num_days, bot_switch):
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=prr, repos=repolist)
@@ -126,6 +129,10 @@ def pr_first_response_graph(repolist, num_days):
     if df.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return nodata_graph
+
+    # remove bot data
+    if bot_switch:
+        df = df[~df["cntrb_id"].isin(app.bots_list)]
 
     df = process_data(df, num_days)
 

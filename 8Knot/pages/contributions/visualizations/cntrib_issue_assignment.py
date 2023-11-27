@@ -14,6 +14,7 @@ from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
+import app
 
 PAGE = "contributions"
 VIZ_ID = "cntrib_issue-assignment"
@@ -66,7 +67,7 @@ gc_cntrib_issue_assignment = dbc.Card(
                                         size="sm",
                                     ),
                                     className="me-2",
-                                    width=1,
+                                    width=2,
                                 ),
                                 dbc.Alert(
                                     children="No contributors meet assignment requirement",
@@ -142,10 +143,11 @@ def toggle_popover(n, is_open):
         Input("repo-choices", "data"),
         Input(f"date-radio-{PAGE}-{VIZ_ID}", "value"),
         Input(f"assignments-required-{PAGE}-{VIZ_ID}", "value"),
+        Input("bot-switch", "value"),
     ],
     background=True,
 )
-def cntrib_issue_assignment_graph(repolist, interval, assign_req):
+def cntrib_issue_assignment_graph(repolist, interval, assign_req, bot_switch):
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=iaq, repos=repolist)
@@ -160,6 +162,10 @@ def cntrib_issue_assignment_graph(repolist, interval, assign_req):
     if df.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return nodata_graph, False
+
+    # remove bot data
+    if bot_switch:
+        df = df[~df["assignee"].isin(app.bots_list)]
 
     df = process_data(df, interval, assign_req)
 

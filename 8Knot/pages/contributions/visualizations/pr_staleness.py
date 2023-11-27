@@ -66,7 +66,7 @@ gc_pr_staleness = dbc.Card(
                                         size="sm",
                                     ),
                                     className="me-2",
-                                    width=1,
+                                    width=2,
                                 ),
                                 dbc.Label(
                                     "Days Until Stale:",
@@ -84,7 +84,7 @@ gc_pr_staleness = dbc.Card(
                                         size="sm",
                                     ),
                                     className="me-2",
-                                    width=1,
+                                    width=2,
                                 ),
                             ],
                             align="center",

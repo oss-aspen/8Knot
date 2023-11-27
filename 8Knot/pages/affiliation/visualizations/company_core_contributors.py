@@ -14,6 +14,7 @@ from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
+import app
 
 PAGE = "affiliation"
 VIZ_ID = "company-core-contributors"
@@ -145,10 +146,11 @@ def toggle_popover(n, is_open):
         Input(f"contributors-required-{PAGE}-{VIZ_ID}", "value"),
         Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "start_date"),
         Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "end_date"),
+        Input("bot-switch", "value"),
     ],
     background=True,
 )
-def compay_associated_activity_graph(repolist, contributions, contributors, start_date, end_date):
+def compay_associated_activity_graph(repolist, contributions, contributors, start_date, end_date, bot_switch):
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=cmq, repos=repolist)
@@ -163,6 +165,10 @@ def compay_associated_activity_graph(repolist, contributions, contributors, star
     if df.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return nodata_graph
+
+    # remove bot data
+    if bot_switch:
+        df = df[~df["cntrb_id"].isin(app.bots_list)]
 
     # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
     df = process_data(df, contributions, contributors, start_date, end_date)

@@ -13,6 +13,7 @@ import io
 from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
+import app
 
 PAGE = "contributors"
 VIZ_ID = "active-drifting-contributors"
@@ -65,7 +66,7 @@ gc_active_drifting_contributors = dbc.Card(
                                         size="sm",
                                     ),
                                     className="me-2",
-                                    width=1,
+                                    width=2,
                                 ),
                                 dbc.Label(
                                     "Months Until Away:",
@@ -83,7 +84,7 @@ gc_active_drifting_contributors = dbc.Card(
                                         size="sm",
                                     ),
                                     className="me-2",
-                                    width=1,
+                                    width=2,
                                 ),
                                 dbc.Alert(
                                     children="Please ensure that 'Months Until Drifting' is less than 'Months Until Away'",
@@ -158,10 +159,11 @@ def toggle_popover(n, is_open):
         Input(f"date-interval-{PAGE}-{VIZ_ID}", "value"),
         Input(f"drifting-months-{PAGE}-{VIZ_ID}", "value"),
         Input(f"away-months-{PAGE}-{VIZ_ID}", "value"),
+        Input("bot-switch", "value"),
     ],
     background=True,
 )
-def active_drifting_contributors_graph(repolist, interval, drift_interval, away_interval):
+def active_drifting_contributors_graph(repolist, interval, drift_interval, away_interval, bot_switch):
     # conditional for the intervals to be valid options
     if drift_interval is None or away_interval is None:
         return dash.no_update, dash.no_update
@@ -183,6 +185,10 @@ def active_drifting_contributors_graph(repolist, interval, drift_interval, away_
     if df.empty:
         logging.warning("PULL REQUEST STALENESS - NO DATA AVAILABLE")
         return nodata_graph, False
+
+    # remove bot data
+    if bot_switch:
+        df = df[~df["cntrb_id"].isin(app.bots_list)]
 
     # function for all data pre processing
     df_status = process_data(df, interval, drift_interval, away_interval)

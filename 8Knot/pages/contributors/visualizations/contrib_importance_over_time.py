@@ -17,7 +17,7 @@ from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
-from scipy import stats
+import app
 
 PAGE = "contributors"
 VIZ_ID = "lottery-factor-over-time"
@@ -103,7 +103,7 @@ gc_lottery_factor_over_time = dbc.Card(
                                         size="sm",
                                     ),
                                     className="me-2",
-                                    width=1,
+                                    width=2,
                                 ),
                                 dbc.Label(
                                     "Step Size:",
@@ -121,7 +121,7 @@ gc_lottery_factor_over_time = dbc.Card(
                                         size="sm",
                                     ),
                                     className="me-2",
-                                    width=1,
+                                    width=2,
                                 ),
                                 dbc.Alert(
                                     children="Please ensure that 'Step Size' is less than or equal to 'Window Size'",
@@ -228,11 +228,12 @@ def graph_title(window_width):
         Input(f"step-size-{PAGE}-{VIZ_ID}", "value"),
         Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "start_date"),
         Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "end_date"),
+        Input("bot-switch", "value"),
     ],
     background=True,
 )
 def create_contrib_prolificacy_over_time_graph(
-    repolist, patterns, threshold, window_width, step_size, start_date, end_date
+    repolist, patterns, threshold, window_width, step_size, start_date, end_date, bot_switch
 ):
     # main function for all data pre processing
     cache = cm()
@@ -241,6 +242,10 @@ def create_contrib_prolificacy_over_time_graph(
     while df is None:
         time.sleep(1.0)
         df = cache.grabm(func=ctq, repos=repolist)
+
+    # remove bot data
+    if bot_switch:
+        df = df[~df["cntrb_id"].isin(app.bots_list)]
 
     # data ready.
     start = time.perf_counter()

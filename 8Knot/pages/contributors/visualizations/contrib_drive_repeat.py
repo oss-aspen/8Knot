@@ -12,6 +12,7 @@ from queries.contributors_query import contributors_query as ctq
 import time
 import io
 from cache_manager.cache_manager import CacheManager as cm
+import app
 
 PAGE = "contributors"
 VIZ_ID = "contrib-drive-repeat"
@@ -66,7 +67,7 @@ gc_contrib_drive_repeat = dbc.Card(
                                         size="sm",
                                     ),
                                     className="me-2",
-                                    width=1,
+                                    width=2,
                                 ),
                             ],
                             align="center",
@@ -150,10 +151,11 @@ def graph_title(view):
         Input("repo-choices", "data"),
         Input(f"contributions-required-{PAGE}-{VIZ_ID}", "value"),
         Input(f"graph-view-{PAGE}-{VIZ_ID}", "value"),
+        Input("bot-switch", "value"),
     ],
     background=True,
 )
-def repeat_drive_by_graph(repolist, contribs, view):
+def repeat_drive_by_graph(repolist, contribs, view, bot_switch):
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=ctq, repos=repolist)
@@ -169,6 +171,10 @@ def repeat_drive_by_graph(repolist, contribs, view):
     if df.empty:
         logging.warning("CONTRIB DRIVE REPEAT - NO DATA AVAILABLE")
         return nodata_graph
+
+    # remove bot data
+    if bot_switch:
+        df = df[~df["cntrb_id"].isin(app.bots_list)]
 
     # function for all data pre processing
     df_cont_subset = process_data(df, view, contribs)

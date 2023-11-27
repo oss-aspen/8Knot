@@ -7,7 +7,7 @@ import io
 import datetime as dt
 from sqlalchemy.exc import SQLAlchemyError
 
-QUERY_NAME = "PR"
+QUERY_NAME = "REPO_FILES"
 
 
 @celery_app.task(
@@ -17,10 +17,11 @@ QUERY_NAME = "PR"
     retry_kwargs={"max_retries": 5},
     retry_jitter=True,
 )
-def prs_query(self, repos):
+def repo_files_query(self, repos):
+
     """
     (Worker Query)
-    Executes SQL query against Augur database for pull request data.
+    Executes SQL query against Augur database to get the repo file data.
 
     Args:
     -----
@@ -37,21 +38,19 @@ def prs_query(self, repos):
 
     query_string = f"""
                     SELECT
-                        r.repo_id as id,
-                        r.repo_name,
-                        pr.pull_request_id AS pull_request,
-                        pr.pr_src_number,
-                        pr.pr_augur_contributor_id AS cntrb_id,
-                        pr.pr_created_at AS created,
-                        pr.pr_closed_at AS closed,
-                        pr.pr_merged_at  AS merged
-                    FROM
-                        repo r,
-                        pull_requests pr
-                    WHERE
-                        r.repo_id = pr.repo_id AND
-                        r.repo_id in ({str(repos)[1:-1]})
-                    """
+                    rl.repo_id AS id,
+                    r.repo_name,
+                    r.repo_path,
+                    rl.rl_analysis_date,
+                    rl.file_path,
+                    rl.file_name
+                FROM
+                    repo_labor rl,
+                    repo r
+                WHERE
+                    rl.repo_id = r.repo_id AND
+                    rl.repo_id in ({str(repos)[1:-1]})
+                """
 
     try:
         dbm = AugurManager()
@@ -67,23 +66,8 @@ def prs_query(self, repos):
 
     df = dbm.run_query(query_string)
 
-    # change to compatible type and remove all data that has been incorrectly formated
-    df["created"] = pd.to_datetime(df["created"], utc=True).dt.date
-    df = df[df.created < dt.date.today()]
-
-    # reformat cntrb_id
-    df["cntrb_id"] = df["cntrb_id"].astype(str)
-    df["cntrb_id"] = df["cntrb_id"].str[:15]
-
-    # sort by the date created
-    df = df.sort_values(by="created")
-    df = df.reset_index()
-    df.drop("index", axis=1, inplace=True)
-
-    # break apart returned data per repo
-    # and temporarily store in List to be
-    # stored in Redis.
     pic = []
+
     for i, r in enumerate(repos):
         # convert series to a dataframe
         c_df = pd.DataFrame(df.loc[df["id"] == r]).reset_index(drop=True)
@@ -108,10 +92,10 @@ def prs_query(self, repos):
 
     # 'ack' is a boolean of whether data was set correctly or not.
     ack = cm_o.setm(
-        func=prs_query,
+        func=repo_files_query,
         repos=repos,
         datas=pic,
     )
-
     logging.warning(f"{QUERY_NAME}_DATA_QUERY - END")
+
     return ack
