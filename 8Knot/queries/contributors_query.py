@@ -90,7 +90,7 @@ def contributors_query(self, repos):
 
     # change to compatible type and remove all data that has been incorrectly formated
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True).dt.date
-    #df = df[df.created_at < dt.date.today()]
+    df = df[df.created_at < dt.date.today()]
 
     df = df.reset_index(drop=True)
 
