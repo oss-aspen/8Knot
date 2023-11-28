@@ -17,7 +17,7 @@ from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
 
-PAGE = "chaoss"
+PAGE = "financial"
 VIZ_ID = "contrib-importance-pie"
 
 gc_contrib_importance_pie = dbc.Card(
@@ -195,7 +195,7 @@ def toggle_popover(n, is_open):
     Input(f"action-type-{PAGE}-{VIZ_ID}", "value"),
 )
 def graph_title(k, action_type):
-    title = f"This thing is working"
+    title = f"Lottery Factor: Top {k} Contributors by {action_type}"
     return title
 
 
