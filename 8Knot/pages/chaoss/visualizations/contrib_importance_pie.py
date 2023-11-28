@@ -195,7 +195,7 @@ def toggle_popover(n, is_open):
     Input(f"action-type-{PAGE}-{VIZ_ID}", "value"),
 )
 def graph_title(k, action_type):
-    title = f"This is a new title!"
+    title = f"This is a test title!"
     return title
 
 
