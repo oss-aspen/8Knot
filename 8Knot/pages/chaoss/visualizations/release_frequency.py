@@ -191,7 +191,7 @@ def toggle_popover(n, is_open):
 def RELEASE_FREQUENCY_graph(repolist, interval):
     # wait for data to asynchronously download and become available.
     cache = cm()
-    df = cache.grabm(func=rq, repos=repolist),
+    df = cache.grabm(func=rq, repos=repolist)
     while df is None:
         time.sleep(1.0)
         df = cache.grabm(func=rq, repos=repolist)
@@ -200,7 +200,7 @@ def RELEASE_FREQUENCY_graph(repolist, interval):
     logging.warning(f"{VIZ_ID}- START")
     logging.warning(df)
     # test if there is data
-    if df[0].empty:
+    if df.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return nodata_graph
 
@@ -223,7 +223,7 @@ def process_data(df: pd.DataFrame, interval):
     df["release_published_at"] = pd.to_datetime(df["release_published_at"], utc=True)
 
     # filter values based on date picker
-    df = df[df.release_published_at >= (dt.date.today() - period)]
+    df = df[pd.to_datetime(df.release_published_at).dt.date >= (dt.date.today() - dt.timedelta(days=365))]
 
     """LOOK AT OTHER VISUALIZATIONS TO SEE IF ANY HAVE A SIMILAR DATA PROCESS"""
 
@@ -238,9 +238,10 @@ def create_figure(df: pd.DataFrame, interval):
     fig = px.scatter(
         df,
         x="release_published_at",
-        y=0,
+        y="repo_name",
         color="repo_name",
-        size=1,
+        size="id",
+        size_max=15,
         hover_data=["repo_name", "release_name", "release_published_at"],
         color_discrete_sequence=color_seq
     )

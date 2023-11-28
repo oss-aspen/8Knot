@@ -54,12 +54,12 @@ def RELEASES_query(self, repos):
     # else:
     #     interval_str = "year"
     query_string = f"""
-                    SELECT repo_name, release_name, release_published_at, release_created_at, release_updated_at
+                    SELECT releases.repo_id as id, repo.repo_name, release_name, releases.release_published_at, releases.release_created_at, releases.release_updated_at, releases.release_created_at as created
 
                     FROM augur_data.releases JOIN augur_data.repo ON releases.repo_id = repo.repo_id
 
                     WHERE
-                        releases.repo_id in ({str(repos)[1:-1]})
+                        releases.repo_id in ({str(repos)[1:-1]}) AND releases.release_created_at IS NOT NULL
 
                     """
 
