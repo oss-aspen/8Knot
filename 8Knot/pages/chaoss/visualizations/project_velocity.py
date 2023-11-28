@@ -26,7 +26,7 @@ gc_project_velocity = dbc.Card(
         dbc.CardBody(
             [
                 html.H3(
-                    "Project Velocity",
+                    "Another New Title!!",
                     className="card-title",
                     style={"textAlign": "center"},
                 ),
