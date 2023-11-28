@@ -17,7 +17,7 @@ from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
 
-PAGE = "chaoss"
+PAGE = "financial"
 VIZ_ID = "contrib-importance-pie"
 
 gc_contrib_importance_pie = dbc.Card(
