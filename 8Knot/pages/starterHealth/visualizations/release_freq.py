@@ -142,7 +142,7 @@ def process_data(
 
     # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
-
+    df.id = df.id.astype(str)
     # order values chronologically by COLUMN_TO_SORT_BY date
     df = df.sort_values(by="created", axis=0, ascending=True)
 
