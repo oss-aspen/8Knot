@@ -67,7 +67,7 @@ gc_RELEASE_FREQUENCY = dbc.Card(
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody("INSERT CONTEXT OF GRAPH HERE"),
+                        dbc.PopoverBody("A graph showing the releases made for a given repo over the course of the past year, allowing maintainers to compare and monitor release cadence and frequency. Steady and consistent releases can be a good sign that a project is mature."),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
                     target=f"popover-target-{PAGE}-{VIZ_ID}",
@@ -81,26 +81,26 @@ gc_RELEASE_FREQUENCY = dbc.Card(
                     [
                         dbc.Row(
                             [
-                                dbc.Label(
-                                    "Date Interval:",
-                                    html_for=f"date-radio-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
-                                dbc.Col(
-                                    [
-                                        dbc.RadioItems(
-                                            id=f"date-radio-{PAGE}-{VIZ_ID}",
-                                            options=[
+                                # dbc.Label(
+                                #     "Date Interval:",
+                                #     html_for=f"date-radio-{PAGE}-{VIZ_ID}",
+                                #     width="auto",
+                                # ),
+                                # dbc.Col(
+                                #     [
+                                #         dbc.RadioItems(
+                                #             id=f"date-radio-{PAGE}-{VIZ_ID}",
+                                #             options=[
 
-                                                {"label": "Week","value": "W",},
-                                                {"label": "Month", "value": "M"},
-                                                {"label": "Year", "value": "Y"},
-                                            ],
-                                            value="M",
-                                            inline=True,
-                                        ),
-                                    ]
-                                ),
+                                #                 {"label": "Week","value": "W",},
+                                #                 {"label": "Month", "value": "M"},
+                                #                 {"label": "Year", "value": "Y"},
+                                #             ],
+                                #             value="M",
+                                #             inline=True,
+                                #         ),
+                                #     ]
+                                # ),
                                 dbc.Col(
                                     dbc.Button(
                                         "About Graph",
@@ -181,14 +181,14 @@ def toggle_popover(n, is_open):
     # if additional output is added, change returns accordingly
     [
         Input("repo-choices", "data"),
-        Input(f"date-radio-{PAGE}-{VIZ_ID}", "interval"),
+        #Input(f"date-radio-{PAGE}-{VIZ_ID}", "interval"),
         # Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "start_date"),
         # Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "end_date"),
         # add additional inputs here
     ],
     background=True,
 )
-def RELEASE_FREQUENCY_graph(repolist, interval):
+def RELEASE_FREQUENCY_graph(repolist):
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=rq, repos=repolist)
@@ -205,19 +205,19 @@ def RELEASE_FREQUENCY_graph(repolist, interval):
         return nodata_graph
 
     # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
-    df = process_data(df, interval)
+    df = process_data(df)
 
-    fig = create_figure(df, interval)
+    fig = create_figure(df)
 
     logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
 
-def process_data(df: pd.DataFrame, interval):
+def process_data(df: pd.DataFrame):
     """Implement your custom data-processing logic in this function.
     The output of this function is the data you intend to create a visualization with,
     requiring no further processing."""
-    x_r, x_name, hover, period = get_graph_time_values(interval)
+    #x_r, x_name, hover, period = get_graph_time_values(interval)
     # convert to datetime objects rather than strings
     # ADD ANY OTHER COLUMNS WITH DATETIME
     df["release_published_at"] = pd.to_datetime(df["release_published_at"], utc=True)
@@ -230,9 +230,9 @@ def process_data(df: pd.DataFrame, interval):
     return df
 
 
-def create_figure(df: pd.DataFrame, interval):
+def create_figure(df: pd.DataFrame):
     # time values for graph
-    x_r, x_name, hover, period = get_graph_time_values(interval)
+    #x_r, x_name, hover, period = get_graph_time_values(interval)
 
     # graph generation
     fig = px.scatter(
@@ -241,14 +241,16 @@ def create_figure(df: pd.DataFrame, interval):
         y="repo_name",
         color="repo_name",
         size="id",
-        size_max=15,
+        size_max=10,
         hover_data=["repo_name", "release_name", "release_published_at"],
         color_discrete_sequence=color_seq
     )
 
     fig.update_traces(
-        hovertemplate="Repo: %{customdata[0]} <br>Release Name: %{customdata[1]} <br>Relase Published: %{customdata[2]}"
+        hovertemplate="Repo: %{y} <br>Release Name: %{customdata[0]} <br>Relase Published: %{x} <extra></extra>",
+
     )
+    fig.update_yaxes(showticklabels=False)
 
     fig.update_layout(
         xaxis_title="Date",
