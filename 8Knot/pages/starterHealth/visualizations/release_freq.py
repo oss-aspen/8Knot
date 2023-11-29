@@ -26,7 +26,7 @@ gc_release_freq = dbc.Card(
         dbc.CardBody(
             [
                 html.H3(
-                    "release_freq",
+                    "Release Frequency",
                     className="card-title",
                     style={"textAlign": "center"},
                 ),
@@ -35,7 +35,9 @@ gc_release_freq = dbc.Card(
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
                             """This visualization gives a view into the development lifecycle of a repository\n
-                             releases are a key view into what a project is doing and how lively it is. """
+                             releases are a key view into what a project is doing and how lively it is.\n
+                              Hovering over a point goes into detail sasying what repo published and on\n
+                               what date the release published. """
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
@@ -99,13 +101,12 @@ def toggle_popover(n, is_open):
     Output(f"{PAGE}-{VIZ_ID}", "figure"),
     [
         Input("repo-choices", "data"),
-        Input(f"graph-view-{PAGE}-{VIZ_ID}", "value"),
         Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "start_date"),
         Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "end_date"),
     ],
     background=True,
 )
-def project_velocity_graph(
+def release_frequency_graph(
     repolist, start_date, end_date
 ):
 
@@ -140,42 +141,44 @@ def process_data(
 ):
 
     # convert to datetime objects rather than strings
-    df["release_published_at"] = pd.to_datetime(df["release_published_at"], utc=True)
+    df["created"] = pd.to_datetime(df["created"], utc=True)
 
     # order values chronologically by COLUMN_TO_SORT_BY date
-    df = df.sort_values(by="release_published_at", axis=0, ascending=True)
-    df = df.insert(0, "y_axis", [1])
+    df = df.sort_values(by="created", axis=0, ascending=True)
 
     # filter values based on date picker
     if start_date is not None:
-        df = df[df.release_published_at >= start_date]
+        df = df[df.created >= start_date]
     if end_date is not None:
-        df = df[df.release_published_at <= end_date]
+        df = df[df.created <= end_date]
 
     return df
 
 
 def create_figure(df: pd.DataFrame):
 
-    y_axis = "release_id" # should be y axis col
-    y_title = "Releases"
-
+    y_data = [0 for x in df.created]
     # graph generation
     fig = px.scatter(
         df,
         x="created",
-        y=y_axis,
-        color="repo_name",
-        color_discrete_sequence=color_seq,
+        y=y_data,
+        color = "id",
+        hover_name="id"
     )
 
-    # layout styling
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(showgrid=False, 
+                 zeroline=True, zerolinecolor='gray', zerolinewidth=3,
+                 showticklabels=False)
+
+    # # layout styling
     fig.update_layout(
         xaxis_title="Release Date",
-        yaxis_title=y_title,
+        yaxis_title="Releases",
         margin_b=40,
         font=dict(size=14),
-        legend_title="Repo Name",
+        legend_title="Repo ID"
     )
 
     return fig
