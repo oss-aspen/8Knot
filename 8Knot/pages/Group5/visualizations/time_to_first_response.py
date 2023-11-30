@@ -8,7 +8,7 @@ import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, color_seq
-from queries.QUERY_NAME import QUERY_NAME as QUERY_INITIALS
+from queries.ttfr_query import TTFRQ_query as ttfrq
 import io
 from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
@@ -16,11 +16,6 @@ import time
 
 """
 NOTE: VARIABLES TO CHANGE:
-(3) gc_VISUALIZATION
-(5) CONTEXT OF GRAPH
-(6) IDs of Dash components
-(6) NAME_OF_VISUALIZATION_graph
-(7) COLUMN_WITH_DATETIME
 (8) COLUMN_WITH_DATETIME
 (9) COLUMN_TO_SORT_BY
 (10) Comments before callbacks
@@ -50,7 +45,7 @@ For more information, check out the new_vis_guidance.md
 PAGE = "Group5"  # EDIT FOR CURRENT PAGE
 VIZ_ID = "time_to_first_response"  # UNIQUE IDENTIFIER FOR VIZUALIZATION
 
-gc_VISUALIZATION = dbc.Card(
+time_to_first_response = dbc.Card(
     [
         dbc.CardBody(
             [
@@ -62,7 +57,7 @@ gc_VISUALIZATION = dbc.Card(
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody("INSERT CONTEXT OF GRAPH HERE"),
+                        dbc.PopoverBody("Graph of time time between commit and response"),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
                     target=f"popover-target-{PAGE}-{VIZ_ID}",
@@ -147,10 +142,10 @@ def toggle_popover(n, is_open):
 def time_to_first_response_graph(repolist, interval):
     # wait for data to asynchronously download and become available.
     cache = cm()
-    df = cache.grabm(func=QUERY_INITIALS, repos=repolist)
+    df = cache.grabm(func=ttfrq, repos=repolist)
     while df is None:
         time.sleep(1.0)
-        df = cache.grabm(func=QUERY_INITIALS, repos=repolist)
+        df = cache.grabm(func=ttfrq, repos=repolist)
 
     start = time.perf_counter()
     logging.warning(f"{VIZ_ID}- START")
@@ -161,9 +156,9 @@ def time_to_first_response_graph(repolist, interval):
         return nodata_graph
 
     # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
-    df = process_data(df, interval)
+    df, df_contribs = process_data(df, interval)
 
-    fig = create_figure(df, interval)
+    fig = create_figure(df, df_contribs,interval)
 
     logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
@@ -176,23 +171,76 @@ def process_data(df: pd.DataFrame, interval):
 
     # convert to datetime objects rather than strings
     # ADD ANY OTHER COLUMNS WITH DATETIME
-    df["COLUMN_WITH_DATETIME"] = pd.to_datetime(df["COLUMN_WITH_DATETIME"], utc=True)
+    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
+    df["closed_at"] = pd.to_datetime(df["closed_at"], utc=True)
 
-    # order values chronologically by COLUMN_TO_SORT_BY date
-    df = df.sort_values(by="COLUMN_TO_SORT_BY", axis=0, ascending=True)
 
     """LOOK AT OTHER VISUALIZATIONS TO SEE IF ANY HAVE A SIMILAR DATA PROCESS"""
 
-    return df
+    created_range = pd.to_datetime(df["created"]).dt.to_period(interval).value_counts().sort_index()
+
+    # converts to data frame object and creates date column from period values
+    df_contribs = created_range.to_frame().reset_index().rename(columns={"index": "Date", "created": "contribs"})
+
+    # converts date column to a datetime object, converts to string first to handle period information
+    df_contribs["Date"] = pd.to_datetime(df_contribs["Date"].astype(str))
+
+    # correction for year binning -
+    # rounded up to next year so this is a simple patch
+    if interval == "Y":
+        df_contribs["Date"] = df_contribs["Date"].dt.year
+    elif interval == "M":
+        df_contribs["Date"] = df_contribs["Date"].dt.strftime("%Y-%m")
+
+    return df, df_contribs
 
 
-def create_figure(df: pd.DataFrame, interval):
+def create_figure(df: pd.DataFrame, df_contribs, interval):
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
-    # graph generation
-    fig = fig
+    if interval == -1:
+        fig = px.line(df, x="created_at", y=df.index, color_discrete_sequence=[color_seq[3]])
+        # fig.update_traces(hovertemplate="Contributors: %{y}<br>%{x|%b %d, %Y} <extra></extra>")
+    else:
+        fig = px.bar(
+            df_contribs,
+            x="Date",
+            y="Time to Respond",
+            range_x=x_r,
+            labels={"x": x_name, "y": "Contributors"},
+            color_discrete_sequence=[color_seq[3]],
+        )
+        fig.update_traces(hovertemplate=hover + "<br>Contributors: %{y}<br>")
 
-    """LOOK AT OTHER VISUALIZATIONS TO SEE IF ANY HAVE A SIMILAR GRAPH"""
-
+    """
+        Ref. for this awesome button thing:
+        https://plotly.com/python/range-slider/
+    """
+    # add the date-range selector
+    fig.update_layout(
+        xaxis=dict(
+            rangeselector=dict(
+                buttons=list(
+                    [
+                        dict(count=1, label="1m", step="month", stepmode="backward"),
+                        dict(count=6, label="6m", step="month", stepmode="backward"),
+                        dict(count=1, label="YTD", step="year", stepmode="todate"),
+                        dict(count=1, label="1y", step="year", stepmode="backward"),
+                        dict(step="all"),
+                    ]
+                )
+            ),
+            rangeslider=dict(visible=True),
+            type="date",
+        )
+    )
+    # label the figure correctly
+    fig.update_layout(
+        xaxis_title="Time",
+        yaxis_title="Number of Contributors",
+        margin_b=40,
+        margin_r=20,
+        font=dict(size=14),
+    )
     return fig
