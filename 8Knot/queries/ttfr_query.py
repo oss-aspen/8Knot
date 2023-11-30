@@ -96,7 +96,7 @@ def TTFRQ_query(self, repos):
 
     # 'ack' is a boolean of whether data was set correctly or not.
     ack = cm_o.setm(
-        func=NAME_query,
+        func=TTFRQ_query,
         repos=repos,
         datas=pic,
     )
