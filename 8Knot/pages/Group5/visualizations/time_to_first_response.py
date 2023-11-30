@@ -226,63 +226,97 @@ def process_data(df: pd.DataFrame, interval, drift_interval, away_interval):
     return df_status
 
 
-def create_figure(df_status: pd.DataFrame, interval):
-    # time values for graph
-    x_r, x_name, hover, period = get_graph_time_values(interval)
-
-    # making a line graph if the bin-size is small enough.
-    if interval == "D":
-        fig = go.Figure(
-            [
-                go.Scatter(
-                    name="Active",
-                    x=df_status["Date"],
-                    y=df_status["Active"],
-                    mode="lines",
-                    showlegend=True,
-                    hovertemplate="Contributors Active: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
-                    marker=dict(color=color_seq[1]),
-                ),
-                go.Scatter(
-                    name="Drifting",
-                    x=df_status["Date"],
-                    y=df_status["Drifting"],
-                    mode="lines",
-                    showlegend=True,
-                    hovertemplate="Contributors Drifting: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
-                    marker=dict(color=color_seq[5]),
-                ),
-                go.Scatter(
-                    name="Away",
-                    x=df_status["Date"],
-                    y=df_status["Away"],
-                    mode="lines",
-                    showlegend=True,
-                    hovertemplate="Contributors Away: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
-                    marker=dict(color=color_seq[2]),
-                ),
-            ]
-        )
-    else:
-        fig = px.bar(
-            df_status,
-            x="Date",
-            y=["Active", "Drifting", "Away"],
-            color_discrete_sequence=[color_seq[1], color_seq[5], color_seq[2]],
-        )
-
-        # edit hover values
-        fig.update_traces(hovertemplate=hover + "<br>Contributors: %{y}<br>" + "<extra></extra>")
-
-    fig.update_layout(
-        xaxis_title="Time",
-        yaxis_title="Number of Contributors",
-        legend_title="Type",
-        font=dict(size=14),
+def create_figure(df_final, threshold, step_size):
+    # create custom data to update the hovertemplate with the action type and start and end dates of a given time window in addition to the lottery factor
+    # make a nested list of plural action types so that it is gramatically correct in the updated hover info eg. Commit -> Commits and PR Opened -> PRs Opened
+    action_types = [
+        [action_type[:2] + "s" + action_type[2:]] * len(df_final)
+        if action_type == "PR Opened"
+        else [action_type[:5] + "s" + action_type[5:]] * len(df_final)
+        if action_type == "Issue Opened" or action_type == "Issue Closed"
+        else [action_type + "s"] * len(df_final)
+        for action_type in df_final.columns[2:]
+    ]
+    time_window = list(
+        df_final["period_from"].dt.strftime("%b %d, %Y") + " - " + df_final["period_to"].dt.strftime("%b %d, %Y")
     )
+    customdata = np.stack(([threshold] * len(df_final), time_window), axis=-1)
 
-    return fig
-
+    # create plotly express line graph
+    fig = go.Figure(
+        [
+            go.Scatter(
+                name="Commit",
+                x=df_final["period_from"],
+                y=df_final["Commit"],
+                text=action_types[0],
+                customdata=customdata,
+                mode="lines",
+                showlegend=True,
+                marker=dict(color=color_seq[0]),
+            ),
+            go.Scatter(
+                name="Issue Opened",
+                x=df_final["period_from"],
+                y=df_final["Issue Opened"],
+                text=action_types[1],
+                customdata=customdata,
+                mode="lines",
+                showlegend=False,
+                marker=dict(color=color_seq[1]),
+            ),
+            go.Scatter(
+                name="Issue Comment",
+                x=df_final["period_from"],
+                y=df_final["Issue Comment"],
+                text=action_types[2],
+                customdata=customdata,
+                mode="lines",
+                showlegend=False,
+                marker=dict(color=color_seq[2]),
+            ),
+            go.Scatter(
+                name="Issue Closed",
+                x=df_final["period_from"],
+                y=df_final["Issue Closed"],
+                text=action_types[3],
+                customdata=customdata,
+                mode="lines",
+                showlegend=False,
+                marker=dict(color=color_seq[3]),
+            ),
+            go.Scatter(
+                name="PR Opened",
+                x=df_final["period_from"],
+                y=df_final["PR Opened"],
+                text=action_types[4],
+                customdata=customdata,
+                mode="lines",
+                showlegend=False,
+                marker=dict(color=color_seq[4]),
+            ),
+            go.Scatter(
+                name="PR Comment",
+                x=df_final["period_from"],
+                y=df_final["PR Comment"],
+                text=action_types[5],
+                customdata=customdata,
+                mode="lines",
+                showlegend=False,
+                marker=dict(color=color_seq[5]),
+            ),
+            go.Scatter(
+                name="PR Review",
+                x=df_final["period_from"],
+                y=df_final["PR Review"],
+                text=action_types[6],
+                customdata=customdata,
+                mode="lines",
+                showlegend=False,
+                marker=dict(color=color_seq[0]),
+            ),
+        ],
+    )
 
 def get_active_drifting_away_up_to(df, date, drift_interval, away_interval):
     # drop rows that are more recent than the date limit
