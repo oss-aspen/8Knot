@@ -8,14 +8,47 @@ import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, color_seq
-from queries.contributors_query import contributors_query as ctq
+from queries.prs_query import prs_query as prq
 import io
 from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
 
-PAGE = "Group5"
-VIZ_ID = "change_request_closure_ratio"
+"""
+NOTE: VARIABLES TO CHANGE:
+
+(5) CONTEXT OF GRAPH
+(6) IDs of Dash components
+(6) NAME_OF_VISUALIZATION_graph
+(7) COLUMN_WITH_DATETIME
+(8) COLUMN_WITH_DATETIME
+(9) COLUMN_TO_SORT_BY
+(10) Comments before callbacks
+(11) QUERY_USED, QUERY_NAME, QUERY_INITIALS
+
+NOTE: IMPORTING A VISUALIZATION INTO A PAGE
+(1) Include the visualization file in the visualization folder for the respective page
+(2) Import the visualization into the page_name.py file using "from .visualizations.visualization_file_name import gc_visualization_name"
+(3) Add the card into a column in a row on the page
+
+NOTE: ADDITIONAL DASH COMPONENTS FOR USER GRAPH CUSTOMIZATIONS
+
+If you add Dash components (ie dbc.Input, dbc.RadioItems, dcc.DatePickerRange...) the ids, html_for, and targets should be in the
+following format: f"component-identifier-{PAGE}-{VIZ_ID}"
+
+NOTE: If you change or add a new query, you need to do "docker system prune -af" before building again
+
+NOTE: If you use an alert or take code from a visualization that uses one, make sure to update returns accordingly in the NAME_OF_VISUALIZATION_graph
+
+For more information, check out the new_vis_guidance.md
+"""
+
+
+# TODO: Remove unused imports and edit strings and variables in all CAPS
+# TODO: Remove comments specific for the template
+
+PAGE = "Group5"  # EDIT FOR CURRENT PAGE
+VIZ_ID = "change_request_closure_ratio"  # UNIQUE IDENTIFIER FOR VIZUALIZATION
 
 change_request_closure_ratio = dbc.Card(
     [
@@ -29,14 +62,10 @@ change_request_closure_ratio = dbc.Card(
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody(
-                            """
-                            Placeholder
-                            """
-                        ),
+                        dbc.PopoverBody("INSERT CONTEXT OF GRAPH HERE"),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",  # needs to be the same as dbc.Button id
+                    target=f"popover-target-{PAGE}-{VIZ_ID}",
                     placement="top",
                     is_open=False,
                 ),
@@ -48,65 +77,20 @@ change_request_closure_ratio = dbc.Card(
                         dbc.Row(
                             [
                                 dbc.Label(
-                                    "Months Until Drifting:",
-                                    html_for=f"drifting-months-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id=f"drifting-months-{PAGE}-{VIZ_ID}",
-                                        type="number",
-                                        min=1,
-                                        max=120,
-                                        step=1,
-                                        value=6,
-                                        size="sm",
-                                    ),
-                                    className="me-2",
-                                    width=1,
-                                ),
-                                dbc.Label(
-                                    "Months Until Away:",
-                                    html_for=f"away-months-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id=f"away-months-{PAGE}-{VIZ_ID}",
-                                        type="number",
-                                        min=1,
-                                        max=120,
-                                        step=1,
-                                        value=12,
-                                        size="sm",
-                                    ),
-                                    className="me-2",
-                                    width=1,
-                                ),
-                                dbc.Alert(
-                                    children="Please ensure that 'Months Until Drifting' is less than 'Months Until Away'",
-                                    id=f"check-alert-{PAGE}-{VIZ_ID}",
-                                    dismissable=True,
-                                    fade=False,
-                                    is_open=False,
-                                    color="warning",
-                                ),
-                            ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
-                                dbc.Label(
                                     "Date Interval:",
-                                    html_for=f"date-interval-{PAGE}-{VIZ_ID}",
+                                    html_for=f"date-radio-{PAGE}-{VIZ_ID}",
                                     width="auto",
                                 ),
                                 dbc.Col(
                                     [
                                         dbc.RadioItems(
-                                            id=f"date-interval-{PAGE}-{VIZ_ID}",
+                                            id=f"date-radio-{PAGE}-{VIZ_ID}",
                                             options=[
-                                                {"label": "Trend", "value": "D"},
+                                                {
+                                                    "label": "Trend",
+                                                    "value": "D",
+                                                },  # TREND IF LINE, DAY IF NOT
+                                                # {"label": "Week","value": "W",}, UNCOMMENT IF APPLICABLE
                                                 {"label": "Month", "value": "M"},
                                                 {"label": "Year", "value": "Y"},
                                             ],
@@ -128,6 +112,46 @@ change_request_closure_ratio = dbc.Card(
                             ],
                             align="center",
                         ),
+                        # TODO: ADD IN IF ADDITIONAL PARAMETERS FOR GRAPH, REMOVE IF NOT
+                        """ format dbc.Inputs, including dbc.Alert if needed
+                                dbc.Label(
+                                    "TITLE_OF_ADDITIONAL_PARAMETER:",
+                                    html_for=f"component-identifier-{PAGE}-{VIZ_ID}",
+                                    width={"size": "auto"},
+                                ),
+                                dbc.Col(
+                                    dbc.Input(
+                                        id=f"component-identifier-{PAGE}-{VIZ_ID}",,
+                                        type="number",
+                                        min=1,
+                                        max=120,
+                                        step=1,
+                                        value=7,
+                                    ),
+                                    className="me-2",
+                                    width=2,
+                                ),
+                                dbc.Alert(
+                                    children="Please ensure that 'PARAMETER' is less than 'PARAMETER'",
+                                    id=f"component-identifier-{PAGE}-{VIZ_ID}",
+                                    dismissable=True,
+                                    fade=False,
+                                    is_open=False,
+                                    color="warning",
+                                ),
+                        """
+                        """ format for dcc.DatePickerRange:
+                                dbc.Col(
+                                    dcc.DatePickerRange(
+                                        id=f"component-identifier-{PAGE}-{VIZ_ID}",
+                                        min_date_allowed=dt.date(2005, 1, 1),
+                                        max_date_allowed=dt.date.today(),
+                                        clearable=True,
+                                    ),
+                                    width="auto",
+                                ),
+
+                        """,
                     ]
                 ),
             ]
@@ -148,168 +172,67 @@ def toggle_popover(n, is_open):
     return is_open
 
 
+# callback for VIZ TITLE graph
 @callback(
     Output(f"{PAGE}-{VIZ_ID}", "figure"),
-    Output(f"check-alert-{PAGE}-{VIZ_ID}", "is_open"),
+    # Output(f"check-alert-{PAGE}-{VIZ_ID}", "is_open"), USE WITH ADDITIONAL PARAMETERS
+    # if additional output is added, change returns accordingly
     [
         Input("repo-choices", "data"),
-        Input(f"date-interval-{PAGE}-{VIZ_ID}", "value"),
-        Input(f"drifting-months-{PAGE}-{VIZ_ID}", "value"),
-        Input(f"away-months-{PAGE}-{VIZ_ID}", "value"),
+        Input(f"date-radio-{PAGE}-{VIZ_ID}", "value"),
+        # add additional inputs here
     ],
     background=True,
 )
-def active_drifting_contributors_graph(repolist, interval, drift_interval, away_interval):
-    # conditional for the intervals to be valid options
-    if drift_interval is None or away_interval is None:
-        return dash.no_update, dash.no_update
-
-    if drift_interval > away_interval:
-        return dash.no_update, True
-
+def change_request_closure_ratio_graph(repolist, interval):
     # wait for data to asynchronously download and become available.
     cache = cm()
-    df = cache.grabm(func=ctq, repos=repolist)
+    df = cache.grabm(func=prq, repos=repolist)
     while df is None:
         time.sleep(1.0)
-        df = cache.grabm(func=ctq, repos=repolist)
+        df = cache.grabm(func=prq, repos=repolist)
 
-    logging.warning(f"ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - START")
     start = time.perf_counter()
+    logging.warning(f"{VIZ_ID}- START")
 
     # test if there is data
     if df.empty:
-        logging.warning("PULL REQUEST STALENESS - NO DATA AVAILABLE")
-        return nodata_graph, False
+        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
+        return nodata_graph
 
-    # function for all data pre processing
-    df_status = process_data(df, interval, drift_interval, away_interval)
+    # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
+    df = process_data(df, interval)
 
-    fig = create_figure(df_status, interval)
+    fig = create_figure(df, interval)
 
-    logging.warning(f"ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}")
-    return fig, False
-
-
-def process_data(df: pd.DataFrame, interval, drift_interval, away_interval):
-    # convert to datetime objects with consistent column name
-    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
-    df.rename(columns={"created_at": "created"}, inplace=True)
-
-    # order from beginning of time to most recent
-    df = df.sort_values("created", axis=0, ascending=True)
-
-    # first and last elements of the dataframe are the
-    # earliest and latest events respectively
-    earliest, latest = df["created"].min(), df["created"].max()
-
-    # beginning to the end of time by the specified interval
-    dates = pd.date_range(start=earliest, end=latest, freq=interval, inclusive="both")
-
-    # df for active, driving, and away contributors for time interval
-    df_status = dates.to_frame(index=False, name="Date")
-
-    # dynamically apply the function to all dates defined in the date_range to create df_status
-    df_status["Active"], df_status["Drifting"], df_status["Away"] = zip(
-        *df_status.apply(
-            lambda row: get_active_drifting_away_up_to(df, row.Date, drift_interval, away_interval),
-            axis=1,
-        )
-    )
-
-    # formatting for graph generation
-    if interval == "M":
-        df_status["Date"] = df_status["Date"].dt.strftime("%Y-%m")
-    elif interval == "Y":
-        df_status["Date"] = df_status["Date"].dt.year
-
-    return df_status
-
-
-def create_figure(df_status: pd.DataFrame, interval):
-    # time values for graph
-    x_r, x_name, hover, period = get_graph_time_values(interval)
-
-    # making a line graph if the bin-size is small enough.
-    if interval == "D":
-        fig = go.Figure(
-            [
-                go.Scatter(
-                    name="Active",
-                    x=df_status["Date"],
-                    y=df_status["Active"],
-                    mode="lines",
-                    showlegend=True,
-                    hovertemplate="Contributors Active: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
-                    marker=dict(color=color_seq[1]),
-                ),
-                go.Scatter(
-                    name="Drifting",
-                    x=df_status["Date"],
-                    y=df_status["Drifting"],
-                    mode="lines",
-                    showlegend=True,
-                    hovertemplate="Contributors Drifting: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
-                    marker=dict(color=color_seq[5]),
-                ),
-                go.Scatter(
-                    name="Away",
-                    x=df_status["Date"],
-                    y=df_status["Away"],
-                    mode="lines",
-                    showlegend=True,
-                    hovertemplate="Contributors Away: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
-                    marker=dict(color=color_seq[2]),
-                ),
-            ]
-        )
-    else:
-        fig = px.bar(
-            df_status,
-            x="Date",
-            y=["Active", "Drifting", "Away"],
-            color_discrete_sequence=[color_seq[1], color_seq[5], color_seq[2]],
-        )
-
-        # edit hover values
-        fig.update_traces(hovertemplate=hover + "<br>Contributors: %{y}<br>" + "<extra></extra>")
-
-    fig.update_layout(
-        xaxis_title="Time",
-        yaxis_title="Number of Contributors",
-        legend_title="Type",
-        font=dict(size=14),
-    )
-
+    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
 
-def get_active_drifting_away_up_to(df, date, drift_interval, away_interval):
-    # drop rows that are more recent than the date limit
-    df_lim = df[df["created"] <= date]
+def process_data(df: pd.DataFrame, interval):
+    """Implement your custom data-processing logic in this function.
+    The output of this function is the data you intend to create a visualization with,
+    requiring no further processing."""
 
-    # keep more recent contribution per ID
-    df_lim = df_lim.drop_duplicates(subset="cntrb_id", keep="last")
+    # convert to datetime objects rather than strings
+    # ADD ANY OTHER COLUMNS WITH DATETIME
+    df["COLUMN_WITH_DATETIME"] = pd.to_datetime(df["COLUMN_WITH_DATETIME"], utc=True)
 
-    # time difference, drifting_months before the threshold date
-    drift_mos = date - relativedelta(months=+drift_interval)
+    # order values chronologically by COLUMN_TO_SORT_BY date
+    df = df.sort_values(by="COLUMN_TO_SORT_BY", axis=0, ascending=True)
 
-    # time difference, away_months before the threshold date
-    away_mos = date - relativedelta(months=+away_interval)
+    """LOOK AT OTHER VISUALIZATIONS TO SEE IF ANY HAVE A SIMILAR DATA PROCESS"""
 
-    # number of total contributors up until date
-    numTotal = df_lim.shape[0]
+    return df
 
-    # number of 'active' contributors, people with contributions before the drift time
-    numActive = df_lim[df_lim["created"] >= drift_mos].shape[0]
 
-    # set of contributions that are before the away time
-    drifting = df_lim[df_lim["created"] > away_mos]
+def create_figure(df: pd.DataFrame, interval):
+    # time values for graph
+    x_r, x_name, hover, period = get_graph_time_values(interval)
 
-    # number of the set of contributions that are after the drift time, but before away
-    numDrifting = drifting[drifting["created"] < drift_mos].shape[0]
+    # graph generation
+    fig = fig
 
-    # difference of the total to get the away value
-    numAway = numTotal - (numActive + numDrifting)
+    """LOOK AT OTHER VISUALIZATIONS TO SEE IF ANY HAVE A SIMILAR GRAPH"""
 
-    return [numActive, numDrifting, numAway]
+    return fig
