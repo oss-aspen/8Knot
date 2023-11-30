@@ -18,9 +18,9 @@ import time
 import datetime as dt
 
 PAGE = "funding"
-VIZ_ID = "contrib-importance-pie"
+VIZ_ID = "contr_type"
 
-gc_contrib_importance_pie = dbc.Card(
+gc_contr_type = dbc.Card(
     [
         dbc.CardBody(
             [

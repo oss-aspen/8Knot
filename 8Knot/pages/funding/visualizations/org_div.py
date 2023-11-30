@@ -19,14 +19,14 @@ import numpy as np
 
 
 PAGE = "funding"
-VIZ_ID = "project-velocity"
+VIZ_ID = "org_div"
 
-gc_project_velocity = dbc.Card(
+gc_org_div = dbc.Card(
     [
         dbc.CardBody(
             [
                 html.H3(
-                    "Project Velocity",
+                    "org_div",
                     className="card-title",
                     style={"textAlign": "center"},
                 ),
