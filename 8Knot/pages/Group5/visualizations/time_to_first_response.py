@@ -158,24 +158,15 @@ def time_to_first_response_graph(repolist, interval):
     # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
     df, df_contribs = process_data(df, interval)
 
-    fig = create_figure(df, df_contribs,interval)
+    fig = create_figure(df, df_contribs, interval)
 
     logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
 
 def process_data(df: pd.DataFrame, interval):
-    """Implement your custom data-processing logic in this function.
-    The output of this function is the data you intend to create a visualization with,
-    requiring no further processing."""
-
-    # convert to datetime objects rather than strings
-    # ADD ANY OTHER COLUMNS WITH DATETIME
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
     df["closed_at"] = pd.to_datetime(df["closed_at"], utc=True)
-
-
-    """LOOK AT OTHER VISUALIZATIONS TO SEE IF ANY HAVE A SIMILAR DATA PROCESS"""
 
     created_range = pd.to_datetime(df["created"]).dt.to_period(interval).value_counts().sort_index()
 
@@ -183,7 +174,12 @@ def process_data(df: pd.DataFrame, interval):
     df_contribs = created_range.to_frame().reset_index().rename(columns={"index": "Date", "created": "contribs"})
 
     # converts date column to a datetime object, converts to string first to handle period information
-    df_contribs["Date"] = pd.to_datetime(df_contribs["Date"].astype(str))
+
+    #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    #NEED TO SUBTRACT END DATE BY START DATE AND MAKE THAT THE Y AXIS VALUE+
+    #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    df_contribs["created_at"] = pd.to_numeric(df_contribs["created_at"])
+    df_contribs["closed_at"] = pd.to_datetime(df_contribs["closed_at"].astype(str))
 
     # correction for year binning -
     # rounded up to next year so this is a simple patch
