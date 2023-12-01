@@ -120,6 +120,8 @@ def create_test_graph(repolist, interval):
     if df.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return nodata_graph, False
+
+    logging.warning(df)
     
     df = process_data(df, interval)
 
