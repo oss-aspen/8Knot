@@ -197,9 +197,6 @@ def directory_dropdown(repo_id):
     path_slice = repo_id + "-" + repo_path + "/" + repo_name + "/"
     df["file_path"] = df["file_path"].str.rsplit(path_slice, n=1).str[1]
 
-    # drop columns not in the most recent collection
-    df = df[df["rl_analysis_date"] == df["rl_analysis_date"].max()]
-
     # drop unneccessary columns not needed after preprocessing steps
     df = df.reset_index()
     df.drop(["index", "id", "repo_name", "repo_path", "rl_analysis_date"], axis=1, inplace=True)
@@ -217,7 +214,6 @@ def directory_dropdown(repo_id):
 
     # sort alphabetically
     directories = sorted(directories)
-    print(directories)
 
     # add top level directory to the list of directories
     directories.insert(0, "Top Level Directory")
@@ -262,8 +258,6 @@ def cntrb_file_heatmap_graph(repo_id, directory, graph_view):
     if df_file.empty or df_file_pr.empty or df_pr.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return nodata_graph
-
-    print(directory)
 
     # function for all data pre processing
     df = process_data(df_file, df_file_pr, df_pr, directory, graph_view)

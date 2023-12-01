@@ -49,7 +49,17 @@ def repo_files_query(self, repos):
                     repo r
                 WHERE
                     rl.repo_id = r.repo_id AND
-                    rl.repo_id in ({str(repos)[1:-1]})
+                    rl.repo_id in ({str(repos)[1:-1]}) AND
+                    rl.rl_analysis_date = (
+                        SELECT
+                            MAX(rl.rl_analysis_date)
+                        FROM
+                            repo_labor rl,
+                            repo r
+                        WHERE
+                            rl.repo_id = r.repo_id AND
+                            rl.repo_id in {str(repos)[1:-1]}
+                        )
                 """
 
     try:
