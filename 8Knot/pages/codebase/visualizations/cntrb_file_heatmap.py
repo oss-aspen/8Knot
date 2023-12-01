@@ -203,7 +203,6 @@ def directory_dropdown(repo_id):
 
     # add top level directory to the list of directories
     directories.insert(0, "Top Level Directory")
-    print(directories)
 
     return directories, "Top Level Directory"
 
@@ -238,8 +237,6 @@ def cntrb_file_heatmap_graph(repo_id, directory, bot_switch):
         time.sleep(1.0)
         df_file_cntbs = cache.grabm(func=cpfq, repos=[repo_id])
 
-    print(directory)
-
     start = time.perf_counter()
     logging.warning(f"{VIZ_ID}- START")
 
@@ -271,9 +268,6 @@ def process_data(df_file: pd.DataFrame, df_actions: pd.DataFrame, df_file_cntbs:
     # pattern found in each file path, used to slice to get only the root file path
     path_slice = repo_id + "-" + repo_path + "/" + repo_name + "/"
     df_file["file_path"] = df_file["file_path"].str.rsplit(path_slice, n=1).str[1]
-
-    # drop columns not in the most recent collection
-    df_file = df_file[df_file["rl_analysis_date"] == df_file["rl_analysis_date"].max()]
 
     # drop unneccessary columns not needed after preprocessing steps
     df_file = df_file.reset_index()
@@ -313,8 +307,11 @@ def process_data(df_file: pd.DataFrame, df_actions: pd.DataFrame, df_file_cntbs:
     # get all of the files in the directory or nested in folders in the directory
     df_dynamic_directory = df_file[df_file["file_path"].str.startswith(directory)]
 
+    # number of files in the directory or nested in folders in the directory that have no contributors
     num_empty_cntrb = df_dynamic_directory[df_dynamic_directory["cntrb_ids"].str.len() == 0].shape[0]
 
+    # return empty df if all of the files in the directory or nested in folders in the directory have
+    # no contributors
     if num_empty_cntrb == df_dynamic_directory.shape[0]:
         return pd.DataFrame()
 
