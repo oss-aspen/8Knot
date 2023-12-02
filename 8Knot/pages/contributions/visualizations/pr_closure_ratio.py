@@ -279,7 +279,7 @@ def create_figure(
             x=df_closed["Date"],
             y=df_closed["closed"],
             mode="lines",
-            maker=dict(color=color_seq[3]),
+            marker=dict(color=color_seq[3]),
             name="Closeline",
             hovertemplate="PRs Closed: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
         )
