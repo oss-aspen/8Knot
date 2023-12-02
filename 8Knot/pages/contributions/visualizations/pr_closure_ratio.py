@@ -22,7 +22,7 @@ gc_pr_closue_ratio = dbc.Card(
         dbc.CardBody(
             [
                 html.H3(
-                    "Pull Requests Over Time",
+                    "Pull Requests Closure Ratio",
                     className = "card-title",
                     style = {"textAlign": "center"},
                 ),
@@ -244,7 +244,7 @@ def create_figure(
         x=df_closed["Date"],
         y=df_closed["closed"],
         opacity=0.9,
-        hovertemplate=[f"{hover}<br>Closed: {val}<br><extra></extra>" for val in df_closed["closed"]],
+        hovertemplate=hover + "<br>Closed: %{y}<br>" + "<extra></extra>", #[f"{hover}<br>Closed: {val}<br><extra></extra>" for val in df_closed["closed"]],
         offsetgroup=1,
         #base=df_closed_merged["merged"],
         marker=dict(color=color_seq[3]),
@@ -279,8 +279,8 @@ def create_figure(
             x=df_closed["Date"],
             y=df_closed["closed"],
             mode="lines",
-            maker=dict(color=color_seq[3]),
-            name="Closeline",
+            marker=dict(color=color_seq[3]),
+            name="Closed line",
             hovertemplate="PRs Closed: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
         )
     )
