@@ -13,6 +13,7 @@ import io
 from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
+import app
 
 
 PAGE = "contributors"
@@ -150,10 +151,11 @@ def toggle_popover(n, is_open):
         Input("repo-choices", "data"),
         Input(f"date-interval-{PAGE}-{VIZ_ID}", "value"),
         Input(f"action-dropdown-{PAGE}-{VIZ_ID}", "value"),
+        Input("bot-switch", "value"),
     ],
     background=True,
 )
-def contribs_by_action_graph(repolist, interval, action):
+def contribs_by_action_graph(repolist, interval, action, bot_switch):
 
     # wait for data to asynchronously download and become available.
     cache = cm()
@@ -169,6 +171,10 @@ def contribs_by_action_graph(repolist, interval, action):
     if df.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return nodata_graph, False
+
+    # remove bot data
+    if bot_switch:
+        df = df[~df["cntrb_id"].isin(app.bots_list)]
 
     # checks if there is a contribution of a specfic action in repo set
     if not df["Action"].str.contains(action).any():

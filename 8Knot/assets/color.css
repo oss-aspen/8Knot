@@ -77,3 +77,13 @@ blockquote p {
 .dmc-multiselect-custom {
   background-color: #272b30;
 }
+
+/* updates background color of switch*/
+.botlist-filter-switch:checked {
+  background-color: #6b8976;
+}
+
+/* updates popover size to allow more text per line */
+.popover {
+  max-width: 500px;
+}

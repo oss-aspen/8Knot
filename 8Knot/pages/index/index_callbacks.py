@@ -23,12 +23,14 @@ from queries.user_groups_query import user_groups_query as ugq
 from queries.pr_response_query import pr_response_query as prr
 from queries.release_query import release_query as rq
 from queries.ttfr_query import TTFRQ_query as ttfrq
+from queries.cntrb_per_file_query import cntrb_per_file_query as cpfq
+from queries.repo_files_query import repo_files_query as rfq
 import redis
 import flask
 
 
 # list of queries to be run
-QUERIES = [iq, cq, cnq, prq, cmq, iaq, praq, prr, rq, ttfrq]
+QUERIES = [iq, cq, cnq, prq, cmq, iaq, praq, prr, rq, cpfq, rfq, ttfrq]
 
 # check if login has been enabled in config
 login_enabled = os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True"

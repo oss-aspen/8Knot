@@ -7,7 +7,7 @@ import io
 import datetime as dt
 from sqlalchemy.exc import SQLAlchemyError
 
-QUERY_NAME = "PR"
+QUERY_NAME = "CNTRB_PER_FILE"
 
 
 @celery_app.task(
@@ -17,10 +17,10 @@ QUERY_NAME = "PR"
     retry_kwargs={"max_retries": 5},
     retry_jitter=True,
 )
-def prs_query(self, repos):
+def cntrb_per_file_query(self, repos):
     """
     (Worker Query)
-    Executes SQL query against Augur database for pull request data.
+    Executes SQL query against Augur database to get contributors per file data.
 
     Args:
     -----
@@ -36,22 +36,18 @@ def prs_query(self, repos):
         return None
 
     query_string = f"""
-                    SELECT
-                        r.repo_id as id,
-                        r.repo_name,
-                        pr.pull_request_id AS pull_request,
-                        pr.pr_src_number,
-                        pr.pr_augur_contributor_id AS cntrb_id,
-                        pr.pr_created_at AS created,
-                        pr.pr_closed_at AS closed,
-                        pr.pr_merged_at  AS merged
-                    FROM
-                        repo r,
-                        pull_requests pr
-                    WHERE
-                        r.repo_id = pr.repo_id AND
-                        r.repo_id in ({str(repos)[1:-1]})
-                    """
+                SELECT
+                    prf.pr_file_path as file_path,
+                    pr.repo_id as ID,
+                    string_agg(DISTINCT CAST(pr.pr_augur_contributor_id AS varchar(15)), ',') AS cntrb_ids
+                FROM
+                    pull_requests pr,
+                    pull_request_files prf
+                WHERE
+                    pr.pull_request_id = prf.pull_request_id AND
+                    pr.repo_id in ({str(repos)[1:-1]})
+                GROUP BY prf.pr_file_path, pr.repo_id
+                """
 
     try:
         dbm = AugurManager()
@@ -67,23 +63,23 @@ def prs_query(self, repos):
 
     df = dbm.run_query(query_string)
 
-    # change to compatible type and remove all data that has been incorrectly formated
-    df["created"] = pd.to_datetime(df["created"], utc=True).dt.date
-    df = df[df.created < dt.date.today()]
-
-    # reformat cntrb_id
-    df["cntrb_id"] = df["cntrb_id"].astype(str)
-    df["cntrb_id"] = df["cntrb_id"].str[:15]
-
-    # sort by the date created
-    df = df.sort_values(by="created")
+    # pandas column and format updates
+    df["cntrb_ids"] = df["cntrb_ids"].str.split(",")
     df = df.reset_index()
     df.drop("index", axis=1, inplace=True)
+    # df.drop(["id"], axis=1, inplace=True)
+    """Commonly used df updates:
 
-    # break apart returned data per repo
-    # and temporarily store in List to be
-    # stored in Redis.
+    df["cntrb_id"] = df["cntrb_id"].astype(str)  # contributor ids to strings
+    df["cntrb_id"] = df["cntrb_id"].str[:15]
+    df = df.sort_values(by="created")
+    df = df.reset_index()
+    df = df.reset_index(drop=True)
+
+    """
+
     pic = []
+
     for i, r in enumerate(repos):
         # convert series to a dataframe
         c_df = pd.DataFrame(df.loc[df["id"] == r]).reset_index(drop=True)
@@ -108,10 +104,10 @@ def prs_query(self, repos):
 
     # 'ack' is a boolean of whether data was set correctly or not.
     ack = cm_o.setm(
-        func=prs_query,
+        func=cntrb_per_file_query,
         repos=repos,
         datas=pic,
     )
-
     logging.warning(f"{QUERY_NAME}_DATA_QUERY - END")
+
     return ack
