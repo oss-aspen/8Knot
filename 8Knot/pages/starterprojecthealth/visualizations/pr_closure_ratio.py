@@ -14,10 +14,10 @@ from queries.prs_query import prs_query as prq
 from cache_manager.cache_manager import CacheManager as cm
 import time
 
-PAGE = "contibutaions"
+PAGE = "starterprojecthealth"
 VIZ_ID = "prs-closure-ratio"
 
-gc_pr_closue_ratio = dbc.Card(
+gc_pr_closure_ratio = dbc.Card(
     [
         dbc.CardBody(
             [
@@ -143,7 +143,6 @@ def prs_closure_ratio_graph(repolist, interval):
 def process_data(df: pd.DataFrame, interval):
     # convert dates to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
-    #df["merged"] = pd.to_datetime(df["merged"], utc=True)
     df["closed"] = pd.to_datetime(df["closed"], utc=True)
 
     # order values chronologically by creation date
@@ -167,18 +166,10 @@ def process_data(df: pd.DataFrame, interval):
     # the period slice is to handle weekly corner case
     df_created["Date"] = pd.to_datetime(df_created["Date"].astype(str).str[:period_slice])
 
-    # df for merged prs in time interval
-    #merged_range = pd.to_datetime(df["merged"]).dt.to_period(interval).value_counts().sort_index()
-    #df_merged = merged_range.to_frame().reset_index().rename(columns={"index": "Date"})
-    #df_merged["Date"] = pd.to_datetime(df_merged["Date"].astype(str).str[:period_slice])
-
     # df for closed prs in time interval
     closed_range = pd.to_datetime(df["closed"]).dt.to_period(interval).value_counts().sort_index()
     df_closed = closed_range.to_frame().reset_index().rename(columns={"index": "Date"})
     df_closed["Date"] = pd.to_datetime(df_closed["Date"].astype(str).str[:period_slice])
-
-    # A single df created for plotting merged and closed as stacked bar chart
-    #df_closed_merged = pd.merge(df_merged, df_closed, on="Date", how="outer")
 
     # formatting for graph generation
     if interval == "M":
@@ -187,8 +178,6 @@ def process_data(df: pd.DataFrame, interval):
     elif interval == "Y":
         df_created["Date"] = df_created["Date"].dt.strftime("%Y-01-01")
         df_closed["Date"] = df_closed["Date"].dt.strftime("%Y-01-01")
-
-    #df_closed_merged["closed"] = df_closed_merged["closed"] - df_closed_merged["merged"]
 
     # ----- Open PR processinging starts here ----
 
@@ -231,15 +220,6 @@ def create_figure(
         marker=dict(color=color_seq[2]),
         name="Created",
     )
-    # fig.add_bar(
-    #     x=df_closed_merged["Date"],
-    #     y=df_closed_merged["merged"],
-    #     opacity=0.9,
-    #     hovertemplate=hover + "<br>Merged: %{y}<br>" + "<extra></extra>",
-    #     offsetgroup=1,
-    #     marker=dict(color=color_seq[4]),
-    #     name="Merged",
-    # )
     fig.add_bar(
         x=df_closed["Date"],
         y=df_closed["closed"],
