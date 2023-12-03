@@ -18,7 +18,7 @@ import math
 import numpy as np
 
 
-PAGE = "Sprint 1"
+PAGE = "starterprojecthealth"
 VIZ_ID = "bus-factor"
 
 gc_bus_factor = dbc.Card(
