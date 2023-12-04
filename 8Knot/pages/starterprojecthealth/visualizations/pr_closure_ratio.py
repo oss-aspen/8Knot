@@ -14,10 +14,10 @@ from queries.prs_query import prs_query as prq
 from cache_manager.cache_manager import CacheManager as cm
 import time
 
-PAGE = "contibutaions"
+PAGE = "contributions"
 VIZ_ID = "prs-closure-ratio"
 
-gc_pr_closue_ratio = dbc.Card(
+gc_pr_closure_ratio = dbc.Card(
     [
         dbc.CardBody(
             [
