@@ -14,7 +14,7 @@ layout = dbc.Container(
     [
         dbc.Row(
             [
-                dbc.Col(gc_change_request_review_duration, width=6),
+                #dbc.Col(gc_change_request_review_duration, width=6),
             ],
             align="center",
             style={"marginBottom": ".5%"},

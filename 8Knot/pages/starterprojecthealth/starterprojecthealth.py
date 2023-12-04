@@ -17,7 +17,7 @@ layout = dbc.Container(
     [
         dbc.Row(
             [
-                dbc.Col(gc_time_first_response, width=6),
+                #dbc.Col(gc_time_first_response, width=6),
                 dbc.Col(gc_pr_closure_ratio, width=6),
             ],
             align="center",
@@ -25,7 +25,7 @@ layout = dbc.Container(
         ),
         dbc.Row(
             [
-                dbc.Col(gc_bus_factor, width=6),
+                #dbc.Col(gc_bus_factor, width=6),
                 dbc.Col(gc_release_frequency, width=6),
             ],
             align="center",
