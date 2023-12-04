@@ -21,7 +21,7 @@ import math
 import numpy as np
 
 
-PAGE = "Community Service and Support"
+PAGE = "communityservicesupport"
 VIZ_ID = "change-request-review-duration"
 
 gc_change_request_review_duration = dbc.Card(
