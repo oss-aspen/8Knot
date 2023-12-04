@@ -33,7 +33,7 @@ gc_bus_factor = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "This graph displays the Bus Factor for the given Repository."
+                            "This graph displays the Bus Factor for the given Repository. https://chaoss.community/kb/metric-bus-factor/"
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
@@ -93,10 +93,10 @@ gc_bus_factor = dbc.Card(
                                         dbc.Input(
                                             id=f"top-k-contributors-{PAGE}-{VIZ_ID}",
                                             type="number",
-                                            min=2,
-                                            max=100,
+                                            min=4,
+                                            max=4,
                                             step=1,
-                                            value=10,
+                                            value=4,
                                             size="sm",
                                         ),
                                     ],
@@ -216,7 +216,7 @@ def create_top_k_cntrbs_graph(repolist, action_type, top_k, patterns, start_date
 
     # Remove bot data if necessary
     if bot_switch:
-        df = df[~df["cntrb_id"].isin(app.bots_list)]
+        df = df[~df["login"].isin(app.bots_list)]
 
     # Process the data for the graph
     df = process_data(df, action_type, top_k, patterns, start_date, end_date)
@@ -247,19 +247,19 @@ def process_data(df: pd.DataFrame, action_type, top_k, patterns, start_date, end
         df = df[~patterns_mask]
 
     # Group by contributor and count actions
-    df = (df.groupby("cntrb_id")["Action"].count()).to_frame()
-    df.sort_values(by="cntrb_id", ascending=False, inplace=True)
+    df = (df.groupby("login")["Action"].count()).to_frame()
+    df.sort_values(by="login", ascending=False, inplace=True)
     df = df.reset_index()
     df = df.rename(columns={"Action": action_type})
 
     # Calculate total and top K contributions
     t_sum = df[action_type].sum()
     df = df.head(top_k)
-    df["cntrb_id"] = df["cntrb_id"].apply(lambda x: str(x).split("-")[0])
+    df["login"] = df["login"].apply(lambda x: str(x).split("-")[0])
     df_sum = df[action_type].sum()
 
     # Append the 'Other' category for remaining contributions
-    df = df.append({"cntrb_id": "Other", action_type: t_sum - df_sum}, ignore_index=True)
+    df = df.append({"login": "Other", action_type: t_sum - df_sum}, ignore_index=True)
     return df
 
 # Function to calculate the Bus Factor
@@ -270,18 +270,13 @@ def calculate_bus_factor(df, action_type):
 
 # Function to create the figure for the graph
 def create_figure(df: pd.DataFrame, action_type, bus_factor):
-    # Create a bar chart to represent the Bus Factor
-    fig = px.bar(
+    fig = px.pie(
         df,
-        x='cntrb_id',
-        y=action_type,
-        title=f"Bus Factor: {bus_factor} (Top Contributors Highlighted)",
-        labels={'cntrb_id': 'Contributor ID', action_type: 'Number of Contributions'}
+        names='login',
+        values=action_type,
+        labels={'login': 'Contributor ID', action_type: 'Number of Contributions'}
     )
-    # Add a horizontal line to highlight the Bus Factor threshold
-    fig.add_hline(y=df[action_type].iloc[bus_factor - 1], line_dash="dot",
-                  annotation_text="Bus Factor Threshold",
-                  annotation_position="bottom right")
-    # Update layout to remove legend
-    fig.update_layout(showlegend=False)
+    fig.update_traces(textinfo='percent+label')
+
     return fig
+
