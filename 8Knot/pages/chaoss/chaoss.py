@@ -6,6 +6,7 @@ import warnings
 # import visualization cards
 from .visualizations.project_velocity import gc_project_velocity
 from .visualizations.contrib_importance_pie import gc_contrib_importance_pie
+from .visualizations.release_frequency import gc_RELEASE_FREQUENCY
 
 warnings.filterwarnings("ignore")
 
@@ -19,8 +20,17 @@ layout = dbc.Container(
                 dbc.Col(gc_project_velocity, width=6),
             ],
             align="center",
+            style={"marginBottom": ".5%"}
+            ),
+
+        dbc.Row(
+            [
+                dbc.Col(gc_RELEASE_FREQUENCY, width=6)
+            ],
+            align="center",
             style={"marginBottom": ".5%"},
         ),
+
     ],
     fluid=True,
 )
