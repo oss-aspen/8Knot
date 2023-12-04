@@ -14,8 +14,8 @@ from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import app
 
+PAGE = "starterprojecthealth"
 # Constants for the page and visualization ID
-PAGE = "chaoss"
 VIZ_ID = "bus-factor"
 
 # Card layout for the Bus Factor visualization

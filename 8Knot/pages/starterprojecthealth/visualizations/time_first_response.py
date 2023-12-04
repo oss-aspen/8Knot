@@ -18,7 +18,7 @@ import math
 import numpy as np
 
 
-PAGE = "Sprint 1"
+PAGE = "starterprojecthealth"
 VIZ_ID = "time-first-reponse"
 
 gc_time_first_response = dbc.Card(
