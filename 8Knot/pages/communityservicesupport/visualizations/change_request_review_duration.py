@@ -9,8 +9,6 @@ from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, color_seq
 from queries.prs_query import prs_query as prs
-from queries.pr_response_query import pr_response_query as prr
-from queries.pr_assignee_query import pr_assignee_query as pra
 from queries.change_request_review_query import change_request_review_query as crr
 import io
 from cache_manager.cache_manager import CacheManager as cm
@@ -37,10 +35,10 @@ gc_change_request_review_duration = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            """This visualization provides insights into the review process of change requests in a project. \n 
-                            It highlights aspects such as the extent of formal reviews, the number of reviews, the nature of comments, \n
-                            and the acceptance or decline of change requests. For more context of this visualization see \n
-                            https://chaoss.community/kb/metric-change-request-reviews/ \n """
+                            """The Change Request Review Duration metric measures the time from when a submitter has submitted a change within a review cycle until it is reviewed.\n
+                            This metric measures one review, however, there may be multiple reviews within a Review Cycle Duration within a Change Request and this measures time of each review.\n
+                            The time waiting for a review is zero if the change request is merged without any requested revisions or clarification. For more context of this visualization see \n
+                            https://chaoss.community/kb/metric-change-request-review-duration/ \n """
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
@@ -65,7 +63,6 @@ gc_change_request_review_duration = dbc.Card(
                                         dbc.RadioItems(
                                             id=f"date-interval-{PAGE}-{VIZ_ID}",
                                             options=[
-                                                {"label": "Trend", "value": "D"},
                                                 {"label": "Month", "value": "M"},
                                                 {"label": "Year", "value": "Y"},
                                             ],
@@ -112,88 +109,147 @@ def toggle_popover(n, is_open):
     # if additional output is added, change returns accordingly
     [
         Input("repo-choices", "data"),
-        Input(f"date-radio-{PAGE}-{VIZ_ID}", "value"),
+        Input(f"date-interval-{PAGE}-{VIZ_ID}", "value"),
         # add additional inputs here
     ],
     background=True,
 )
 def change_request_review_duration_graph(repolist, interval):
-    # wait for data to asynchronously download and become available.
+    # Fetch and process the data
     cache = cm()
-    df = cache.grabm(func=prs, repos=repolist)
-    while df is None:
-        time.sleep(1.0)
-        df = cache.grabm(func=prs, repos=repolist)
+    df = cache.grabm(func=crr, repos=repolist)
+    if df is None or df.empty:
+        return go.Figure().update_layout(title="No data available")
 
-    start = time.perf_counter()
-    logging.warning(f"{VIZ_ID}- START")
+    processed_df = process_data(df)
+    stats_df = calculate_statistics(processed_df, interval)
 
-    # test if there is data
-    if df.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
-        return nodata_graph
+    # Create the figure
+    fig = go.Figure()
+    bar_names = ['Mean Days to First Response', 'Mean Days to Last Response', 'Mean Days to Close', 'Mean Days to Accepted']
 
-    # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
-    df = process_data(df, interval)
+    for col, bar_name in zip(['first_response_days', 'last_response_days', 'close_days', 'accept_days'], bar_names):
+        fig.add_trace(go.Bar(
+            x=stats_df['period'],
+            y=stats_df[col],
+            name=bar_name
+        ))
 
-    fig = create_figure(df, interval)
+    # Customize layout
+    fig.update_layout(
+        title='Mean Response Times for Pull Requests',
+        xaxis_title='Time Period',
+        yaxis_title='Days',
+        barmode='group',
+        legend_title='Metrics'
+    )
 
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
+def process_data(df):
+    df['first_response_days'] = (df['first_response_timestamp'] - df['pr_created_at']).dt.days
+    df['last_response_days'] = (df['last_response_timestamp'] - df['pr_created_at']).dt.days
+    df['close_days'] = (df['pr_closed_at'] - df['pr_created_at']).dt.days
+    df['accept_days'] = (df['pr_merged_at'] - df['pr_created_at']).dt.days
+    return df
 
-def process_data(df: pd.DataFrame, interval):
-    # convert to datetime objects rather than strings
-    df["created"] = pd.to_datetime(df["created"], utc=True)
-    df["merged"] = pd.to_datetime(df["merged"], utc=True)
-    df["closed"] = pd.to_datetime(df["closed"], utc=True)
+"""
+def process_data(df: pd.DataFrame):
+    # Convert to datetime objects rather than strings
+    df["pr_created_at"] = pd.to_datetime(df["pr_created_at"], utc=True)
+    df["pr_merged_at"] = pd.to_datetime(df["pr_merged_at"], utc=True)
+    df["pr_closed_at"] = pd.to_datetime(df["pr_closed_at"], utc=True)
+
+    # Calculate the required statistics
+    df['first_response_days'] = (df['first_response_timestamp'] - df['pr_created_at']).dt.days
+    df['last_response_days'] = (df['last_response_timestamp'] - df['pr_created_at']).dt.days
+    df['close_days'] = (df['pr_closed_at'] - df['pr_created_at']).dt.days
+    df['accept_days'] = (df['pr_merged_at'] - df['pr_created_at']).dt.days
     
-    # ensure pull request unique ID are formatted
-    #df["pull_request"] = df["pull_request"].astype(str)
-    #df["pull_request"] = df["pull_request"].str[:15]
+    # Group by Year/Month
+    df['year_month'] = df['pr_created_at'].dt.to_period('M')
+    grouped = df.groupby('year_month')
+    
+    # Calculate mean for each group
+    stats = grouped.agg({
+        'first_response_days': 'mean',
+        'last_response_days': 'mean',
+        'close_days': 'mean',
+        'accept_days': 'mean'
+    }).reset_index()
+    
+    return stats
+"""
 
-    # order values chronologically by creation date
-    df = df.sort_values(by="created", axis=0, ascending=True)
-
-    # first and last elements of the dataframe are the
-    # earliest and latest events respectively
-    earliest = df["created"].min()
-    latest = max(df["created"].max(), df["closed"].max())
-
-    # generating buckets beginning to the end of time by the specified interval
-    dates = pd.date_range(start=earliest, end=latest, freq=interval, inclusive="both")
-
-    # df for new, staling, and stale prs for time interval
-    df_status = dates.to_frame(index=False, name="Date")
-
-    # formatting for graph generation
-    if interval == "M":
-        df_status["Date"] = df_status["Date"].dt.strftime("%Y-%m")
-    elif interval == "Y":
-        df_status["Date"] = df_status["Date"].dt.year
-
-    return df_status
-
-#TODO: Update the figure pieces
-def create_figure(df_status: pd.DataFrame, interval):
+def create_figure(stats_df, interval):
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
-
+    
+    # Create the figure
     fig = px.bar(
-        df_status,
-        x="Date",
-        y=["Rejected-Bot", "Rejected-Human", "Approved-Bot", "Approved-Human"],
-        color_discrete_sequence=[color_seq[1], color_seq[5], color_seq[2], color_seq[0]],
-    )
+            stats_df,
+            x=stats_df['year_month'],
+            y=stats_df['first_response_days', 'last_response_days', 'close_days', 'accept_days'],
+            color_discrete_sequence=[color_seq[1], color_seq[5], color_seq[2], color_seq[0]],
+        )
 
     # edit hover values
     fig.update_traces(hovertemplate=hover + "<br>PRs: %{y}<br>" + "<extra></extra>")
 
     fig.update_layout(
         xaxis_title="Time",
-        yaxis_title="Review Duration",
+        yaxis_title="Pull Requests",
         legend_title="Type",
         font=dict(size=14),
     )
+    
+    # Customize layout with the legend
+    fig.update_layout(
+        title='Mean Response Times for Pull Requests All Closed',
+        xaxis_title='Year/Month',
+        yaxis_title='Days to Close',
+        legend_title='Metrics',
+        barmode='group',
+        legend=dict(orientation="h")  # Horizontal legend below the chart
+    )
 
+    # Return the figure
     return fig
+
+def calculate_statistics(df, interval):
+    if interval == 'M':
+        df['period'] = df['pr_created_at'].dt.to_period('M')
+    else:
+        df['period'] = df['pr_created_at'].dt.to_period('Y')
+
+    stats = df.groupby('period').agg({
+        'first_response_days': 'mean',
+        'last_response_days': 'mean',
+        'close_days': 'mean',
+        'accept_days': 'mean'
+    }).reset_index()
+
+    return stats
+
+"""
+def calculate_statistics(df):
+    # Example calculations, you will need to adjust based on your actual DataFrame structure
+    df['first_response_days'] = (df['first_response_timestamp'] - df['pr_created_at']).dt.days
+    df['last_response_days'] = (df['last_response_timestamp'] - df['pr_created_at']).dt.days
+    df['close_days'] = (df['pr_closed_at'] - df['pr_created_at']).dt.days
+    df['accept_days'] = (df['pr_merged_at'] - df['pr_created_at']).dt.days
+    
+    # Group by Year/Month
+    df['year_month'] = df['pr_created_at'].dt.to_period('M')
+    grouped = df.groupby('year_month')
+    
+    # Calculate mean for each group
+    stats = grouped.agg({
+        'first_response_days': 'mean',
+        'last_response_days': 'mean',
+        'close_days': 'mean',
+        'accept_days': 'mean'
+    }).reset_index()
+    
+    return stats
+"""

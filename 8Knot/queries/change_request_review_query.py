@@ -7,8 +7,7 @@ import io
 import datetime as dt
 from sqlalchemy.exc import SQLAlchemyError
 
-QUERY_NAME = "CRR"
-
+QUERY_NAME = "change_request_review"
 
 @celery_app.task(
     bind=True,
@@ -18,66 +17,60 @@ QUERY_NAME = "CRR"
     retry_jitter=True,
 )
 def change_request_review_query(self, repos):
-    """
-    (Worker Query)
-    Executes SQL query against Augur database for change request review data.
-
-    Args:
-    -----
-        repo_ids ([str]): repos that SQL query is executed on.
-
-    Returns:
-    --------
-        dict: Results from SQL query, interpreted from pd.to_dict('records')
-    """
     logging.warning(f"{QUERY_NAME}_DATA_QUERY - START")
 
     if len(repos) == 0:
         return None
 
     query_string = f"""
-                    SELECT
-                        pr.pull_request_id,
-                        pr.pr_src_number,
-                        pr.pr_created_at AS pr_created,
-                        pr.pr_closed_at AS pr_closed,
-                        pr.pr_merged_at AS pr_merged,
-                        rpr.review_id,
-                        rpr.review_submitted_at,
-                        rpr.review_status,
-                        rpr.reviewer_id,
-                        CASE 
-                            WHEN rpr.reviewer_id IS NOT NULL THEN 'Human'
-                            ELSE 'Bot'
-                        END AS reviewer_type,
-                        -- Additional fields as necessary
-                    FROM
-                        pull_requests pr
-                    LEFT JOIN
-                        repo_pull_request_reviews rpr ON pr.pull_request_id = rpr.pull_request_id
-                    WHERE
-                        pr.repo_id in ({str(repos)[1:-1]})
+                SELECT
+                    pr.pull_request_id,
+                    pr.repo_id AS id,
+                    pr.pr_created_at,
+                    pr.pr_closed_at,
+                    pr.pr_merged_at,
+                    MIN(c.msg_timestamp) OVER (PARTITION BY pr.pull_request_id) AS first_response_timestamp,
+                    MAX(c.msg_timestamp) OVER (PARTITION BY pr.pull_request_id) AS last_response_timestamp
+                FROM
+                    pull_requests pr
+                LEFT JOIN comments c ON pr.pull_request_id = c.pull_request_id
+                WHERE
+                    pr.repo_id in ({str(repos)[1:-1]})
                     """
 
     try:
         dbm = AugurManager()
-        engine = dbm.get_engine()
+        df = dbm.run_query(query_string)
+
+        # Convert timestamps to dates and handle UUID conversion if necessary
+        df["pr_created_at"] = pd.to_datetime(df["pr_created_at"], utc=True).dt.date
+        df["pr_closed_at"] = pd.to_datetime(df["pr_closed_at"], utc=True).dt.date
+        df["pr_merged_at"] = pd.to_datetime(df["pr_merged_at"], utc=True).dt.date
+        df["first_response_timestamp"] = pd.to_datetime(df["first_response_timestamp"], utc=True).dt.date
+        df["last_response_timestamp"] = pd.to_datetime(df["last_response_timestamp"], utc=True).dt.date
+        df = df[df.pr_created_at < dt.date.today()]
+        df = df.reset_index(drop=True)
+
+        # Serialize the DataFrame to be stored in Redis
+        pic = io.BytesIO()
+        df.to_feather(pic)
+        pic.seek(0)
+        serialized_df = pic.read()
+
     except KeyError:
         logging.error(f"{QUERY_NAME}_DATA_QUERY - INCOMPLETE ENVIRONMENT")
         return False
     except SQLAlchemyError:
         logging.error(f"{QUERY_NAME}_DATA_QUERY - COULDN'T CONNECT TO DB")
-        raise SQLAlchemyError("DBConnect failed")
-
-    df = dbm.run_query(query_string)
+        raise
 
     # Store results in Redis
     cm_o = cm()
     ack = cm_o.setm(
         func=change_request_review_query,
         repos=repos,
-        datas=[df.to_dict('records')],
+        datas=serialized_df,
     )
-
     logging.warning(f"{QUERY_NAME}_DATA_QUERY - END")
+
     return ack
