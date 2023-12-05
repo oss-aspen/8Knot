@@ -23,7 +23,7 @@ gc_pr_review_response = dbc.Card(
         dbc.CardBody(
             [
                 html.H3(
-                    "Pull Request Review Responses",
+                    "Pull Request Conversation Engagement",
                     className="card-title",
                     style={"textAlign": "center"},
                 ),
@@ -32,8 +32,9 @@ gc_pr_review_response = dbc.Card(
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
                             """
-                            Compares the volume of PRs open against the number of those PRs that \n
-                            have a response in the time interval.
+                            Tracks the number of PRs that are open on a given day vs. those that have
+                            received a comment or a review within a time interval, or that are waiting
+                            on a response from the opener.
                             """
                         ),
                     ],
@@ -151,7 +152,9 @@ def process_data(df: pd.DataFrame, num_days):
 
     # sort in ascending earlier and only get ealiest value
     df = df.sort_values(by="msg_timestamp", axis=0, ascending=True)
-    df = df.drop_duplicates(subset="pull_request_id", keep="first")
+
+    # 1 row per pr with either null msg date or most recent if one exists
+    df = df.drop_duplicates(subset="pull_request_id", keep="last")
 
     # first and last elements of the dataframe are the
     # earliest and latest events respectively
@@ -213,8 +216,8 @@ def create_figure(df: pd.DataFrame, num_days):
 
 def get_open_response(df, date, num_days):
     """
-    This function takes a date and determines how many
-    prs in that time interval are opened and if they have a response within num_days or waiting on pr openers response.
+    This function takes a date and determines how many prs in that time interval are
+    open and if they have a response within num_days or waiting on pr openers response.
 
     Args:
     -----
@@ -229,85 +232,45 @@ def get_open_response(df, date, num_days):
 
     Returns:
     --------
-        int, int: Number of opened and responded to prs within num_days on the day
+        int, int: number of open prs, and number of prs responded to within num_days or waiting on pr openers response
     """
-    # drop rows that are more recent than the date and only keep 1 row per pull request
-    df_created = df[df["pr_created_at"] <= date].drop_duplicates(subset="pull_request_id", keep="first")
+
+    # drop rows with prs that have been created after the date
+    df_created = df[df["pr_created_at"] <= date]
 
     # drops rows that have been closed before date
-    df_open = df_created[df_created["pr_closed_at"] > date]
+    df_open_at_date = df_created[df_created["pr_closed_at"] > date]
 
     # include prs that have not been close yet
-    df_open = pd.concat([df_open, df_created[df_created.pr_closed_at.isnull()]])
+    df_open_at_date = pd.concat([df_open_at_date, df_created[df_created.pr_closed_at.isnull()]])
 
-    # generates number of columns ie open prs
-    num_open = df_open.shape[0]
+    # number of columns in df ie number of open prs
+    num_open = df_open_at_date.shape[0]
 
     # get all prs that have atleast one response
-    df_response = df_open[df_open["msg_timestamp"].notnull()]
+    df_response = df_open_at_date[df_open_at_date["msg_timestamp"].notnull()]
 
     # if no messages for any of the open prs, return num_open and 0
     if len(df_response.index) == 0:
         return num_open, 0
 
-    # for each of the prs currently open on the date, see if they meet the response criteria
-    df_response["response_by"] = df_response.apply(
-        lambda row: get_response_condition(df, date, row.pull_request_id, num_days),
-        axis=1,
-    )
+    # drop messages that happen after date considered
+    df_messages_in_range = df_open_at_date[df_open_at_date["msg_timestamp"] < date]
 
-    # Inlcude only the prs that msg timestamp is before the responded by time
-    df_response = df_response[df_response["response_by"] == True]
-
-    # number of prs that had response in time interval
-    num_response = df_response.shape[0]
-
-    return num_open, num_response
-
-
-def get_response_condition(df, date, pull_request_id, num_days):
-    """
-    This function takes a date and determines how many
-    prs in that time interval have a response within num_days or waiting on pr openers response.
-
-    Args:
-    -----
-        df : Pandas Dataframe
-            Dataframe with pr assignment actions of the assignees
-
-        date : Datetime Timestamp
-            Timestamp of the date
-
-        pull_request_id : int
-            id for pull request in augur
-
-        num_days : int
-            number of days that a response should be within
-
-    Returns:
-    --------
-        boolean: T/F for response condition
-    """
-
-    # get only the messages for the specific pr
-    df = df[df["pull_request_id"] == pull_request_id]
-
-    # drop all messages after the date
-    df = df[df["msg_timestamp"] < date]
-
-    # check if there is no messages before running the rest to prevent errors
-    if len(df) == 0:
-        return False
-
-    df = df.reset_index()
+    # order messages from earliest to latest by timestamp
+    df_messages_in_range = df_messages_in_range.sort_values(by="msg_timestamp", axis=0, ascending=True)
 
     # threshold of when the last response would need to be by
     before_date_by_num_days = date - pd.DateOffset(days=num_days)
 
-    # if the most recent message before the date is not from the pr creator then there has been a response in the time constraint
-    if df.iloc[-1]["cntrb_id"] != df.iloc[-1]["msg_cntrb_id"]:
-        return True
-    else:
-        # PR meets criteria - latest response is within window OR is waiting on opener's response
-        valid_messages = df[(df["msg_timestamp"] > before_date_by_num_days) & (df["cntrb_id"] != df["msg_cntrb_id"])]
-        return len(valid_messages) > 0
+    # checks if the most recent message was within the date requirement or by someone other than
+    # the pr creator
+    df_responded_to_by_deadline = df_messages_in_range[
+        (df_messages_in_range["msg_timestamp"] > before_date_by_num_days)
+        | (df_messages_in_range["msg_cntrb_id"] != df_messages_in_range["cntrb_id"])
+    ]
+
+    # generates number of columns ie prs with a response within num_days or waiting on pr openers response
+    n_met_response_criteria = df_responded_to_by_deadline.shape[0]
+
+    return num_open, n_met_response_criteria
