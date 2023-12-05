@@ -36,11 +36,9 @@ gc_bus_factor = dbc.Card(
                             """
                                         For a given action type, visualizes the proportional share of the top k anonymous
                                         contributors, aggregating the remaining contributors as "Other". Suppose Contributor A
-                                        opens the most PRs of all contributors, accounting for 1/5 of all PRs. If k = 1,
-                                        then the chart will have one slice for Contributor A accounting for 1/5 of the area,
-                                        with the remaining 4/5 representing all other contributors. By default, contributors
-                                        who have 'potential-bot-filter' in their login are filtered out. Optionally, contributors
-                                        can be filtered out by their logins with custom keyword(s). Note: Some commits may have a
+                                        commits the most of all contributors, accounting for 1/5 of all commits. If k = 2,
+                                        then the chart will have one slice for Contributor A and one slice for contributor B accounting for 1/5 of the area,
+                                        with the remaining 4/5 representing all other contributors. Note: Some commits may have a
                                         Contributor ID of 'None' if there is no Github account is associated with the email that
                                         the contributor committed as.
                                         """
@@ -69,11 +67,7 @@ gc_bus_factor = dbc.Card(
                                             id=f"action-type-{PAGE}-{VIZ_ID}",
                                             options=[
                                                 {"label": "Commit", "value": "Commit"},
-                                                {"label": "Issue Opened", "value": "Issue Opened"},
                                                 {"label": "Issue Comment", "value": "Issue Comment"},
-                                                {"label": "Issue Closed", "value": "Issue Closed"},
-                                                {"label": "PR Open", "value": "PR Open"},
-                                                {"label": "PR Review", "value": "PR Review"},
                                                 {"label": "PR Comment", "value": "PR Comment"},
                                             ],
                                             value="Commit",
@@ -268,7 +262,8 @@ def process_data(df: pd.DataFrame, action_type, top_k, patterns, start_date, end
     df = (df.groupby("cntrb_id")["Action"].count()).to_frame()
 
     # sort rows according to amount of contributions from greatest to least
-    df.sort_values(by="cntrb_id", ascending=False, inplace=True)
+    #Changed the by="" value from cntrb_id to Action. The pie chart was sorting values by the contributor ID and not actually showing the top contributors
+    df.sort_values(by="Action", ascending=False, inplace=True)
     df = df.reset_index()
 
     # rename Action column to action_type
