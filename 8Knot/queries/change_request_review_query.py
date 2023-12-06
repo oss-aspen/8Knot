@@ -24,39 +24,29 @@ def change_request_review_query(self, repos):
 
     query_string = f"""
                 SELECT
-                    pr.pull_request_id,
-                    pr.repo_id AS id,
-                    pr.pr_created_at,
-                    pr.pr_closed_at,
-                    pr.pr_merged_at,
-                    MIN(c.msg_timestamp) OVER (PARTITION BY pr.pull_request_id) AS first_response_timestamp,
-                    MAX(c.msg_timestamp) OVER (PARTITION BY pr.pull_request_id) AS last_response_timestamp
+                    epr.pr_src_id,
+                    epr.repo_id AS id,
+                    epr.pr_created_at,
+                    epr.pr_closed_at,
+                    epr.pr_merged_at,
+                    epr.days_to_close,
+                    CASE
+                        WHEN epr.days_to_first_response < 0 THEN NULL
+                        ELSE epr.days_to_first_response
+                    END as days_to_first_response,
+                    CASE
+                        WHEN epr.days_to_last_response < 0 THEN NULL
+                        ELSE epr.days_to_last_response
+                    END as days_to_last_response
                 FROM
-                    pull_requests pr
-                LEFT JOIN comments c ON pr.pull_request_id = c.pull_request_id
+                    explorer_pr_response_times epr
                 WHERE
-                    pr.repo_id in ({str(repos)[1:-1]})
-                    """
+                    epr.repo_id in ({str(repos)[1:-1]})
+                """
 
     try:
         dbm = AugurManager()
-        df = dbm.run_query(query_string)
-
-        # Convert timestamps to dates and handle UUID conversion if necessary
-        df["pr_created_at"] = pd.to_datetime(df["pr_created_at"], utc=True).dt.date
-        df["pr_closed_at"] = pd.to_datetime(df["pr_closed_at"], utc=True).dt.date
-        df["pr_merged_at"] = pd.to_datetime(df["pr_merged_at"], utc=True).dt.date
-        df["first_response_timestamp"] = pd.to_datetime(df["first_response_timestamp"], utc=True).dt.date
-        df["last_response_timestamp"] = pd.to_datetime(df["last_response_timestamp"], utc=True).dt.date
-        df = df[df.pr_created_at < dt.date.today()]
-        df = df.reset_index(drop=True)
-
-        # Serialize the DataFrame to be stored in Redis
-        pic = io.BytesIO()
-        df.to_feather(pic)
-        pic.seek(0)
-        serialized_df = pic.read()
-
+        engine = dbm.get_engine()
     except KeyError:
         logging.error(f"{QUERY_NAME}_DATA_QUERY - INCOMPLETE ENVIRONMENT")
         return False
@@ -64,12 +54,49 @@ def change_request_review_query(self, repos):
         logging.error(f"{QUERY_NAME}_DATA_QUERY - COULDN'T CONNECT TO DB")
         raise
 
-    # Store results in Redis
+    df = dbm.run_query(query_string)
+        
+    if df is None:
+        logging.error(f"No data returned for repos {repos}")
+        return None
+
+    # Convert timestamps to dates and handle UUID conversion if necessary
+    df["pr_created_at"] = pd.to_datetime(df["pr_created_at"], utc=True).dt.date
+    df["pr_closed_at"] = pd.to_datetime(df["pr_closed_at"], utc=True).dt.date
+    df["pr_merged_at"] = pd.to_datetime(df["pr_merged_at"], utc=True).dt.date
+    df = df[df.pr_created_at < dt.date.today()]
+    df = df.reset_index(drop=True)
+
+    # Serialize the DataFrame to be stored in Redis
+    pic = []
+
+    for i, r in enumerate(repos):
+        # convert series to a dataframe
+        c_df = pd.DataFrame(df.loc[df["id"] == r]).reset_index(drop=True)
+
+        # bytes buffer to be written to
+        b = io.BytesIO()
+
+        # write dataframe in feather format to BytesIO buffer
+        bs = c_df.to_feather(b)
+
+        # move head of buffer to the beginning
+        b.seek(0)
+
+        # write the bytes of the buffer into the array
+        bs = b.read()
+        pic.append(bs)
+
+    del df
+
+    # store results in Redis
     cm_o = cm()
+
+    # 'ack' is a boolean of whether data was set correctly or not.
     ack = cm_o.setm(
         func=change_request_review_query,
         repos=repos,
-        datas=serialized_df,
+        datas=pic,
     )
     logging.warning(f"{QUERY_NAME}_DATA_QUERY - END")
 

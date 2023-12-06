@@ -53,6 +53,20 @@ gc_change_request_review_duration = dbc.Card(
                     [
                         dbc.Row(
                             [
+                                dbc.Col(
+                                    dcc.DatePickerRange(
+                                        id=f"date-picker-range-{PAGE}-{VIZ_ID}",
+                                        min_date_allowed=dt.date(2005, 1, 1),
+                                        max_date_allowed=dt.date.today(),
+                                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                                        clearable=True,
+                                    ),
+                                    width="auto",
+                                ),
+                            ],
+                        ),
+                        dbc.Row(
+                            [
                                 dbc.Label(
                                     "Date Interval:",
                                     html_for=f"date-interval-{PAGE}-{VIZ_ID}",
@@ -110,146 +124,104 @@ def toggle_popover(n, is_open):
     [
         Input("repo-choices", "data"),
         Input(f"date-interval-{PAGE}-{VIZ_ID}", "value"),
+        Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "start_date"),
+        Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "end_date"),
         # add additional inputs here
     ],
     background=True,
 )
-def change_request_review_duration_graph(repolist, interval):
+def change_request_review_duration_graph(repolist, interval, start_date, end_date):
     # Fetch and process the data
     cache = cm()
     df = cache.grabm(func=crr, repos=repolist)
-    if df is None or df.empty:
+    while df is None:
+        time.sleep(1.0)
+        df = cache.grabm(func=crr, repos=repolist)
+    
+    # data ready.
+    start = time.perf_counter()
+    logging.warning("CHANGE REQUEST REVIEW DURATION - START")
+    
+    # Test the dataframe has data
+    if df is None:
+        logging.warning(f"DataFrame is None for Repos: {repolist}")
         return go.Figure().update_layout(title="No data available")
+    if df.empty:
+        logging.warning(f"DataFrame is empty for Repos: {repolist}")
+        return go.Figure().update_layout(title="No data available")
+    
+    # Process the data
+    processed_df = process_data(df, interval, start_date, end_date)
 
-    processed_df = process_data(df)
-    stats_df = calculate_statistics(processed_df, interval)
+    fig = create_figure(processed_df, interval)
+    
+    logging.warning(f"CHANGE_REQUEST_REVIEW_DURATION_VIZ - END - {time.perf_counter() - start}")
 
+    return fig
+
+def process_data(df: pd.DataFrame, interval, start_date, end_date):
+    # convert timestamps to dates and handle UUID conversion if necessary
+    df["pr_created_at"] = pd.to_datetime(df["pr_created_at"], utc=True)
+    df["pr_closed_at"] = pd.to_datetime(df["pr_closed_at"], utc=True)
+    df["pr_merged_at"] = pd.to_datetime(df["pr_merged_at"], utc=True)
+    
+    # Calculate 'days_to_merge'
+    df["days_to_merge"] = (df["pr_merged_at"] - df["pr_created_at"]).dt.days
+    
+    # Handle missing or invalid data
+    df = df.dropna(subset=['pr_created_at'])
+    df = df[df['days_to_merge'].notna() & (df['days_to_merge'] >= 0)]
+    
+    # Convert start_date and end_date to datetime if they are not None
+    if start_date is not None:
+        start_date = pd.to_datetime(start_date, utc=True)
+        df = df[df["pr_created_at"] >= start_date]
+
+    if end_date is not None:
+        end_date = pd.to_datetime(end_date, utc=True)
+        df = df[df["pr_created_at"] <= end_date]
+
+    # Sort values and group by the specified interval
+    df = df.sort_values(by="pr_created_at", ascending=True)
+    if interval == 'M':
+        df['period'] = df['pr_created_at'].dt.to_period('M')
+    elif interval == 'Y':
+        df['period'] = df['pr_created_at'].dt.to_period('Y')
+    else:
+        raise ValueError("Invalid interval selected")
+
+    stats_df = df.groupby('period').agg({
+        'days_to_first_response': 'mean',
+        'days_to_last_response': 'mean',
+        'days_to_close': 'mean',
+        'days_to_merge': 'mean',
+    }).reset_index()
+    
+    return stats_df
+
+def create_figure(df, interval):
+    # time values for graph
+    x_r, x_name, hover, period = get_graph_time_values(interval)
+    
     # Create the figure
     fig = go.Figure()
-    bar_names = ['Mean Days to First Response', 'Mean Days to Last Response', 'Mean Days to Close', 'Mean Days to Accepted']
+    metrics = ['days_to_first_response', 'days_to_last_response', 'days_to_close', 'days_to_merge']
+    bar_names = ['Mean Days to First Response', 'Mean Days to Last Response', 'Mean Days to Close', 'Mean Days to Merge']
 
-    for col, bar_name in zip(['first_response_days', 'last_response_days', 'close_days', 'accept_days'], bar_names):
+    for col, bar_name in zip(metrics, bar_names):
         fig.add_trace(go.Bar(
-            x=stats_df['period'],
-            y=stats_df[col],
+            x=df['period'].astype(str),  # Convert period to string for plotting
+            y=df[col],
             name=bar_name
         ))
 
     # Customize layout
     fig.update_layout(
-        title='Mean Response Times for Pull Requests',
         xaxis_title='Time Period',
         yaxis_title='Days',
         barmode='group',
-        legend_title='Metrics'
-    )
-
-    return fig
-
-def process_data(df):
-    df['first_response_days'] = (df['first_response_timestamp'] - df['pr_created_at']).dt.days
-    df['last_response_days'] = (df['last_response_timestamp'] - df['pr_created_at']).dt.days
-    df['close_days'] = (df['pr_closed_at'] - df['pr_created_at']).dt.days
-    df['accept_days'] = (df['pr_merged_at'] - df['pr_created_at']).dt.days
-    return df
-
-"""
-def process_data(df: pd.DataFrame):
-    # Convert to datetime objects rather than strings
-    df["pr_created_at"] = pd.to_datetime(df["pr_created_at"], utc=True)
-    df["pr_merged_at"] = pd.to_datetime(df["pr_merged_at"], utc=True)
-    df["pr_closed_at"] = pd.to_datetime(df["pr_closed_at"], utc=True)
-
-    # Calculate the required statistics
-    df['first_response_days'] = (df['first_response_timestamp'] - df['pr_created_at']).dt.days
-    df['last_response_days'] = (df['last_response_timestamp'] - df['pr_created_at']).dt.days
-    df['close_days'] = (df['pr_closed_at'] - df['pr_created_at']).dt.days
-    df['accept_days'] = (df['pr_merged_at'] - df['pr_created_at']).dt.days
-    
-    # Group by Year/Month
-    df['year_month'] = df['pr_created_at'].dt.to_period('M')
-    grouped = df.groupby('year_month')
-    
-    # Calculate mean for each group
-    stats = grouped.agg({
-        'first_response_days': 'mean',
-        'last_response_days': 'mean',
-        'close_days': 'mean',
-        'accept_days': 'mean'
-    }).reset_index()
-    
-    return stats
-"""
-
-def create_figure(stats_df, interval):
-    # time values for graph
-    x_r, x_name, hover, period = get_graph_time_values(interval)
-    
-    # Create the figure
-    fig = px.bar(
-            stats_df,
-            x=stats_df['year_month'],
-            y=stats_df['first_response_days', 'last_response_days', 'close_days', 'accept_days'],
-            color_discrete_sequence=[color_seq[1], color_seq[5], color_seq[2], color_seq[0]],
-        )
-
-    # edit hover values
-    fig.update_traces(hovertemplate=hover + "<br>PRs: %{y}<br>" + "<extra></extra>")
-
-    fig.update_layout(
-        xaxis_title="Time",
-        yaxis_title="Pull Requests",
-        legend_title="Type",
-        font=dict(size=14),
-    )
-    
-    # Customize layout with the legend
-    fig.update_layout(
-        title='Mean Response Times for Pull Requests All Closed',
-        xaxis_title='Year/Month',
-        yaxis_title='Days to Close',
-        legend_title='Metrics',
-        barmode='group',
-        legend=dict(orientation="h")  # Horizontal legend below the chart
+        legend_title='Legend'
     )
 
     # Return the figure
     return fig
-
-def calculate_statistics(df, interval):
-    if interval == 'M':
-        df['period'] = df['pr_created_at'].dt.to_period('M')
-    else:
-        df['period'] = df['pr_created_at'].dt.to_period('Y')
-
-    stats = df.groupby('period').agg({
-        'first_response_days': 'mean',
-        'last_response_days': 'mean',
-        'close_days': 'mean',
-        'accept_days': 'mean'
-    }).reset_index()
-
-    return stats
-
-"""
-def calculate_statistics(df):
-    # Example calculations, you will need to adjust based on your actual DataFrame structure
-    df['first_response_days'] = (df['first_response_timestamp'] - df['pr_created_at']).dt.days
-    df['last_response_days'] = (df['last_response_timestamp'] - df['pr_created_at']).dt.days
-    df['close_days'] = (df['pr_closed_at'] - df['pr_created_at']).dt.days
-    df['accept_days'] = (df['pr_merged_at'] - df['pr_created_at']).dt.days
-    
-    # Group by Year/Month
-    df['year_month'] = df['pr_created_at'].dt.to_period('M')
-    grouped = df.groupby('year_month')
-    
-    # Calculate mean for each group
-    stats = grouped.agg({
-        'first_response_days': 'mean',
-        'last_response_days': 'mean',
-        'close_days': 'mean',
-        'accept_days': 'mean'
-    }).reset_index()
-    
-    return stats
-"""
