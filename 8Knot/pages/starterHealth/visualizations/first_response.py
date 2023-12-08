@@ -7,13 +7,12 @@ import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
-from pages.utils.graph_utils import color_seq
-from queries.company_query import company_query as cmq
+from pages.utils.graph_utils import get_graph_time_values, color_seq
+from queries.pr_response_query import pr_response_query as prr
 import io
 from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
-import datetime as dt
 
 PAGE = "starterHealth"
 VIZ_ID = "first_response"
@@ -32,15 +31,13 @@ gc_first_response = dbc.Card(
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
                             """
-                            Visualizes the population of unique commit email addresses per represented domain.\n
-                            e.g. if there are 100 distinct commit contributors and 50 use an '@gmail.com' email address,\n
-                            and another 50 use an '@redhat.com' email address, 50 percent of of emails wll be '@gmail.com'\n
-                            and 50% will be '@redhat.com'.
+                            Compares the volume of PRs being opened against the number of those PRs that \n
+                            receive at least one response within the parameterized timeframe after being opened.
                             """
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",  # needs to be the same as dbc.Button id
+                    target=f"popover-target-{PAGE}-{VIZ_ID}",
                     placement="top",
                     is_open=False,
                 ),
@@ -52,37 +49,24 @@ gc_first_response = dbc.Card(
                         dbc.Row(
                             [
                                 dbc.Label(
-                                    "Contributors Required:",
-                                    html_for=f"contributions-required-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
+                                    "Response Days:",
+                                    html_for=f"response-days-{PAGE}-{VIZ_ID}",
+                                    width="auto",
                                 ),
                                 dbc.Col(
                                     dbc.Input(
-                                        id=f"contributions-required-{PAGE}-{VIZ_ID}",
+                                        id=f"response-days-{PAGE}-{VIZ_ID}",
                                         type="number",
                                         min=1,
-                                        max=50,
+                                        max=120,
                                         step=1,
-                                        value=3,
-                                        size="sm",
+                                        value=2,
                                     ),
                                     className="me-2",
-                                    width=2,
+                                    width=1,
                                 ),
-                            ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
                                 dbc.Col(
-                                    dcc.DatePickerRange(
-                                        id=f"date-picker-range-{PAGE}-{VIZ_ID}",
-                                        min_date_allowed=dt.date(2005, 1, 1),
-                                        max_date_allowed=dt.date.today(),
-                                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
-                                        clearable=True,
-                                    ),
-                                    width="auto",
+                                    width=6,
                                 ),
                                 dbc.Col(
                                     dbc.Button(
@@ -118,24 +102,22 @@ def toggle_popover(n, is_open):
     return is_open
 
 
-# callback for Company Affiliation by Github Account Info graph
+# callback for pr first response graph
 @callback(
     Output(f"{PAGE}-{VIZ_ID}", "figure"),
     [
         Input("repo-choices", "data"),
-        Input(f"contributions-required-{PAGE}-{VIZ_ID}", "value"),
-        Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "start_date"),
-        Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "end_date"),
+        Input(f"response-days-{PAGE}-{VIZ_ID}", "value"),
     ],
     background=True,
 )
-def unique_domains_graph(repolist, num, start_date, end_date):
+def pr_first_response_graph(repolist, num_days):
     # wait for data to asynchronously download and become available.
     cache = cm()
-    df = cache.grabm(func=cmq, repos=repolist)
+    df = cache.grabm(func=prr, repos=repolist)
     while df is None:
         time.sleep(1.0)
-        df = cache.grabm(func=cmq, repos=repolist)
+        df = cache.grabm(func=prr, repos=repolist)
 
     start = time.perf_counter()
     logging.warning(f"{VIZ_ID}- START")
@@ -145,64 +127,116 @@ def unique_domains_graph(repolist, num, start_date, end_date):
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return nodata_graph
 
-    # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
-    df = process_data(df, num, start_date, end_date)
+    df = process_data(df, num_days)
 
-    fig = create_figure(df)
+    fig = create_figure(df, num_days)
 
     logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
 
-def process_data(df: pd.DataFrame, num, start_date, end_date):
+def process_data(df: pd.DataFrame, num_days):
+
     # convert to datetime objects rather than strings
-    df["created"] = pd.to_datetime(df["created"], utc=True)
+    df["msg_timestamp"] = pd.to_datetime(df["msg_timestamp"], utc=True)
+    df["pr_created_at"] = pd.to_datetime(df["pr_created_at"], utc=True)
+    df["pr_closed_at"] = pd.to_datetime(df["pr_closed_at"], utc=True)
 
-    # order values chronologically by COLUMN_TO_SORT_BY date
-    df = df.sort_values(by="created", axis=0, ascending=True)
+    # drop messages from the pr creator
+    df = df[df["cntrb_id"] != df["msg_cntrb_id"]]
 
-    # filter values based on date picker
-    if start_date is not None:
-        df = df[df.created >= start_date]
-    if end_date is not None:
-        df = df[df.created <= end_date]
+    # sort in ascending earlier and only get ealiest value
+    df = df.sort_values(by="msg_timestamp", axis=0, ascending=True)
+    df = df.drop_duplicates(subset="pull_request_id", keep="first")
 
-    # creates list of unique emails and flattens list result
-    emails = df.email_list.str.split(" , ").explode("email_list").unique().tolist()
+    # first and last elements of the dataframe are the
+    # earliest and latest events respectively
+    earliest = df["pr_created_at"].min()
+    latest = max(df["pr_created_at"].max(), df["pr_closed_at"].max())
 
-    # remove any entries not in email format
-    emails = [x for x in emails if "@" in x]
+    # beginning to the end of time by the specified interval
+    dates = pd.date_range(start=earliest, end=latest, freq="D", inclusive="both")
 
-    # creates list of email domains from the emails list
-    email_domains = [x[x.rindex("@") + 1 :] for x in emails]
+    # df for open prs and responded to prs in time interval
+    df_pr_responses = dates.to_frame(index=False, name="Date")
 
-    # creates df of domains and counts
-    df = pd.DataFrame(email_domains, columns=["domains"]).value_counts().to_frame().reset_index()
-
-    df = df.rename(columns={0: "occurences"})
-
-    # changes the name of the company if under a certain threshold
-    df.loc[df.occurences <= num, "domains"] = "Other"
-
-    # groups others together for final counts
-    df = (
-        df.groupby(by="domains")["occurences"]
-        .sum()
-        .reset_index()
-        .sort_values(by=["occurences"], ascending=False)
-        .reset_index(drop=True)
+    # every day, count the number of PRs that are open on that day and the number of
+    # those that were responded to within num_days of their opening
+    df_pr_responses["Open"], df_pr_responses["Response"] = zip(
+        *df_pr_responses.apply(
+            lambda row: get_open_response(df, row.Date, num_days),
+            axis=1,
+        )
     )
 
-    return df
+    df_pr_responses["Date"] = df_pr_responses["Date"].dt.strftime("%Y-%m-%d")
+
+    return df_pr_responses
 
 
-def create_figure(df: pd.DataFrame):
-    # graph generation
-    fig = px.pie(df, names="domains", values="occurences", color_discrete_sequence=color_seq)
-    fig.update_traces(
-        textposition="inside",
-        textinfo="percent+label",
-        hovertemplate="%{label} <br>Contributions: %{value}<br><extra></extra>",
+def create_figure(df: pd.DataFrame, num_days):
+
+    fig = go.Figure(
+        [
+            go.Scatter(
+                name="Response time",
+                x=df["Date"],
+                y=df["Response"],
+                mode="lines",
+                showlegend=True,
+                hovertemplate="PRs: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
+                marker=dict(color=color_seq[5]),
+            ),
+        ]
+    )
+    fig.update_layout(
+        xaxis_title="Time",
+        yaxis_title="Number of PRs",
+        font=dict(size=14),
     )
 
     return fig
+
+
+def get_open_response(df, date, num_days):
+    """
+    This function takes a date and determines how many
+    prs in that time interval are opened and if they have a response within num_days.
+
+    Args:
+    -----
+        df : Pandas Dataframe
+            Dataframe with pr assignment actions of the assignees
+
+        date : Datetime Timestamp
+            Timestamp of the date
+
+        num_days : int
+            number of days that a response should be within
+
+    Returns:
+    --------
+        int, int: Number of opened and responded to prs within num_days on the day
+    """
+    # drop rows that are more recent than the date limit
+    df_created = df[df["pr_created_at"] <= date]
+
+    # drops rows that have been closed after date
+    df_open = df_created[df_created["pr_closed_at"] > date]
+
+    # include prs that have not been close yet
+    df_open = pd.concat([df_open, df_created[df_created.pr_closed_at.isnull()]])
+
+    # column to hold date num_days after the pr_creation date for comparision
+    df_open["response_by"] = df_open["pr_created_at"] + pd.DateOffset(days=num_days)
+
+    # Inlcude only the prs that msg timestamp is before the responded by time
+    df_response = df_open[df_open["msg_timestamp"] < df_open["response_by"]]
+
+    # generates number of columns ie open prs
+    num_open = df_open.shape[0]
+
+    # number of prs that had response in time interval
+    num_response = df_response.shape[0]
+
+    return num_open, num_response
