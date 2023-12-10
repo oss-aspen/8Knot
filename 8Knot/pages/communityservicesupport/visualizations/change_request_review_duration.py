@@ -9,8 +9,6 @@ from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, color_seq
 from queries.prs_query import prs_query as prs
-from queries.pr_response_query import pr_response_query as prr
-from queries.pr_assignee_query import pr_assignee_query as pra
 from queries.change_request_review_query import change_request_review_query as crr
 import io
 from cache_manager.cache_manager import CacheManager as cm
@@ -37,10 +35,10 @@ gc_change_request_review_duration = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            """This visualization provides insights into the review process of change requests in a project. \n 
-                            It highlights aspects such as the extent of formal reviews, the number of reviews, the nature of comments, \n
-                            and the acceptance or decline of change requests. For more context of this visualization see \n
-                            https://chaoss.community/kb/metric-change-request-reviews/ \n """
+                            """The Change Request Review Duration metric measures the time from when a submitter has submitted a change within a review cycle until it is reviewed.\n
+                            This metric measures one review, however, there may be multiple reviews within a Review Cycle Duration within a Change Request and this measures time of each review.\n
+                            The time waiting for a review is zero if the change request is merged without any requested revisions or clarification. For more context of this visualization see \n
+                            https://chaoss.community/kb/metric-change-request-review-duration/ \n """
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
@@ -55,6 +53,20 @@ gc_change_request_review_duration = dbc.Card(
                     [
                         dbc.Row(
                             [
+                                dbc.Col(
+                                    dcc.DatePickerRange(
+                                        id=f"date-picker-range-{PAGE}-{VIZ_ID}",
+                                        min_date_allowed=dt.date(2005, 1, 1),
+                                        max_date_allowed=dt.date.today(),
+                                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                                        clearable=True,
+                                    ),
+                                    width="auto",
+                                ),
+                            ],
+                        ),
+                        dbc.Row(
+                            [
                                 dbc.Label(
                                     "Date Interval:",
                                     html_for=f"date-interval-{PAGE}-{VIZ_ID}",
@@ -65,7 +77,6 @@ gc_change_request_review_duration = dbc.Card(
                                         dbc.RadioItems(
                                             id=f"date-interval-{PAGE}-{VIZ_ID}",
                                             options=[
-                                                {"label": "Trend", "value": "D"},
                                                 {"label": "Month", "value": "M"},
                                                 {"label": "Year", "value": "Y"},
                                             ],
@@ -112,88 +123,105 @@ def toggle_popover(n, is_open):
     # if additional output is added, change returns accordingly
     [
         Input("repo-choices", "data"),
-        Input(f"date-radio-{PAGE}-{VIZ_ID}", "value"),
+        Input(f"date-interval-{PAGE}-{VIZ_ID}", "value"),
+        Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "start_date"),
+        Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "end_date"),
         # add additional inputs here
     ],
     background=True,
 )
-def change_request_review_duration_graph(repolist, interval):
-    # wait for data to asynchronously download and become available.
+def change_request_review_duration_graph(repolist, interval, start_date, end_date):
+    # Fetch and process the data
     cache = cm()
-    df = cache.grabm(func=prs, repos=repolist)
+    df = cache.grabm(func=crr, repos=repolist)
     while df is None:
         time.sleep(1.0)
-        df = cache.grabm(func=prs, repos=repolist)
-
+        df = cache.grabm(func=crr, repos=repolist)
+    
+    # data ready.
     start = time.perf_counter()
-    logging.warning(f"{VIZ_ID}- START")
-
-    # test if there is data
+    logging.warning("CHANGE REQUEST REVIEW DURATION - START")
+    
+    # Test the dataframe has data
+    if df is None:
+        logging.warning(f"DataFrame is None for Repos: {repolist}")
+        return go.Figure().update_layout(title="No data available")
     if df.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
-        return nodata_graph
+        logging.warning(f"DataFrame is empty for Repos: {repolist}")
+        return go.Figure().update_layout(title="No data available")
+    
+    # Process the data
+    processed_df = process_data(df, interval, start_date, end_date)
 
-    # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
-    df = process_data(df, interval)
+    fig = create_figure(processed_df, interval)
+    
+    logging.warning(f"CHANGE_REQUEST_REVIEW_DURATION_VIZ - END - {time.perf_counter() - start}")
 
-    fig = create_figure(df, interval)
-
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
-
-def process_data(df: pd.DataFrame, interval):
-    # convert to datetime objects rather than strings
-    df["created"] = pd.to_datetime(df["created"], utc=True)
-    df["merged"] = pd.to_datetime(df["merged"], utc=True)
-    df["closed"] = pd.to_datetime(df["closed"], utc=True)
+def process_data(df: pd.DataFrame, interval, start_date, end_date):
+    # convert timestamps to dates and handle UUID conversion if necessary
+    df["pr_created_at"] = pd.to_datetime(df["pr_created_at"], utc=True)
+    df["pr_closed_at"] = pd.to_datetime(df["pr_closed_at"], utc=True)
+    df["pr_merged_at"] = pd.to_datetime(df["pr_merged_at"], utc=True)
     
-    # ensure pull request unique ID are formatted
-    #df["pull_request"] = df["pull_request"].astype(str)
-    #df["pull_request"] = df["pull_request"].str[:15]
+    # Calculate 'days_to_merge'
+    df["days_to_merge"] = (df["pr_merged_at"] - df["pr_created_at"]).dt.days
+    
+    # Handle missing or invalid data
+    df = df.dropna(subset=['pr_created_at'])
+    df = df[df['days_to_merge'].notna() & (df['days_to_merge'] >= 0)]
+    
+    # Convert start_date and end_date to datetime if they are not None
+    if start_date is not None:
+        start_date = pd.to_datetime(start_date, utc=True)
+        df = df[df["pr_created_at"] >= start_date]
 
-    # order values chronologically by creation date
-    df = df.sort_values(by="created", axis=0, ascending=True)
+    if end_date is not None:
+        end_date = pd.to_datetime(end_date, utc=True)
+        df = df[df["pr_created_at"] <= end_date]
 
-    # first and last elements of the dataframe are the
-    # earliest and latest events respectively
-    earliest = df["created"].min()
-    latest = max(df["created"].max(), df["closed"].max())
+    # Sort values and group by the specified interval
+    df = df.sort_values(by="pr_created_at", ascending=True)
+    if interval == 'M':
+        df['period'] = df['pr_created_at'].dt.to_period('M')
+    elif interval == 'Y':
+        df['period'] = df['pr_created_at'].dt.to_period('Y')
+    else:
+        raise ValueError("Invalid interval selected")
 
-    # generating buckets beginning to the end of time by the specified interval
-    dates = pd.date_range(start=earliest, end=latest, freq=interval, inclusive="both")
+    stats_df = df.groupby('period').agg({
+        'days_to_first_response': 'mean',
+        'days_to_last_response': 'mean',
+        'days_to_close': 'mean',
+        'days_to_merge': 'mean',
+    }).reset_index()
+    
+    return stats_df
 
-    # df for new, staling, and stale prs for time interval
-    df_status = dates.to_frame(index=False, name="Date")
-
-    # formatting for graph generation
-    if interval == "M":
-        df_status["Date"] = df_status["Date"].dt.strftime("%Y-%m")
-    elif interval == "Y":
-        df_status["Date"] = df_status["Date"].dt.year
-
-    return df_status
-
-#TODO: Update the figure pieces
-def create_figure(df_status: pd.DataFrame, interval):
+def create_figure(df, interval):
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
+    
+    # Create the figure
+    fig = go.Figure()
+    metrics = ['days_to_first_response', 'days_to_last_response', 'days_to_close', 'days_to_merge']
+    bar_names = ['Mean Days to First Response', 'Mean Days to Last Response', 'Mean Days to Close', 'Mean Days to Merge']
 
-    fig = px.bar(
-        df_status,
-        x="Date",
-        y=["Rejected-Bot", "Rejected-Human", "Approved-Bot", "Approved-Human"],
-        color_discrete_sequence=[color_seq[1], color_seq[5], color_seq[2], color_seq[0]],
-    )
+    for col, bar_name in zip(metrics, bar_names):
+        fig.add_trace(go.Bar(
+            x=df['period'].astype(str),  # Convert period to string for plotting
+            y=df[col],
+            name=bar_name
+        ))
 
-    # edit hover values
-    fig.update_traces(hovertemplate=hover + "<br>PRs: %{y}<br>" + "<extra></extra>")
-
+    # Customize layout
     fig.update_layout(
-        xaxis_title="Time",
-        yaxis_title="Review Duration",
-        legend_title="Type",
-        font=dict(size=14),
+        xaxis_title='Time Period',
+        yaxis_title='Days',
+        barmode='group',
+        legend_title='Legend'
     )
 
+    # Return the figure
     return fig
