@@ -19,6 +19,10 @@ def pr_response_query(self, repos):
     if not the msg_timestamp is null. It takes in the data
     of the comments (messages) on prs and pr reviews for each pr if it exists.
 
+    explorer_pr_response is a materialized view on the database for quicker run time and
+    may not be in your augur database. The SQL query content can be found
+    in docs/materialized_views/explorer_pr_response.sql
+
     Args:
     -----
         repo_ids ([str]): repos that SQL query is executed on.
