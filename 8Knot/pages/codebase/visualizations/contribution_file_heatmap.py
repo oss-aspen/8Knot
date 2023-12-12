@@ -73,7 +73,7 @@ graph_loading = html.Div(
                                     id=f"directory-{PAGE}-{VIZ_ID}",
                                     classNames={"values": "dmc-multiselect-custom"},
                                     searchable=True,
-                                    clearable=True,
+                                    clearable=False,
                                 ),
                             ],
                             className="me-2",
@@ -210,7 +210,9 @@ def directory_dropdown(repo_id):
 
     # get all of the file names to filter out of the directory set
     top_level_files = df["file_name"][df[1].isnull()].tolist()
-    directories = [f for f in directories if f not in top_level_files]
+    # applies another rsplit to make sure directories that only have folders are included
+    folder_only_directories = [x.rsplit("/", 1)[0] for x in directories]
+    directories = list(set(directories + folder_only_directories))
 
     # sort alphabetically
     directories = sorted(directories)
