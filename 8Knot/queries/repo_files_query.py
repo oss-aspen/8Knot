@@ -18,7 +18,6 @@ QUERY_NAME = "REPO_FILES"
     retry_jitter=True,
 )
 def repo_files_query(self, repos):
-
     """
     (Worker Query)
     Executes SQL query against Augur database to get the repo file data.
@@ -58,7 +57,7 @@ def repo_files_query(self, repos):
                             repo r
                         WHERE
                             rl.repo_id = r.repo_id AND
-                            rl.repo_id in {str(repos)[1:-1]}
+                            rl.repo_id in ({str(repos)[1:-1]})
                         )
                 """
 
