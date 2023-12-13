@@ -36,27 +36,25 @@ def repo_files_query(self, repos):
 
     query_string = """
                     SELECT
-                    rl.repo_id AS id,
-                    r.repo_name,
-                    r.repo_path,
-                    rl.rl_analysis_date,
-                    rl.file_path,
-                    rl.file_name
-                FROM
-                    repo_labor rl,
-                    repo r
-                WHERE
-                    rl.repo_id = r.repo_id AND
-                    rl.repo_id in %s AND
-                    rl.rl_analysis_date = (
-                        SELECT
-                            MAX(rl.rl_analysis_date)
-                        FROM
-                            repo_labor rl,
-                            repo r
-                        WHERE
-                            rl.repo_id = r.repo_id AND
-                            rl.repo_id in %s
+                        rl.repo_id AS id,
+                        r.repo_name,
+                        r.repo_path,
+                        rl.rl_analysis_date,
+                        rl.file_path,
+                        rl.file_name
+                    FROM
+                        repo_labor rl,
+                        repo r
+                    WHERE
+                        rl.repo_id = r.repo_id AND
+                        rl.repo_id in %s AND
+                        (rl.repo_id, rl.rl_analysis_date) IN (
+                            SELECT DISTINCT ON (repo_id)
+                                repo_id, rl_analysis_date
+                            FROM repo_labor
+                            WHERE
+                                repo_id IN %s
+                            ORDER BY repo_id, rl_analysis_date DESC
                         )
                 """
 

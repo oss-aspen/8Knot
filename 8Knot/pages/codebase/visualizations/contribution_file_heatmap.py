@@ -187,12 +187,12 @@ def directory_dropdown(repo_id):
         repolist=[repo_id],
     )
 
-    logging.warning(f"DIRECTORY DROPDOWN - CACHE READ {df.shape[0]}")
+    logging.warning(f"DIRECTORY DROPDOWN - CACHE READ")
 
     # test if there is data
     if df.empty:
         logging.warning(f"{VIZ_ID} DROPDOWN- NO DATA AVAILABLE")
-        return "NO DATA"
+        return ["Top Level Directory"], "Top Level Directory"
 
     # strings to hold the values for each column (always the same for every row of this query)
     repo_name = df["repo_name"].iloc[0]
@@ -231,45 +231,6 @@ def directory_dropdown(repo_id):
     return directories, "Top Level Directory"
 
 
-def multi_query_helper(repos):
-    """
-    For cntrb_file_heatmap_graph-
-    hack to put all of the cache-retrieval
-    in the same place temporarily
-    """
-
-    # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=repos):
-        logging.warning(f"CONTRIBUTION FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
-
-    # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=prfq.__name__, repolist=repos):
-        logging.warning(f"CONTRIBUTION FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
-
-    # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=prq.__name__, repolist=repos):
-        logging.warning(f"CONTRIBUTION FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
-
-    # GET ALL DATA FROM POSTGRES CACHE
-    df_file = cf.retrieve_from_cache(
-        tablename=rfq.__name__,
-        repolist=repos,
-    )
-    df_file_pr = cf.retrieve_from_cache(
-        tablename=prfq.__name__,
-        repolist=repos,
-    )
-    df_pr = cf.retrieve_from_cache(
-        tablename=prq.__name__,
-        repolist=repos,
-    )
-
-    return df_file, df_file_pr, df_pr
-
-
 # callback for contributor file heatmap graph
 @callback(
     Output(f"{PAGE}-{VIZ_ID}", "figure"),
@@ -305,6 +266,51 @@ def cntrb_file_heatmap_graph(repo_id, directory, graph_view):
     return fig
 
 
+def multi_query_helper(repos):
+    """
+    For cntrb_file_heatmap_graph-
+    hack to put all of the cache-retrieval
+    in the same place temporarily
+    """
+
+    # wait for data to asynchronously download and become available.
+    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=repos):
+        logging.warning(
+            f"CONTRIBUTION FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE"
+        )
+        time.sleep(0.5)
+
+    # wait for data to asynchronously download and become available.
+    while not_cached := cf.get_uncached(func_name=prfq.__name__, repolist=repos):
+        logging.warning(
+            f"CONTRIBUTION FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE"
+        )
+        time.sleep(0.5)
+
+    # wait for data to asynchronously download and become available.
+    while not_cached := cf.get_uncached(func_name=prq.__name__, repolist=repos):
+        logging.warning(
+            f"CONTRIBUTION FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE"
+        )
+        time.sleep(0.5)
+
+    # GET ALL DATA FROM POSTGRES CACHE
+    df_file = cf.retrieve_from_cache(
+        tablename=rfq.__name__,
+        repolist=repos,
+    )
+    df_file_pr = cf.retrieve_from_cache(
+        tablename=prfq.__name__,
+        repolist=repos,
+    )
+    df_pr = cf.retrieve_from_cache(
+        tablename=prq.__name__,
+        repolist=repos,
+    )
+
+    return df_file, df_file_pr, df_pr
+
+
 def process_data(
     df_file: pd.DataFrame,
     df_file_pr: pd.DataFrame,
@@ -326,7 +332,9 @@ def process_data(
 
     # drop unneccessary columns not needed after preprocessing steps
     df_file = df_file.reset_index()
-    df_file.drop(["index", "repo_name", "repo_path", "rl_analysis_date"], axis=1, inplace=True)
+    df_file.drop(
+        ["index", "repo_name", "repo_path", "rl_analysis_date"], axis=1, inplace=True
+    )
 
     # split file path by directory
     df_file = df_file.join(df_file["file_path"].str.split("/", expand=True))
@@ -368,7 +376,9 @@ def process_data(
     )
 
     # reformat 0 to "" for later processing
-    df_dynamic_directory.loc[df_dynamic_directory.pull_request == 0, "pull_request"] = ""
+    df_dynamic_directory.loc[
+        df_dynamic_directory.pull_request == 0, "pull_request"
+    ] = ""
 
     # Set of pull_request to confirm there are no duplicate pull requests
     df_dynamic_directory["pull_request"] = df_dynamic_directory.apply(
@@ -381,7 +391,9 @@ def process_data(
     df_pr["merged"] = pd.to_datetime(df_pr["merged"], utc=True)
 
     # drop unneccessary columns not needed after preprocessing steps
-    df_pr.drop(["id", "repo_name", "pr_src_number", "cntrb_id", "closed"], axis=1, inplace=True)
+    df_pr.drop(
+        ["id", "repo_name", "pr_src_number", "cntrb_id", "closed"], axis=1, inplace=True
+    )
 
     # dictionaries of pull_requests and their open and merge dates
     pr_open = df_pr.set_index("pull_request")["created"].to_dict()
@@ -392,7 +404,11 @@ def process_data(
         *df_dynamic_directory.apply(
             lambda row: [
                 [pr_open[x] for x in row.pull_request],
-                [pr_merged[x] for x in row.pull_request if not pd.isnull(pr_merged[x])],
+                [
+                    pr_merged[x]
+                    for x in row.pull_request
+                    if (not pd.isnull(pr_merged[x]))
+                ],
             ],
             axis=1,
         )
@@ -402,9 +418,13 @@ def process_data(
     df_dynamic_directory = df_dynamic_directory.explode(graph_view)
 
     # get files that have no pull requests and remove from set to prevent errors in grouper function
-    no_contribs = df_dynamic_directory["directory_value"][df_dynamic_directory[graph_view].isnull()].tolist()
+    no_contribs = df_dynamic_directory["directory_value"][
+        df_dynamic_directory[graph_view].isnull()
+    ].tolist()
 
-    df_dynamic_directory = df_dynamic_directory[~df_dynamic_directory[graph_view].isnull()]
+    df_dynamic_directory = df_dynamic_directory[
+        ~df_dynamic_directory[graph_view].isnull()
+    ]
 
     """Creates df with a column for each month between start and end date. This will be used to confirm that
     there will be a column for every month even if there is no pull request date in it. This greatly
@@ -421,7 +441,11 @@ def process_data(
     final["directory_value"] = final["directory_value"].astype(str)
 
     # grouping dates by every month and counting the number of pr opened or merged with the last activity at that date
-    final = final.groupby(pd.Grouper(key=graph_view, freq="1M"))["directory_value"].value_counts().unstack(0)
+    final = (
+        final.groupby(pd.Grouper(key=graph_view, freq="1M"))["directory_value"]
+        .value_counts()
+        .unstack(0)
+    )
 
     # removing the None row that was used for column formating if exists
     if "nan" in final.index:

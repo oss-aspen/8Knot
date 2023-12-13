@@ -28,28 +28,52 @@ def prs_query(self, repos):
     if len(repos) == 0:
         return None
 
-    query_string = f"""
+    # NOTE: This was dropping PRs that were needed in the heatmap
+    # visualizations, so we switched back to the old query.
+    # Below is how we were screening out PRs that happened "in the future"
+
+    # query_string = f"""
+    #                 SELECT
+    #                     r.repo_id,
+    #                     r.repo_name,
+    #                     pr.pull_request_id AS pull_request,
+    #                     pr.pr_src_number,
+    #                     left(pr.pr_augur_contributor_id::text, 15) as cntrb_id,
+    #                     -- values are timestamp not timestamptz
+    #                     pr.pr_created_at AS created,
+    #                     pr.pr_closed_at AS closed,
+    #                     pr.pr_merged_at AS merged
+    #                 FROM
+    #                     repo r,
+    #                     pull_requests pr
+    #                 WHERE
+    #                     r.repo_id = pr.repo_id AND
+    #                     r.repo_id in %s
+    #                     and pr.pr_created_at < now()
+    #                     and pr.pr_closed_at < now()
+    #                     and pr.pr_merged_at < now()
+    #                 ORDER BY pr.pr_created_at
+    #                 """
+
+    query_string = """
                     SELECT
-                        r.repo_id,
+                        r.repo_id as id,
                         r.repo_name,
                         pr.pull_request_id AS pull_request,
                         pr.pr_src_number,
-                        left(pr.pr_augur_contributor_id::text, 15) as cntrb_id,
-                        -- values are timestamp not timestamptz
+                        pr.pr_augur_contributor_id AS cntrb_id,
                         pr.pr_created_at AS created,
                         pr.pr_closed_at AS closed,
-                        pr.pr_merged_at AS merged
+                        pr.pr_merged_at  AS merged
                     FROM
                         repo r,
                         pull_requests pr
                     WHERE
                         r.repo_id = pr.repo_id AND
                         r.repo_id in %s
-                        and pr.pr_created_at < now()
-                        and pr.pr_closed_at < now()
-                        and pr.pr_merged_at < now()
-                    ORDER BY pr.pr_created_at
-                    """
+
+    """
+
     # used for caching
     func_name = prs_query.__name__
 

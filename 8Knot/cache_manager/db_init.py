@@ -152,7 +152,7 @@ def _create_application_tables() -> None:
             CREATE UNLOGGED TABLE IF NOT EXISTS prs_query(
                 id integer,
                 repo_name text,
-                pull_request text,
+                pull_request int,
                 pr_src_number text,
                 cntrb_id text,
                 created text,
@@ -239,7 +239,7 @@ def _create_application_tables() -> None:
             """
             CREATE UNLOGGED TABLE IF NOT EXISTS pr_file_query(
                 file_path text,
-                pull_request integer,
+                pull_request int,
                 id integer
             )
             """

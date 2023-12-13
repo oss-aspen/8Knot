@@ -170,12 +170,12 @@ def directory_dropdown(repo_id):
         repolist=[repo_id],
     )
 
-    logging.warning(f"DIRECTORY DROPDOWN - CACHE READ {df.shape[0]}")
+    logging.warning(f"DIRECTORY DROPDOWN - CACHE READ")
 
     # test if there is data
     if df.empty:
         logging.warning(f"{VIZ_ID} DROPDOWN- NO DATA AVAILABLE")
-        return dash.no_update, "NO DATA"
+        return ["Top Level Directory"], "Top Level Directory"
 
     # strings to hold the values for each column (always the same for every row of this query)
     repo_name = df["repo_name"].iloc[0]
@@ -216,6 +216,41 @@ def directory_dropdown(repo_id):
     logging.warning(f"DIRECTORY DROPDOWN - FINISHED")
 
     return directories, "Top Level Directory"
+
+
+# callback for contributor file heatmap graph
+@callback(
+    Output(f"{PAGE}-{VIZ_ID}", "figure"),
+    [
+        Input(f"repo-{PAGE}-{VIZ_ID}", "value"),
+        Input(f"directory-{PAGE}-{VIZ_ID}", "value"),
+        Input("bot-switch", "value"),
+    ],
+    background=True,
+)
+def cntrb_file_heatmap_graph(repo_id, directory, bot_switch):
+    start = time.perf_counter()
+    logging.warning(f"{VIZ_ID}- START")
+
+    # get dataframes of data from cache
+    df_file, df_actions, df_file_cntbs = multi_query_helper([repo_id])
+
+    # test if there is data
+    if df_file.empty or df_actions.empty or df_file_cntbs.empty:
+        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
+        return nodata_graph
+
+    # function for all data pre processing
+    df = process_data(df_file, df_actions, df_file_cntbs, directory, bot_switch)
+
+    # if there are no cntrbs in a directory plot no data graph
+    if df.empty:
+        return nodata_graph
+
+    fig = create_figure(df)
+
+    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
+    return fig
 
 
 def multi_query_helper(repos):
@@ -259,41 +294,6 @@ def multi_query_helper(repos):
     df_file_cntrbs = preproc_u.cntrb_per_file(df_file_cntrbs)
 
     return df_file, df_actions, df_file_cntrbs
-
-
-# callback for contributor file heatmap graph
-@callback(
-    Output(f"{PAGE}-{VIZ_ID}", "figure"),
-    [
-        Input(f"repo-{PAGE}-{VIZ_ID}", "value"),
-        Input(f"directory-{PAGE}-{VIZ_ID}", "value"),
-        Input("bot-switch", "value"),
-    ],
-    background=True,
-)
-def cntrb_file_heatmap_graph(repo_id, directory, bot_switch):
-    start = time.perf_counter()
-    logging.warning(f"{VIZ_ID}- START")
-
-    # get dataframes of data from cache
-    df_file, df_actions, df_file_cntbs = multi_query_helper([repo_id])
-
-    # test if there is data
-    if df_file.empty or df_actions.empty or df_file_cntbs.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
-        return nodata_graph
-
-    # function for all data pre processing
-    df = process_data(df_file, df_actions, df_file_cntbs, directory, bot_switch)
-
-    # if there are no cntrbs in a directory plot no data graph
-    if df.empty:
-        return nodata_graph
-
-    fig = create_figure(df)
-
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
-    return fig
 
 
 def process_data(
