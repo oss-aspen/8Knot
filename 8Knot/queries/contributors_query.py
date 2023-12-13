@@ -51,6 +51,7 @@ def contributors_query(self, repos):
                     WHERE
                         ca.repo_id in %s
                         and timezone('utc', ca.created_at) < now() -- created_at is a timestamptz value
+                        -- don't need to check non-null for created_at because it's non-null by definition.
                 """
 
     # used for caching

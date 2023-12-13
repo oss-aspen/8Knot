@@ -34,34 +34,41 @@ def repo_files_query(self, repos):
     if len(repos) == 0:
         return None
 
+    # NOTE: in below query, for each repo_id we're interested in,
+    # we pre-compute the most recent augur analysis date. This allows
+    # us to quickly get the names of the files in the repo that
+    # exist most-currently, dropping files that have been added and
+    # then deleted in the past.
+
     query_string = """
                     SELECT
-                    rl.repo_id AS id,
-                    r.repo_name,
-                    r.repo_path,
-                    rl.rl_analysis_date,
-                    rl.file_path,
-                    rl.file_name
-                FROM
-                    repo_labor rl,
-                    repo r
-                WHERE
-                    rl.repo_id = r.repo_id AND
-                    rl.repo_id in %s AND
-                    rl.rl_analysis_date = (
-                        SELECT
-                            MAX(rl.rl_analysis_date)
-                        FROM
-                            repo_labor rl,
-                            repo r
-                        WHERE
-                            rl.repo_id = r.repo_id AND
-                            rl.repo_id in %s
+                        rl.repo_id AS id,
+                        r.repo_name,
+                        r.repo_path,
+                        rl.rl_analysis_date,
+                        rl.file_path,
+                        rl.file_name
+                    FROM
+                        repo_labor rl,
+                        repo r
+                    WHERE
+                        rl.repo_id = r.repo_id AND
+                        rl.repo_id in %s AND
+                        -- NOTE ABOVE 
+                        (rl.repo_id, rl.rl_analysis_date) IN (
+                            SELECT DISTINCT ON (repo_id)
+                                repo_id, rl_analysis_date
+                            FROM repo_labor
+                            WHERE
+                                repo_id IN %s
+                            ORDER BY repo_id, rl_analysis_date DESC
                         )
                 """
 
     func_name = repo_files_query.__name__
-    cf.caching_wrapper(func_name=func_name, query=query_string, repolist=repos, n_repolist_uses=2)
+    cf.caching_wrapper(
+        func_name=func_name, query=query_string, repolist=repos, n_repolist_uses=2
+    )
 
     logging.warning(f"{func_name} COLLECTION - END")
     return 0

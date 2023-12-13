@@ -52,6 +52,7 @@ def company_query(self, repos):
                     WHERE
                         c.repo_id in %s
                         and timezone('utc', c.created_at) < now() -- created_at is a timestamptz value
+                        -- don't need to check non-null for created_at because it's non-null by definition.
                     GROUP BY c.cntrb_id, c.created_at, c.repo_id, c.login, c.action, c.rank, con.cntrb_company
                     ORDER BY
                         c.created_at

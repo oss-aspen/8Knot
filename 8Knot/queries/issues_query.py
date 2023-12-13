@@ -49,7 +49,9 @@ def issues_query(self, repos):
                         r.repo_id in %s
                         and i.pull_request_id is null
                         and i.created_at < now()
-                        and i.closed_at < now()
+                        and (i.closed_at < now() or i.closed_at IS NULL)
+                        -- have to accept NULL values because issues could still be open, or unassigned,
+                        -- and still be acceptable.
                     ORDER BY i.created_at
                     """
 
