@@ -46,8 +46,10 @@ def issue_assignee_query(self, repos):
                     WHERE
                         ia.id in %s
                         and ia.created < now()
-                        and ia.closed < now()
-                        and ia.assign_date < now()
+                        and (ia.closed < now() or ia.closed IS NULL)
+                        and (ia.assign_date < now() or ia.assign_date IS NULL)
+                        -- have to accept NULL values because issues could still be open, or unassigned,
+                        -- and still be acceptable.
                 """
 
     # used for caching

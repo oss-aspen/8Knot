@@ -187,12 +187,12 @@ def directory_dropdown(repo_id):
         repolist=[repo_id],
     )
 
-    logging.warning(f"DIRECTORY DROPDOWN - CACHE READ {df.shape[0]}")
+    logging.warning(f"DIRECTORY DROPDOWN - CACHE READ")
 
     # test if there is data
     if df.empty:
         logging.warning(f"{VIZ_ID} DROPDOWN- NO DATA AVAILABLE")
-        return "NO DATA"
+        return ["Top Level Directory"], "Top Level Directory"
 
     # strings to hold the values for each column (always the same for every row of this query)
     repo_name = df["repo_name"].iloc[0]
@@ -229,6 +229,41 @@ def directory_dropdown(repo_id):
     directories.insert(0, "Top Level Directory")
 
     return directories, "Top Level Directory"
+
+
+# callback for contributor file heatmap graph
+@callback(
+    Output(f"{PAGE}-{VIZ_ID}", "figure"),
+    [
+        Input(f"repo-{PAGE}-{VIZ_ID}", "value"),
+        Input(f"directory-{PAGE}-{VIZ_ID}", "value"),
+        Input(f"graph-view-{PAGE}-{VIZ_ID}", "value"),
+    ],
+    background=True,
+)
+def cntrb_file_heatmap_graph(repo_id, directory, graph_view):
+    start = time.perf_counter()
+    logging.warning(f"{VIZ_ID}- START")
+
+    # get dataframes of data from cache
+    df_file, df_file_pr, df_pr = multi_query_helper([repo_id])
+
+    # test if there is data
+    if df_file.empty or df_file_pr.empty or df_pr.empty:
+        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
+        return nodata_graph
+
+    # function for all data pre processing
+    df = process_data(df_file, df_file_pr, df_pr, directory, graph_view)
+
+    # if there are no pull request on a directory plot no data graph
+    if df.empty:
+        return nodata_graph
+
+    fig = create_figure(df, graph_view)
+
+    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
+    return fig
 
 
 def multi_query_helper(repos):
@@ -268,41 +303,6 @@ def multi_query_helper(repos):
     )
 
     return df_file, df_file_pr, df_pr
-
-
-# callback for contributor file heatmap graph
-@callback(
-    Output(f"{PAGE}-{VIZ_ID}", "figure"),
-    [
-        Input(f"repo-{PAGE}-{VIZ_ID}", "value"),
-        Input(f"directory-{PAGE}-{VIZ_ID}", "value"),
-        Input(f"graph-view-{PAGE}-{VIZ_ID}", "value"),
-    ],
-    background=True,
-)
-def cntrb_file_heatmap_graph(repo_id, directory, graph_view):
-    start = time.perf_counter()
-    logging.warning(f"{VIZ_ID}- START")
-
-    # get dataframes of data from cache
-    df_file, df_file_pr, df_pr = multi_query_helper([repo_id])
-
-    # test if there is data
-    if df_file.empty or df_file_pr.empty or df_pr.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
-        return nodata_graph
-
-    # function for all data pre processing
-    df = process_data(df_file, df_file_pr, df_pr, directory, graph_view)
-
-    # if there are no pull request on a directory plot no data graph
-    if df.empty:
-        return nodata_graph
-
-    fig = create_figure(df, graph_view)
-
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
-    return fig
 
 
 def process_data(
@@ -392,7 +392,7 @@ def process_data(
         *df_dynamic_directory.apply(
             lambda row: [
                 [pr_open[x] for x in row.pull_request],
-                [pr_merged[x] for x in row.pull_request if not pd.isnull(pr_merged[x])],
+                [pr_merged[x] for x in row.pull_request if (not pd.isnull(pr_merged[x]))],
             ],
             axis=1,
         )
