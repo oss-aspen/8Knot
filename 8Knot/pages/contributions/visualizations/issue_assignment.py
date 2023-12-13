@@ -280,23 +280,19 @@ def issue_assignment(df, start_date, end_date):
     df_created = df[df["created"] <= end_date]
 
     # Keep issues that were either still open after the 'start_date' or that have not been closed.
-    df_in_range = df_created[
-        (df_created["closed"] > start_date) | (df_created["closed"].isnull())
-    ]
+    df_in_range = df_created[(df_created["closed"] > start_date) | (df_created["closed"].isnull())]
 
     # number of issues open in time interval
     num_issues_open = df_in_range["issue_id"].nunique()
 
     # get all issue unassignments and drop rows that have been unassigned more recent than the end date
     num_unassigned_actions = df_in_range[
-        (df_in_range["assignment_action"] == "unassigned")
-        & (df_in_range["assign_date"] <= end_date)
+        (df_in_range["assignment_action"] == "unassigned") & (df_in_range["assign_date"] <= end_date)
     ].shape[0]
 
     # get all issue assignments and drop rows that have been assigned more recent than the end date
     num_assigned_actions = df_in_range[
-        (df_in_range["assignment_action"] == "assigned")
-        & (df_in_range["assign_date"] <= end_date)
+        (df_in_range["assignment_action"] == "assigned") & (df_in_range["assign_date"] <= end_date)
     ].shape[0]
 
     # number of assigned issues during the time interval

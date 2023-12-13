@@ -6,8 +6,7 @@ from cache_manager.cache_manager import CacheManager as cm
 import io
 import datetime as dt
 from sqlalchemy.exc import SQLAlchemyError
-
-QUERY_NAME = "REPO_FILES"
+import cache_manager.cache_facade as cf
 
 
 @celery_app.task(
@@ -30,12 +29,12 @@ def repo_files_query(self, repos):
     --------
         dict: Results from SQL query, interpreted from pd.to_dict('records')
     """
-    logging.warning(f"{QUERY_NAME}_DATA_QUERY - START")
+    logging.warning(f"{repo_files_query.__name__}_DATA_QUERY - START")
 
     if len(repos) == 0:
         return None
 
-    query_string = f"""
+    query_string = """
                     SELECT
                     rl.repo_id AS id,
                     r.repo_name,
@@ -48,7 +47,7 @@ def repo_files_query(self, repos):
                     repo r
                 WHERE
                     rl.repo_id = r.repo_id AND
-                    rl.repo_id in ({str(repos)[1:-1]}) AND
+                    rl.repo_id in %s AND
                     rl.rl_analysis_date = (
                         SELECT
                             MAX(rl.rl_analysis_date)
@@ -57,54 +56,12 @@ def repo_files_query(self, repos):
                             repo r
                         WHERE
                             rl.repo_id = r.repo_id AND
-                            rl.repo_id in ({str(repos)[1:-1]})
+                            rl.repo_id in %s
                         )
                 """
 
-    try:
-        dbm = AugurManager()
-        engine = dbm.get_engine()
-    except KeyError:
-        # noack, data wasn't successfully set.
-        logging.error(f"{QUERY_NAME}_DATA_QUERY - INCOMPLETE ENVIRONMENT")
-        return False
-    except SQLAlchemyError:
-        logging.error(f"{QUERY_NAME}_DATA_QUERY - COULDN'T CONNECT TO DB")
-        # allow retry via Celery rules.
-        raise SQLAlchemyError("DBConnect failed")
+    func_name = repo_files_query.__name__
+    cf.caching_wrapper(func_name=func_name, query=query_string, repolist=repos, n_repolist_uses=2)
 
-    df = dbm.run_query(query_string)
-
-    pic = []
-
-    for i, r in enumerate(repos):
-        # convert series to a dataframe
-        c_df = pd.DataFrame(df.loc[df["id"] == r]).reset_index(drop=True)
-
-        # bytes buffer to be written to
-        b = io.BytesIO()
-
-        # write dataframe in feather format to BytesIO buffer
-        bs = c_df.to_feather(b)
-
-        # move head of buffer to the beginning
-        b.seek(0)
-
-        # write the bytes of the buffer into the array
-        bs = b.read()
-        pic.append(bs)
-
-    del df
-
-    # store results in Redis
-    cm_o = cm()
-
-    # 'ack' is a boolean of whether data was set correctly or not.
-    ack = cm_o.setm(
-        func=repo_files_query,
-        repos=repos,
-        datas=pic,
-    )
-    logging.warning(f"{QUERY_NAME}_DATA_QUERY - END")
-
-    return ack
+    logging.warning(f"{func_name} COLLECTION - END")
+    return 0

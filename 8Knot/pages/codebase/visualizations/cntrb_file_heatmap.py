@@ -13,12 +13,12 @@ from queries.contributors_query import contributors_query as cnq
 from queries.cntrb_per_file_query import cntrb_per_file_query as cpfq
 from queries.repo_files_query import repo_files_query as rfq
 from app import augur
-import io
-from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
+import pages.utils.preprocessing_utils as preproc_u
 import time
 from dash.exceptions import PreventUpdate
 import app
+import cache_manager.cache_facade as cf
 
 PAGE = "codebase"
 VIZ_ID = "cntrb-file-heatmap"
@@ -119,6 +119,7 @@ gc_cntrb_file_heatmap = dbc.Card(
     ],
 )
 
+
 # callback for graph info popover
 @callback(
     Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
@@ -140,7 +141,6 @@ def toggle_popover(n, is_open):
     [Input("repo-choices", "data")],
 )
 def repo_dropdown(repo_ids):
-
     # array to hold repo_id and git url pairing for dropdown
     data_array = []
     for repo_id in repo_ids:
@@ -160,16 +160,22 @@ def repo_dropdown(repo_ids):
 )
 def directory_dropdown(repo_id):
     # wait for data to asynchronously download and become available.
-    cache = cm()
-    df = cache.grabm(func=rfq, repos=[repo_id])
-    while df is None:
-        time.sleep(1.0)
-        df = cache.grabm(func=rfq, repos=[repo_id])
+    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=[repo_id]):
+        logging.warning(f"DIRECTORY DROPDOWN - WAITING ON DATA TO BECOME AVAILABLE")
+        time.sleep(0.5)
+
+    logging.warning(f"DIRECTORY DROPDOWN - RETRIEVING FROM CACHE")
+    df = cf.retrieve_from_cache(
+        tablename=rfq.__name__,
+        repolist=[repo_id],
+    )
+
+    logging.warning(f"DIRECTORY DROPDOWN - CACHE READ {df.shape[0]}")
 
     # test if there is data
     if df.empty:
         logging.warning(f"{VIZ_ID} DROPDOWN- NO DATA AVAILABLE")
-        return "NO DATA"
+        return dash.no_update, "NO DATA"
 
     # strings to hold the values for each column (always the same for every row of this query)
     repo_name = df["repo_name"].iloc[0]
@@ -185,7 +191,11 @@ def directory_dropdown(repo_id):
 
     # drop unneccessary columns not needed after preprocessing steps
     df = df.reset_index()
-    df.drop(["index", "id", "repo_name", "repo_path", "rl_analysis_date"], axis=1, inplace=True)
+    df.drop(
+        ["index", "id", "repo_name", "repo_path", "rl_analysis_date"],
+        axis=1,
+        inplace=True,
+    )
 
     # split file path by directory
     df = df.join(df["file_path"].str.split("/", expand=True))
@@ -203,8 +213,52 @@ def directory_dropdown(repo_id):
 
     # add top level directory to the list of directories
     directories.insert(0, "Top Level Directory")
+    logging.warning(f"DIRECTORY DROPDOWN - FINISHED")
 
     return directories, "Top Level Directory"
+
+
+def multi_query_helper(repos):
+    """
+    For cntrb_file_heatmap_graph-
+    hack to put all of the cache-retrieval
+    in the same place temporarily
+    """
+
+    # wait for data to asynchronously download and become available.
+    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=repos):
+        logging.warning(f"CONTRIBUTOR FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
+        time.sleep(0.5)
+
+    # wait for data to asynchronously download and become available.
+    while not_cached := cf.get_uncached(func_name=cnq.__name__, repolist=repos):
+        logging.warning(f"CONTRIBUTOR FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
+        time.sleep(0.5)
+
+    # wait for data to asynchronously download and become available.
+    while not_cached := cf.get_uncached(func_name=cpfq.__name__, repolist=repos):
+        logging.warning(f"CONTRIBUTOR FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
+        time.sleep(0.5)
+
+    # GET ALL DATA FROM POSTGRES CACHE
+    df_file = cf.retrieve_from_cache(
+        tablename=rfq.__name__,
+        repolist=repos,
+    )
+    df_actions = cf.retrieve_from_cache(
+        tablename=cnq.__name__,
+        repolist=repos,
+    )
+    df_file_cntrbs = cf.retrieve_from_cache(
+        tablename=cpfq.__name__,
+        repolist=repos,
+    )
+
+    # necessary preprocessing steps that were lifted out of the querying step
+    df_actions = preproc_u.contributors_df_action_naming(df_actions)
+    df_file_cntrbs = preproc_u.cntrb_per_file(df_file_cntrbs)
+
+    return df_file, df_actions, df_file_cntrbs
 
 
 # callback for contributor file heatmap graph
@@ -218,27 +272,11 @@ def directory_dropdown(repo_id):
     background=True,
 )
 def cntrb_file_heatmap_graph(repo_id, directory, bot_switch):
-    # wait for data to asynchronously download and become available.
-    cache = cm()
-
-    # execute queries for the 3 needed dfs
-    df_file = cache.grabm(func=rfq, repos=[repo_id])
-    while df_file is None:
-        time.sleep(1.0)
-        df_file = cache.grabm(func=rfq, repos=[repo_id])
-
-    df_actions = cache.grabm(func=cnq, repos=[repo_id])
-    while df_actions is None:
-        time.sleep(1.0)
-        df_actions = cache.grabm(func=cnq, repos=[repo_id])
-
-    df_file_cntbs = cache.grabm(func=cpfq, repos=[repo_id])
-    while df_file_cntbs is None:
-        time.sleep(1.0)
-        df_file_cntbs = cache.grabm(func=cpfq, repos=[repo_id])
-
     start = time.perf_counter()
     logging.warning(f"{VIZ_ID}- START")
+
+    # get dataframes of data from cache
+    df_file, df_actions, df_file_cntbs = multi_query_helper([repo_id])
 
     # test if there is data
     if df_file.empty or df_actions.empty or df_file_cntbs.empty:
@@ -258,8 +296,13 @@ def cntrb_file_heatmap_graph(repo_id, directory, bot_switch):
     return fig
 
 
-def process_data(df_file: pd.DataFrame, df_actions: pd.DataFrame, df_file_cntbs: pd.DataFrame, directory, bot_switch):
-
+def process_data(
+    df_file: pd.DataFrame,
+    df_actions: pd.DataFrame,
+    df_file_cntbs: pd.DataFrame,
+    directory,
+    bot_switch,
+):
     # strings to hold the values for each column (always the same for every row of this query)
     repo_name = df_file["repo_name"].iloc[0]
     repo_path = df_file["repo_path"].iloc[0]
@@ -390,7 +433,6 @@ def process_data(df_file: pd.DataFrame, df_actions: pd.DataFrame, df_file_cntbs:
 
 
 def create_figure(df: pd.DataFrame):
-
     fig = px.imshow(
         df,
         labels=dict(x="Time", y="Directory Entries", color="Contributors"),

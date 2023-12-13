@@ -226,6 +226,57 @@ def _create_application_tables() -> None:
 
         cur.execute(
             """
+            CREATE UNLOGGED TABLE IF NOT EXISTS cntrb_per_file_query(
+                file_path text,
+                id integer,
+                cntrb_ids text
+            )
+            """
+        )
+        logging.warning("CREATED cntrb_per_file_query TABLE")
+
+        cur.execute(
+            """
+            CREATE UNLOGGED TABLE IF NOT EXISTS pr_file_query(
+                file_path text,
+                pull_request integer,
+                id integer
+            )
+            """
+        )
+        logging.warning("CREATED pr_file_query TABLE")
+
+        cur.execute(
+            """
+            CREATE UNLOGGED TABLE IF NOT EXISTS repo_files_query(
+                id int,
+                repo_name text,
+                repo_path text,
+                rl_analysis_date text,
+                file_path text,
+                file_name text
+            )
+            """
+        )
+        logging.warning("CREATED repo_files_query TABLE")
+
+        cur.execute(
+            """
+            CREATE UNLOGGED TABLE IF NOT EXISTS pr_response_query(
+                pull_request_id int,
+                ID int,
+                cntrb_id text,
+                msg_timestamp text,
+                msg_cntrb_id text,
+                pr_created_at text,
+                pr_closed_at text
+            )
+            """
+        )
+        logging.warning("CREATED pr_response_query TABLE")
+
+        cur.execute(
+            """
             CREATE UNLOGGED TABLE IF NOT EXISTS cache_bookkeeping(
                 cache_func text,
                 repo_id int,

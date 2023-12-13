@@ -13,11 +13,11 @@ from queries.pr_files_query import pr_file_query as prfq
 from queries.repo_files_query import repo_files_query as rfq
 from app import augur
 import io
-from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
 from dash.exceptions import PreventUpdate
 import app
+import cache_manager.cache_facade as cf
 
 PAGE = "codebase"
 VIZ_ID = "contribution-file-heatmap"
@@ -136,6 +136,7 @@ gc_contribution_file_heatmap = dbc.Card(
     ],
 )
 
+
 # callback for graph info popover
 @callback(
     Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
@@ -157,7 +158,6 @@ def toggle_popover(n, is_open):
     [Input("repo-choices", "data")],
 )
 def repo_dropdown(repo_ids):
-
     # array to hold repo_id and git url pairing for dropdown
     data_array = []
     for repo_id in repo_ids:
@@ -177,11 +177,17 @@ def repo_dropdown(repo_ids):
 )
 def directory_dropdown(repo_id):
     # wait for data to asynchronously download and become available.
-    cache = cm()
-    df = cache.grabm(func=rfq, repos=[repo_id])
-    while df is None:
-        time.sleep(1.0)
-        df = cache.grabm(func=rfq, repos=[repo_id])
+    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=[repo_id]):
+        logging.warning(f"DIRECTORY DROPDOWN - WAITING ON DATA TO BECOME AVAILABLE")
+        time.sleep(0.5)
+
+    logging.warning(f"DIRECTORY DROPDOWN - RETRIEVING FROM CACHE")
+    df = cf.retrieve_from_cache(
+        tablename=rfq.__name__,
+        repolist=[repo_id],
+    )
+
+    logging.warning(f"DIRECTORY DROPDOWN - CACHE READ {df.shape[0]}")
 
     # test if there is data
     if df.empty:
@@ -199,7 +205,11 @@ def directory_dropdown(repo_id):
 
     # drop unneccessary columns not needed after preprocessing steps
     df = df.reset_index()
-    df.drop(["index", "id", "repo_name", "repo_path", "rl_analysis_date"], axis=1, inplace=True)
+    df.drop(
+        ["index", "id", "repo_name", "repo_path", "rl_analysis_date"],
+        axis=1,
+        inplace=True,
+    )
 
     # split file path by directory
     df = df.join(df["file_path"].str.split("/", expand=True))
@@ -221,6 +231,45 @@ def directory_dropdown(repo_id):
     return directories, "Top Level Directory"
 
 
+def multi_query_helper(repos):
+    """
+    For cntrb_file_heatmap_graph-
+    hack to put all of the cache-retrieval
+    in the same place temporarily
+    """
+
+    # wait for data to asynchronously download and become available.
+    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=repos):
+        logging.warning(f"CONTRIBUTION FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
+        time.sleep(0.5)
+
+    # wait for data to asynchronously download and become available.
+    while not_cached := cf.get_uncached(func_name=prfq.__name__, repolist=repos):
+        logging.warning(f"CONTRIBUTION FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
+        time.sleep(0.5)
+
+    # wait for data to asynchronously download and become available.
+    while not_cached := cf.get_uncached(func_name=prq.__name__, repolist=repos):
+        logging.warning(f"CONTRIBUTION FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
+        time.sleep(0.5)
+
+    # GET ALL DATA FROM POSTGRES CACHE
+    df_file = cf.retrieve_from_cache(
+        tablename=rfq.__name__,
+        repolist=repos,
+    )
+    df_file_pr = cf.retrieve_from_cache(
+        tablename=prfq.__name__,
+        repolist=repos,
+    )
+    df_pr = cf.retrieve_from_cache(
+        tablename=prq.__name__,
+        repolist=repos,
+    )
+
+    return df_file, df_file_pr, df_pr
+
+
 # callback for contributor file heatmap graph
 @callback(
     Output(f"{PAGE}-{VIZ_ID}", "figure"),
@@ -232,27 +281,11 @@ def directory_dropdown(repo_id):
     background=True,
 )
 def cntrb_file_heatmap_graph(repo_id, directory, graph_view):
-    # wait for data to asynchronously download and become available.
-    cache = cm()
-
-    # execute queries for the 3 needed dfs
-    df_file = cache.grabm(func=rfq, repos=[repo_id])
-    while df_file is None:
-        time.sleep(1.0)
-        df_file = cache.grabm(func=rfq, repos=[repo_id])
-
-    df_file_pr = cache.grabm(func=prfq, repos=[repo_id])
-    while df_file_pr is None:
-        time.sleep(1.0)
-        df_file_pr = cache.grabm(func=prfq, repos=[repo_id])
-
-    df_pr = cache.grabm(func=prq, repos=[repo_id])
-    while df_pr is None:
-        time.sleep(1.0)
-        df_pr = cache.grabm(func=prq, repos=[repo_id])
-
     start = time.perf_counter()
     logging.warning(f"{VIZ_ID}- START")
+
+    # get dataframes of data from cache
+    df_file, df_file_pr, df_pr = multi_query_helper([repo_id])
 
     # test if there is data
     if df_file.empty or df_file_pr.empty or df_pr.empty:
@@ -272,8 +305,13 @@ def cntrb_file_heatmap_graph(repo_id, directory, graph_view):
     return fig
 
 
-def process_data(df_file: pd.DataFrame, df_file_pr: pd.DataFrame, df_pr: pd.DataFrame, directory, graph_view):
-
+def process_data(
+    df_file: pd.DataFrame,
+    df_file_pr: pd.DataFrame,
+    df_pr: pd.DataFrame,
+    directory,
+    graph_view,
+):
     # strings to hold the values for each column (always the same for every row of this query)
     repo_name = df_file["repo_name"].iloc[0]
     repo_path = df_file["repo_path"].iloc[0]

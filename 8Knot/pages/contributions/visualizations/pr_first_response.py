@@ -11,6 +11,7 @@ from pages.utils.graph_utils import get_graph_time_values, color_seq
 from queries.pr_response_query import pr_response_query as prr
 import io
 from cache_manager.cache_manager import CacheManager as cm
+import cache_manager.cache_facade as cf
 from pages.utils.job_utils import nodata_graph
 import time
 import app
@@ -115,15 +116,18 @@ def toggle_popover(n, is_open):
     background=True,
 )
 def pr_first_response_graph(repolist, num_days, bot_switch):
-    # wait for data to asynchronously download and become available.
-    cache = cm()
-    df = cache.grabm(func=prr, repos=repolist)
-    while df is None:
-        time.sleep(1.0)
-        df = cache.grabm(func=prr, repos=repolist)
+    while not_cached := cf.get_uncached(func_name=prr.__name__, repolist=repolist):
+        logging.warning(f"PR_FIRST_RESPONSE - WAITING ON DATA TO BECOME AVAILABLE")
+        time.sleep(0.5)
 
     start = time.perf_counter()
     logging.warning(f"{VIZ_ID}- START")
+
+    # GET ALL DATA FROM POSTGRES CACHE
+    df = cf.retrieve_from_cache(
+        tablename=prr.__name__,
+        repolist=repolist,
+    )
 
     # test if there is data
     if df.empty:
@@ -143,7 +147,6 @@ def pr_first_response_graph(repolist, num_days, bot_switch):
 
 
 def process_data(df: pd.DataFrame, num_days):
-
     # convert to datetime objects rather than strings
     df["msg_timestamp"] = pd.to_datetime(df["msg_timestamp"], utc=True)
     df["pr_created_at"] = pd.to_datetime(df["pr_created_at"], utc=True)
@@ -182,7 +185,6 @@ def process_data(df: pd.DataFrame, num_days):
 
 
 def create_figure(df: pd.DataFrame, num_days):
-
     fig = go.Figure(
         [
             go.Scatter(

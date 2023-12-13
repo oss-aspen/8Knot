@@ -76,9 +76,7 @@ gc_lottery_factor_over_time = dbc.Card(
                                             min=10,
                                             max=95,
                                             value=50,
-                                            marks={
-                                                i: f"{i}%" for i in range(10, 100, 5)
-                                            },
+                                            marks={i: f"{i}%" for i in range(10, 100, 5)},
                                         ),
                                     ],
                                     className="me-2",
@@ -151,9 +149,7 @@ gc_lottery_factor_over_time = dbc.Card(
                                             data=[
                                                 {"value": "bot", "label": "bot"},
                                             ],
-                                            classNames={
-                                                "values": "dmc-multiselect-custom"
-                                            },
+                                            classNames={"values": "dmc-multiselect-custom"},
                                             creatable=True,
                                             searchable=True,
                                         ),
@@ -170,9 +166,7 @@ gc_lottery_factor_over_time = dbc.Card(
                                         id=f"date-picker-range-{PAGE}-{VIZ_ID}",
                                         min_date_allowed=dt.date(2005, 1, 1),
                                         max_date_allowed=dt.date.today(),
-                                        initial_visible_month=dt.date(
-                                            dt.date.today().year, 1, 1
-                                        ),
+                                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
                                         clearable=True,
                                     ),
                                     width="auto",
@@ -282,9 +276,7 @@ def create_contrib_prolificacy_over_time_graph(
     if step_size > window_width:
         return dash.no_update, True
 
-    df_final = process_data(
-        df, patterns, threshold, window_width, step_size, start_date, end_date
-    )
+    df_final = process_data(df, patterns, threshold, window_width, step_size, start_date, end_date)
 
     fig = create_figure(df_final, threshold, step_size)
 
@@ -292,9 +284,7 @@ def create_contrib_prolificacy_over_time_graph(
     return fig, False
 
 
-def process_data(
-    df, patterns, threshold, window_width, step_size, start_date, end_date
-):
+def process_data(df, patterns, threshold, window_width, step_size, start_date, end_date):
     # convert to datetime objects rather than strings
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
 
@@ -317,9 +307,7 @@ def process_data(
     threshold = threshold / 100
 
     # create bins with a size equivalent to the the step size starting from the start date up to the end date
-    period_from = pd.date_range(
-        start=start_date, end=end_date, freq=f"{step_size}m", inclusive="both"
-    )
+    period_from = pd.date_range(start=start_date, end=end_date, freq=f"{step_size}m", inclusive="both")
     # store the period_from dates in a df
     df_final = period_from.to_frame(index=False, name="period_from")
     # calculate the end of each interval and store the values in a column named period_from
@@ -336,9 +324,7 @@ def process_data(
         df_final["PR Review"],
     ) = zip(
         *df_final.apply(
-            lambda row: cntrb_prolificacy_over_time(
-                df, row.period_from, row.period_to, window_width, threshold
-            ),
+            lambda row: cntrb_prolificacy_over_time(df, row.period_from, row.period_to, window_width, threshold),
             axis=1,
         )
     )
@@ -358,9 +344,7 @@ def create_figure(df_final, threshold, step_size):
         for action_type in df_final.columns[2:]
     ]
     time_window = list(
-        df_final["period_from"].dt.strftime("%b %d, %Y")
-        + " - "
-        + df_final["period_to"].dt.strftime("%b %d, %Y")
+        df_final["period_from"].dt.strftime("%b %d, %Y") + " - " + df_final["period_to"].dt.strftime("%b %d, %Y")
     )
     customdata = np.stack(([threshold] * len(df_final), time_window), axis=-1)
 
@@ -488,17 +472,11 @@ def cntrb_prolificacy_over_time(df, period_from, period_to, window_width, thresh
     )
 
     # count the number of contributions each contributor has made according each action type
-    df_count_cntrbs = (
-        df_in_range.groupby(["Action", "cntrb_id"])["cntrb_id"].count().to_frame()
-    )
-    df_count_cntrbs = df_count_cntrbs.rename(
-        columns={"cntrb_id": "count"}
-    ).reset_index()
+    df_count_cntrbs = df_in_range.groupby(["Action", "cntrb_id"])["cntrb_id"].count().to_frame()
+    df_count_cntrbs = df_count_cntrbs.rename(columns={"cntrb_id": "count"}).reset_index()
 
     # pivot df such that the column names correspond to the different action types, index is the cntrb_ids, and the values are the number of contributions of each contributor
-    df_count_cntrbs = df_count_cntrbs.pivot(
-        index="cntrb_id", columns="Action", values="count"
-    )
+    df_count_cntrbs = df_count_cntrbs.pivot(index="cntrb_id", columns="Action", values="count")
 
     commit = calc_lottery_factor(df_count_cntrbs, "Commit", threshold)
     issueOpened = calc_lottery_factor(df_count_cntrbs, "Issue Opened", threshold)
@@ -537,9 +515,7 @@ def calc_lottery_factor(df, action_type, threshold):
     running_sum = 0
 
     for _, row in df.iterrows():
-        running_sum += row[
-            action_type
-        ]  # update the running sum by the number of contributions a contributor has made
+        running_sum += row[action_type]  # update the running sum by the number of contributions a contributor has made
         lottery_factor += 1  # update contributor prolificacy
         # if the running sum of contributions is greater than or equal to the threshold amount, break
         if running_sum >= thresh_cntrbs:

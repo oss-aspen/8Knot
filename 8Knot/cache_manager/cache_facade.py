@@ -152,16 +152,16 @@ def get_uncached(func_name: str, repolist: list[int]) -> list[int]:  # or None
             return not_cached
 
 
-def caching_wrapper(func_name: str, query: str, repolist: list[int]) -> None:
+def caching_wrapper(func_name: str, query: str, repolist: list[int], n_repolist_uses=1) -> None:
     """Combines steps of (1) identifying which repos aren't already cached and
     (2) querying + caching repos those repos.
 
     Args:
-        func_name (str): name of querying function's file
         func_name (str): literal name of querying function for bookkeeping
-        table_name (str): which table to insert results into
         query (str): sql query as a string
         repolist (list[int]): list of repos requested by user.
+        n_repolist_uses (int): if the repolist is used more than once in the query, simply inject it again.
+                                TODO: remove this hack and parameterize queries by name
 
     Raises:
         Exception: If a step fails, will print exception and re-raise.
@@ -178,7 +178,10 @@ def caching_wrapper(func_name: str, query: str, repolist: list[int]) -> None:
             return 0
         else:
             logging.warning(f"{func_name} COLLECTION - CACHING {len(uncached_repos)} NEW REPOS")
-            uncached_repos: tuple[tuple] = tuple([tuple(uncached_repos)])
+
+            # inject the repolist multiple times because the SQL uses it more
+            # than once and the wildcard %s are ordered.
+            uncached_repos: tuple[tuple] = tuple([tuple(uncached_repos) for _ in range(n_repolist_uses)])
 
         # STEP 2: Query for those repos
         logging.warning(f"{func_name} COLLECTION - EXECUTING CACHING QUERY")

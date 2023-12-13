@@ -180,9 +180,7 @@ gc_project_velocity = dbc.Card(
                                         id=f"date-picker-range-{PAGE}-{VIZ_ID}",
                                         min_date_allowed=dt.date(2005, 1, 1),
                                         max_date_allowed=dt.date.today(),
-                                        initial_visible_month=dt.date(
-                                            dt.date.today().year, 1, 1
-                                        ),
+                                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
                                         clearable=True,
                                     ),
                                     width="auto",
@@ -332,9 +330,7 @@ def process_data(
 
     # log of commits and contribs
     df_consolidated["log_num_commits"] = df_consolidated["Commit"].apply(math.log)
-    df_consolidated["log_num_contrib"] = df_consolidated[
-        "num_unique_contributors"
-    ].apply(math.log)
+    df_consolidated["log_num_contrib"] = df_consolidated["num_unique_contributors"].apply(math.log)
 
     # column to hold the weighted values of pr and issues actions summed together
     df_consolidated["prs_issues_actions_weighted"] = (
@@ -346,9 +342,7 @@ def process_data(
     )
 
     # column for log value of pr and issue actions
-    df_consolidated["log_prs_issues_actions_weighted"] = df_consolidated[
-        "prs_issues_actions_weighted"
-    ].apply(math.log)
+    df_consolidated["log_prs_issues_actions_weighted"] = df_consolidated["prs_issues_actions_weighted"].apply(math.log)
 
     return df_consolidated
 

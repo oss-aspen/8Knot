@@ -157,9 +157,7 @@ def new_contributor_graph(repolist, interval, bot_switch):
 
     fig = create_figure(df, df_contribs, interval)
 
-    logging.warning(
-        f"TOTAL_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}"
-    )
+    logging.warning(f"TOTAL_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}")
     return fig
 
 
@@ -188,16 +186,10 @@ def process_data(df, interval):
         return df, None
 
     # get the count of new contributors in the desired interval in pandas period format, sort index to order entries
-    created_range = (
-        pd.to_datetime(df["created"]).dt.to_period(interval).value_counts().sort_index()
-    )
+    created_range = pd.to_datetime(df["created"]).dt.to_period(interval).value_counts().sort_index()
 
     # converts to data frame object and creates date column from period values
-    df_contribs = (
-        created_range.to_frame()
-        .reset_index()
-        .rename(columns={"index": "Date", "created": "contribs"})
-    )
+    df_contribs = created_range.to_frame().reset_index().rename(columns={"index": "Date", "created": "contribs"})
 
     # converts date column to a datetime object, converts to string first to handle period information
     df_contribs["Date"] = pd.to_datetime(df_contribs["Date"].astype(str))
@@ -217,12 +209,8 @@ def create_figure(df, df_contribs, interval):
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
     if interval == -1:
-        fig = px.line(
-            df, x="created", y=df.index, color_discrete_sequence=[color_seq[3]]
-        )
-        fig.update_traces(
-            hovertemplate="Contributors: %{y}<br>%{x|%b %d, %Y} <extra></extra>"
-        )
+        fig = px.line(df, x="created", y=df.index, color_discrete_sequence=[color_seq[3]])
+        fig.update_traces(hovertemplate="Contributors: %{y}<br>%{x|%b %d, %Y} <extra></extra>")
     else:
         fig = px.bar(
             df_contribs,
