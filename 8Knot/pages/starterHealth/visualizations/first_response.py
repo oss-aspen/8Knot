@@ -31,8 +31,8 @@ gc_first_response = dbc.Card(
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
                             """
-                            Compares the volume of PRs being opened against the number of those PRs that \n
-                            receive at least one response within the parameterized timeframe after being opened.
+                            Shows the average time needed to receive a first response \n
+                            within a certain amount of days.
                             """
                         ),
                     ],
@@ -111,7 +111,7 @@ def toggle_popover(n, is_open):
     ],
     background=True,
 )
-def pr_first_response_graph(repolist, num_days):
+def first_response_graph(repolist, num_days):
     # wait for data to asynchronously download and become available.
     cache = cm()
     df = cache.grabm(func=prr, repos=repolist)
