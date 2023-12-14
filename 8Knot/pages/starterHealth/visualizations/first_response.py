@@ -48,11 +48,6 @@ gc_first_response = dbc.Card(
                     [
                         dbc.Row(
                             [
-                                dbc.Label(
-                                    "Response Days:",
-                                    html_for=f"response-days-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
                                 dbc.Col(
                                     dbc.Input(
                                         id=f"response-days-{PAGE}-{VIZ_ID}",
