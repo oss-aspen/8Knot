@@ -7,16 +7,16 @@ import pandas as pd
 import logging
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, color_seq
-from queries.contributors_query import contributors_query as ctq
+from queries.repo_info_query import repo_info_query as riq
 import io
 from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
 
-PAGE = "financial"
-VIZ_ID = "test-graph"
+PAGE = "starter-project-health"
+VIZ_ID = "watchers-count"
 
-gc_test_graph = dbc.Card(
+gc_watchers_count_graph = dbc.Card(
     [
         dbc.CardBody(
             [
@@ -108,11 +108,11 @@ def toggle_popover_1(n, is_open):
 def graph_title(view):
     title = ""
     if view == -1:
-        title = "Total Contributors Over Time"
+        title = "Total Watchers Over Time"
     elif view == "M":
-        title = "New Contributors by Month"
+        title = "New Watchers by Month"
     else:
-        title = "New Contributors by Year"
+        title = "New Watchers by Year"
     return title
 
 
@@ -124,20 +124,20 @@ def graph_title(view):
     ],
     background=True,
 )
-def new_contributor_graph(repolist, interval):
+def watchers_count_graph(repolist, interval):
     # wait for data to asynchronously download and become available.
     cache = cm()
-    df = cache.grabm(func=ctq, repos=repolist)
+    df = cache.grabm(func=riq, repos=repolist)
     while df is None:
         time.sleep(1.0)
-        df = cache.grabm(func=ctq, repos=repolist)
+        df = cache.grabm(func=riq, repos=repolist)
 
-    logging.warning("TOTAL_CONTRIBUTOR_GROWTH_VIZ - START")
+    logging.warning("WATCHERS_COUNT_VIZ - START")
     start = time.perf_counter()
 
     # test if there is data
     if df.empty:
-        logging.warning("TOTAL_CONTRIBUTOR_GROWTH_VIZ - NO DATA AVAILABLE")
+        logging.warning("WATCHERS_COUNT_VIZ - NO DATA AVAILABLE")    
         return nodata_graph
 
     # function for all data pre processing
@@ -145,18 +145,20 @@ def new_contributor_graph(repolist, interval):
 
     fig = create_figure(df, df_contribs, interval)
 
-    logging.warning(f"TOTAL_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}")
+    logging.warning(f"WATCHERS_COUNT_VIZ - END - {time.perf_counter() - start}")
     return fig
 
 
 def process_data(df, interval):
     # convert to datetime objects with consistent column name
     #convert dates to datetimes for ease of processing
-    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
-    df.rename(columns={"created_at": "created"}, inplace=True)
+    df["last_updated"] = pd.to_datetime(df["last_updated"], utc=True)
+    df.rename(columns={"last_updated": "created"}, inplace=True)
 
     # order from beginning of time to most recent
     df = df.sort_values("created", axis=0, ascending=True)
+
+    df3 = df[['created', 'watchers_count']]
 
     """
         Assume that the cntrb_id values are unique to individual contributors.
@@ -164,33 +166,28 @@ def process_data(df, interval):
         date.
     """
 
-    # keep only first contributions
-    df = df[df["rank"] == 1]
-
-    # get all of the unique entries by contributor ID
-    df.drop_duplicates(subset=["cntrb_id"], inplace=True)
-    df.reset_index(inplace=True)
+    logging.warning(df3.head())
 
     if interval == -1:
-        return df, None
+        return df3, None
 
     # get the count of new contributors in the desired interval in pandas period format, sort index to order entries
-    created_range = pd.to_datetime(df["created"]).dt.to_period(interval).value_counts().sort_index()
+    created_range = pd.to_datetime(df3["created"]).dt.to_period(interval).value_counts().sort_index()
 
     # converts to data frame object and creates date column from period values
-    df_contribs = created_range.to_frame().reset_index().rename(columns={"index": "Date", "created": "contribs"})
+    df3_contribs = created_range.to_frame().reset_index().rename(columns={"index": "Date", "created": "contribs"})
 
     # converts date column to a datetime object, converts to string first to handle period information
-    df_contribs["Date"] = pd.to_datetime(df_contribs["Date"].astype(str))
+    df3_contribs["Date"] = pd.to_datetime(df3_contribs["Date"].astype(str))
 
     # correction for year binning -
     # rounded up to next year so this is a simple patch
     if interval == "Y":
-        df_contribs["Date"] = df_contribs["Date"].dt.year
+        df3_contribs["Date"] = df3_contribs["Date"].dt.year
     elif interval == "M":
-        df_contribs["Date"] = df_contribs["Date"].dt.strftime("%Y-%m")
+        df3_contribs["Date"] = df3_contribs["Date"].dt.strftime("%Y-%m")
 
-    return df, df_contribs
+    return df3, df3_contribs
 
 
 def create_figure(df, df_contribs, interval):
@@ -199,17 +196,17 @@ def create_figure(df, df_contribs, interval):
 
     if interval == -1:
         fig = px.line(df, x="created", y=df.index, color_discrete_sequence=[color_seq[3]])
-        fig.update_traces(hovertemplate="Contributors: %{y}<br>%{x|%b %d, %Y} <extra></extra>")
+        fig.update_traces(hovertemplate="Watchers: %{y}<br>%{x|%b %d, %Y} <extra></extra>")
     else:
         fig = px.bar(
             df_contribs,
             x="Date",
             y="contribs",
             range_x=x_r,
-            labels={"x": x_name, "y": "Contributors"},
+            labels={"x": x_name, "y": "Watchers"},
             color_discrete_sequence=[color_seq[3]],
         )
-        fig.update_traces(hovertemplate=hover + "<br>Contributors: %{y}<br>")
+        fig.update_traces(hovertemplate=hover + "<br>Watchers: %{y}<br>")
 
     """
         Ref. for this awesome button thing:
@@ -236,7 +233,7 @@ def create_figure(df, df_contribs, interval):
     # label the figure correctly
     fig.update_layout(
         xaxis_title="Time",
-        yaxis_title="Number of Contributors",
+        yaxis_title="Number of Watchers",
         margin_b=40,
         margin_r=20,
         font=dict(size=14),
