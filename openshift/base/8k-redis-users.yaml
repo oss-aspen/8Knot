@@ -64,7 +64,7 @@ spec:
           emptyDir: {}
         - name: redis-data
           persistentVolumeClaim:
-            claimName: eightknot-redis-data
+            claimName: eightknot-redis-users-data
 ---
 apiVersion: v1
 kind: Service
