@@ -24,3 +24,11 @@ def contributors_df_action_naming(df):
     df["cntrb_id"] = df["cntrb_id"].astype(str)  # contributor ids to strings
     df.rename(columns={"action": "Action"}, inplace=True)
     return df
+
+
+def cntrb_per_file(df):
+    # pandas column and format updates
+    df["cntrb_ids"] = df["cntrb_ids"].str.split(",")
+    df = df.reset_index()
+    df.drop("index", axis=1, inplace=True)
+    return df

@@ -79,9 +79,7 @@ gc_gh_company_affiliation = dbc.Card(
                                         id=f"date-picker-range-{PAGE}-{VIZ_ID}",
                                         min_date_allowed=dt.date(2005, 1, 1),
                                         max_date_allowed=dt.date.today(),
-                                        initial_visible_month=dt.date(
-                                            dt.date.today().year, 1, 1
-                                        ),
+                                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
                                         clearable=True,
                                     ),
                                     width="auto",
@@ -189,9 +187,7 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
     df["company_name"] = df.index
     df = df.reset_index()
     df["company_name"] = df["company_name"].astype(str)
-    df = df.rename(
-        columns={"index": "orginal_name", "cntrb_company": "contribution_count"}
-    )
+    df = df.rename(columns={"index": "orginal_name", "cntrb_company": "contribution_count"})
 
     # applies fuzzy matching comparing all rows to each other
     df["match"] = df.apply(lambda row: fuzzy_match(df, row["company_name"]), axis=1)
@@ -237,9 +233,7 @@ def fuzzy_match(df, name):
     necessary for the loop to change the company name if there is a match. 70 is the match value
     threshold for the partial ratio to be considered a match
     """
-    matches = df.apply(
-        lambda row: (fuzz.partial_ratio(row["company_name"], name) >= 70), axis=1
-    )
+    matches = df.apply(lambda row: (fuzz.partial_ratio(row["company_name"], name) >= 70), axis=1)
     return [i for i, x in enumerate(matches) if x]
 
 

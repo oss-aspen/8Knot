@@ -98,9 +98,7 @@ gc_company_core_contributors = dbc.Card(
                                         id=f"date-picker-range-{PAGE}-{VIZ_ID}",
                                         min_date_allowed=dt.date(2005, 1, 1),
                                         max_date_allowed=dt.date.today(),
-                                        initial_visible_month=dt.date(
-                                            dt.date.today().year, 1, 1
-                                        ),
+                                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
                                         clearable=True,
                                     ),
                                     width="auto",
@@ -152,9 +150,7 @@ def toggle_popover(n, is_open):
     ],
     background=True,
 )
-def compay_associated_activity_graph(
-    repolist, contributions, contributors, start_date, end_date, bot_switch
-):
+def compay_associated_activity_graph(repolist, contributions, contributors, start_date, end_date, bot_switch):
     # wait for data to asynchronously download and become available.
     while not_cached := cf.get_uncached(func_name=cmq.__name__, repolist=repolist):
         logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
@@ -217,12 +213,7 @@ def process_data(df: pd.DataFrame, contributions, contributors, start_date, end_
     email_domains = [x[x.rindex("@") + 1 :] for x in emails]
 
     # creates df of domains and counts
-    df = (
-        pd.DataFrame(email_domains, columns=["domains"])
-        .value_counts()
-        .to_frame()
-        .reset_index()
-    )
+    df = pd.DataFrame(email_domains, columns=["domains"]).value_counts().to_frame().reset_index()
 
     df = df.rename(columns={0: "contributors"})
 

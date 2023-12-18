@@ -50,6 +50,7 @@ def commits_query(self, repos):
                         c.repo_id in %s
                         and timezone('utc', c.cmt_author_timestamp) < now()
                         and timezone('utc', c.cmt_committer_timestamp) < now()
+                        -- Above queries are always non-null so we don't have to check them.
                     """
 
     # used for caching

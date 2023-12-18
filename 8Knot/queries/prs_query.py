@@ -28,7 +28,7 @@ def prs_query(self, repos):
     if len(repos) == 0:
         return None
 
-    query_string = f"""
+    query_string = """
                     SELECT
                         r.repo_id,
                         r.repo_name,
@@ -46,10 +46,13 @@ def prs_query(self, repos):
                         r.repo_id = pr.repo_id AND
                         r.repo_id in %s
                         and pr.pr_created_at < now()
-                        and pr.pr_closed_at < now()
-                        and pr.pr_merged_at < now()
+                        and (pr.pr_closed_at < now() or pr.pr_closed_at IS NULL)
+                        and (pr.pr_merged_at < now() or pr.pr_merged_at IS NULL)
+                        -- have to accept NULL values because PRs could still be open, or unassigned,
+                        -- and still be acceptable.
                     ORDER BY pr.pr_created_at
                     """
+
     # used for caching
     func_name = prs_query.__name__
 

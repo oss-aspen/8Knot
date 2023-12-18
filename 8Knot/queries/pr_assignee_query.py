@@ -46,8 +46,10 @@ def pr_assignee_query(self, repos):
                     WHERE
                         pa.id in %s
                         and pa.created < now()
-                        and pa.closed < now()
-                        and pa.assign_date < now()
+                        and (pa.closed < now() or pa.closed IS NULL)
+                        and (pa.assign_date < now() or pa.assign_date IS NULL)
+                        -- have to accept NULL values because PRs could still be open, or unassigned,
+                        -- and still be acceptable.
                 """
 
     # used for caching

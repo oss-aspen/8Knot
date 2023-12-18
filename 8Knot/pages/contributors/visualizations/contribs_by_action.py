@@ -229,10 +229,7 @@ def create_figure(df: pd.DataFrame, interval, action):
     # creates bins with interval size and customizes the hover value for the bars
     fig.update_traces(
         xbins_size=interval,
-        hovertemplate=hover
-        + "<br>"
-        + action
-        + " Contributors: %{y}<br><extra></extra>",
+        hovertemplate=hover + "<br>" + action + " Contributors: %{y}<br><extra></extra>",
         marker_line_width=0.1,
         marker_line_color="black",
     )

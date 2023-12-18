@@ -117,11 +117,12 @@ def _create_application_tables() -> None:
 
     with conn.cursor() as cur:
         # create tables if they don't already exist.
+        # TODO: id->repo_id, commits->commit_id
         cur.execute(
             """
             CREATE UNLOGGED TABLE IF NOT EXISTS commits_query(
-                id integer,
-                commits text PRIMARY KEY,
+                id int,
+                commits text, -- this is the commit hash, so it's base64 hash.
                 author_email text,
                 date text,
                 author_timestamp text,
@@ -133,11 +134,11 @@ def _create_application_tables() -> None:
         cur.execute(
             """
             CREATE UNLOGGED TABLE IF NOT EXISTS issues_query(
-                id integer,
+                id int,
                 repo_name text,
-                issue text,
-                issue_number text,
-                gh_issue text,
+                issue int,
+                issue_number int,
+                gh_issue int,
                 reporter_id text,
                 issue_closer text,
                 created text,
@@ -150,10 +151,10 @@ def _create_application_tables() -> None:
         cur.execute(
             """
             CREATE UNLOGGED TABLE IF NOT EXISTS prs_query(
-                id integer,
+                id int,
                 repo_name text,
-                pull_request text,
-                pr_src_number text,
+                pull_request int,
+                pr_src_number int,
                 cntrb_id text,
                 created text,
                 closed text,
@@ -168,10 +169,10 @@ def _create_application_tables() -> None:
             CREATE UNLOGGED TABLE IF NOT EXISTS company_query(
                 cntrb_id text,
                 created text,
-                id integer,
+                id int,
                 login text,
                 action text,
-                rank integer,
+                rank int,
                 cntrb_company text,
                 email_list text
             )
@@ -182,13 +183,13 @@ def _create_application_tables() -> None:
         cur.execute(
             """
             CREATE UNLOGGED TABLE IF NOT EXISTS contributors_query(
-                id integer,
+                id int,
                 repo_name text,
                 cntrb_id text,
                 created_at text,
                 login text,
                 action text,
-                rank integer
+                rank int
             )
             """
         )
@@ -198,7 +199,7 @@ def _create_application_tables() -> None:
             """
             CREATE UNLOGGED TABLE IF NOT EXISTS issue_assignee_query(
                 issue_id text,
-                id integer,
+                id int,
                 created text,
                 closed text,
                 assign_date text,
@@ -212,8 +213,8 @@ def _create_application_tables() -> None:
         cur.execute(
             """
             CREATE UNLOGGED TABLE IF NOT EXISTS pr_assignee_query(
-                pull_request_id text,
-                id integer,
+                pull_request_id int,
+                id int,
                 created text,
                 closed text,
                 assign_date text,
@@ -223,6 +224,57 @@ def _create_application_tables() -> None:
             """
         )
         logging.warning("CREATED pr_assignments TABLE")
+
+        cur.execute(
+            """
+            CREATE UNLOGGED TABLE IF NOT EXISTS cntrb_per_file_query(
+                file_path text,
+                id int,
+                cntrb_ids text
+            )
+            """
+        )
+        logging.warning("CREATED cntrb_per_file_query TABLE")
+
+        cur.execute(
+            """
+            CREATE UNLOGGED TABLE IF NOT EXISTS pr_file_query(
+                file_path text,
+                pull_request int,
+                id int
+            )
+            """
+        )
+        logging.warning("CREATED pr_file_query TABLE")
+
+        cur.execute(
+            """
+            CREATE UNLOGGED TABLE IF NOT EXISTS repo_files_query(
+                id int,
+                repo_name text,
+                repo_path text,
+                rl_analysis_date text,
+                file_path text,
+                file_name text
+            )
+            """
+        )
+        logging.warning("CREATED repo_files_query TABLE")
+
+        cur.execute(
+            """
+            CREATE UNLOGGED TABLE IF NOT EXISTS pr_response_query(
+                pull_request_id int,
+                ID int,
+                cntrb_id text,
+                msg_timestamp text,
+                msg_cntrb_id text,
+                pr_created_at text,
+                pr_closed_at text
+            )
+            """
+        )
+        logging.warning("CREATED pr_response_query TABLE")
 
         cur.execute(
             """

@@ -88,9 +88,7 @@ gc_company_associated_activity = dbc.Card(
                                         id=f"date-picker-range-{PAGE}-{VIZ_ID}",
                                         min_date_allowed=dt.date(2005, 1, 1),
                                         max_date_allowed=dt.date.today(),
-                                        initial_visible_month=dt.date(
-                                            dt.date.today().year, 1, 1
-                                        ),
+                                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
                                         clearable=True,
                                     ),
                                     width="auto",
@@ -210,12 +208,7 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
     email_domains = [x[x.rindex("@") + 1 :] for x in emails]
 
     # creates df of domains and counts
-    df = (
-        pd.DataFrame(email_domains, columns=["domains"])
-        .value_counts()
-        .to_frame()
-        .reset_index()
-    )
+    df = pd.DataFrame(email_domains, columns=["domains"]).value_counts().to_frame().reset_index()
 
     df = df.rename(columns={0: "occurrences"})
 

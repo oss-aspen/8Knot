@@ -171,9 +171,7 @@ def create_contrib_over_time_graph(repolist, contribs, interval, bot_switch):
 
     fig = create_figure(df_drive_repeat, interval)
 
-    logging.warning(
-        f"CONTRIBUTIONS_OVER_TIME_VIZ - END - {time.perf_counter() - start}"
-    )
+    logging.warning(f"CONTRIBUTIONS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
     return fig
 
 

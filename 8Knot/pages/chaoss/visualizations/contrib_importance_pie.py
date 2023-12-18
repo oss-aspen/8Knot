@@ -149,9 +149,7 @@ gc_contrib_importance_pie = dbc.Card(
                                             data=[
                                                 {"value": "bot", "label": "bot"},
                                             ],
-                                            classNames={
-                                                "values": "dmc-multiselect-custom"
-                                            },
+                                            classNames={"values": "dmc-multiselect-custom"},
                                             creatable=True,
                                             searchable=True,
                                         ),
@@ -169,9 +167,7 @@ gc_contrib_importance_pie = dbc.Card(
                                             id=f"date-picker-range-{PAGE}-{VIZ_ID}",
                                             min_date_allowed=dt.date(2005, 1, 1),
                                             max_date_allowed=dt.date.today(),
-                                            initial_visible_month=dt.date(
-                                                dt.date.today().year, 1, 1
-                                            ),
+                                            initial_visible_month=dt.date(dt.date.today().year, 1, 1),
                                             clearable=True,
                                         ),
                                     ],
@@ -238,9 +234,7 @@ def graph_title(k, action_type):
     ],
     background=True,
 )
-def create_top_k_cntrbs_graph(
-    repolist, action_type, top_k, patterns, start_date, end_date, bot_switch
-):
+def create_top_k_cntrbs_graph(repolist, action_type, top_k, patterns, start_date, end_date, bot_switch):
     # wait for data to asynchronously download and become available.
     while not_cached := cf.get_uncached(func_name=ctq.__name__, repolist=repolist):
         logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
@@ -324,9 +318,7 @@ def process_data(df: pd.DataFrame, action_type, top_k, patterns, start_date, end
     df_sum = df[action_type].sum()
 
     # calculate the remaining contributions by taking the the difference of t_sum and df_sum
-    df = df.append(
-        {"cntrb_id": "Other", action_type: t_sum - df_sum}, ignore_index=True
-    )
+    df = df.append({"cntrb_id": "Other", action_type: t_sum - df_sum}, ignore_index=True)
 
     return df
 

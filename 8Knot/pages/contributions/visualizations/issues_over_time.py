@@ -9,7 +9,6 @@ import logging
 from pages.utils.graph_utils import get_graph_time_values, color_seq
 from pages.utils.job_utils import nodata_graph
 from queries.issues_query import issues_query as iq
-from cache_manager.cache_manager import CacheManager as cm
 import time
 import cache_manager.cache_facade as cf
 
