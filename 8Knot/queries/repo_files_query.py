@@ -54,7 +54,7 @@ def repo_files_query(self, repos):
                     WHERE
                         rl.repo_id = r.repo_id AND
                         rl.repo_id in %s AND
-                        -- NOTE ABOVE 
+                        -- NOTE ABOVE
                         (rl.repo_id, rl.rl_analysis_date) IN (
                             SELECT DISTINCT ON (repo_id)
                                 repo_id, rl_analysis_date
@@ -66,9 +66,7 @@ def repo_files_query(self, repos):
                 """
 
     func_name = repo_files_query.__name__
-    cf.caching_wrapper(
-        func_name=func_name, query=query_string, repolist=repos, n_repolist_uses=2
-    )
+    cf.caching_wrapper(func_name=func_name, query=query_string, repolist=repos, n_repolist_uses=2)
 
     logging.warning(f"{func_name} COLLECTION - END")
     return 0
