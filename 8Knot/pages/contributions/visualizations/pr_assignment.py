@@ -9,12 +9,11 @@ from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, color_seq
 from queries.pr_assignee_query import pr_assignee_query as praq
-import io
-from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
 import app
+import cache_manager.cache_facade as cf
 
 PAGE = "contributions"
 VIZ_ID = "pr_assignment"
@@ -106,16 +105,28 @@ def toggle_popover(n, is_open):
 # callback for pull request review assignment graph
 @callback(
     Output(f"{PAGE}-{VIZ_ID}", "figure"),
-    [Input("repo-choices", "data"), Input(f"date-radio-{PAGE}-{VIZ_ID}", "value"), Input("bot-switch", "value")],
+    [
+        Input("repo-choices", "data"),
+        Input(f"date-radio-{PAGE}-{VIZ_ID}", "value"),
+        Input("bot-switch", "value"),
+    ],
     background=True,
 )
 def pr_assignment_graph(repolist, interval, bot_switch):
     # wait for data to asynchronously download and become available.
-    cache = cm()
-    df = cache.grabm(func=praq, repos=repolist)
-    while df is None:
-        time.sleep(1.0)
-        df = cache.grabm(func=praq, repos=repolist)
+    while not_cached := cf.get_uncached(func_name=praq.__name__, repolist=repolist):
+        logging.warning(f"{VIZ_ID} - WAITING ON DATA TO BECOME AVAILABLE")
+        time.sleep(0.5)
+
+    # data ready.
+    start = time.perf_counter()
+    logging.warning(f"{VIZ_ID}- START")
+
+    # GET ALL DATA FROM POSTGRES CACHE
+    df = cf.retrieve_from_cache(
+        tablename=praq.__name__,
+        repolist=repolist,
+    )
 
     start = time.perf_counter()
     logging.warning(f"{VIZ_ID}- START")
@@ -141,7 +152,6 @@ def pr_assignment_graph(repolist, interval, bot_switch):
 
 
 def process_data(df: pd.DataFrame, interval):
-
     # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
     df["closed"] = pd.to_datetime(df["closed"], utc=True)

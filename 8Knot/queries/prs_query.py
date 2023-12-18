@@ -1,13 +1,6 @@
 import logging
-import pandas as pd
-from db_manager.augur_manager import AugurManager
 from app import celery_app
-from cache_manager.cache_manager import CacheManager as cm
-import io
-import datetime as dt
-from sqlalchemy.exc import SQLAlchemyError
-
-QUERY_NAME = "PR"
+import cache_manager.cache_facade as cf
 
 
 @celery_app.task(
@@ -30,42 +23,47 @@ def prs_query(self, repos):
     --------
         dict: Results from SQL query, interpreted from pd.to_dict('records')
     """
-    logging.warning(f"{QUERY_NAME}_DATA_QUERY - START")
+    logging.warning(f"{prs_query.__name__} COLLECTION - START")
 
     if len(repos) == 0:
         return None
 
-    query_string = f"""
+    query_string = """
                     SELECT
-                        r.repo_id as id,
+                        r.repo_id,
                         r.repo_name,
                         pr.pull_request_id AS pull_request,
                         pr.pr_src_number,
-                        pr.pr_augur_contributor_id AS cntrb_id,
+                        left(pr.pr_augur_contributor_id::text, 15) as cntrb_id,
+                        -- values are timestamp not timestamptz
                         pr.pr_created_at AS created,
                         pr.pr_closed_at AS closed,
-                        pr.pr_merged_at  AS merged
+                        pr.pr_merged_at AS merged
                     FROM
                         repo r,
                         pull_requests pr
                     WHERE
                         r.repo_id = pr.repo_id AND
-                        r.repo_id in ({str(repos)[1:-1]})
+                        r.repo_id in %s
+                        and pr.pr_created_at < now()
+                        and (pr.pr_closed_at < now() or pr.pr_closed_at IS NULL)
+                        and (pr.pr_merged_at < now() or pr.pr_merged_at IS NULL)
+                        -- have to accept NULL values because PRs could still be open, or unassigned,
+                        -- and still be acceptable.
+                    ORDER BY pr.pr_created_at
                     """
 
-    try:
-        dbm = AugurManager()
-        engine = dbm.get_engine()
-    except KeyError:
-        # noack, data wasn't successfully set.
-        logging.error(f"{QUERY_NAME}_DATA_QUERY - INCOMPLETE ENVIRONMENT")
-        return False
-    except SQLAlchemyError:
-        logging.error(f"{QUERY_NAME}_DATA_QUERY - COULDN'T CONNECT TO DB")
-        # allow retry via Celery rules.
-        raise SQLAlchemyError("DBConnect failed")
+    # used for caching
+    func_name = prs_query.__name__
 
-    df = dbm.run_query(query_string)
+    # raises Exception on failure. Returns nothing.
+    cf.caching_wrapper(
+        func_name=func_name,
+        query=query_string,
+        repolist=repos,
+    )
+    """
+    Old post-processing steps:
 
     # change to compatible type and remove all data that has been incorrectly formated
     df["created"] = pd.to_datetime(df["created"], utc=True).dt.date
@@ -77,41 +75,6 @@ def prs_query(self, repos):
 
     # sort by the date created
     df = df.sort_values(by="created")
-    df = df.reset_index()
-    df.drop("index", axis=1, inplace=True)
+    """
 
-    # break apart returned data per repo
-    # and temporarily store in List to be
-    # stored in Redis.
-    pic = []
-    for i, r in enumerate(repos):
-        # convert series to a dataframe
-        c_df = pd.DataFrame(df.loc[df["id"] == r]).reset_index(drop=True)
-
-        # bytes buffer to be written to
-        b = io.BytesIO()
-
-        # write dataframe in feather format to BytesIO buffer
-        bs = c_df.to_feather(b)
-
-        # move head of buffer to the beginning
-        b.seek(0)
-
-        # write the bytes of the buffer into the array
-        bs = b.read()
-        pic.append(bs)
-
-    del df
-
-    # store results in Redis
-    cm_o = cm()
-
-    # 'ack' is a boolean of whether data was set correctly or not.
-    ack = cm_o.setm(
-        func=prs_query,
-        repos=repos,
-        datas=pic,
-    )
-
-    logging.warning(f"{QUERY_NAME}_DATA_QUERY - END")
-    return ack
+    logging.warning(f"{prs_query.__name__} COLLECTION - END")

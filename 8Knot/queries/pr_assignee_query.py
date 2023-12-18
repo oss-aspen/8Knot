@@ -1,13 +1,6 @@
 import logging
-import pandas as pd
-from db_manager.augur_manager import AugurManager
 from app import celery_app
-from cache_manager.cache_manager import CacheManager as cm
-import io
-import datetime as dt
-from sqlalchemy.exc import SQLAlchemyError
-
-QUERY_NAME = "PR_ASSIGNEE"
+import cache_manager.cache_facade as cf
 
 
 @celery_app.task(
@@ -33,33 +26,44 @@ def pr_assignee_query(self, repos):
     --------
         dict: Results from SQL query, interpreted from pd.to_dict('records')
     """
-    logging.warning(f"{QUERY_NAME}_DATA_QUERY - START")
+    logging.warning(f"{pr_assignee_query.__name__} COLLECTION - START")
 
     if len(repos) == 0:
         return None
 
     query_string = f"""
                     SELECT
-                        *
+                        pa.pull_request_id,
+                        pa.id,
+                        -- below are timestamp not timestamptz
+                        pa.created,
+                        pa.closed,
+                        pa.assign_date,
+                        pa.assignment_action,
+                        left(pa.assignee::text, 15) as assignee
                     FROM
                         explorer_pr_assignments pa
                     WHERE
-                        pa.id in ({str(repos)[1:-1]})
+                        pa.id in %s
+                        and pa.created < now()
+                        and (pa.closed < now() or pa.closed IS NULL)
+                        and (pa.assign_date < now() or pa.assign_date IS NULL)
+                        -- have to accept NULL values because PRs could still be open, or unassigned,
+                        -- and still be acceptable.
                 """
 
-    try:
-        dbm = AugurManager()
-        engine = dbm.get_engine()
-    except KeyError:
-        # noack, data wasn't successfully set.
-        logging.error(f"{QUERY_NAME}_DATA_QUERY - INCOMPLETE ENVIRONMENT")
-        return False
-    except SQLAlchemyError:
-        logging.error(f"{QUERY_NAME}_DATA_QUERY - COULDN'T CONNECT TO DB")
-        # allow retry via Celery rules.
-        raise SQLAlchemyError("DBConnect failed")
+    # used for caching
+    func_name = pr_assignee_query.__name__
 
-    df = dbm.run_query(query_string)
+    # raises Exception on failure. Returns nothing.
+    cf.caching_wrapper(
+        func_name=func_name,
+        query=query_string,
+        repolist=repos,
+    )
+
+    """
+    Old post-processing steps:
 
     # id as string and slice to remove excess 0s
     df["assignee"] = df["assignee"].astype(str)
@@ -68,37 +72,6 @@ def pr_assignee_query(self, repos):
     # change to compatible type and remove all data that has been incorrectly formated
     df["created"] = pd.to_datetime(df["created"], utc=True).dt.date
     df = df[df.created < dt.date.today()]
+    """
 
-    pic = []
-
-    for i, r in enumerate(repos):
-        # convert series to a dataframe
-        c_df = pd.DataFrame(df.loc[df["id"] == r]).reset_index(drop=True)
-
-        # bytes buffer to be written to
-        b = io.BytesIO()
-
-        # write dataframe in feather format to BytesIO buffer
-        bs = c_df.to_feather(b)
-
-        # move head of buffer to the beginning
-        b.seek(0)
-
-        # write the bytes of the buffer into the array
-        bs = b.read()
-        pic.append(bs)
-
-    del df
-
-    # store results in Redis
-    cm_o = cm()
-
-    # 'ack' is a boolean of whether data was set correctly or not.
-    ack = cm_o.setm(
-        func=pr_assignee_query,
-        repos=repos,
-        datas=pic,
-    )
-    logging.warning(f"{QUERY_NAME}_DATA_QUERY - END")
-
-    return ack
+    logging.warning(f"{pr_assignee_query.__name__} COLLECTION - END")

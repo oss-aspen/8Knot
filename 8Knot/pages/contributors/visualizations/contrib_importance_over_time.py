@@ -9,15 +9,15 @@ import pandas as pd
 import numpy as np
 import logging
 from dateutil.relativedelta import *  # type: ignore
-import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, color_seq
 from queries.contributors_query import contributors_query as ctq
 import io
-from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
 import app
+import pages.utils.preprocessing_utils as preproc_utils
+import cache_manager.cache_facade as cf
 
 PAGE = "contributors"
 VIZ_ID = "lottery-factor-over-time"
@@ -194,6 +194,7 @@ gc_lottery_factor_over_time = dbc.Card(
     ],
 )
 
+
 # callback for graph info popover
 @callback(
     Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
@@ -233,15 +234,30 @@ def graph_title(window_width):
     background=True,
 )
 def create_contrib_prolificacy_over_time_graph(
-    repolist, patterns, threshold, window_width, step_size, start_date, end_date, bot_switch
+    repolist,
+    patterns,
+    threshold,
+    window_width,
+    step_size,
+    start_date,
+    end_date,
+    bot_switch,
 ):
-    # main function for all data pre processing
-    cache = cm()
-    df = cache.grabm(func=ctq, repos=repolist)
+    # wait for data to asynchronously download and become available.
+    while not_cached := cf.get_uncached(func_name=ctq.__name__, repolist=repolist):
+        logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
+        time.sleep(0.5)
 
-    while df is None:
-        time.sleep(1.0)
-        df = cache.grabm(func=ctq, repos=repolist)
+    logging.warning(f"{VIZ_ID} - START")
+    start = time.perf_counter()
+
+    # GET ALL DATA FROM POSTGRES CACHE
+    df = cf.retrieve_from_cache(
+        tablename=ctq.__name__,
+        repolist=repolist,
+    )
+
+    df = preproc_utils.contributors_df_action_naming(df)
 
     # remove bot data
     if bot_switch:
@@ -269,7 +285,6 @@ def create_contrib_prolificacy_over_time_graph(
 
 
 def process_data(df, patterns, threshold, window_width, step_size, start_date, end_date):
-
     # convert to datetime objects rather than strings
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
 
@@ -309,7 +324,8 @@ def process_data(df, patterns, threshold, window_width, step_size, start_date, e
         df_final["PR Review"],
     ) = zip(
         *df_final.apply(
-            lambda row: cntrb_prolificacy_over_time(df, row.period_from, row.period_to, window_width, threshold), axis=1
+            lambda row: cntrb_prolificacy_over_time(df, row.period_from, row.period_to, window_width, threshold),
+            axis=1,
         )
     )
 

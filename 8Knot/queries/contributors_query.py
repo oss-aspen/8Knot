@@ -1,13 +1,6 @@
 import logging
-import pandas as pd
-from db_manager.augur_manager import AugurManager
 from app import celery_app
-from cache_manager.cache_manager import CacheManager as cm
-import io
-import datetime as dt
-from sqlalchemy.exc import SQLAlchemyError
-
-QUERY_NAME = "CONTRIBUTOR"
+import cache_manager.cache_facade as cf
 
 
 @celery_app.task(
@@ -26,6 +19,10 @@ def contributors_query(self, repos):
     may not be in your augur database. The SQL query content can be found
     in docs/materialized_views/explorer_contributor_actions.sql
 
+    NOTE: FOR ANALYSIS, REQUIRES PRE-PROCESSING STEP:
+        contributors_df_action_naming() in 8Knot/8Knot/pages/utils/preprocessing_utils.py
+
+
     Args:
     -----
         repo_ids ([str]): repos that SQL query is executed on.
@@ -35,54 +32,44 @@ def contributors_query(self, repos):
         dict: Results from SQL query, interpreted from pd.to_dict('records')
 
     """
-    logging.warning(f"{QUERY_NAME}_DATA_QUERY - START")
+    logging.warning(f"{contributors_query.__name__} COLLECTION - START")
 
     if len(repos) == 0:
         return None
 
     query_string = f"""
                     SELECT
-                        repo_id as id,
-                        repo_name as repo_name,
-                        cntrb_id,
-                        created_at,
-                        login,
-                        action,
-                        rank
+                        ca.repo_id as id,
+                        ca.repo_name,
+                        left(ca.cntrb_id::text, 15) as cntrb_id, -- first 15 characters of the uuid
+                        timezone('utc', ca.created_at) AS created,
+                        ca.login,
+                        ca.action,
+                        ca.rank
                     FROM
-                        augur_data.explorer_contributor_actions
+                        explorer_contributor_actions ca
                     WHERE
-                        repo_id in ({str(repos)[1:-1]})
+                        ca.repo_id in %s
+                        and timezone('utc', ca.created_at) < now() -- created_at is a timestamptz value
+                        -- don't need to check non-null for created_at because it's non-null by definition.
                 """
 
-    try:
-        dbm = AugurManager()
-        engine = dbm.get_engine()
-    except KeyError:
-        # noack, data wasn't successfully set.
-        logging.error(f"{QUERY_NAME}_DATA_QUERY - INCOMPLETE ENVIRONMENT")
-        return False
-    except SQLAlchemyError:
-        logging.error(f"{QUERY_NAME}_DATA_QUERY - COULDN'T CONNECT TO DB")
-        # allow retry via Celery rules.
-        raise SQLAlchemyError("DBConnect failed")
+    # used for caching
+    func_name = contributors_query.__name__
 
-    df = dbm.run_query(query_string)
+    # raises Exception on failure. Returns nothing.
+    cf.caching_wrapper(
+        func_name=func_name,
+        query=query_string,
+        repolist=repos,
+    )
 
-    # update column values
-    df.loc[df["action"] == "pull_request_open", "action"] = "PR Opened"
-    df.loc[df["action"] == "pull_request_comment", "action"] = "PR Comment"
-    df.loc[df["action"] == "pull_request_closed", "action"] = "PR Closed"
-    df.loc[df["action"] == "pull_request_merged", "action"] = "PR Merged"
-    df.loc[df["action"] == "pull_request_review_COMMENTED", "action"] = "PR Review"
-    df.loc[df["action"] == "pull_request_review_APPROVED", "action"] = "PR Review"
-    df.loc[df["action"] == "pull_request_review_CHANGES_REQUESTED", "action"] = "PR Review"
-    df.loc[df["action"] == "pull_request_review_DISMISSED", "action"] = "PR Review"
-    df.loc[df["action"] == "issue_opened", "action"] = "Issue Opened"
-    df.loc[df["action"] == "issue_closed", "action"] = "Issue Closed"
-    df.loc[df["action"] == "issue_comment", "action"] = "Issue Comment"
-    df.loc[df["action"] == "commit", "action"] = "Commit"
-    df.rename(columns={"action": "Action"}, inplace=True)
+    """
+    Old Post-processing steps
+
+    # reformat cntrb_id
+    df["cntrb_id"] = df["cntrb_id"].astype(str)
+    df["cntrb_id"] = df["cntrb_id"].str[:15]
 
     # reformat cntrb_id
     df["cntrb_id"] = df["cntrb_id"].astype(str)
@@ -92,38 +79,7 @@ def contributors_query(self, repos):
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True).dt.date
     df = df[df.created_at < dt.date.today()]
 
-    df = df.reset_index(drop=True)
+    Additional post-processing done on-the-fly in 8knot/pages/utils/preprocessing_utils.py
+    """
 
-    pic = []
-
-    for i, r in enumerate(repos):
-        # convert series to a dataframe
-        c_df = pd.DataFrame(df.loc[df["id"] == r]).reset_index(drop=True)
-
-        # bytes buffer to be written to
-        b = io.BytesIO()
-
-        # write dataframe in feather format to BytesIO buffer
-        bs = c_df.to_feather(b)
-
-        # move head of buffer to the beginning
-        b.seek(0)
-
-        # write the bytes of the buffer into the array
-        bs = b.read()
-        pic.append(bs)
-
-    del df
-
-    # store results in Redis
-    cm_o = cm()
-
-    # 'ack' is a boolean of whether data was set correctly or not.
-    ack = cm_o.setm(
-        func=contributors_query,
-        repos=repos,
-        datas=pic,
-    )
-    logging.warning(f"{QUERY_NAME}_DATA_QUERY - END")
-
-    return ack
+    logging.warning(f"{contributors_query.__name__} COLLECTION - END")

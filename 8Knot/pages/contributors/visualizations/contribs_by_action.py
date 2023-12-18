@@ -9,11 +9,11 @@ from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, color_seq
 from queries.contributors_query import contributors_query as ctq
-import io
-from cache_manager.cache_manager import CacheManager as cm
 from pages.utils.job_utils import nodata_graph
 import time
 import app
+import pages.utils.preprocessing_utils as preproc_utils
+import cache_manager.cache_facade as cf
 
 
 PAGE = "contributors"
@@ -64,10 +64,22 @@ gc_contribs_by_action = dbc.Card(
                                                     "label": "PR Open",
                                                     "value": "PR Opened",
                                                 },
-                                                {"label": "Comment", "value": "Comment"},
-                                                {"label": "PR Review", "value": "PR Review"},
-                                                {"label": "Issue Opened", "value": "Issue Opened"},
-                                                {"label": "Issue Closed", "value": "Issue Closed"},
+                                                {
+                                                    "label": "Comment",
+                                                    "value": "Comment",
+                                                },
+                                                {
+                                                    "label": "PR Review",
+                                                    "value": "PR Review",
+                                                },
+                                                {
+                                                    "label": "Issue Opened",
+                                                    "value": "Issue Opened",
+                                                },
+                                                {
+                                                    "label": "Issue Closed",
+                                                    "value": "Issue Closed",
+                                                },
                                                 {"label": "Commit", "value": "Commit"},
                                             ],
                                             value="PR Opened",
@@ -156,16 +168,21 @@ def toggle_popover(n, is_open):
     background=True,
 )
 def contribs_by_action_graph(repolist, interval, action, bot_switch):
-
     # wait for data to asynchronously download and become available.
-    cache = cm()
-    df = cache.grabm(func=ctq, repos=repolist)
-    while df is None:
-        time.sleep(1.0)
-        df = cache.grabm(func=ctq, repos=repolist)
+    while not_cached := cf.get_uncached(func_name=ctq.__name__, repolist=repolist):
+        logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
+        time.sleep(0.5)
 
+    logging.warning(f"{VIZ_ID} - START")
     start = time.perf_counter()
-    logging.warning(f"{VIZ_ID}- START")
+
+    # GET ALL DATA FROM POSTGRES CACHE
+    df = cf.retrieve_from_cache(
+        tablename=ctq.__name__,
+        repolist=repolist,
+    )
+
+    df = preproc_utils.contributors_df_action_naming(df)
 
     # test if there is data
     if df.empty:
@@ -190,7 +207,6 @@ def contribs_by_action_graph(repolist, interval, action, bot_switch):
 
 
 def process_data(df: pd.DataFrame, interval, action):
-
     # convert to datetime objects rather than strings
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
 

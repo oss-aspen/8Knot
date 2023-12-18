@@ -5,8 +5,7 @@
 
 Welcome to 8Knot!
 
-[Example of Application](https://eightknot.osci.io/)
----
+## [Example of Application](https://eightknot.osci.io/)
 
 ## Introduction
 
@@ -83,8 +82,8 @@ Augur, a project in the [CHAOSS](https://chaoss.community) Foundation, is closin
 
 Quoting Augur's own README.md:
 
->"Augur’s main focus is to measure the overall health and sustainability of open source projects, as these types of projects are system critical for nearly every software organization or company.
->We do this by gathering data about project repositories and normalizing that into our data model to provide useful metrics about your project’s health."
+> "Augur’s main focus is to measure the overall health and sustainability of open source projects, as these types of projects are system critical for nearly every software organization or company.
+> We do this by gathering data about project repositories and normalizing that into our data model to provide useful metrics about your project’s health."
 
 8Knot's contribution to further closing this gap is to provide an interface to the data collected and organized by Augur as a data web-app with both essential statistical figures,
 and higher-order machine learning and data science-informed insights.
@@ -145,7 +144,7 @@ The credentials below are valid, so you can copy and use them to access a develo
 If you have a companion Augur front end application you'll need to set the following credentials in the env.list as well.
 By setting these credentials, a button on the top tab of the application will become available to allow you to create an account on
 your Augur front end, to log into your application via this front end, and to create user-defined groups of repos/organizations that
-will become available in your application, prefixed by your Augur username (e.g. \<username\>_example_group and \<username\>_other_example).
+will become available in your application, prefixed by your Augur username (e.g. \<username\>\_example_group and \<username\>\_other_example).
 The groups of the user who registers the 8Knot app with an Augur front end will be available to all other users- this user is considered the
 application's owner.
 
@@ -181,8 +180,8 @@ docker && docker compose || docker-compose
 (above just runs docker and docker-compose and checks if both work)
 
 NOTE: `podman-compose` has been generally verified to work as well, but our preference is `docker compose`
-    `podman-compose` doesn't support the `--scale` flag as we would expect so we don't use it for our own
-    development applications, but the application is built to work with the minimum number of containers. YMMV.
+`podman-compose` doesn't support the `--scale` flag as we would expect so we don't use it for our own
+development applications, but the application is built to work with the minimum number of containers. "your mileage my vary".
 
 ### Build and Run
 
@@ -203,7 +202,7 @@ There need to be (#visualizations + 1) celery threads available for the callback
 
 A concrete example: I have 6 CPU's allocated to my Docker runtime, so Celery workers will default to a concurrency of 6 processes.
 However, there are 7 visualizations on the Overview page. Therefore, I will scale the 'callback_worker' pod to 2 instances,
-guaranteeing that there are (2 * #CPUs = 12) available processing celery threads, ensuring that the known deadlock will be avoided.
+guaranteeing that there are (2 \* #CPUs = 12) available processing celery threads, ensuring that the known deadlock will be avoided.
 
 ```bash
 docker compose up --build --scale query-worker=2 --scale callback-worker=2

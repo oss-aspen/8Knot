@@ -9,9 +9,8 @@ import logging
 from pages.utils.graph_utils import get_graph_time_values, color_seq
 from pages.utils.job_utils import nodata_graph
 from queries.issues_query import issues_query as iq
-from cache_manager.cache_manager import CacheManager as cm
-import io
 import time
+import cache_manager.cache_facade as cf
 
 PAGE = "contributions"
 VIZ_ID = "issues-over-time"
@@ -116,15 +115,19 @@ def toggle_popover(n, is_open):
 )
 def issues_over_time_graph(repolist, interval):
     # wait for data to asynchronously download and become available.
-    cache = cm()
-    df = cache.grabm(func=iq, repos=repolist)
-    while df is None:
-        time.sleep(1.0)
-        df = cache.grabm(func=iq, repos=repolist)
+    while not_cached := cf.get_uncached(func_name=iq.__name__, repolist=repolist):
+        logging.warning(f"ISSUES OVER TIME - WAITING ON DATA TO BECOME AVAILABLE")
+        time.sleep(0.5)
 
     # data ready.
     start = time.perf_counter()
     logging.warning("ISSUES OVER TIME - START")
+
+    # GET ALL DATA FROM POSTGRES CACHE
+    df = cf.retrieve_from_cache(
+        tablename=iq.__name__,
+        repolist=repolist,
+    )
 
     # test if there is data
     if df.empty:
