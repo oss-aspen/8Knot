@@ -160,22 +160,34 @@ def process_data(df, interval):
 
     df3 = df[['created', 'watchers_count']]
 
+    logging.warning(df3.head(10))
+
+    df3['created'] = pd.to_datetime(df3['created'])
+
+    df3 = df3.set_index('created').resample(interval).sum().reset_index()
+
     """
         Assume that the cntrb_id values are unique to individual contributors.
         Find the first rank-1 contribution of the contributors, saving the created
         date.
     """
 
-    logging.warning(df3.head())
+    logging.warning(df3.head(10))
 
     if interval == -1:
         return df3, None
 
     # get the count of new contributors in the desired interval in pandas period format, sort index to order entries
-    created_range = pd.to_datetime(df3["created"]).dt.to_period(interval).value_counts().sort_index()
+    created_range = pd.to_datetime(df3["created"]).dt.to_period(interval).sort_index()
+
+    
 
     # converts to data frame object and creates date column from period values
     df3_contribs = created_range.to_frame().reset_index().rename(columns={"index": "Date", "created": "contribs"})
+
+    logging.warning(df3_contribs.head())
+    logging.warning(df3.columns.tolist())
+    logging.warning(df3.index.name)
 
     # converts date column to a datetime object, converts to string first to handle period information
     df3_contribs["Date"] = pd.to_datetime(df3_contribs["Date"].astype(str))

@@ -187,6 +187,8 @@ def process_data(df, interval):
     elif interval == "M":
         df2_contribs["Date"] = df2_contribs["Date"].dt.strftime("%Y-%m")
 
+    logging.warning(df2_contribs.head())
+
     return df2, df2_contribs
 
 
