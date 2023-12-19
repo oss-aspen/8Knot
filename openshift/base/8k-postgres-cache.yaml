@@ -2,13 +2,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  # TODO: fix name inconsistences
   name: postgres-cache
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: eightknot-app
+      name: postgres-cache
   template:
+    metadata:
+      labels:
+        name: postgres-cache
     spec:
       containers:
         - image: quay.io/enterprisedb/postgresql:16
@@ -45,7 +49,7 @@ spec:
       protocol: TCP
       targetPort: 5432
   selector:
-    name: eightknot-postgres-cache
+    name: postgres-cache
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
