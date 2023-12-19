@@ -25,16 +25,17 @@ spec:
     spec:
       containers:
         - command:
-            [
-              "gunicorn",
-              "--bind",
-              ":8080",
-              "app:server",
-              "--workers",
-              "1",
-              "--threads",
-              "2",
-            ]
+            - gunicorn
+            - '--bind'
+            - ':8080'
+            - 'app:server'
+            - '--workers'
+            - '1'
+            - '--threads'
+            - '2'
+          # env:
+          #   - name: CACHE_HOST
+          #     value: eightknot-postgres-cache
           envFrom:
             - secretRef:
                 name: augur-config
@@ -76,16 +77,20 @@ spec:
       initContainers:
         # Set up Postgres cache before app server
         # becomes available.
-        - name: postgres-initialization
+        - name: init
           image: eightknot-app:latest
           imagePullPolicy: Always
+          # env:
+          #   - name: CACHE_HOST
+          #     value: eightknot-postgres-cache
           envFrom:
             - secretRef:
                 name: augur-config
             - secretRef:
-                name: secret-postgres
-          command: ["python3", "cache_manager/db_init.py"]
-
+                name: eightknot-postgres
+          command:
+            - python3
+            - cache_manager/db_init.py
 ---
 apiVersion: v1
 kind: Service
