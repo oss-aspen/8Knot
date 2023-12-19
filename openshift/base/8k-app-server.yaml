@@ -71,6 +71,19 @@ spec:
             requests:
               cpu: 50m
               memory: 150Mi
+      initContainers:
+        # Set up Postgres cache before app server
+        # becomes available.
+        - name: postgres-initialization
+          image: eightknot-app:latest
+          imagePullPolicy: Always
+          envFrom:
+            - secretRef:
+                name: augur-config
+            - secretRef:
+                name: secret-postgres
+          command: ["python3", "cache_manager/db_init.py"]
+
 ---
 apiVersion: v1
 kind: Service
