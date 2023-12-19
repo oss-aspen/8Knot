@@ -33,9 +33,6 @@ spec:
             - '1'
             - '--threads'
             - '2'
-          # env:
-          #   - name: CACHE_HOST
-          #     value: eightknot-postgres-cache
           envFrom:
             - secretRef:
                 name: augur-config
@@ -80,9 +77,6 @@ spec:
         - name: init
           image: eightknot-app:latest
           imagePullPolicy: Always
-          # env:
-          #   - name: CACHE_HOST
-          #     value: eightknot-postgres-cache
           envFrom:
             - secretRef:
                 name: augur-config

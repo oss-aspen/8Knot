@@ -2,20 +2,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  # TODO: fix name inconsistences
-  name: postgres-cache
+  name: eightknot-postgres-cache
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: postgres-cache
+      name: eightknot-postgres-cache
   template:
     metadata:
       labels:
-        name: postgres-cache
+        name: eightknot-postgres-cache
     spec:
       containers:
-        - image: quay.io/enterprisedb/postgresql:16
+        - image: quay.io/enterprisedb/postgresql:13
           name: postgresql
           ports:
             - containerPort: 5432
@@ -41,6 +40,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
+  # TODO: define best default for openshift and docker compose
   name: postgres-cache
 spec:
   ports:
