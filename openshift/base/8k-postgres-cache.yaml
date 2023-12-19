@@ -2,9 +2,14 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  annotations:
+    image.openshift.io/triggers: >-
+      [{"from":{"kind":"ImageStreamTag","name":"postgresql:13-el8","namespace":"openshift"},"fieldPath":"spec.template.spec.containers[?(@.name==\"postgresql\")].image","pause":"true"}]
   name: eightknot-postgres-cache
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       name: eightknot-postgres-cache
@@ -15,8 +20,8 @@ spec:
     spec:
       containers:
         # TODO: decide to use openshift postgres image
-        # image: image-registry.openshift-image-registry.svc:5000/openshift/postgresql:13-el8
-        - image: quay.io/enterprisedb/postgresql:16
+        # image: quay.io/enterprisedb/postgresql:13
+        - image: image-registry.openshift-image-registry.svc:5000/openshift/postgresql:13-el8
           name: postgresql
           ports:
             - containerPort: 5432
