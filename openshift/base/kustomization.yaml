@@ -15,6 +15,8 @@ resources:
   - 8k-worker-callback.yaml
   - 8k-worker-query.yaml
   - 8k-redis-users.yaml
+  - 8k-postgres-cache.yaml
   # - namespace.yaml
   - secret-augur.yaml
   - secret-redis.yaml
+  - secret-postgres.yaml
