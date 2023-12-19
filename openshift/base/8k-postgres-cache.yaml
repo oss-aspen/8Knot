@@ -2,22 +2,13 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  labels:
-    app.kubernetes.io/part-of: eightknot-app
-    app: eightknot-app
-    name: postgres-cache
   name: postgres-cache
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: eightknot-app
-  strategy: {}
   template:
-    metadata:
-      labels:
-        app: eightknot-app
-        app.kubernetes.io/part-of: eightknot-app
     spec:
       containers:
         - image: quay.io/enterprisedb/postgresql:16
@@ -46,8 +37,6 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  labels:
-    app.kubernetes.io/part-of: eightknot-app
   name: postgres-cache
 spec:
   ports:
@@ -61,8 +50,6 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  labels:
-    app.kubernetes.io/part-of: eightknot-app
   name: eightknot-postgres-cache-data
 spec:
   accessModes:

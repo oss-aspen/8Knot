@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    alpha.image.policy.openshift.io/resolve-names: '*'
+    alpha.image.policy.openshift.io/resolve-names: "*"
     app.openshift.io/route-disabled: "false"
     app.openshift.io/vcs-ref: main
     app.openshift.io/vcs-uri: https://github.com/oss-aspen/8Knot.git
@@ -24,23 +24,35 @@ spec:
         name: eightknot-worker-query
     spec:
       containers:
-      - command:
-          [ "celery", "-A", "app:celery_app", "worker", "--loglevel=INFO", "-Q", "data", "-c", "4" ]
-        envFrom:
-        - secretRef:
-            name: augur-config
-        - secretRef:
-            name: eightknot-redis
-        image: eightknot-app:latest
-        imagePullPolicy: Always
-        name: eightknot-app
-        ports:
-        - containerPort: 8080
-          protocol: TCP
-        resources:
-          limits:
-            cpu: 300m
-            memory: 1Gi
-          requests:
-            cpu: 100m
-            memory: 512Mi
+        - command:
+            [
+              "celery",
+              "-A",
+              "app:celery_app",
+              "worker",
+              "--loglevel=INFO",
+              "-Q",
+              "data",
+              "-c",
+              "4",
+            ]
+          envFrom:
+            - secretRef:
+                name: augur-config
+            - secretRef:
+                name: eightknot-redis
+            - secretRef:
+                name: eightknot-postgres
+          image: eightknot-app:latest
+          imagePullPolicy: Always
+          name: eightknot-app
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 300m
+              memory: 1Gi
+            requests:
+              cpu: 100m
+              memory: 512Mi
