@@ -18,6 +18,8 @@ except KeyError as ke:
 
 # credentials to access application cache from environment
 env_dbname = os.getenv("CACHE_DB_NAME", "augur_cache")
+# TODO: define best default for openshift and docker compose
+# env_host = os.getenv("CACHE_HOST", "eightknot-postgres-cache")
 env_host = os.getenv("CACHE_HOST", "postgres-cache")
 env_user = os.getenv("CACHE_USER", "postgres")
 env_password = os.getenv("POSTGRES_PASSWORD", "password")
