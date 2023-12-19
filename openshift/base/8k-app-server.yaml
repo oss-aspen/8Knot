@@ -40,6 +40,8 @@ spec:
                 name: augur-config
             - secretRef:
                 name: eightknot-redis
+            - secretRef:
+                name: eightknot-postgres
           image: eightknot-app:latest
           imagePullPolicy: Always
           name: eightknot-app
