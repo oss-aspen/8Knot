@@ -14,7 +14,8 @@ spec:
         name: eightknot-postgres-cache
     spec:
       containers:
-        # image: 
+        # TODO: decide to use openshift postgres image
+        # image: image-registry.openshift-image-registry.svc:5000/openshift/postgresql:13-el8
         - image: quay.io/enterprisedb/postgresql:16
           name: postgresql
           ports:
