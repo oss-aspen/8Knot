@@ -14,7 +14,8 @@ spec:
         name: eightknot-postgres-cache
     spec:
       containers:
-        - image: quay.io/enterprisedb/postgresql:13
+        # image: 
+        - image: quay.io/enterprisedb/postgresql:16
           name: postgresql
           ports:
             - containerPort: 5432
