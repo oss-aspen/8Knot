@@ -65,3 +65,11 @@ patches:
       - op: replace
         path: /spec/host
         value: dev.eightknot.osci.io
+  # TODO: fix init containers using image stream
+  - target:
+      kind: Deployment
+      name: eightknot-app-server
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/initContainers/0/image
+        value: 'image-registry.openshift-image-registry.svc:5000/dev-eightknot/eightknot-app:latest'
