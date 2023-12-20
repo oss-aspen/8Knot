@@ -56,7 +56,7 @@ spec:
       protocol: TCP
       targetPort: 5432
   selector:
-    name: postgres-cache
+    name: eightknot-postgres-cache
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
