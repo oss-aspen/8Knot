@@ -8,6 +8,9 @@ metadata:
   name: eightknot-app
   labels:
     build: eightknot-app
+spec:
+  lookupPolicy:
+    local: true
 ---
 apiVersion: build.openshift.io/v1
 kind: BuildConfig
