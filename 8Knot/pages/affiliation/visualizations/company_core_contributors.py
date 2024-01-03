@@ -104,6 +104,19 @@ gc_company_core_contributors = dbc.Card(
                                     width="auto",
                                 ),
                                 dbc.Col(
+                                    dbc.Checklist(
+                                        id=f"email-filter-{PAGE}-{VIZ_ID}",
+                                        options=[
+                                            {"label": "Exclude Gmail", "value": "gmail"},
+                                            {"label": "Exclude GitHub", "value": "github"},
+                                        ],
+                                        value=[""],
+                                        inline=True,
+                                        switch=True,
+                                    ),
+                                    width=4,
+                                ),
+                                dbc.Col(
                                     dbc.Button(
                                         "About Graph",
                                         id=f"popover-target-{PAGE}-{VIZ_ID}",
@@ -146,11 +159,14 @@ def toggle_popover(n, is_open):
         Input(f"contributors-required-{PAGE}-{VIZ_ID}", "value"),
         Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "start_date"),
         Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "end_date"),
+        Input(f"email-filter-{PAGE}-{VIZ_ID}", "value"),
         Input("bot-switch", "value"),
     ],
     background=True,
 )
-def compay_associated_activity_graph(repolist, contributions, contributors, start_date, end_date, bot_switch):
+def compay_associated_activity_graph(
+    repolist, contributions, contributors, start_date, end_date, email_filter, bot_switch
+):
     # wait for data to asynchronously download and become available.
     while not_cached := cf.get_uncached(func_name=cmq.__name__, repolist=repolist):
         logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
@@ -175,7 +191,7 @@ def compay_associated_activity_graph(repolist, contributions, contributors, star
         df = df[~df["cntrb_id"].isin(app.bots_list)]
 
     # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
-    df = process_data(df, contributions, contributors, start_date, end_date)
+    df = process_data(df, contributions, contributors, start_date, end_date, email_filter)
 
     fig = create_figure(df)
 
@@ -183,7 +199,7 @@ def compay_associated_activity_graph(repolist, contributions, contributors, star
     return fig
 
 
-def process_data(df: pd.DataFrame, contributions, contributors, start_date, end_date):
+def process_data(df: pd.DataFrame, contributions, contributors, start_date, end_date, email_filter):
     # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
 
@@ -228,6 +244,16 @@ def process_data(df: pd.DataFrame, contributions, contributors, start_date, end_
         .sort_values(by=["contributors"], ascending=False)
         .reset_index(drop=True)
     )
+
+    # remove other from set
+    df = df[df.domains != "Other"]
+
+    # removes entries with gmail or other if checked
+    if email_filter is not None:
+        if "gmail" in email_filter:
+            df = df[df.domains != "gmail.com"]
+        if "github" in email_filter:
+            df = df[df.domains != "users.noreply.github.com"]
 
     return df
 
