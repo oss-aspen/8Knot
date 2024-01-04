@@ -24,7 +24,7 @@ gc_gh_company_affiliation = dbc.Card(
         dbc.CardBody(
             [
                 html.H3(
-                    "Company Affiliation by Github Account Info",
+                    "Company Affiliation by GitHub Account Info",
                     className="card-title",
                     style={"textAlign": "center"},
                 ),
@@ -33,7 +33,7 @@ gc_gh_company_affiliation = dbc.Card(
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
                             """
-                            Visualizes Github account institution affiliation.\n
+                            Visualizes GitHub account institution affiliation.\n
                             Many individuals don't report an affiliated institution, but\n
                             this count may be considered an absolute lower-bound on affiliation.
                             """
