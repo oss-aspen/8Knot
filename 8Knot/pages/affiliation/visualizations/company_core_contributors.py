@@ -33,7 +33,7 @@ gc_company_core_contributors = dbc.Card(
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
                             "This graph counts the number of core contributions that COULD be linked to each company.\n\
-                            The methodology behind this is to take each associated email to someones github account\n\
+                            The methodology behind this is to take each associated email to someones GitHub account\n\
                             and link the contributions to each as it is unknown which initity the actvity was done for.\n\
                             Then the graph groups contributions by contributors and filters by contributors that are core.\n\
                             Contributions required is the amount of contributions necessary to be consider a core contributor\n\
