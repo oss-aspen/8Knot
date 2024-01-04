@@ -263,6 +263,72 @@ def _create_application_tables() -> None:
 
         cur.execute(
             """
+            CREATE UNLOGGED TABLE IF NOT EXISTS repo_languages_query(
+                id int,
+                programming_language text,
+                code_lines int,
+                files int
+            )
+            """
+        )
+        logging.warning("CREATED repo_languages_query TABLE")
+
+        cur.execute(
+            """
+            CREATE UNLOGGED TABLE IF NOT EXISTS package_version_query(
+                id int,
+                name text,
+                current_release_date text,
+                latest_release_date text,
+                libyear float4
+            )
+            """
+        )
+        logging.warning("CREATED package_version_query TABLE")
+
+        cur.execute(
+            """
+            CREATE UNLOGGED TABLE IF NOT EXISTS repo_releases_query(
+                id int,
+                release_name text,
+                release_created_at text,
+                release_published_at text,
+                release_updated_at text
+            )
+            """
+        )
+        logging.warning("CREATED repo_releases_query TABLE")
+
+        cur.execute(
+            """
+            CREATE UNLOGGED TABLE IF NOT EXISTS ossf_score_query(
+                id int,
+                name text,
+                score float4
+            )
+            """
+        )
+        logging.warning("CREATED ossf_score_query TABLE")
+
+        cur.execute(
+            """
+            CREATE UNLOGGED TABLE IF NOT EXISTS repo_info_query(
+                id int,
+                issues_enabled text,
+                fork_count int,
+                watchers_count int,
+                license text,
+                stars_count int,
+                code_of_conduct_file text,
+                security_issue_file text,
+                security_audit_file text
+            )
+            """
+        )
+        logging.warning("CREATED repo_info_query TABLE")
+
+        cur.execute(
+            """
             CREATE UNLOGGED TABLE IF NOT EXISTS pr_response_query(
                 pull_request_id int,
                 ID int,
