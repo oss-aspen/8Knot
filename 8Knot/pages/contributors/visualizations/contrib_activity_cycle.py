@@ -176,13 +176,13 @@ def process_data(df: pd.DataFrame, interval):
 def create_figure(df: pd.DataFrame, interval):
     column = "Weekday"
     order = [
-        "Sunday",
         "Monday",
         "Tuesday",
         "Wednesday",
         "Thursday",
         "Friday",
         "Saturday",
+        "Sunday",
     ]
     if interval == "H":
         column = "Hour"
