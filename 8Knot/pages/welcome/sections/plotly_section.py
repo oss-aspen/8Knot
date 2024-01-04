@@ -15,7 +15,7 @@ layout = html.Div(
                         html.Div(
                             className="card_section_description",
                             children=[
-                                html.H1("Using Plotly Figures"),
+                                html.H1("Using 8Knot Visaulizations"),
                                 html.P(
                                     """
                             Visualizations in 8Knot are created with Plotly figures. These figures come with
@@ -134,6 +134,18 @@ layout = html.Div(
                                             src="assets/welcome_plotly_section/graph-with-plotly-tools.png",
                                         ),
                                     ],
+                                ),
+                            ],
+                        ),
+                        html.Div(
+                            className="instruction_card",
+                            children=[
+                                html.H2("5. About Graph"),
+                                html.P(
+                                    """ Each visualization has an "About Graph" button that describes an
+                                    explanation on how to interpret the graph and references to any relevant
+                                    resources.
+                                    """
                                 ),
                             ],
                         ),
