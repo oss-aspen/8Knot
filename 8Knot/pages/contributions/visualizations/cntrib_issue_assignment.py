@@ -51,6 +51,27 @@ gc_cntrib_issue_assignment = dbc.Card(
                         dbc.Row(
                             [
                                 dbc.Label(
+                                    "Date Interval:",
+                                    html_for=f"date-radio-{PAGE}-{VIZ_ID}",
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.RadioItems(
+                                            id=f"date-radio-{PAGE}-{VIZ_ID}",
+                                            options=[
+                                                {"label": "Trend", "value": "D"},
+                                                {"label": "Week", "value": "W"},
+                                                {"label": "Month", "value": "M"},
+                                                {"label": "Year", "value": "Y"},
+                                            ],
+                                            value="W",
+                                            inline=True,
+                                        ),
+                                    ],
+                                    width=4,
+                                ),
+                                dbc.Label(
                                     "Total Assignments Required:",
                                     html_for=f"assignments-required-{PAGE}-{VIZ_ID}",
                                     width={"size": "auto"},
@@ -81,25 +102,18 @@ gc_cntrib_issue_assignment = dbc.Card(
                         ),
                         dbc.Row(
                             [
-                                dbc.Label(
-                                    "Date Interval:",
-                                    html_for=f"date-radio-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
                                 dbc.Col(
-                                    [
-                                        dbc.RadioItems(
-                                            id=f"date-radio-{PAGE}-{VIZ_ID}",
-                                            options=[
-                                                {"label": "Trend", "value": "D"},
-                                                {"label": "Week", "value": "W"},
-                                                {"label": "Month", "value": "M"},
-                                                {"label": "Year", "value": "Y"},
-                                            ],
-                                            value="W",
-                                            inline=True,
+                                    dcc.DatePickerRange(
+                                        id=f"date-picker-range-{PAGE}-{VIZ_ID}",
+                                        min_date_allowed=dt.date(2005, 1, 1),
+                                        max_date_allowed=dt.date.today(),
+                                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                                        start_date=dt.date(
+                                            dt.date.today().year - 2, dt.date.today().month, dt.date.today().day
                                         ),
-                                    ]
+                                        clearable=True,
+                                    ),
+                                    width="auto",
                                 ),
                                 dbc.Col(
                                     dbc.Button(
@@ -113,6 +127,7 @@ gc_cntrib_issue_assignment = dbc.Card(
                                 ),
                             ],
                             align="center",
+                            justify="between",
                         ),
                     ]
                 ),
@@ -142,11 +157,13 @@ def toggle_popover(n, is_open):
         Input("repo-choices", "data"),
         Input(f"date-radio-{PAGE}-{VIZ_ID}", "value"),
         Input(f"assignments-required-{PAGE}-{VIZ_ID}", "value"),
+        Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "start_date"),
+        Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "end_date"),
         Input("bot-switch", "value"),
     ],
     background=True,
 )
-def cntrib_issue_assignment_graph(repolist, interval, assign_req, bot_switch):
+def cntrib_issue_assignment_graph(repolist, interval, assign_req, start_date, end_date, bot_switch):
     # wait for data to asynchronously download and become available.
     while not_cached := cf.get_uncached(func_name=iaq.__name__, repolist=repolist):
         logging.warning(f"{VIZ_ID} - WAITING ON DATA TO BECOME AVAILABLE")
@@ -171,7 +188,7 @@ def cntrib_issue_assignment_graph(repolist, interval, assign_req, bot_switch):
     if bot_switch:
         df = df[~df["assignee"].isin(app.bots_list)]
 
-    df = process_data(df, interval, assign_req)
+    df = process_data(df, interval, assign_req, start_date, end_date)
 
     fig = create_figure(df, interval)
 
@@ -179,7 +196,7 @@ def cntrib_issue_assignment_graph(repolist, interval, assign_req, bot_switch):
     return fig, False
 
 
-def process_data(df: pd.DataFrame, interval, assign_req):
+def process_data(df: pd.DataFrame, interval, assign_req, start_date, end_date):
     # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
     df["closed"] = pd.to_datetime(df["closed"], utc=True)
@@ -209,6 +226,12 @@ def process_data(df: pd.DataFrame, interval, assign_req):
     # no update if there are not any contributors that meet the criteria
     if len(contributors) == 0:
         return dash.no_update, True
+
+    # filter values based on date picker
+    if start_date is not None:
+        df = df[df.created >= start_date]
+    if end_date is not None:
+        df = df[df.created <= end_date]
 
     # only include contributors that meet the criteria
     df = df.loc[df["assignee"].isin(contributors)]
@@ -289,14 +312,6 @@ def create_figure(df: pd.DataFrame, interval):
 
         # edit hover values
         fig.update_traces(hovertemplate=hover + "<br>Issues Assigned: %{y}<br>")
-
-        fig.update_xaxes(
-            showgrid=True,
-            ticklabelmode="period",
-            dtick=period,
-            rangeslider_yaxis_rangemode="match",
-            range=x_r,
-        )
 
     # layout specifics for both styles of plots
     fig.update_layout(
