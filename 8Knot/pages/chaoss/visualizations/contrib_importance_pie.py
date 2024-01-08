@@ -42,7 +42,7 @@ gc_contrib_importance_pie = dbc.Card(
                                         with the remaining 4/5 representing all other contributors. By default, contributors
                                         who have 'potential-bot-filter' in their login are filtered out. Optionally, contributors
                                         can be filtered out by their logins with custom keyword(s). Note: Some commits may have a
-                                        Contributor ID of 'None' if there is no Github account is associated with the email that
+                                        Contributor ID of 'None' if there is no GitHub account is associated with the email that
                                         the contributor committed as.
                                         """
                         ),

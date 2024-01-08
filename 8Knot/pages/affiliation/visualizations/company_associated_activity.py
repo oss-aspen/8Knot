@@ -78,6 +78,19 @@ gc_company_associated_activity = dbc.Card(
                                     className="me-2",
                                     width=2,
                                 ),
+                                dbc.Col(
+                                    dbc.Checklist(
+                                        id=f"email-filter-{PAGE}-{VIZ_ID}",
+                                        options=[
+                                            {"label": "Exclude Gmail", "value": "gmail"},
+                                            {"label": "Exclude GitHub", "value": "github"},
+                                        ],
+                                        value=[""],
+                                        inline=True,
+                                        switch=True,
+                                    ),
+                                    width=4,
+                                ),
                             ],
                             align="center",
                         ),
@@ -135,11 +148,12 @@ def toggle_popover(n, is_open):
         Input(f"company-contributions-required-{PAGE}-{VIZ_ID}", "value"),
         Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "start_date"),
         Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "end_date"),
+        Input(f"email-filter-{PAGE}-{VIZ_ID}", "value"),
         Input("bot-switch", "value"),
     ],
     background=True,
 )
-def compay_associated_activity_graph(repolist, num, start_date, end_date, bot_switch):
+def compay_associated_activity_graph(repolist, num, start_date, end_date, email_filter, bot_switch):
     """Each contribution is associated with a contributor. That contributor can be associated with
 
     more than one different email. Hence each contribution is associated with all of the emails that a contributor has historically used.
@@ -177,7 +191,7 @@ def compay_associated_activity_graph(repolist, num, start_date, end_date, bot_sw
         df = df[~df["cntrb_id"].isin(app.bots_list)]
 
     # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
-    df = process_data(df, num, start_date, end_date)
+    df = process_data(df, num, start_date, end_date, email_filter)
 
     fig = create_figure(df)
 
@@ -185,7 +199,7 @@ def compay_associated_activity_graph(repolist, num, start_date, end_date, bot_sw
     return fig
 
 
-def process_data(df: pd.DataFrame, num, start_date, end_date):
+def process_data(df: pd.DataFrame, num, start_date, end_date, email_filter):
     # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
 
@@ -223,6 +237,16 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
         .sort_values(by=["occurrences"], ascending=False)
         .reset_index(drop=True)
     )
+
+    # remove other from set
+    df = df[df.domains != "Other"]
+
+    # removes entries with gmail or other if checked
+    if email_filter is not None:
+        if "gmail" in email_filter:
+            df = df[df.domains != "gmail.com"]
+        if "github" in email_filter:
+            df = df[df.domains != "users.noreply.github.com"]
 
     return df
 
