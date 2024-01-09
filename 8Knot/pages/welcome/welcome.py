@@ -44,7 +44,7 @@ layout = dbc.Container(
                                     children=[general_tab_contents],
                                 ),
                                 dcc.Tab(
-                                    label="Plotly Figure Tools",
+                                    label="Using 8Knot Visualizations",
                                     value="plotlyfiguretools",
                                     children=[plotly_tab_contents],
                                 ),
