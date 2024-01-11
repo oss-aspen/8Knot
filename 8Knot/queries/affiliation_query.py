@@ -10,10 +10,10 @@ import cache_manager.cache_facade as cf
     retry_kwargs={"max_retries": 5},
     retry_jitter=True,
 )
-def company_query(self, repos):
+def affiliation_query(self, repos):
     """
     (Worker Query)
-    Executes SQL query against Augur database for company affiliation data.
+    Executes SQL query against Augur database for organization affiliation data.
 
     Explorer_contributor_actions is a materialized view on the database for quicker run time and
     may not be in your augur database. The SQL query content can be found
@@ -28,7 +28,7 @@ def company_query(self, repos):
         dict: Results from SQL query, interpreted from pd.to_dict('records')
 
     """
-    logging.warning(f"{company_query.__name__} COLLECTION - START")
+    logging.warning(f"{affiliation_query.__name__} COLLECTION - START")
 
     if len(repos) == 0:
         return None
@@ -59,7 +59,7 @@ def company_query(self, repos):
                     """
 
     # used for caching
-    func_name = company_query.__name__
+    func_name = affiliation_query.__name__
 
     # raises Exception on failure. Returns nothing.
     cf.caching_wrapper(
@@ -81,4 +81,4 @@ def company_query(self, repos):
     df = df[df.created < dt.date.today()]
 
     """
-    logging.warning(f"{company_query.__name__} COLLECTION - END")
+    logging.warning(f"{affiliation_query.__name__} COLLECTION - END")

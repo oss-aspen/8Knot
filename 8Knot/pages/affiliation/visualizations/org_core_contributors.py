@@ -8,23 +8,23 @@ import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import color_seq
-from queries.company_query import company_query as cmq
+from queries.affiliation_query import affiliation_query as aq
+import io
 from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
-from fuzzywuzzy import fuzz
 import app
 import cache_manager.cache_facade as cf
 
 PAGE = "affiliation"
-VIZ_ID = "gh-company-affiliation"
+VIZ_ID = "org-core-contributors"
 
-gc_gh_company_affiliation = dbc.Card(
+gc_org_core_contributors = dbc.Card(
     [
         dbc.CardBody(
             [
                 html.H3(
-                    "Company Affiliation by GitHub Account Info",
+                    "Organization Core Contributors",
                     className="card-title",
                     style={"textAlign": "center"},
                 ),
@@ -32,11 +32,12 @@ gc_gh_company_affiliation = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            """
-                            Visualizes GitHub account institution affiliation.\n
-                            Many individuals don't report an affiliated institution, but\n
-                            this count may be considered an absolute lower-bound on affiliation.
-                            """
+                            "This graph counts the number of core contributions that COULD be linked to each organization.\n\
+                            The methodology behind this is to take each associated email to someones GitHub account\n\
+                            and link the contributions to each as it is unknown which initity the actvity was done for.\n\
+                            Then the graph groups contributions by contributors and filters by contributors that are core.\n\
+                            Contributions required is the amount of contributions necessary to be consider a core contributor\n\
+                            Core Contributors required is the amount of core contributors needed to have the domain listed."
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
@@ -61,9 +62,27 @@ gc_gh_company_affiliation = dbc.Card(
                                         id=f"contributions-required-{PAGE}-{VIZ_ID}",
                                         type="number",
                                         min=1,
+                                        max=100,
+                                        step=1,
+                                        value=10,
+                                        size="sm",
+                                    ),
+                                    className="me-2",
+                                    width=2,
+                                ),
+                                dbc.Label(
+                                    "Core Contributors Required:",
+                                    html_for=f"contributors-required-{PAGE}-{VIZ_ID}",
+                                    width={"size": "auto"},
+                                ),
+                                dbc.Col(
+                                    dbc.Input(
+                                        id=f"contributors-required-{PAGE}-{VIZ_ID}",
+                                        type="number",
+                                        min=1,
                                         max=50,
                                         step=1,
-                                        value=5,
+                                        value=3,
                                         size="sm",
                                     ),
                                     className="me-2",
@@ -83,6 +102,19 @@ gc_gh_company_affiliation = dbc.Card(
                                         clearable=True,
                                     ),
                                     width="auto",
+                                ),
+                                dbc.Col(
+                                    dbc.Checklist(
+                                        id=f"email-filter-{PAGE}-{VIZ_ID}",
+                                        options=[
+                                            {"label": "Exclude Gmail", "value": "gmail"},
+                                            {"label": "Exclude GitHub", "value": "github"},
+                                        ],
+                                        value=[""],
+                                        inline=True,
+                                        switch=True,
+                                    ),
+                                    width=4,
                                 ),
                                 dbc.Col(
                                     dbc.Button(
@@ -124,15 +156,19 @@ def toggle_popover(n, is_open):
     [
         Input("repo-choices", "data"),
         Input(f"contributions-required-{PAGE}-{VIZ_ID}", "value"),
+        Input(f"contributors-required-{PAGE}-{VIZ_ID}", "value"),
         Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "start_date"),
         Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "end_date"),
+        Input(f"email-filter-{PAGE}-{VIZ_ID}", "value"),
         Input("bot-switch", "value"),
     ],
     background=True,
 )
-def gh_company_affiliation_graph(repolist, num, start_date, end_date, bot_switch):
+def compay_associated_activity_graph(
+    repolist, contributions, contributors, start_date, end_date, email_filter, bot_switch
+):
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=cmq.__name__, repolist=repolist):
+    while not_cached := cf.get_uncached(func_name=aq.__name__, repolist=repolist):
         logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 
@@ -141,9 +177,10 @@ def gh_company_affiliation_graph(repolist, num, start_date, end_date, bot_switch
 
     # GET ALL DATA FROM POSTGRES CACHE
     df = cf.retrieve_from_cache(
-        tablename=cmq.__name__,
+        tablename=aq.__name__,
         repolist=repolist,
     )
+
     # test if there is data
     if df.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
@@ -154,7 +191,7 @@ def gh_company_affiliation_graph(repolist, num, start_date, end_date, bot_switch
         df = df[~df["cntrb_id"].isin(app.bots_list)]
 
     # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
-    df = process_data(df, num, start_date, end_date)
+    df = process_data(df, contributions, contributors, start_date, end_date, email_filter)
 
     fig = create_figure(df)
 
@@ -162,11 +199,7 @@ def gh_company_affiliation_graph(repolist, num, start_date, end_date, bot_switch
     return fig
 
 
-def process_data(df: pd.DataFrame, num, start_date, end_date):
-    """Implement your custom data-processing logic in this function.
-    The output of this function is the data you intend to create a visualization with,
-    requiring no further processing."""
-
+def process_data(df: pd.DataFrame, contributions, contributors, start_date, end_date, email_filter):
     # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
 
@@ -179,76 +212,65 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
     if end_date is not None:
         df = df[df.created <= end_date]
 
-    # intital count of same company name in github profile
-    result = df.cntrb_company.value_counts(dropna=False)
+    # groups contributions by countributor id and counts, created column now hold the number
+    # of contributions for its respective contributor
+    df = df.groupby(["cntrb_id", "email_list"], as_index=False)[["created"]].count()
 
-    # reset format for df work
-    df = result.to_frame()
-    df["company_name"] = df.index
-    df = df.reset_index()
-    df["company_name"] = df["company_name"].astype(str)
-    df = df.rename(columns={"index": "orginal_name", "cntrb_company": "contribution_count"})
+    # filters out contributors that dont meet the core contribution threshhold
+    df = df[df.created >= contributions]
 
-    # applies fuzzy matching comparing all rows to each other
-    df["match"] = df.apply(lambda row: fuzzy_match(df, row["company_name"]), axis=1)
+    # creates list of unique emails and flattens list result
+    emails = df.email_list.str.split(" , ").explode("email_list").tolist()
 
-    # changes company name to match other fuzzy matches
-    for x in range(0, len(df)):
-        # gets match values for the current row
-        matches = df.iloc[x]["match"]
-        for y in matches:
-            # for each match, change the name to its match and clear out match column as
-            # it will unnecessarily reapply changes
-            df.loc[y, "company_name"] = df.iloc[x]["company_name"]
-            df.loc[y, "match"] = ""
+    # remove any entries not in email format
+    emails = [x for x in emails if "@" in x]
 
-    # groups all same name company affiliation and sums the contributions
-    df = (
-        df.groupby(by="company_name")["contribution_count"]
-        .sum()
-        .reset_index()
-        .sort_values(by=["contribution_count"])
-        .reset_index(drop=True)
-    )
+    # creates list of email domains from the emails list
+    email_domains = [x[x.rindex("@") + 1 :] for x in emails]
 
-    # changes the name of the company if under a certain threshold
-    df.loc[df.contribution_count <= num, "company_name"] = "Other"
+    # creates df of domains and counts
+    df = pd.DataFrame(email_domains, columns=["domains"]).value_counts().to_frame().reset_index()
+
+    df = df.rename(columns={0: "contributors"})
+
+    # changes the name of the org if under a certain threshold
+    df.loc[df.contributors <= contributors, "domains"] = "Other"
 
     # groups others together for final counts
     df = (
-        df.groupby(by="company_name")["contribution_count"]
+        df.groupby(by="domains")["contributors"]
         .sum()
         .reset_index()
-        .sort_values(by=["contribution_count"])
+        .sort_values(by=["contributors"], ascending=False)
         .reset_index(drop=True)
     )
+
+    # remove other from set
+    df = df[df.domains != "Other"]
+
+    # removes entries with gmail or other if checked
+    if email_filter is not None:
+        if "gmail" in email_filter:
+            df = df[df.domains != "gmail.com"]
+        if "github" in email_filter:
+            df = df[df.domains != "users.noreply.github.com"]
 
     return df
 
 
-def fuzzy_match(df, name):
-    """
-    This function compares each row to all of the other values in the company_name column and
-    outputs a list on if there is a fuzzy match between the different rows. This gives the values
-    necessary for the loop to change the company name if there is a match. 70 is the match value
-    threshold for the partial ratio to be considered a match
-    """
-    matches = df.apply(lambda row: (fuzz.partial_ratio(row["company_name"], name) >= 70), axis=1)
-    return [i for i, x in enumerate(matches) if x]
-
-
 def create_figure(df: pd.DataFrame):
     # graph generation
-    fig = px.pie(
-        df,
-        names="company_name",
-        values="contribution_count",
-        color_discrete_sequence=color_seq,
+    fig = px.bar(df, x="domains", y="contributors", color_discrete_sequence=color_seq)
+    fig.update_xaxes(rangeslider_visible=True, range=[-0.5, 15])
+    fig.update_layout(
+        xaxis_title="Domains",
+        yaxis_title="Core Contributors",
+        bargroupgap=0.1,
+        margin_b=40,
+        font=dict(size=14),
     )
     fig.update_traces(
-        textposition="inside",
-        textinfo="percent+label",
-        hovertemplate="%{label} <br>Contributions: %{value}<br><extra></extra>",
+        hovertemplate="%{label} <br>Contributors: %{value}<br><extra></extra>",
     )
 
     return fig

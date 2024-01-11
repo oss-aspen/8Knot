@@ -166,7 +166,7 @@ def _create_application_tables() -> None:
 
         cur.execute(
             """
-            CREATE UNLOGGED TABLE IF NOT EXISTS company_query(
+            CREATE UNLOGGED TABLE IF NOT EXISTS affiliation_query(
                 cntrb_id text,
                 created text,
                 id int,
@@ -178,7 +178,7 @@ def _create_application_tables() -> None:
             )
             """
         )
-        logging.warning("CREATED company TABLE")
+        logging.warning("CREATED affiliation_query TABLE")
 
         cur.execute(
             """
