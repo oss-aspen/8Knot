@@ -19,6 +19,7 @@ WSGI
 api
 cdolfi
 cmq
+aq
 config
 deployer
 dev

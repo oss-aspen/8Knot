@@ -8,7 +8,7 @@ import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import color_seq
-from queries.company_query import company_query as cmq
+from queries.affiliation_query import affiliation_query as aq
 from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
@@ -132,7 +132,7 @@ def toggle_popover(n, is_open):
 )
 def unique_domains_graph(repolist, num, start_date, end_date, bot_switch):
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=cmq.__name__, repolist=repolist):
+    while not_cached := cf.get_uncached(func_name=aq.__name__, repolist=repolist):
         logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 
@@ -141,7 +141,7 @@ def unique_domains_graph(repolist, num, start_date, end_date, bot_switch):
 
     # GET ALL DATA FROM POSTGRES CACHE
     df = cf.retrieve_from_cache(
-        tablename=cmq.__name__,
+        tablename=aq.__name__,
         repolist=repolist,
     )
 

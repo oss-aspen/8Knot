@@ -8,7 +8,7 @@ import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import color_seq
-from queries.company_query import company_query as cmq
+from queries.affiliation_query import affiliation_query as aq
 from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
@@ -16,14 +16,14 @@ import app
 import cache_manager.cache_facade as cf
 
 PAGE = "affiliation"
-VIZ_ID = "company-associated-activity"
+VIZ_ID = "organization-associated-activity"
 
-gc_company_associated_activity = dbc.Card(
+gc_org_associated_activity = dbc.Card(
     [
         dbc.CardBody(
             [
                 html.H3(
-                    "Company Associated Activity",
+                    "Organization Associated Activity",
                     className="card-title",
                     style={"textAlign": "center"},
                 ),
@@ -62,12 +62,12 @@ gc_company_associated_activity = dbc.Card(
                             [
                                 dbc.Label(
                                     "Contributions Required:",
-                                    html_for=f"company-contributions-required-{PAGE}-{VIZ_ID}",
+                                    html_for=f"contributions-required-{PAGE}-{VIZ_ID}",
                                     width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     dbc.Input(
-                                        id=f"company-contributions-required-{PAGE}-{VIZ_ID}",
+                                        id=f"contributions-required-{PAGE}-{VIZ_ID}",
                                         type="number",
                                         min=1,
                                         max=100,
@@ -140,12 +140,12 @@ def toggle_popover(n, is_open):
     return is_open
 
 
-# callback for Company Affiliation by Github Account Info graph
+# callback for Organization Affiliation by Github Account Info graph
 @callback(
     Output(f"{PAGE}-{VIZ_ID}", "figure"),
     [
         Input("repo-choices", "data"),
-        Input(f"company-contributions-required-{PAGE}-{VIZ_ID}", "value"),
+        Input(f"contributions-required-{PAGE}-{VIZ_ID}", "value"),
         Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "start_date"),
         Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "end_date"),
         Input(f"email-filter-{PAGE}-{VIZ_ID}", "value"),
@@ -153,7 +153,7 @@ def toggle_popover(n, is_open):
     ],
     background=True,
 )
-def compay_associated_activity_graph(repolist, num, start_date, end_date, email_filter, bot_switch):
+def org_associated_activity_graph(repolist, num, start_date, end_date, email_filter, bot_switch):
     """Each contribution is associated with a contributor. That contributor can be associated with
 
     more than one different email. Hence each contribution is associated with all of the emails that a contributor has historically used.
@@ -168,7 +168,7 @@ def compay_associated_activity_graph(repolist, num, start_date, end_date, email_
     """
 
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=cmq.__name__, repolist=repolist):
+    while not_cached := cf.get_uncached(func_name=aq.__name__, repolist=repolist):
         logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 
@@ -177,7 +177,7 @@ def compay_associated_activity_graph(repolist, num, start_date, end_date, email_
 
     # GET ALL DATA FROM POSTGRES CACHE
     df = cf.retrieve_from_cache(
-        tablename=cmq.__name__,
+        tablename=aq.__name__,
         repolist=repolist,
     )
 
@@ -226,7 +226,7 @@ def process_data(df: pd.DataFrame, num, start_date, end_date, email_filter):
 
     df = df.rename(columns={0: "occurrences"})
 
-    # changes the name of the company if under a certain threshold
+    # changes the name of the organization if under a certain threshold
     df.loc[df.occurrences <= num, "domains"] = "Other"
 
     # groups others together for final counts
