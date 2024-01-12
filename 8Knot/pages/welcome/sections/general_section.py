@@ -31,6 +31,17 @@ layout = html.Div(
                         html.Div(
                             className="info_card",
                             children=[
+                                html.H2("Repo Overview"),
+                                html.P(
+                                    """
+                                    General information at the repo group and single repo level
+                                   """
+                                ),
+                            ],
+                        ),
+                        html.Div(
+                            className="info_card",
+                            children=[
                                 html.H2("Contributions"),
                                 html.P(
                                     """

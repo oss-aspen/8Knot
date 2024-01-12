@@ -36,25 +36,25 @@ layout = dbc.Container(
                     className="welcome_instructions_section",
                     children=[
                         dcc.Tabs(
-                            value="general",
+                            value="plotlyfiguretools",
                             children=[
-                                dcc.Tab(
-                                    label="General",
-                                    value="general",
-                                    children=[general_tab_contents],
-                                ),
                                 dcc.Tab(
                                     label="Using 8Knot Visualizations",
                                     value="plotlyfiguretools",
                                     children=[plotly_tab_contents],
                                 ),
                                 dcc.Tab(
-                                    label="Your Augur Account",
+                                    label="How 8Knot Works",
+                                    value="general",
+                                    children=[general_tab_contents],
+                                ),
+                                dcc.Tab(
+                                    label="Logging into Augur",
                                     value="auguraccount",
                                     children=[augur_tab_contents],
                                 ),
                                 dcc.Tab(
-                                    label="Adding a User Group",
+                                    label="Creating Project Groups",
                                     value="usergroup",
                                     children=[group_tab_contents],
                                 ),
