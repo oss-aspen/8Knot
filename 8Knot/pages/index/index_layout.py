@@ -239,7 +239,7 @@ search_bar = html.Div(
                 ),
                 dbc.Switch(
                     id="bot-switch",
-                    label="Github Bot Filter",
+                    label="GitHub Bot Filter",
                     value=True,
                     input_class_name="botlist-filter-switch",
                     style={"fontSize": 18},
@@ -267,7 +267,7 @@ layout = dbc.Container(
                 dbc.Col(
                     [
                         dbc.Label(
-                            "Select Github repos or orgs:",
+                            "Select GitHub repos or orgs:",
                             html_for="projects",
                             width="auto",
                             size="lg",

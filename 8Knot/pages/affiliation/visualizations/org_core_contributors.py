@@ -8,7 +8,7 @@ import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import color_seq
-from queries.company_query import company_query as cmq
+from queries.affiliation_query import affiliation_query as aq
 import io
 from pages.utils.job_utils import nodata_graph
 import time
@@ -17,14 +17,14 @@ import app
 import cache_manager.cache_facade as cf
 
 PAGE = "affiliation"
-VIZ_ID = "company-core-contributors"
+VIZ_ID = "org-core-contributors"
 
-gc_company_core_contributors = dbc.Card(
+gc_org_core_contributors = dbc.Card(
     [
         dbc.CardBody(
             [
                 html.H3(
-                    "Company Core Contributors",
+                    "Organization Core Contributors",
                     className="card-title",
                     style={"textAlign": "center"},
                 ),
@@ -32,8 +32,8 @@ gc_company_core_contributors = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "This graph counts the number of core contributions that COULD be linked to each company.\n\
-                            The methodology behind this is to take each associated email to someones github account\n\
+                            "This graph counts the number of core contributions that COULD be linked to each organization.\n\
+                            The methodology behind this is to take each associated email to someones GitHub account\n\
                             and link the contributions to each as it is unknown which initity the actvity was done for.\n\
                             Then the graph groups contributions by contributors and filters by contributors that are core.\n\
                             Contributions required is the amount of contributions necessary to be consider a core contributor\n\
@@ -104,6 +104,19 @@ gc_company_core_contributors = dbc.Card(
                                     width="auto",
                                 ),
                                 dbc.Col(
+                                    dbc.Checklist(
+                                        id=f"email-filter-{PAGE}-{VIZ_ID}",
+                                        options=[
+                                            {"label": "Exclude Gmail", "value": "gmail"},
+                                            {"label": "Exclude GitHub", "value": "github"},
+                                        ],
+                                        value=[""],
+                                        inline=True,
+                                        switch=True,
+                                    ),
+                                    width=4,
+                                ),
+                                dbc.Col(
                                     dbc.Button(
                                         "About Graph",
                                         id=f"popover-target-{PAGE}-{VIZ_ID}",
@@ -146,13 +159,16 @@ def toggle_popover(n, is_open):
         Input(f"contributors-required-{PAGE}-{VIZ_ID}", "value"),
         Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "start_date"),
         Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "end_date"),
+        Input(f"email-filter-{PAGE}-{VIZ_ID}", "value"),
         Input("bot-switch", "value"),
     ],
     background=True,
 )
-def compay_associated_activity_graph(repolist, contributions, contributors, start_date, end_date, bot_switch):
+def compay_associated_activity_graph(
+    repolist, contributions, contributors, start_date, end_date, email_filter, bot_switch
+):
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=cmq.__name__, repolist=repolist):
+    while not_cached := cf.get_uncached(func_name=aq.__name__, repolist=repolist):
         logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 
@@ -161,7 +177,7 @@ def compay_associated_activity_graph(repolist, contributions, contributors, star
 
     # GET ALL DATA FROM POSTGRES CACHE
     df = cf.retrieve_from_cache(
-        tablename=cmq.__name__,
+        tablename=aq.__name__,
         repolist=repolist,
     )
 
@@ -175,7 +191,7 @@ def compay_associated_activity_graph(repolist, contributions, contributors, star
         df = df[~df["cntrb_id"].isin(app.bots_list)]
 
     # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
-    df = process_data(df, contributions, contributors, start_date, end_date)
+    df = process_data(df, contributions, contributors, start_date, end_date, email_filter)
 
     fig = create_figure(df)
 
@@ -183,7 +199,7 @@ def compay_associated_activity_graph(repolist, contributions, contributors, star
     return fig
 
 
-def process_data(df: pd.DataFrame, contributions, contributors, start_date, end_date):
+def process_data(df: pd.DataFrame, contributions, contributors, start_date, end_date, email_filter):
     # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
 
@@ -217,7 +233,7 @@ def process_data(df: pd.DataFrame, contributions, contributors, start_date, end_
 
     df = df.rename(columns={0: "contributors"})
 
-    # changes the name of the company if under a certain threshold
+    # changes the name of the org if under a certain threshold
     df.loc[df.contributors <= contributors, "domains"] = "Other"
 
     # groups others together for final counts
@@ -228,6 +244,16 @@ def process_data(df: pd.DataFrame, contributions, contributors, start_date, end_
         .sort_values(by=["contributors"], ascending=False)
         .reset_index(drop=True)
     )
+
+    # remove other from set
+    df = df[df.domains != "Other"]
+
+    # removes entries with gmail or other if checked
+    if email_filter is not None:
+        if "gmail" in email_filter:
+            df = df[df.domains != "gmail.com"]
+        if "github" in email_filter:
+            df = df[df.domains != "users.noreply.github.com"]
 
     return df
 

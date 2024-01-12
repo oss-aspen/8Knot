@@ -17,7 +17,7 @@ from queries.issues_query import issues_query as iq
 from queries.commits_query import commits_query as cq
 from queries.contributors_query import contributors_query as cnq
 from queries.prs_query import prs_query as prq
-from queries.company_query import company_query as cmq
+from queries.affiliation_query import affiliation_query as aq
 from queries.pr_assignee_query import pr_assignee_query as praq
 from queries.issue_assignee_query import issue_assignee_query as iaq
 from queries.user_groups_query import user_groups_query as ugq
@@ -36,6 +36,7 @@ import flask
 
 # list of queries to be run
 QUERIES = [iq, cq, cnq, prq, cmq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq]
+
 
 # check if login has been enabled in config
 login_enabled = os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True"

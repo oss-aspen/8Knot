@@ -199,29 +199,41 @@ def process_data(df, interval, contribs):
         # this is to slice the extra period information that comes with the weekly case
         period_slice = 10
 
-    # df for drive by contributros in time interval
-    df_drive = (
-        # disable and re-enable formatter
-        # fmt: off
-        df_drive_temp.groupby(by=df_drive_temp.created.dt.to_period(interval))["cntrb_id"]
-        # fmt: on
-        .nunique()
-        .reset_index()
-        .rename(columns={"cntrb_id": "Drive", "created": "Date"})
-    )
-    df_drive["Date"] = pd.to_datetime(df_drive["Date"].astype(str).str[:period_slice])
+    # create empty df for empty case
+    df_drive = pd.DataFrame(columns=["Date", "Drive"])
+    df_drive["Drive"] = df_drive.Drive.astype("int64")
 
-    # df for repeat contributors in time interval
-    df_repeat = (
-        # disable and re-enable formatter
-        # fmt: off
-        df_repeat_temp.groupby(by=df_repeat_temp.created.dt.to_period(interval))["cntrb_id"]
-        # fmt: on
-        .nunique()
-        .reset_index()
-        .rename(columns={"cntrb_id": "Repeat", "created": "Date"})
-    )
-    df_repeat["Date"] = pd.to_datetime(df_repeat["Date"].astype(str).str[:period_slice])
+    # fill df only if there is data
+    if not df_drive_temp.empty:
+        # df for drive by contributros in time interval
+        df_drive = (
+            # disable and re-enable formatter
+            # fmt: off
+            df_drive_temp.groupby(by=df_drive_temp.created.dt.to_period(interval))["cntrb_id"]
+            # fmt: on
+            .nunique()
+            .reset_index()
+            .rename(columns={"cntrb_id": "Drive", "created": "Date"})
+        )
+        df_drive["Date"] = pd.to_datetime(df_drive["Date"].astype(str).str[:period_slice])
+
+    # create empty df for empty case
+    df_repeat = pd.DataFrame(columns=["Date", "Repeat"])
+    df_repeat["Repeat"] = df_repeat.Repeat.astype("int64")
+
+    # fill df only if there is data
+    if not df_repeat_temp.empty:
+        # df for repeat contributors in time interval
+        df_repeat = (
+            # disable and re-enable formatter
+            # fmt: off
+            df_repeat_temp.groupby(by=df_repeat_temp.created.dt.to_period(interval))["cntrb_id"]
+            # fmt: on
+            .nunique()
+            .reset_index()
+            .rename(columns={"cntrb_id": "Repeat", "created": "Date"})
+        )
+        df_repeat["Date"] = pd.to_datetime(df_repeat["Date"].astype(str).str[:period_slice])
 
     # A single df created for plotting merged and closed as stacked bar chart
     df_drive_repeat = pd.merge(df_drive, df_repeat, on="Date", how="outer")

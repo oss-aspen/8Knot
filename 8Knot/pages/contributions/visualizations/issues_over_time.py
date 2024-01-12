@@ -11,6 +11,8 @@ from pages.utils.job_utils import nodata_graph
 from queries.issues_query import issues_query as iq
 import time
 import cache_manager.cache_facade as cf
+import datetime as dt
+from dateutil.relativedelta import relativedelta
 
 PAGE = "contributions"
 VIZ_ID = "issues-over-time"
@@ -71,6 +73,24 @@ gc_issues_over_time = dbc.Card(
                                     ),
                                     className="me-2",
                                 ),
+                            ],
+                            align="center",
+                        ),
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    dcc.DatePickerRange(
+                                        id=f"date-picker-range-{PAGE}-{VIZ_ID}",
+                                        min_date_allowed=dt.date(2005, 1, 1),
+                                        max_date_allowed=dt.date.today(),
+                                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                                        start_date=dt.date(
+                                            dt.date.today().year - 2, dt.date.today().month, dt.date.today().day
+                                        ),
+                                        clearable=True,
+                                    ),
+                                    width="auto",
+                                ),
                                 dbc.Col(
                                     dbc.Button(
                                         "About Graph",
@@ -83,6 +103,7 @@ gc_issues_over_time = dbc.Card(
                                 ),
                             ],
                             align="center",
+                            justify="between",
                         ),
                     ]
                 ),
@@ -110,10 +131,12 @@ def toggle_popover(n, is_open):
     [
         Input("repo-choices", "data"),
         Input(f"date-interval-{PAGE}-{VIZ_ID}", "value"),
+        Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "start_date"),
+        Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "end_date"),
     ],
     background=True,
 )
-def issues_over_time_graph(repolist, interval):
+def issues_over_time_graph(repolist, interval, start_date, end_date):
     # wait for data to asynchronously download and become available.
     while not_cached := cf.get_uncached(func_name=iq.__name__, repolist=repolist):
         logging.warning(f"ISSUES OVER TIME - WAITING ON DATA TO BECOME AVAILABLE")
@@ -135,7 +158,7 @@ def issues_over_time_graph(repolist, interval):
         return nodata_graph
 
     # function for all data pre processing
-    df_created, df_closed, df_open = process_data(df, interval)
+    df_created, df_closed, df_open = process_data(df, interval, start_date, end_date)
 
     fig = create_figure(df_created, df_closed, df_open, interval)
 
@@ -144,10 +167,10 @@ def issues_over_time_graph(repolist, interval):
     return fig
 
 
-def process_data(df: pd.DataFrame, interval):
+def process_data(df: pd.DataFrame, interval, start_date, end_date):
     # convert to datetime objects rather than strings
-    df["created"] = pd.to_datetime(df["created"], utc=True)
-    df["closed"] = pd.to_datetime(df["closed"], utc=True)
+    df["created"] = pd.to_datetime(df["created"], utc=False)
+    df["closed"] = pd.to_datetime(df["closed"], utc=False)
 
     # order values chronologically by creation date
     df = df.sort_values(by="created", axis=0, ascending=True)
@@ -175,18 +198,20 @@ def process_data(df: pd.DataFrame, interval):
     df_closed = closed_range.to_frame().reset_index().rename(columns={"index": "Date"})
     df_closed["Date"] = pd.to_datetime(df_closed["Date"].astype(str).str[:period_slice])
 
-    # formatting for graph generation
-    if interval == "M":
-        df_created["Date"] = df_created["Date"].dt.strftime("%Y-%m-01")
-        df_closed["Date"] = df_closed["Date"].dt.strftime("%Y-%m-01")
-    elif interval == "Y":
-        df_created["Date"] = df_created["Date"].dt.strftime("%Y-01-01")
-        df_closed["Date"] = df_closed["Date"].dt.strftime("%Y-01-01")
-
     # first and last elements of the dataframe are the
     # earliest and latest events respectively
     earliest = df["created"].min()
     latest = max(df["created"].max(), df["closed"].max())
+
+    # filter values based on date picker, needs to be after open issue for correct counting
+    if start_date is not None:
+        df_created = df_created[df_created.Date >= start_date]
+        df_closed = df_closed[df_closed.Date >= start_date]
+        earliest = start_date
+    if end_date is not None:
+        df_created = df_created[df_created.Date <= end_date]
+        df_closed = df_closed[df_closed.Date <= end_date]
+        latest = end_date
 
     # beginning to the end of time by the specified interval
     dates = pd.date_range(start=earliest, end=latest, freq="D", inclusive="both")
@@ -196,6 +221,14 @@ def process_data(df: pd.DataFrame, interval):
 
     # aplies function to get the amount of open issues for each day
     df_open["Open"] = df_open.apply(lambda row: get_open(df, row.Date), axis=1)
+
+    # formatting for graph generation
+    if interval == "M":
+        df_created["Date"] = df_created["Date"].dt.strftime("%Y-%m-01")
+        df_closed["Date"] = df_closed["Date"].dt.strftime("%Y-%m-01")
+    elif interval == "Y":
+        df_created["Date"] = df_created["Date"].dt.strftime("%Y-01-01")
+        df_closed["Date"] = df_closed["Date"].dt.strftime("%Y-01-01")
 
     df_open["Date"] = df_open["Date"].dt.strftime("%Y-%m-%d")
 
@@ -226,13 +259,13 @@ def create_figure(df_created: pd.DataFrame, df_closed: pd.DataFrame, df_open: pd
         marker=dict(color=color_seq[4]),
         name="Closed",
     )
-    fig.update_xaxes(
+    """fig.update_xaxes(
         showgrid=True,
         ticklabelmode="period",
         dtick=period,
         rangeslider_yaxis_rangemode="match",
         range=x_r,
-    )
+    )"""
     fig.update_layout(
         xaxis_title=x_name,
         yaxis_title="Number of Issues",

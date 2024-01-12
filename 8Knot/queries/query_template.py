@@ -1,4 +1,5 @@
 import logging
+from app import celery_app
 import cache_manager.cache_facade as cf
 
 """
@@ -7,6 +8,7 @@ TODO:
     chosen name. ctrl-f is a good way to do this for every occurence in the file!
 (2) Paste SQL query for Augur db into the query_string variable. Use the psycopg2 '%s' wildcard in the string
     where you intend to use the repos list. The '%s' will be replaced with a literal representation of the 'repos' variable.
+    NOTE: if you have more than one '%s', list "n_repolist_uses=x" (x being the number of '%s') in the cf.caching_wrapper
 (3) Navigate to 8Knot/pages/index/index_callbacks.py. Import your new query as a unique acronym. add it to the QUERIES list.
     this registers your query to be scheduled when a user requests new data.
 (4) Create a table in 8Knot/8Knot/cache_manager/db_init.py for the new data you're retrieving from augur. Name the table identically to
@@ -42,6 +44,10 @@ def NAME_query(self, repos):
     Args:
     -----
         repos ([int]): repos that SQL query is executed on.
+
+    Returns:
+    --------
+        dict: Results from SQL query, interpreted from pd.to_dict('records')
 
     """
     logging.warning(f"{NAME_query.__name__} COLLECTION - START")

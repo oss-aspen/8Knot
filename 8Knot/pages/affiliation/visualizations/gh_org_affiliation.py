@@ -8,22 +8,23 @@ import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import color_seq
-from queries.company_query import company_query as cmq
+from queries.affiliation_query import affiliation_query as aq
 from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
+from fuzzywuzzy import fuzz
 import app
 import cache_manager.cache_facade as cf
 
 PAGE = "affiliation"
-VIZ_ID = "company-associated-activity"
+VIZ_ID = "gh-org-affiliation"
 
-gc_company_associated_activity = dbc.Card(
+gc_gh_org_affiliation = dbc.Card(
     [
         dbc.CardBody(
             [
                 html.H3(
-                    "Company Associated Activity",
+                    "Organization Affiliation by GitHub Account Info",
                     className="card-title",
                     style={"textAlign": "center"},
                 ),
@@ -32,19 +33,9 @@ gc_company_associated_activity = dbc.Card(
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
                             """
-                            For non-commit contributions (see definition of Contribution on Info page)\n
-                            we only know which contributor account contributed. We don't know which email,\n
-                            and therefore which possible institution the contribution represented.\n
-                            e.g. if we know that a PR comment was made by JaneDoe, and they have a '@redhat.com' and\n
-                            an '@gmail.com' email, we don't know whether they contributed individually\n
-                            or as a representative of an instituion. Therefore, we lower-bound the contribution\n
-                            of representation by counting each contribution as being made by ALL of the contributors\n
-                            linked email domains.\n
-                            This graph can therefore be interpreted as 'The minimum number of individuals who have\n
-                            been associated with each domain.'\n
-                            e.g. If there are 100 contributions and 20 contributors, and each contributor has an '@redhat.com'\n
-                            email associated with their account and one other random email, '@redhat.com' will be counted 100 times\n
-                            and the other contributor emails will also total a count of 100.\n
+                            Visualizes GitHub account institution affiliation.\n
+                            Many individuals don't report an affiliated institution, but\n
+                            this count may be considered an absolute lower-bound on affiliation.
                             """
                         ),
                     ],
@@ -62,17 +53,17 @@ gc_company_associated_activity = dbc.Card(
                             [
                                 dbc.Label(
                                     "Contributions Required:",
-                                    html_for=f"company-contributions-required-{PAGE}-{VIZ_ID}",
+                                    html_for=f"contributions-required-{PAGE}-{VIZ_ID}",
                                     width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     dbc.Input(
-                                        id=f"company-contributions-required-{PAGE}-{VIZ_ID}",
+                                        id=f"contributions-required-{PAGE}-{VIZ_ID}",
                                         type="number",
                                         min=1,
-                                        max=100,
+                                        max=50,
                                         step=1,
-                                        value=10,
+                                        value=5,
                                         size="sm",
                                     ),
                                     className="me-2",
@@ -127,34 +118,21 @@ def toggle_popover(n, is_open):
     return is_open
 
 
-# callback for Company Affiliation by Github Account Info graph
+# callback for Organization Affiliation by Github Account Info graph
 @callback(
     Output(f"{PAGE}-{VIZ_ID}", "figure"),
     [
         Input("repo-choices", "data"),
-        Input(f"company-contributions-required-{PAGE}-{VIZ_ID}", "value"),
+        Input(f"contributions-required-{PAGE}-{VIZ_ID}", "value"),
         Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "start_date"),
         Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "end_date"),
         Input("bot-switch", "value"),
     ],
     background=True,
 )
-def compay_associated_activity_graph(repolist, num, start_date, end_date, bot_switch):
-    """Each contribution is associated with a contributor. That contributor can be associated with
-
-    more than one different email. Hence each contribution is associated with all of the emails that a contributor has historically used.
-
-    We don't always know which email (and therefore which organization) a contributor is affiliated with at contribution
-
-    time, so we choose to count all of their possible affiliations via their email list. e.g. if "Jane Doe" is associated with "gmail.com"
-
-    and "yahoo.com" and they have 5 contributions, "gmail.com" and "yahoo.com" would be counted 5 times each. We assume that relatively few people
-
-    will have many emails. We acknowledge that this will almost always contribute to an overcount but will never undercount."
-    """
-
+def gh_org_affiliation_graph(repolist, num, start_date, end_date, bot_switch):
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=cmq.__name__, repolist=repolist):
+    while not_cached := cf.get_uncached(func_name=aq.__name__, repolist=repolist):
         logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 
@@ -163,10 +141,9 @@ def compay_associated_activity_graph(repolist, num, start_date, end_date, bot_sw
 
     # GET ALL DATA FROM POSTGRES CACHE
     df = cf.retrieve_from_cache(
-        tablename=cmq.__name__,
+        tablename=aq.__name__,
         repolist=repolist,
     )
-
     # test if there is data
     if df.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
@@ -186,6 +163,10 @@ def compay_associated_activity_graph(repolist, num, start_date, end_date, bot_sw
 
 
 def process_data(df: pd.DataFrame, num, start_date, end_date):
+    """Implement your custom data-processing logic in this function.
+    The output of this function is the data you intend to create a visualization with,
+    requiring no further processing."""
+
     # convert to datetime objects rather than strings
     df["created"] = pd.to_datetime(df["created"], utc=True)
 
@@ -198,47 +179,75 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
     if end_date is not None:
         df = df[df.created <= end_date]
 
-    # creates list of emails for each contribution and flattens list result
-    emails = df.email_list.str.split(" , ").explode("email_list").tolist()
+    # intital count of same company name in github profile
+    result = df.cntrb_company.value_counts(dropna=False)
 
-    # remove any entries not in email format
-    emails = [x for x in emails if "@" in x]
+    # reset format for df work
+    df = result.to_frame()
+    df["company_name"] = df.index
+    df = df.reset_index()
+    df["company_name"] = df["company_name"].astype(str)
+    df = df.rename(columns={"index": "orginal_name", "cntrb_company": "contribution_count"})
 
-    # creates list of email domains from the emails list
-    email_domains = [x[x.rindex("@") + 1 :] for x in emails]
+    # applies fuzzy matching comparing all rows to each other
+    df["match"] = df.apply(lambda row: fuzzy_match(df, row["company_name"]), axis=1)
 
-    # creates df of domains and counts
-    df = pd.DataFrame(email_domains, columns=["domains"]).value_counts().to_frame().reset_index()
+    # changes company name to match other fuzzy matches
+    for x in range(0, len(df)):
+        # gets match values for the current row
+        matches = df.iloc[x]["match"]
+        for y in matches:
+            # for each match, change the name to its match and clear out match column as
+            # it will unnecessarily reapply changes
+            df.loc[y, "company_name"] = df.iloc[x]["company_name"]
+            df.loc[y, "match"] = ""
 
-    df = df.rename(columns={0: "occurrences"})
+    # groups all same name company affiliation and sums the contributions
+    df = (
+        df.groupby(by="company_name")["contribution_count"]
+        .sum()
+        .reset_index()
+        .sort_values(by=["contribution_count"])
+        .reset_index(drop=True)
+    )
 
     # changes the name of the company if under a certain threshold
-    df.loc[df.occurrences <= num, "domains"] = "Other"
+    df.loc[df.contribution_count <= num, "company_name"] = "Other"
 
     # groups others together for final counts
     df = (
-        df.groupby(by="domains")["occurrences"]
+        df.groupby(by="company_name")["contribution_count"]
         .sum()
         .reset_index()
-        .sort_values(by=["occurrences"], ascending=False)
+        .sort_values(by=["contribution_count"])
         .reset_index(drop=True)
     )
 
     return df
 
 
+def fuzzy_match(df, name):
+    """
+    This function compares each row to all of the other values in the company_name column and
+    outputs a list on if there is a fuzzy match between the different rows. This gives the values
+    necessary for the loop to change the company name if there is a match. 70 is the match value
+    threshold for the partial ratio to be considered a match
+    """
+    matches = df.apply(lambda row: (fuzz.partial_ratio(row["company_name"], name) >= 70), axis=1)
+    return [i for i, x in enumerate(matches) if x]
+
+
 def create_figure(df: pd.DataFrame):
     # graph generation
-    fig = px.bar(df, x="domains", y="occurrences", color_discrete_sequence=color_seq)
-    fig.update_xaxes(rangeslider_visible=True, range=[-0.5, 15])
-    fig.update_layout(
-        xaxis_title="Domains",
-        yaxis_title="Contributions",
-        bargroupgap=0.1,
-        margin_b=40,
-        font=dict(size=14),
+    fig = px.pie(
+        df,
+        names="company_name",
+        values="contribution_count",
+        color_discrete_sequence=color_seq,
     )
     fig.update_traces(
+        textposition="inside",
+        textinfo="percent+label",
         hovertemplate="%{label} <br>Contributions: %{value}<br><extra></extra>",
     )
 
