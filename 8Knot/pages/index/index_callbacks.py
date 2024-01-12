@@ -25,12 +25,18 @@ from queries.pr_response_query import pr_response_query as prr
 from queries.cntrb_per_file_query import cntrb_per_file_query as cpfq
 from queries.repo_files_query import repo_files_query as rfq
 from queries.pr_files_query import pr_file_query as prfq
+from queries.repo_languages_query import repo_languages_query as rlq
+from queries.package_version_query import package_version_query as pvq
+from queries.repo_releases_query import repo_releases_query as rrq
+from queries.ossf_score_query import ossf_score_query as osq
+from queries.repo_info_query import repo_info_query as riq
 import redis
 import flask
 
 
 # list of queries to be run
-QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, cpfq, rfq, prfq]
+QUERIES = [iq, cq, cnq, prq, cmq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq]
+
 
 # check if login has been enabled in config
 login_enabled = os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True"
