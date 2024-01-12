@@ -157,6 +157,9 @@ def code_languages_graph(repolist, view):
 
 def process_data(df: pd.DataFrame):
 
+    # SVG files give one line of code per file
+    df.loc[df["programming_language"] == "SVG", "code_lines"] = df["files"]
+
     # group files by their programing language and sum code lines and files
     df_lang = df[["programming_language", "code_lines", "files"]].groupby("programming_language").sum().reset_index()
 
