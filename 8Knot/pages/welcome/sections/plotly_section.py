@@ -15,7 +15,7 @@ layout = html.Div(
                         html.Div(
                             className="card_section_description",
                             children=[
-                                html.H1("Using 8Knot Visaulizations"),
+                                html.H1("Using 8Knot Visualizations"),
                                 html.P(
                                     """
                             Visualizations in 8Knot are created with Plotly figures. These figures come with
