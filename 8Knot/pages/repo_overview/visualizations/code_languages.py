@@ -111,9 +111,9 @@ def toggle_popover(n, is_open):
 def graph_title(view):
     title = ""
     if view == "file":
-        title = "File Lanugage by File"
+        title = "File Language by File"
     else:
-        title = "File Lanugage by Line"
+        title = "File Language by Line"
     return title
 
 
