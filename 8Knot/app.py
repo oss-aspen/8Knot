@@ -15,6 +15,7 @@ import os
 import sys
 import logging
 import dash
+import sqlalchemy as salc
 from sqlalchemy.exc import SQLAlchemyError
 import plotly.io as plt_io
 import dash_bootstrap_components as dbc
@@ -24,7 +25,9 @@ import _login
 from _celery import celery_app, celery_manager
 import _bots as bots
 
-logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO)
+logging.basicConfig(
+    format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO
+)
 
 
 """CREATE DATABASE ACCESS OBJECT AND CACHE SEARCH OPTIONS"""
@@ -43,8 +46,33 @@ except SQLAlchemyError:
     sys.exit(1)
 
 # grab list of projects and orgs from Augur database.
-augur.multiselect_startup()
+# augur.multiselect_startup()
+# TODO: overwriting repo/org startup
+recs = None
+with engine.connect() as conn:
+    stmt = salc.text(
+        text="""
+        select 
+            r.repo_id,
+            r.repo_git,
+            rg.repo_group_id,
+            rg.rg_name
+        from
+            augur_data.repo r
+            join 
+            augur_data.repo_groups rg
+            on r.repo_group_id = rg.repo_group_id
+        order by
+            rg.rg_name, length(r.repo_git) 
+        """
+    )
+    recs = conn.execute(statement=stmt)
 
+repo_options = [
+    {"label": f"{tup[3]} || {tup[1]}", "value": {"type": "repo", "repo_id": tup[0]}}
+    for tup in recs
+]
+logging.warning(f"REPO OPTIONS QUERIED AND AVAILABLE, ex: {repo_options[0]}")
 
 """IMPORT AFTER GLOBAL VARIABLES SET"""
 import pages.index.index_callbacks as index_callbacks

@@ -35,7 +35,24 @@ import flask
 
 
 # list of queries to be run
-QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq]
+QUERIES = [
+    iq,
+    cq,
+    cnq,
+    prq,
+    aq,
+    iaq,
+    praq,
+    prr,
+    cpfq,
+    rfq,
+    prfq,
+    rlq,
+    pvq,
+    rrq,
+    osq,
+    riq,
+]
 
 
 # check if login has been enabled in config
@@ -76,7 +93,9 @@ def kick_off_group_collection(url, n_clicks):
         # TODO: check how old groups are. If they're pretty old (threshold tbd) then requery
 
         # check if groups are not already cached, or if the refresh-button was pressed
-        if not users_cache.exists(f"{user_id}_groups") or (dash.ctx.triggered_id == "refresh-button"):
+        if not users_cache.exists(f"{user_id}_groups") or (
+            dash.ctx.triggered_id == "refresh-button"
+        ):
             # kick off celery task to collect groups
             # on query worker queue,
             return [ugq.apply_async(args=[user_id], queue="data").id]
@@ -167,69 +186,133 @@ def login_username_button(url):
     )
 
 
-@callback(
-    [Output("projects", "data")],
-    [Input("projects", "searchValue")],
-    [
-        State("projects", "value"),
-    ],
-)
-def dynamic_multiselect_options(user_in: str, selections):
-    """
-    Ref: https://dash.plotly.com/dash-core-components/dropdown#dynamic-options
+# @callback(
+#     [Output("projects", "data")],
+#     [Input("projects", "searchValue")],
+#     [
+#         State("projects", "value"),
+#     ],
+# )
+# def dynamic_multiselect_options(user_in: str, selections):
+#     """
+#     Ref: https://dash.plotly.com/dash-core-components/dropdown#dynamic-options
 
-    For all of the possible repo's / orgs, check if the substring currently
-    being searched is in the repo's name or if the repo / org name is
-    in the current list of states selected. Add it to the list if it matches
-    either of the options.
-    """
+#     For all of the possible repo's / orgs, check if the substring currently
+#     being searched is in the repo's name or if the repo / org name is
+#     in the current list of states selected. Add it to the list if it matches
+#     either of the options.
+#     """
 
-    if not user_in:
-        return dash.no_update
+#     if not user_in:
+#         return dash.no_update
 
-    options = augur.get_multiselect_options().copy()
+#     options = augur.get_multiselect_options().copy()
 
-    if current_user.is_authenticated:
-        logging.warning(f"LOGINBUTTON: USER LOGGED IN {current_user}")
-        # TODO: implement more permanent interface
-        users_cache = redis.StrictRedis(
-            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
-            port=6379,
-            password=os.getenv("REDIS_PASSWORD", ""),
-            decode_responses=True,
-        )
-        try:
-            users_cache.ping()
-        except redis.exceptions.ConnectionError:
-            logging.error("MULTISELECT: Could not connect to users-cache.")
-            return dash.no_update
+#     if current_user.is_authenticated:
+#         logging.warning(f"LOGINBUTTON: USER LOGGED IN {current_user}")
+#         # TODO: implement more permanent interface
+#         users_cache = redis.StrictRedis(
+#             host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
+#             port=6379,
+#             password=os.getenv("REDIS_PASSWORD", ""),
+#             decode_responses=True,
+#         )
+#         try:
+#             users_cache.ping()
+#         except redis.exceptions.ConnectionError:
+#             logging.error("MULTISELECT: Could not connect to users-cache.")
+#             return dash.no_update
 
-        try:
-            if users_cache.exists(f"{current_user.get_id()}_group_options"):
-                options = options + json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
-        except redis.exceptions.ConnectionError:
-            logging.error("Searchbar: couldn't connect to Redis for user group options.")
+#         try:
+#             if users_cache.exists(f"{current_user.get_id()}_group_options"):
+#                 options = options + json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
+#         except redis.exceptions.ConnectionError:
+#             logging.error("Searchbar: couldn't connect to Redis for user group options.")
 
-    # if the number of options changes then we're
-    # adding AUGUR_ entries somewhere.
+#     # if the number of options changes then we're
+#     # adding AUGUR_ entries somewhere.
 
-    if selections is None:
-        selections = []
+#     if selections is None:
+#         selections = []
 
-    # match lowercase inputs with lowercase possible values
-    opts = [i for i in options if user_in.lower() in i["label"]]
+#     # match lowercase inputs with lowercase possible values
+#     opts = [i for i in options if user_in.lower() in i["label"]]
 
-    # sort matches by length
-    opts = sorted(opts, key=lambda v: len(v["label"]))
+#     # sort matches by length
+#     opts = sorted(opts, key=lambda v: len(v["label"]))
 
-    # always include the previous selections from the searchbar to avoid
-    # those values being clobbered when we truncate the total length.
-    # arbitrarily 'small' number of matches returned..
-    if len(opts) < 100:
-        return [opts + [v for v in options if v["value"] in selections]]
+#     # always include the previous selections from the searchbar to avoid
+#     # those values being clobbered when we truncate the total length.
+#     # arbitrarily 'small' number of matches returned..
+#     if len(opts) < 100:
+#         return [opts + [v for v in options if v["value"] in selections]]
 
-    else:
-        return [opts[:100] + [v for v in options if v["value"] in selections]]
+#     else:
+#         return [opts[:100] + [v for v in options if v["value"] in selections]]
+
+
+# callback for repo selections to feed into visualization call backs
+# @callback(
+#     [Output("results-output-container", "children"), Output("repo-choices", "data")],
+#     [
+#         Input("search", "n_clicks"),
+#         State("projects", "value"),
+#     ],
+# )
+# def multiselect_values_to_repo_ids(n_clicks, user_vals):
+#     if not user_vals:
+#         logging.warning("NOTHING SELECTED IN SEARCH BAR")
+#         raise dash.exceptions.PreventUpdate
+
+#     # individual repo numbers
+#     repos = [r for r in user_vals if isinstance(r, int)]
+#     logging.warning(f"REPOS: {repos}")
+
+#     # names of augur groups or orgs
+#     names = [n for n in user_vals if isinstance(n, str)]
+
+#     org_repos = [augur.org_to_repos(o) for o in names if augur.is_org(o)]
+#     # flatten list repo_ids in orgs to 1D
+#     org_repos = [v for l in org_repos for v in l]
+#     logging.warning(f"ORG_REPOS: {org_repos}")
+
+#     user_groups = []
+#     if current_user.is_authenticated:
+#         logging.warning(f"LOGINBUTTON: USER LOGGED IN {current_user}")
+#         # TODO: implement more permanent interface
+#         users_cache = redis.StrictRedis(
+#             host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
+#             port=6379,
+#             password=os.getenv("REDIS_PASSWORD", ""),
+#             decode_responses=True,
+#         )
+#         try:
+#             users_cache.ping()
+#         except redis.exceptions.ConnectionError:
+#             logging.error("SEARCH-BUTTON: Could not connect to users-cache.")
+#             return dash.no_update
+
+#         try:
+#             if users_cache.exists(f"{current_user.get_id()}_groups"):
+#                 user_groups = json.loads(
+#                     users_cache.get(f"{current_user.get_id()}_groups")
+#                 )
+#                 logging.warning(f"USERS Groups: {type(user_groups)}, {user_groups}")
+#         except redis.exceptions.ConnectionError:
+#             logging.error(
+#                 "Searchbar: couldn't connect to Redis for user group options."
+#             )
+
+#     group_repos = [user_groups[g] for g in names if not augur.is_org(g)]
+#     # flatten list repo_ids in orgs to 1D
+#     group_repos = [v for l in group_repos for v in l]
+#     logging.warning(f"GROUP_REPOS: {group_repos}")
+
+#     # only unique repo ids
+#     all_repo_ids = list(set().union(*[repos, org_repos, group_repos]))
+#     logging.warning(f"SELECTED_REPOS: {all_repo_ids}")
+
+#     return "", all_repo_ids
 
 
 # callback for repo selections to feed into visualization call backs
@@ -240,56 +323,14 @@ def dynamic_multiselect_options(user_in: str, selections):
         State("projects", "value"),
     ],
 )
-def multiselect_values_to_repo_ids(n_clicks, user_vals):
-    if not user_vals:
+def searchvals_to_vizzes(n_clicks, repos):
+    if not repos:
         logging.warning("NOTHING SELECTED IN SEARCH BAR")
         raise dash.exceptions.PreventUpdate
-
-    # individual repo numbers
-    repos = [r for r in user_vals if isinstance(r, int)]
-    logging.warning(f"REPOS: {repos}")
-
-    # names of augur groups or orgs
-    names = [n for n in user_vals if isinstance(n, str)]
-
-    org_repos = [augur.org_to_repos(o) for o in names if augur.is_org(o)]
-    # flatten list repo_ids in orgs to 1D
-    org_repos = [v for l in org_repos for v in l]
-    logging.warning(f"ORG_REPOS: {org_repos}")
-
-    user_groups = []
-    if current_user.is_authenticated:
-        logging.warning(f"LOGINBUTTON: USER LOGGED IN {current_user}")
-        # TODO: implement more permanent interface
-        users_cache = redis.StrictRedis(
-            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
-            port=6379,
-            password=os.getenv("REDIS_PASSWORD", ""),
-            decode_responses=True,
-        )
-        try:
-            users_cache.ping()
-        except redis.exceptions.ConnectionError:
-            logging.error("SEARCH-BUTTON: Could not connect to users-cache.")
-            return dash.no_update
-
-        try:
-            if users_cache.exists(f"{current_user.get_id()}_groups"):
-                user_groups = json.loads(users_cache.get(f"{current_user.get_id()}_groups"))
-                logging.warning(f"USERS Groups: {type(user_groups)}, {user_groups}")
-        except redis.exceptions.ConnectionError:
-            logging.error("Searchbar: couldn't connect to Redis for user group options.")
-
-    group_repos = [user_groups[g] for g in names if not augur.is_org(g)]
-    # flatten list repo_ids in orgs to 1D
-    group_repos = [v for l in group_repos for v in l]
-    logging.warning(f"GROUP_REPOS: {group_repos}")
-
-    # only unique repo ids
-    all_repo_ids = list(set().union(*[repos, org_repos, group_repos]))
-    logging.warning(f"SELECTED_REPOS: {all_repo_ids}")
-
-    return "", all_repo_ids
+    ids = [v["repo_id"] for v in repos]
+    logging.warning(f"SELECTED_REPOS: {ids}")
+    logging.warning(f"NUM SELECTED REPOS: {len(ids)}")
+    return "", ids
 
 
 @callback(

@@ -2,6 +2,7 @@ from dash import html, dcc
 import dash
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
+import app
 from app import augur
 import os
 import logging
@@ -25,7 +26,9 @@ if os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True":
                                 ]
                             ),
                             dbc.NavItem(
-                                dbc.NavLink("Refresh Groups", id="refresh-button", disabled=True),
+                                dbc.NavLink(
+                                    "Refresh Groups", id="refresh-button", disabled=True
+                                ),
                             ),
                             dbc.NavItem(
                                 dbc.NavLink(
@@ -90,7 +93,11 @@ navbar = dbc.Navbar(
                             dbc.Nav(
                                 [
                                     dbc.NavLink("Welcome", href="/", active="exact"),
-                                    dbc.NavLink("Repo Overview", href="/repo_overview", active="exact"),
+                                    dbc.NavLink(
+                                        "Repo Overview",
+                                        href="/repo_overview",
+                                        active="exact",
+                                    ),
                                     dbc.NavLink(
                                         "Contributions",
                                         href="/contributions",
@@ -115,8 +122,12 @@ navbar = dbc.Navbar(
                                         href="/affiliation",
                                         active="exact",
                                     ),
-                                    dbc.NavLink("CHAOSS", href="/chaoss", active="exact"),
-                                    dbc.NavLink("Codebase", href="/codebase", active="exact"),
+                                    dbc.NavLink(
+                                        "CHAOSS", href="/chaoss", active="exact"
+                                    ),
+                                    dbc.NavLink(
+                                        "Codebase", href="/codebase", active="exact"
+                                    ),
                                     dbc.NavLink("Info", href="/info", active="exact"),
                                 ],
                                 navbar=True,
@@ -185,11 +196,12 @@ search_bar = html.Div(
                             id="projects",
                             searchable=True,
                             clearable=True,
-                            nothingFound="No matching repos/orgs.",
+                            nothingFound="No repositories matching your input!",
                             variant="filled",
-                            debounce=100,
-                            data=[augur.initial_multiselect_option()],
-                            value=[augur.initial_multiselect_option()["value"]],
+                            debounce=0.5,
+                            data=app.repo_options,
+                            value=app.repo_options[0],
+                            limit=100,
                             style={"fontSize": 16},
                         ),
                         dbc.Alert(
@@ -274,7 +286,11 @@ layout = dbc.Container(
                         ),
                         search_bar,
                         dcc.Loading(
-                            children=[html.Div(id="results-output-container", className="mb-4")],
+                            children=[
+                                html.Div(
+                                    id="results-output-container", className="mb-4"
+                                )
+                            ],
                             color="#119DFF",
                             type="dot",
                             fullscreen=True,
