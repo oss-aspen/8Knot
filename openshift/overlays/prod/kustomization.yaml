@@ -26,14 +26,14 @@ patches:
     patch: |-
       - op: add
         path: /spec/replicas
-        value: 3
+        value: 15 
   - target:
       kind: Deployment
       name: eightknot-worker-query
     patch: |-
       - op: add
         path: /spec/replicas
-        value: 2
+        value: 10 
   - target:
       kind: HorizontalPodAutoscaler
     patch: |-
