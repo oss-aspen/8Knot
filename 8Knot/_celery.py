@@ -16,10 +16,11 @@ celery_app = Celery(
 )
 
 celery_app.conf.update(
-    task_time_limit=84600,
+    task_time_limit=2700, # 45 minutes
     task_acks_late=True,
     task_track_started=True,
     result_extended=True,
+    worker_prefetch_multiplier=1,
 )
 
 celery_manager = CeleryManager(celery_app=celery_app)

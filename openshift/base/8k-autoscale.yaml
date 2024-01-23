@@ -34,7 +34,7 @@ spec:
     kind: Deployment
     name: eightknot-worker-callback
   minReplicas: 1
-  maxReplicas: 20
+  maxReplicas: 30 # each is its own process
   metrics:
     - type: Resource
       resource:
@@ -59,7 +59,7 @@ spec:
     kind: Deployment
     name: eightknot-worker-query
   minReplicas: 1
-  maxReplicas: 8
+  maxReplicas: 20 
   metrics:
     - type: Resource
       resource:
