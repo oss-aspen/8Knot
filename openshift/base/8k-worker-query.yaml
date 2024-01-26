@@ -34,7 +34,7 @@ spec:
               "-Q",
               "data",
               "-c",
-              "4",
+              "1",
             ]
           envFrom:
             - secretRef:
