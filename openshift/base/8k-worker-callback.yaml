@@ -32,7 +32,7 @@ spec:
               "worker",
               "--loglevel=INFO",
               "-c",
-              "4",
+              "1",
             ]
           envFrom:
             - secretRef:
