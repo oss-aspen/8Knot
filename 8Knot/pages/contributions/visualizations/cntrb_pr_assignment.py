@@ -222,7 +222,6 @@ def process_data(df: pd.DataFrame, interval, assign_req, start_date, end_date):
         .value_counts()
         .to_frame()
         .reset_index()
-        .rename(columns={"assignee": "count", "index": "assignee"})
     )
 
     # create list of all contributors that meet the assignment requirement

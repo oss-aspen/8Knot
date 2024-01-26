@@ -165,7 +165,7 @@ def process_data(df: pd.DataFrame, interval):
     created_range = df["created_at"].dt.to_period(interval).value_counts().sort_index()
 
     # converts to data frame object and created date column from period values
-    df_created = created_range.to_frame().reset_index().rename(columns={"index": "Date"})
+    df_created = created_range.to_frame().reset_index().rename(columns={"created": "Date", "count": "created"})
 
     # converts date column to a datetime object, converts to string first to handle period information
     # the period slice is to handle weekly corner case
@@ -173,12 +173,12 @@ def process_data(df: pd.DataFrame, interval):
 
     # df for merged prs in time interval
     merged_range = pd.to_datetime(df["merged_at"]).dt.to_period(interval).value_counts().sort_index()
-    df_merged = merged_range.to_frame().reset_index().rename(columns={"index": "Date"})
+    df_merged = merged_range.to_frame().reset_index().rename(columns={"merged": "Date", "count": "merged"})
     df_merged["Date"] = pd.to_datetime(df_merged["Date"].astype(str).str[:period_slice])
 
     # df for closed prs in time interval
     closed_range = pd.to_datetime(df["closed_at"]).dt.to_period(interval).value_counts().sort_index()
-    df_closed = closed_range.to_frame().reset_index().rename(columns={"index": "Date"})
+    df_closed = closed_range.to_frame().reset_index().rename(columns={"closed": "Date", "count": "closed"})
     df_closed["Date"] = pd.to_datetime(df_closed["Date"].astype(str).str[:period_slice])
 
     # A single df created for plotting merged and closed as stacked bar chart

@@ -186,10 +186,19 @@ def process_data(df, interval):
         return df, None
 
     # get the count of new contributors in the desired interval in pandas period format, sort index to order entries
+<<<<<<< HEAD
     created_range = pd.to_datetime(df["created_at"]).dt.to_period(interval).value_counts().sort_index()
 
     # converts to data frame object and creates date column from period values
     df_contribs = created_range.to_frame().reset_index().rename(columns={"index": "Date", "created_at": "contribs"})
+=======
+    created_range = pd.to_datetime(df["created"]).dt.to_period(interval).value_counts().sort_index()
+    logging.critical(f"created_range new_contributor.py {created_range}")
+
+    # converts to data frame object and creates date column from period values
+    df_contribs = created_range.to_frame().reset_index().rename(columns={"created": "Date", "count": "contribs"})
+    logging.critical(f"df_contribs new_contributor.py {df_contribs}")
+>>>>>>> 7d12c64 (fixes df names for contributors page)
 
     # converts date column to a datetime object, converts to string first to handle period information
     df_contribs["Date"] = pd.to_datetime(df_contribs["Date"].astype(str))
