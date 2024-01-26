@@ -10,6 +10,7 @@ import dash
 from dash import callback
 from dash.dependencies import Input, Output, State
 from app import augur
+import app
 from flask_login import current_user
 from cache_manager.cache_manager import CacheManager as cm
 import cache_manager.cache_facade as cf
@@ -93,9 +94,7 @@ def kick_off_group_collection(url, n_clicks):
         # TODO: check how old groups are. If they're pretty old (threshold tbd) then requery
 
         # check if groups are not already cached, or if the refresh-button was pressed
-        if not users_cache.exists(f"{user_id}_groups") or (
-            dash.ctx.triggered_id == "refresh-button"
-        ):
+        if not users_cache.exists(f"{user_id}_groups") or (dash.ctx.triggered_id == "refresh-button"):
             # kick off celery task to collect groups
             # on query worker queue,
             return [ugq.apply_async(args=[user_id], queue="data").id]
@@ -327,10 +326,18 @@ def searchvals_to_vizzes(n_clicks, repos):
     if not repos:
         logging.warning("NOTHING SELECTED IN SEARCH BAR")
         raise dash.exceptions.PreventUpdate
-    ids = [v["repo_id"] for v in repos]
-    logging.warning(f"SELECTED_REPOS: {ids}")
-    logging.warning(f"NUM SELECTED REPOS: {len(ids)}")
-    return "", ids
+
+    # gives a list of repo_ids
+    repo_ids = [v["repo_id"] for v in repos if v["type"] == "repo"]
+
+    # will give a list-of-lists
+    org_ids = [app.msoh.org_map[v["org_id"]] for v in repos if v["type"] == "org"]
+
+    # will get a list of unique repo_ids
+    all_ids = list(set().union(repo_ids, *org_ids))
+
+    logging.warning(f"NUM SELECTED REPOS: {len(all_ids)}")
+    return "", all_ids
 
 
 @callback(
@@ -375,7 +382,7 @@ def show_help_alert(n_clicks, openness, repo_ids):
         dash.no_update | boolean: whether the help alert should be open.
     """
     print(repo_ids)
-    url_list = [augur.repo_id_to_git(i) for i in repo_ids]
+    url_list = [app.msoh.repo_id_to_git(i) for i in repo_ids]
 
     if n_clicks == 0:
         return dash.no_update, str(url_list)

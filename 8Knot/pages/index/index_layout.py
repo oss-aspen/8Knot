@@ -6,6 +6,7 @@ import app
 from app import augur
 import os
 import logging
+import _multiselect
 
 # if param doesn't exist, default to False. Otherwise, use the param's booly value.
 # this determines if the log in option will be shown or not
@@ -26,9 +27,7 @@ if os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True":
                                 ]
                             ),
                             dbc.NavItem(
-                                dbc.NavLink(
-                                    "Refresh Groups", id="refresh-button", disabled=True
-                                ),
+                                dbc.NavLink("Refresh Groups", id="refresh-button", disabled=True),
                             ),
                             dbc.NavItem(
                                 dbc.NavLink(
@@ -122,12 +121,8 @@ navbar = dbc.Navbar(
                                         href="/affiliation",
                                         active="exact",
                                     ),
-                                    dbc.NavLink(
-                                        "CHAOSS", href="/chaoss", active="exact"
-                                    ),
-                                    dbc.NavLink(
-                                        "Codebase", href="/codebase", active="exact"
-                                    ),
+                                    dbc.NavLink("CHAOSS", href="/chaoss", active="exact"),
+                                    dbc.NavLink("Codebase", href="/codebase", active="exact"),
                                     dbc.NavLink("Info", href="/info", active="exact"),
                                 ],
                                 navbar=True,
@@ -195,12 +190,13 @@ search_bar = html.Div(
                         dmc.MultiSelect(
                             id="projects",
                             searchable=True,
+                            placeholder="Please select a repository or an organization.",
                             clearable=True,
                             nothingFound="No repositories matching your input!",
                             variant="filled",
                             debounce=0.5,
-                            data=app.repo_options,
-                            value=app.repo_options[0],
+                            data=app.msoh.all_options(),
+                            value=app.msoh.initial_option(),
                             limit=100,
                             style={"fontSize": 16},
                         ),
@@ -286,11 +282,7 @@ layout = dbc.Container(
                         ),
                         search_bar,
                         dcc.Loading(
-                            children=[
-                                html.Div(
-                                    id="results-output-container", className="mb-4"
-                                )
-                            ],
+                            children=[html.Div(id="results-output-container", className="mb-4")],
                             color="#119DFF",
                             type="dot",
                             fullscreen=True,
