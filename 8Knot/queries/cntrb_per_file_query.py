@@ -31,7 +31,7 @@ def cntrb_per_file_query(self, repos):
     query_string = """
                 SELECT
                     prf.pr_file_path as file_path,
-                    pr.repo_id as ID,
+                    pr.repo_id as repo_id,
                     string_agg(DISTINCT CAST(pr.pr_augur_contributor_id AS varchar(15)), ',') AS cntrb_ids
                 FROM
                     pull_requests pr,

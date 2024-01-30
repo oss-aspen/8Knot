@@ -164,10 +164,10 @@ def new_contributor_graph(repolist, interval, bot_switch):
 def process_data(df, interval):
     # convert to datetime objects with consistent column name
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
-    df.rename(columns={"created_at": "created"}, inplace=True)
+    # df.rename(columns={"created_at": "created"}, inplace=True)
 
     # order from beginning of time to most recent
-    df = df.sort_values("created", axis=0, ascending=True)
+    df = df.sort_values("created_at", axis=0, ascending=True)
 
     """
         Assume that the cntrb_id values are unique to individual contributors.
@@ -186,10 +186,10 @@ def process_data(df, interval):
         return df, None
 
     # get the count of new contributors in the desired interval in pandas period format, sort index to order entries
-    created_range = pd.to_datetime(df["created"]).dt.to_period(interval).value_counts().sort_index()
+    created_range = pd.to_datetime(df["created_at"]).dt.to_period(interval).value_counts().sort_index()
 
     # converts to data frame object and creates date column from period values
-    df_contribs = created_range.to_frame().reset_index().rename(columns={"index": "Date", "created": "contribs"})
+    df_contribs = created_range.to_frame().reset_index().rename(columns={"index": "Date", "created_at": "contribs"})
 
     # converts date column to a datetime object, converts to string first to handle period information
     df_contribs["Date"] = pd.to_datetime(df_contribs["Date"].astype(str))
@@ -209,7 +209,7 @@ def create_figure(df, df_contribs, interval):
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
     if interval == -1:
-        fig = px.line(df, x="created", y=df.index, color_discrete_sequence=[color_seq[3]])
+        fig = px.line(df, x="created_at", y=df.index, color_discrete_sequence=[color_seq[3]])
         fig.update_traces(hovertemplate="Contributors: %{y}<br>%{x|%b %d, %Y} <extra></extra>")
     else:
         fig = px.bar(
