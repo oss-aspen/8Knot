@@ -109,7 +109,9 @@ gc_cntrib_pr_assignment = dbc.Card(
                                         max_date_allowed=dt.date.today(),
                                         initial_visible_month=dt.date(dt.date.today().year, 1, 1),
                                         start_date=dt.date(
-                                            dt.date.today().year - 2, dt.date.today().month, dt.date.today().day
+                                            dt.date.today().year - 2,
+                                            dt.date.today().month,
+                                            dt.date.today().day,
                                         ),
                                         clearable=True,
                                     ),
@@ -201,12 +203,12 @@ def cntrib_pr_assignment_graph(repolist, interval, assign_req, start_date, end_d
 
 def process_data(df: pd.DataFrame, interval, assign_req, start_date, end_date):
     # convert to datetime objects rather than strings
-    df["created"] = pd.to_datetime(df["created"], utc=True)
-    df["closed"] = pd.to_datetime(df["closed"], utc=True)
+    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
+    df["closed_at"] = pd.to_datetime(df["closed_at"], utc=True)
     df["assign_date"] = pd.to_datetime(df["assign_date"], utc=True)
 
     # order values chronologically by created date
-    df = df.sort_values(by="created", axis=0, ascending=True)
+    df = df.sort_values(by="created_at", axis=0, ascending=True)
 
     # drop all issues that have no assignments
     df = df[~df.assignment_action.isnull()]
@@ -232,17 +234,17 @@ def process_data(df: pd.DataFrame, interval, assign_req, start_date, end_date):
 
     # filter values based on date picker
     if start_date is not None:
-        df = df[df.created >= start_date]
+        df = df[df.created_at >= start_date]
     if end_date is not None:
-        df = df[df.created <= end_date]
+        df = df[df.created_at <= end_date]
 
     # only include contributors that meet the criteria
     df = df.loc[df["assignee"].isin(contributors)]
 
     # first and last elements of the dataframe are the
     # earliest and latest events respectively
-    earliest = df["created"].min()
-    latest = max(df["created"].max(), df["closed"].max())
+    earliest = df["created_at"].min()
+    latest = max(df["created_at"].max(), df["closed_at"].max())
 
     # generating buckets beginning to the end of time by the specified interval
     dates = pd.date_range(start=earliest, end=latest, freq=interval, inclusive="both")
@@ -356,10 +358,10 @@ def pr_assignment(df, start_date, end_date, contrib):
     df = df[df["assignee"] == contrib]
 
     # drop rows that are more recent than the end date
-    df_created = df[df["created"] <= end_date]
+    df_created = df[df["created_at"] <= end_date]
 
     # Keep issues that were either still open after the 'start_date' or that have not been closed.
-    df_in_range = df_created[(df_created["closed"] > start_date) | (df_created["closed"].isnull())]
+    df_in_range = df_created[(df_created["closed_at"] > start_date) | (df_created["closed_at"].isnull())]
 
     # get all issue unassignments and drop rows that have been unassigned more recent than the end date
     df_unassign = df_in_range[

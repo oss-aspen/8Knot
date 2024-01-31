@@ -107,8 +107,14 @@ gc_org_core_contributors = dbc.Card(
                                     dbc.Checklist(
                                         id=f"email-filter-{PAGE}-{VIZ_ID}",
                                         options=[
-                                            {"label": "Exclude Gmail", "value": "gmail"},
-                                            {"label": "Exclude GitHub", "value": "github"},
+                                            {
+                                                "label": "Exclude Gmail",
+                                                "value": "gmail",
+                                            },
+                                            {
+                                                "label": "Exclude GitHub",
+                                                "value": "github",
+                                            },
                                         ],
                                         value=[""],
                                         inline=True,
@@ -165,7 +171,13 @@ def toggle_popover(n, is_open):
     background=True,
 )
 def compay_associated_activity_graph(
-    repolist, contributions, contributors, start_date, end_date, email_filter, bot_switch
+    repolist,
+    contributions,
+    contributors,
+    start_date,
+    end_date,
+    email_filter,
+    bot_switch,
 ):
     # wait for data to asynchronously download and become available.
     while not_cached := cf.get_uncached(func_name=aq.__name__, repolist=repolist):
@@ -201,23 +213,23 @@ def compay_associated_activity_graph(
 
 def process_data(df: pd.DataFrame, contributions, contributors, start_date, end_date, email_filter):
     # convert to datetime objects rather than strings
-    df["created"] = pd.to_datetime(df["created"], utc=True)
+    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
 
     # order values chronologically by COLUMN_TO_SORT_BY date
-    df = df.sort_values(by="created", axis=0, ascending=True)
+    df = df.sort_values(by="created_at", axis=0, ascending=True)
 
     # filter values based on date picker
     if start_date is not None:
-        df = df[df.created >= start_date]
+        df = df[df.created_at >= start_date]
     if end_date is not None:
-        df = df[df.created <= end_date]
+        df = df[df.created_at <= end_date]
 
     # groups contributions by countributor id and counts, created column now hold the number
     # of contributions for its respective contributor
-    df = df.groupby(["cntrb_id", "email_list"], as_index=False)[["created"]].count()
+    df = df.groupby(["cntrb_id", "email_list"], as_index=False)[["created_at"]].count()
 
     # filters out contributors that dont meet the core contribution threshhold
-    df = df[df.created >= contributions]
+    df = df[df.created_at >= contributions]
 
     # creates list of unique emails and flattens list result
     emails = df.email_list.str.split(" , ").explode("email_list").tolist()

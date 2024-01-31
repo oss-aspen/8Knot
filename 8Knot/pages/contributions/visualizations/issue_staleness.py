@@ -206,16 +206,16 @@ def new_staling_issues_graph(repolist, interval, staling_interval, stale_interva
 
 def process_data(df: pd.DataFrame, interval, staling_interval, stale_interval):
     # convert to datetime objects rather than strings
-    df["created"] = pd.to_datetime(df["created"], utc=True)
-    df["closed"] = pd.to_datetime(df["closed"], utc=True)
+    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
+    df["closed_at"] = pd.to_datetime(df["closed_at"], utc=True)
 
     # order values chronologically by creation date
-    df = df.sort_values(by="created", axis=0, ascending=True)
+    df = df.sort_values(by="created_at", axis=0, ascending=True)
 
     # first and last elements of the dataframe are the
     # earliest and latest events respectively
-    earliest = df["created"].min()
-    latest = max(df["created"].max(), df["closed"].max())
+    earliest = df["created_at"].min()
+    latest = max(df["created_at"].max(), df["closed_at"].max())
 
     # generating buckets beginning to the end of time by the specified interval
     dates = pd.date_range(start=earliest, end=latest, freq=interval, inclusive="both")
@@ -300,13 +300,13 @@ def create_figure(df_status: pd.DataFrame, interval):
 
 def get_new_staling_stale_up_to(df, date, staling_interval, stale_interval):
     # drop rows that are more recent than the date limit
-    df_created = df[df["created"] <= date]
+    df_created = df[df["created_at"] <= date]
 
     # drop rows that have been closed before date
-    df_in_range = df_created[df_created["closed"] > date]
+    df_in_range = df_created[df_created["closed_at"] > date]
 
     # include rows that have a null closed value
-    df_in_range = pd.concat([df_in_range, df_created[df_created.closed.isnull()]])
+    df_in_range = pd.concat([df_in_range, df_created[df_created.closed_at.isnull()]])
 
     # time difference for the amount of days before the threshold date
     staling_days = date - relativedelta(days=+staling_interval)
@@ -318,10 +318,10 @@ def get_new_staling_stale_up_to(df, date, staling_interval, stale_interval):
     numTotal = df_in_range.shape[0]
 
     # num of currently open issues that have been create in the last staling_value amount of days
-    numNew = df_in_range[df_in_range["created"] >= staling_days].shape[0]
+    numNew = df_in_range[df_in_range["created_at"] >= staling_days].shape[0]
 
-    staling = df_in_range[df_in_range["created"] > stale_days]
-    numStaling = staling[staling["created"] < staling_days].shape[0]
+    staling = df_in_range[df_in_range["created_at"] > stale_days]
+    numStaling = staling[staling["created_at"] < staling_days].shape[0]
 
     numStale = numTotal - (numNew + numStaling)
 

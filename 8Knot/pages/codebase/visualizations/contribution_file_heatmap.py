@@ -93,10 +93,10 @@ graph_loading = html.Div(
                                 dbc.RadioItems(
                                     id=f"graph-view-{PAGE}-{VIZ_ID}",
                                     options=[
-                                        {"label": "PR Opened", "value": "created"},
-                                        {"label": "PR Merged", "value": "merged"},
+                                        {"label": "PR Opened", "value": "created_at"},
+                                        {"label": "PR Merged", "value": "merged_at"},
                                     ],
-                                    value="created",
+                                    value="created_at",
                                     inline=True,
                                 ),
                             ]
@@ -197,7 +197,7 @@ def directory_dropdown(repo_id):
     # strings to hold the values for each column (always the same for every row of this query)
     repo_name = df["repo_name"].iloc[0]
     repo_path = df["repo_path"].iloc[0]
-    repo_id = str(df["id"].iloc[0])
+    repo_id = str(df["repo_id"].iloc[0])
 
     # pattern found in each file path, used to slice to get only the root file path
     path_slice = repo_id + "-" + repo_path + "/" + repo_name + "/"
@@ -206,7 +206,7 @@ def directory_dropdown(repo_id):
     # drop unneccessary columns not needed after preprocessing steps
     df = df.reset_index()
     df.drop(
-        ["index", "id", "repo_name", "repo_path", "rl_analysis_date"],
+        ["index", "repo_id", "repo_name", "repo_path", "rl_analysis_date"],
         axis=1,
         inplace=True,
     )
@@ -317,7 +317,7 @@ def process_data(
     # strings to hold the values for each column (always the same for every row of this query)
     repo_name = df_file["repo_name"].iloc[0]
     repo_path = df_file["repo_path"].iloc[0]
-    repo_id = str(df_file["id"].iloc[0])
+    repo_id = str(df_file["repo_id"].iloc[0])
 
     # pattern found in each file path, used to slice to get only the root file path
     path_slice = repo_id + "-" + repo_path + "/" + repo_name + "/"
@@ -334,11 +334,11 @@ def process_data(
     df_file = df_file.join(df_file["file_path"].str.split("/", expand=True))
 
     # drop unnecessary columns
-    df_file.drop(["id"], axis=1, inplace=True)
-    df_file_pr.drop(["id"], axis=1, inplace=True)
+    df_file.drop(["repo_id"], axis=1, inplace=True)
+    df_file_pr.drop(["repo_id"], axis=1, inplace=True)
 
     # create column with list of prs per file path
-    df_file_pr = df_file_pr.groupby("file_path")["pull_request"].apply(list)
+    df_file_pr = df_file_pr.groupby("file_path")["pull_request_id"].apply(list)
 
     # Left join on df_files to only get the files that are currently in the repository
     # and the contributors that have ever opened a pr that included edits on the file
@@ -354,7 +354,7 @@ def process_data(
     df_dynamic_directory = df_file[df_file["file_path"].str.startswith(directory)]
 
     # test if there is any pull requests in the directory
-    if df_dynamic_directory.pull_request.isnull().all():
+    if df_dynamic_directory.pull_request_id.isnull().all():
         return pd.DataFrame()
 
     # get one level up from the directory level
@@ -363,38 +363,42 @@ def process_data(
     # Groupby the level above the selected directory for all files nested in folders are together.
     # For each, create a list of all of pull request that include that file
     df_dynamic_directory = (
-        df_dynamic_directory.groupby(group_column)["pull_request"]
+        df_dynamic_directory.groupby(group_column)["pull_request_id"]
         .sum()
         .reset_index()
         .rename(columns={group_column: "directory_value"})
     )
 
     # reformat 0 to "" for later processing
-    df_dynamic_directory.loc[df_dynamic_directory.pull_request == 0, "pull_request"] = ""
+    df_dynamic_directory.loc[df_dynamic_directory.pull_request_id == 0, "pull_request_id"] = ""
 
     # Set of pull_request to confirm there are no duplicate pull requests
-    df_dynamic_directory["pull_request"] = df_dynamic_directory.apply(
-        lambda row: set(row.pull_request),
+    df_dynamic_directory["pull_request_id"] = df_dynamic_directory.apply(
+        lambda row: set(row.pull_request_id),
         axis=1,
     )
 
     # date reformating
-    df_pr["created"] = pd.to_datetime(df_pr["created"], utc=True)
-    df_pr["merged"] = pd.to_datetime(df_pr["merged"], utc=True)
+    df_pr["created_at"] = pd.to_datetime(df_pr["created_at"], utc=True)
+    df_pr["merged_at"] = pd.to_datetime(df_pr["merged_at"], utc=True)
 
     # drop unneccessary columns not needed after preprocessing steps
-    df_pr.drop(["id", "repo_name", "pr_src_number", "cntrb_id", "closed"], axis=1, inplace=True)
+    df_pr.drop(
+        ["repo_id", "repo_name", "pr_src_number", "cntrb_id", "closed_at"],
+        axis=1,
+        inplace=True,
+    )
 
     # dictionaries of pull_requests and their open and merge dates
-    pr_open = df_pr.set_index("pull_request")["created"].to_dict()
-    pr_merged = df_pr.set_index("pull_request")["merged"].to_dict()
+    pr_open = df_pr.set_index("pull_request_id")["created_at"].to_dict()
+    pr_merged = df_pr.set_index("pull_request_id")["merged_at"].to_dict()
 
     # get list of pr created and merged dates for each pr
-    df_dynamic_directory["created"], df_dynamic_directory["merged"] = zip(
+    df_dynamic_directory["created_at"], df_dynamic_directory["merged_at"] = zip(
         *df_dynamic_directory.apply(
             lambda row: [
-                [pr_open[x] for x in row.pull_request],
-                [pr_merged[x] for x in row.pull_request if (not pd.isnull(pr_merged[x]))],
+                [pr_open[x] for x in row.pull_request_id],
+                [pr_merged[x] for x in row.pull_request_id if (not pd.isnull(pr_merged[x]))],
             ],
             axis=1,
         )
@@ -413,8 +417,8 @@ def process_data(
     improves the heatmap ploting"""
 
     # dates based on creation and closed dates so it represents the length of the project
-    min_date = df_pr.created.min()
-    max_date = max(df_pr["created"].max(), df_pr["merged"].max())
+    min_date = df_pr.created_at.min()
+    max_date = max(df_pr["created_at"].max(), df_pr["merged_at"].max())
     dates = pd.date_range(start=min_date, end=max_date, freq="M", inclusive="both")
     df_fill = dates.to_frame(index=False, name=graph_view)
 
@@ -438,7 +442,7 @@ def process_data(
 
 def create_figure(df: pd.DataFrame, graph_view):
     legend_title = "PRs Opened"
-    if graph_view == "merged":
+    if graph_view == "merged_at":
         legend_title = "PRs Merged"
 
     fig = px.imshow(

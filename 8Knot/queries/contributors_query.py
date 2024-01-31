@@ -39,10 +39,10 @@ def contributors_query(self, repos):
 
     query_string = f"""
                     SELECT
-                        ca.repo_id as id,
+                        ca.repo_id,
                         ca.repo_name,
                         left(ca.cntrb_id::text, 15) as cntrb_id, -- first 15 characters of the uuid
-                        timezone('utc', ca.created_at) AS created,
+                        timezone('utc', ca.created_at) AS created_at,
                         ca.login,
                         ca.action,
                         ca.rank

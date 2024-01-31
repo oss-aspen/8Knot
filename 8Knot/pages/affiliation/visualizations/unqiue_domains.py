@@ -165,16 +165,16 @@ def unique_domains_graph(repolist, num, start_date, end_date, bot_switch):
 
 def process_data(df: pd.DataFrame, num, start_date, end_date):
     # convert to datetime objects rather than strings
-    df["created"] = pd.to_datetime(df["created"], utc=True)
+    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
 
     # order values chronologically by COLUMN_TO_SORT_BY date
-    df = df.sort_values(by="created", axis=0, ascending=True)
+    df = df.sort_values(by="created_at", axis=0, ascending=True)
 
     # filter values based on date picker
     if start_date is not None:
-        df = df[df.created >= start_date]
+        df = df[df.created_at >= start_date]
     if end_date is not None:
-        df = df[df.created <= end_date]
+        df = df[df.created_at <= end_date]
 
     # creates list of unique emails and flattens list result
     emails = df.email_list.str.split(" , ").explode("email_list").unique().tolist()

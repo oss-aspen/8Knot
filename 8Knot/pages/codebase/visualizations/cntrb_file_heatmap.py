@@ -180,7 +180,7 @@ def directory_dropdown(repo_id):
     # strings to hold the values for each column (always the same for every row of this query)
     repo_name = df["repo_name"].iloc[0]
     repo_path = df["repo_path"].iloc[0]
-    repo_id = str(df["id"].iloc[0])
+    repo_id = str(df["repo_id"].iloc[0])
 
     # pattern found in each file path, used to slice to get only the root file path
     path_slice = repo_id + "-" + repo_path + "/" + repo_name + "/"
@@ -192,7 +192,7 @@ def directory_dropdown(repo_id):
     # drop unneccessary columns not needed after preprocessing steps
     df = df.reset_index()
     df.drop(
-        ["index", "id", "repo_name", "repo_path", "rl_analysis_date"],
+        ["index", "repo_id", "repo_name", "repo_path", "rl_analysis_date"],
         axis=1,
         inplace=True,
     )
@@ -308,7 +308,7 @@ def process_data(
     # strings to hold the values for each column (always the same for every row of this query)
     repo_name = df_file["repo_name"].iloc[0]
     repo_path = df_file["repo_path"].iloc[0]
-    repo_id = str(df_file["id"].iloc[0])
+    repo_id = str(df_file["repo_id"].iloc[0])
 
     # pattern found in each file path, used to slice to get only the root file path
     path_slice = repo_id + "-" + repo_path + "/" + repo_name + "/"
@@ -322,8 +322,8 @@ def process_data(
     df_file = df_file.join(df_file["file_path"].str.split("/", expand=True))
 
     # drop unnecessary columns
-    df_file.drop(["id"], axis=1, inplace=True)
-    df_file_cntbs.drop(["id"], axis=1, inplace=True)
+    df_file.drop(["repo_id"], axis=1, inplace=True)
+    df_file_cntbs.drop(["repo_id"], axis=1, inplace=True)
 
     # Left join on df_files to only get the files that are currently in the repository
     # and the contributors that have ever opened a pr that included edits on the file
@@ -387,7 +387,11 @@ def process_data(
 
     # drop unneccessary columns not needed after preprocessing steps
     df_actions = df_actions.reset_index()
-    df_actions.drop(["index", "id", "repo_name", "login", "Action", "rank"], axis=1, inplace=True)
+    df_actions.drop(
+        ["index", "repo_id", "repo_name", "login", "Action", "rank"],
+        axis=1,
+        inplace=True,
+    )
 
     # dictionary of cntrb_ids and their most recent activity on repo
     last_contrb = df_actions.set_index("cntrb_id")["created_at"].to_dict()

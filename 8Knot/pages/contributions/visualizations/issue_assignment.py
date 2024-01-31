@@ -152,17 +152,17 @@ def cntrib_issue_assignment_graph(repolist, interval, bot_switch):
 
 def process_data(df: pd.DataFrame, interval):
     # convert to datetime objects rather than strings
-    df["created"] = pd.to_datetime(df["created"], utc=True)
-    df["closed"] = pd.to_datetime(df["closed"], utc=True)
+    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
+    df["closed_at"] = pd.to_datetime(df["closed_at"], utc=True)
     df["assign_date"] = pd.to_datetime(df["assign_date"], utc=True)
 
     # order values chronologically by created date
-    df = df.sort_values(by="created", axis=0, ascending=True)
+    df = df.sort_values(by="created_at", axis=0, ascending=True)
 
     # first and last elements of the dataframe are the
     # earliest and latest events respectively
-    earliest = df["created"].min()
-    latest = max(df["created"].max(), df["closed"].max())
+    earliest = df["created_at"].min()
+    latest = max(df["created_at"].max(), df["closed_at"].max())
 
     # generating buckets beginning to the end of time by the specified interval
     dates = pd.date_range(start=earliest, end=latest, freq=interval, inclusive="both")
@@ -277,10 +277,10 @@ def issue_assignment(df, start_date, end_date):
     """
 
     # drop rows that are more recent than the end date
-    df_created = df[df["created"] <= end_date]
+    df_created = df[df["created_at"] <= end_date]
 
     # Keep issues that were either still open after the 'start_date' or that have not been closed.
-    df_in_range = df_created[(df_created["closed"] > start_date) | (df_created["closed"].isnull())]
+    df_in_range = df_created[(df_created["closed_at"] > start_date) | (df_created["closed_at"].isnull())]
 
     # number of issues open in time interval
     num_issues_open = df_in_range["issue_id"].nunique()

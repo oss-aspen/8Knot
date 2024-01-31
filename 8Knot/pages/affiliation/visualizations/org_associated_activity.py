@@ -82,8 +82,14 @@ gc_org_associated_activity = dbc.Card(
                                     dbc.Checklist(
                                         id=f"email-filter-{PAGE}-{VIZ_ID}",
                                         options=[
-                                            {"label": "Exclude Gmail", "value": "gmail"},
-                                            {"label": "Exclude GitHub", "value": "github"},
+                                            {
+                                                "label": "Exclude Gmail",
+                                                "value": "gmail",
+                                            },
+                                            {
+                                                "label": "Exclude GitHub",
+                                                "value": "github",
+                                            },
                                         ],
                                         value=[""],
                                         inline=True,
@@ -201,16 +207,16 @@ def org_associated_activity_graph(repolist, num, start_date, end_date, email_fil
 
 def process_data(df: pd.DataFrame, num, start_date, end_date, email_filter):
     # convert to datetime objects rather than strings
-    df["created"] = pd.to_datetime(df["created"], utc=True)
+    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
 
     # order values chronologically by COLUMN_TO_SORT_BY date
-    df = df.sort_values(by="created", axis=0, ascending=True)
+    df = df.sort_values(by="created_at", axis=0, ascending=True)
 
     # filter values based on date picker
     if start_date is not None:
-        df = df[df.created >= start_date]
+        df = df[df.created_at >= start_date]
     if end_date is not None:
-        df = df[df.created <= end_date]
+        df = df[df.created_at <= end_date]
 
     # creates list of emails for each contribution and flattens list result
     emails = df.email_list.str.split(" , ").explode("email_list").tolist()

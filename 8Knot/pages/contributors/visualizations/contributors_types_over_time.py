@@ -178,7 +178,7 @@ def create_contrib_over_time_graph(repolist, contribs, interval, bot_switch):
 def process_data(df, interval, contribs):
     # convert to datetime objects with consistent column name
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
-    df.rename(columns={"created_at": "created"}, inplace=True)
+    # df.rename(columns={"created_at": "created"}, inplace=True)
 
     # remove null contrib ids
     df.dropna(inplace=True)
@@ -191,7 +191,7 @@ def process_data(df, interval, contribs):
     df_repeat_temp = df.loc[df["cntrb_id"].isin(contributors)]
 
     # order values chronologically by creation date
-    df = df.sort_values(by="created", axis=0, ascending=True)
+    df = df.sort_values(by="created_at", axis=0, ascending=True)
 
     # variable to slice on to handle weekly period edge case
     period_slice = None
@@ -209,11 +209,11 @@ def process_data(df, interval, contribs):
         df_drive = (
             # disable and re-enable formatter
             # fmt: off
-            df_drive_temp.groupby(by=df_drive_temp.created.dt.to_period(interval))["cntrb_id"]
+            df_drive_temp.groupby(by=df_drive_temp.created_at.dt.to_period(interval))["cntrb_id"]
             # fmt: on
             .nunique()
             .reset_index()
-            .rename(columns={"cntrb_id": "Drive", "created": "Date"})
+            .rename(columns={"cntrb_id": "Drive", "created_at": "Date"})
         )
         df_drive["Date"] = pd.to_datetime(df_drive["Date"].astype(str).str[:period_slice])
 
@@ -227,11 +227,11 @@ def process_data(df, interval, contribs):
         df_repeat = (
             # disable and re-enable formatter
             # fmt: off
-            df_repeat_temp.groupby(by=df_repeat_temp.created.dt.to_period(interval))["cntrb_id"]
+            df_repeat_temp.groupby(by=df_repeat_temp.created_at.dt.to_period(interval))["cntrb_id"]
             # fmt: on
             .nunique()
             .reset_index()
-            .rename(columns={"cntrb_id": "Repeat", "created": "Date"})
+            .rename(columns={"cntrb_id": "Repeat", "created_at": "Date"})
         )
         df_repeat["Date"] = pd.to_datetime(df_repeat["Date"].astype(str).str[:period_slice])
 
