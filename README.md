@@ -205,7 +205,7 @@ However, there are 7 visualizations on the Overview page. Therefore, I will scal
 guaranteeing that there are (2 \* #CPUs = 12) available processing celery threads, ensuring that the known deadlock will be avoided.
 
 ```bash
-docker compose up --build --scale query-worker=2 --scale callback-worker=2
+docker compose up --build --scale worker-query=2 --scale worker-callback=2
 ```
 
 To stop the application, run:
