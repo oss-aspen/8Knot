@@ -124,21 +124,31 @@ def process_data(df: pd.DataFrame):
     # get max time difference to use for grouping and round for correct format
     max_time = round(df["libyear"].max(), 3)
 
-    # group by the 4 buckets
-    depend_pie = pd.DataFrame(
-        df["libyear"].groupby(pd.cut(df["libyear"], [0, 0.001, 0.5, 1, max_time], right=False)).count()
-    ).rename(columns={"libyear": "packages"})
+    # create intervals for df grouper
+    intervals = [0.0, 0.001, 0.5, 1.0, max_time]
+    intervals = [val for val in intervals if val <= max_time]
+
+    # round up for formating and corner case ease
+    intervals[-1] = intervals[-1] + 0.001
+
+    # group by the time intervals
+    depend_pie = pd.DataFrame(df["libyear"].groupby(pd.cut(df["libyear"], intervals, right=False)).count()).rename(
+        columns={"libyear": "packages"}
+    )
     depend_pie = depend_pie.reset_index().rename(columns={"libyear": "date_range"})
     depend_pie["date_range"] = depend_pie["date_range"].astype(str)
 
-    # create string for naming
-    max_string = "[1.0, " + str(max_time) + ")"
-
-    # update naming for pie chart
-    depend_pie.loc[depend_pie["date_range"] == "[0.0, 0.001)", "date_range"] = "Up to date"
-    depend_pie.loc[depend_pie["date_range"] == "[0.001, 0.5)", "date_range"] = "Less than 6 months"
-    depend_pie.loc[depend_pie["date_range"] == "[0.5, 1.0)", "date_range"] = "6 months to year"
-    depend_pie.loc[depend_pie["date_range"] == max_string, "date_range"] = "Greater than a year"
+    # update column names dynamically based on specific ranges
+    for x in range(len(intervals) - 1):
+        updated_date_range = "Up to date"
+        if intervals[x] > 0 and intervals[x] < 0.5:
+            updated_date_range = "Less than 6 months"
+        if intervals[x] >= 0.5 and intervals[x] < 1:
+            updated_date_range = "6 months to year"
+        if intervals[x] == 1:
+            updated_date_range = "Greater than a year"
+        current_date_range = "[" + str(intervals[x]) + ", " + str(intervals[x + 1]) + ")"
+        depend_pie.loc[depend_pie["date_range"] == current_date_range, "date_range"] = updated_date_range
 
     return depend_pie
 
