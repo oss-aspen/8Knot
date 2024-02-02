@@ -21,7 +21,7 @@ import app
 import cache_manager.cache_facade as cf
 
 PAGE = "codebase"
-VIZ_ID = "cntrb-file-heatmap"
+VIZ_ID = "reviewer-file-heatmap"
 
 # div to hold all objects to wait for loading to render
 graph_loading = html.Div(
@@ -31,12 +31,12 @@ graph_loading = html.Div(
                 dbc.PopoverHeader("Graph Info:"),
                 dbc.PopoverBody(
                     """
-                    This visualization analyzes the activity of the contributors to sub-sections (files or folders)
-                    of a repository. Specifically, this heatmap identifies the last time a sub-section's contributors
-                    (those people who have opened at least one pull request to a sub-section) last contributed to the
+                    This visualization analyzes the activity of the reviewers to sub-sections (files or folders)
+                    of a repository. Specifically, this heatmap identifies the last time a sub-section's reviewer
+                    (those people who have reviewed at least one pull request to a sub-section) last contributed to the
                     repository. See the definition of "contribution" on the Info page for more information. This could be
                     interpreted as monitoring technical knowledge retention of codebase components: if a sub-section's
-                    past contributors are no longer active in the repository, maintainership of that sub-section could
+                    past reviewers are no longer active in the repository, maintainership of that sub-section could
                     be insufficient and require attention.
                     """
                 ),
@@ -102,12 +102,12 @@ graph_loading = html.Div(
     ],
 )
 
-gc_cntrb_file_heatmap = dbc.Card(
+gc_reviewer_file_heatmap = dbc.Card(
     [
         dbc.CardBody(
             [
                 html.H3(
-                    "Contributor File Heatmap",
+                    "Reviewer File Heatmap",
                     className="card-title",
                     style={"textAlign": "center"},
                 ),
@@ -220,7 +220,7 @@ def directory_dropdown(repo_id):
     return directories, "Top Level Directory"
 
 
-# callback for contributor file heatmap graph
+# callback for reviewer file heatmap graph
 @callback(
     Output(f"{PAGE}-{VIZ_ID}", "figure"),
     [
@@ -230,7 +230,7 @@ def directory_dropdown(repo_id):
     ],
     background=True,
 )
-def cntrb_file_heatmap_graph(repo_id, directory, bot_switch):
+def reviewer_file_heatmap_graph(repo_id, directory, bot_switch):
     start = time.perf_counter()
     logging.warning(f"{VIZ_ID}- START")
 
@@ -257,7 +257,7 @@ def cntrb_file_heatmap_graph(repo_id, directory, bot_switch):
 
 def multi_query_helper(repos):
     """
-    For cntrb_file_heatmap_graph-
+    For reviewer_file_heatmap_graph-
     hack to put all of the cache-retrieval
     in the same place temporarily
     """
@@ -323,23 +323,23 @@ def process_data(
 
     # drop unnecessary columns
     df_file.drop(["repo_id"], axis=1, inplace=True)
-    df_file_cntbs.drop(["repo_id", "reviewer_ids"], axis=1, inplace=True)
+    df_file_cntbs.drop(["repo_id", "cntrb_ids"], axis=1, inplace=True)
 
     # Left join on df_files to only get the files that are currently in the repository
     # and the contributors that have ever opened a pr that included edits on the file
     df_file = pd.merge(df_file, df_file_cntbs, on="file_path", how="left")
     # replace nan with empty string to avoid errors in list comprehension
-    df_file.cntrb_ids.fillna("", inplace=True)
+    df_file.reviewer_ids.fillna("", inplace=True)
 
-    # reformat cntrb_ids to list and remove bots if filter is on
+    # reformat reviewer_ids to list and remove bots if filter is on
     if bot_switch:
-        df_file["cntrb_ids"] = df_file.apply(
-            lambda row: [x for x in row.cntrb_ids if x not in app.bots_list],
+        df_file["reviewer_ids"] = df_file.apply(
+            lambda row: [x for x in row.reviewer_ids if x not in app.bots_list],
             axis=1,
         )
     else:
-        df_file["cntrb_ids"] = df_file.apply(
-            lambda row: [x for x in row.cntrb_ids],
+        df_file["reviewer_ids"] = df_file.apply(
+            lambda row: [x for x in row.reviewer_ids],
             axis=1,
         )
 
@@ -353,7 +353,7 @@ def process_data(
     df_dynamic_directory = df_file[df_file["file_path"].str.startswith(directory)]
 
     # number of files in the directory or nested in folders in the directory that have no contributors
-    num_empty_cntrb = df_dynamic_directory[df_dynamic_directory["cntrb_ids"].str.len() == 0].shape[0]
+    num_empty_cntrb = df_dynamic_directory[df_dynamic_directory["reviewer_ids"].str.len() == 0].shape[0]
 
     # return empty df if all of the files in the directory or nested in folders in the directory have
     # no contributors
@@ -366,17 +366,19 @@ def process_data(
     # Groupby the level above the selected directory for all files nested in folders are together.
     # For each, create a list of all of the contributors who have contributed
     df_dynamic_directory = (
-        df_dynamic_directory.groupby(group_column)["cntrb_ids"]
+        df_dynamic_directory.groupby(group_column)["reviewer_ids"]
         .sum()
         .reset_index()
         .rename(columns={group_column: "directory_value"})
     )
 
-    # Set of cntrb_ids to confirm there are no duplicate cntrb_ids
-    df_dynamic_directory["cntrb_ids"] = df_dynamic_directory.apply(
-        lambda row: set(row.cntrb_ids),
+    # Set of reviewer_ids to confirm there are no duplicate reviewer_ids
+    df_dynamic_directory["reviewer_ids"] = df_dynamic_directory.apply(
+        lambda row: set(row.reviewer_ids),
         axis=1,
     )
+
+    print(df_dynamic_directory)
 
     # date reformating
     df_actions["created_at"] = pd.to_datetime(df_actions["created_at"], utc=True)
@@ -393,12 +395,12 @@ def process_data(
         inplace=True,
     )
 
-    # dictionary of cntrb_ids and their most recent activity on repo
+    # dictionary of reviewer_ids and their most recent activity on repo
     last_contrb = df_actions.set_index("cntrb_id")["created_at"].to_dict()
 
     # get list of dates of the most recent activity for each contributor for each file
     df_dynamic_directory["dates"] = df_dynamic_directory.apply(
-        lambda row: [last_contrb[x] for x in row.cntrb_ids],
+        lambda row: [last_contrb[x] for x in row.reviewer_ids],
         axis=1,
     )
 
