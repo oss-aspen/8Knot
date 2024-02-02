@@ -228,9 +228,10 @@ def _create_application_tables() -> None:
         cur.execute(
             """
             CREATE UNLOGGED TABLE IF NOT EXISTS cntrb_per_file_query(
-                file_path text,
                 repo_id int,
-                cntrb_ids text
+                file_path text,
+                cntrb_ids text,
+                reviewer_ids text
             )
             """
         )
