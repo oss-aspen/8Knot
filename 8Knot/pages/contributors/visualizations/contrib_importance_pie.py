@@ -319,8 +319,6 @@ def process_data(df: pd.DataFrame, action_type, top_k, patterns, start_date, end
     df_sum = df[action_type].sum()
 
     # calculate the remaining contributions by taking the the difference of t_sum and df_sum
-    # df = df.append({"cntrb_id": "Other", action_type: t_sum - df_sum}, ignore_index=True)
-
     # dataframes no longer implement above 'append' interface as of Pandas 1.4.4
     # create a single-entry dataframe that we can concatenate onto existing df
     df_concat = pd.DataFrame(data={"cntrb_id": ["Other"], action_type: [t_sum - df_sum]})
