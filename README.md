@@ -40,24 +40,40 @@ The file-structure of our application is intuitive. Non-application files are om
     |   +-- index/
                |     +-- index_callbacks.py
                |     +-- index_layout.py
-        +-- overview/
-               |     +-- overview.py
+        +-- welcome/
+               |     +-- welcome.py
                |     +-- visualizations/
                             |     +-- name_of_visualization_1.py
                             |     ...
                             |     +-- name_of_visualization_n.py
+        +-- contributions/
+               |     +-- contributions.py
+               |     +-- visualizations/
+                            |     ...
+        +-- contributors/
+               |     +-- cntrb_behavior.py
+               |     +-- cntrb_type.py
+               |     +-- visualizations/
+                            |     ...
         +-- chaoss/
                |     +-- chaoss.py
                |     +-- visualizations/
-                            |     +-- name_of_visualization_1.py
                             |     ...
-                            |     +-- name_of_visualization_n.py
-        +-- home/
-               |     +-- home.py
+        +-- affiliation/
+               |     +-- affiliation.py
+               |     +-- visualizations/
+                            |     ...
+        +-- codebase/
+               |     +-- codebase.py
+               |     +-- visualizations/
+                            |     ...
         +-- visualization_template/
                |     +-- viz_template.py
         +-- utils/
 +-- app.py
++-- _celery.py
++-- _login.py
++-- _bots.py
 .
 .
 .
@@ -66,7 +82,7 @@ The file-structure of our application is intuitive. Non-application files are om
 
 The application 'Dash' instance is defined in the 'app.py' file, as is the app.server object that our WSGI server uses, and the manager for the task-queue.
 
-The 'Dash' application instance imports the application's base layout from the '/pages/index/index_layout.py' file. The logic to process user input to components laid out in this file (search bar, page selectors) is defined in '/pages/index/index_callbacks.py.'
+The 'Dash' application instance imports the application's base layout from the '/pages/index/index_layout.py' file. The logic to process user input to components is laid out in this file (search bar, page selectors) is defined in '/pages/index/index_callbacks.py.'
 
 Each page of the application is in its own 'pages' folder. On each page a variety of metrics and figures are rendered. These, for each page, are in the 'page_name/visualizations/' folder, and are imported into the file 'page_name.py.'
 
@@ -120,14 +136,28 @@ If you would prefer to look at our most up-to-date work, please check out the fo
 
 ---
 
-## Local Development
+## Architectural Comment
 
-We've tried to make it as easy as possible to go from fork/clone to a running instance.
+Our demonstration application run in Oregon (AWS us-west2), while the Augur database that we use is in Columbus, MO. To improve user experience,
+we implement a cache using PostgreSQL as a side-car to our application.
+
+This has added significant application complexity that will be rebuilt and removed in the near future once we've replication our Augur database
+to the same data-center as our application.
+
+If you experience trouble with the existing caching architecture, please log an issue or reach out to us directly.
+
+---
+
+## Deploying 8Knot Locally and for Development
+
+We've tried to make it as easy as possible to run your own 8Knot instance.
 
 ### Credentials
 
 You will need credentials of the following form, named `env.list`, at the top-level of the 8Knot directory that you clone.
-The credentials below are valid, so you can copy and use them to access a development instance of Augur.
+The credentials below are valid, so you can copy and use them to access a testing instance of an Augur database.
+
+These credentials are suitable for development, but please replace any secrets with different values in production.
 
 ```
     AUGUR_DATABASE=graphish
@@ -139,14 +169,18 @@ The credentials below are valid, so you can copy and use them to access a develo
     8KNOT_DEBUG=True
     REDIS_PASSWORD=1234
     DEFAULT_SEARCHBAR_LABEL=chaoss
+    POSTGRES_PASSWORD=somepassword
+    SECRET_KEY=somethingsecret
 ```
 
-If you have a companion Augur front end application you'll need to set the following credentials in the env.list as well.
-By setting these credentials, a button on the top tab of the application will become available to allow you to create an account on
-your Augur front end, to log into your application via this front end, and to create user-defined groups of repos/organizations that
-will become available in your application, prefixed by your Augur username (e.g. \<username\>\_example_group and \<username\>\_other_example).
-The groups of the user who registers the 8Knot app with an Augur front end will be available to all other users- this user is considered the
-application's owner.
+8Knot doesn't handle user accounts or data collection requests on its own. To support these features, you'll need to add the
+following additional configuration to your `env.list` file.
+
+You'll need to register your 8Knot instance with an Augur front-end application to get an `AUGUR_APP_ID` and an `AUGUR_CLIENT_SECRET`.
+All parameters wrapped in `< >` will need to be replaced below. `<endpoint>` variables refer to the host of the Augur front-end that
+you're using.
+
+8Knot uses these parameters to manage user accounts via an OAuth2.0 flow, so user passwords are never handled directly.
 
 ```
     AUGUR_LOGIN_ENABLED=True
@@ -159,6 +193,12 @@ application's owner.
     AUGUR_ADMIN_NAME_ENDPOINT=<endpoint>/api/unstable/application/
     AUGUR_ADMIN_GROUP_NAMES_ENDPOINT=<endpoint>/api/unstable/application/groups/names
     AUGUR_ADMIN_GROUPS_ENDPOINT=<endpoint>/api/unstable/application/group/repos
+    OAUTH_CLIENT_NAME=augur
+    OAUTH_CLIENT_ID=<id>
+    OAUTH_CLIENT_SECRET=<secret>
+    OAUTH_AUTHORIZE_URL=<endpoint>/user/authorize
+    OAUTH_TOKEN_URL=<endpoint>/api/unstable/user/session/generate
+    OAUTH_REDIRECT_URI = localhost:8080/
 ```
 
 Note: You'll have to manually fill in the \<AUGUR_APP_ID\> in the AUGUR_USER_AUTH_ENDPOINT environment variable.
@@ -167,9 +207,9 @@ In-depth instructions for enabling 8Knot + Augur integration is available in [AU
 
 ### Runtime
 
-We use Docker containers to minimize the installation requirements for development. If you do not have Docker on your system, please follow the following guide: [Install Docker](https://docs.docker.com/engine/install)
+We use containers to minimize the installation requirements for development and single-machine production deployments. If you do not have Docker on your system, please follow the following guide: [Install Docker](https://docs.docker.com/engine/install)
 
-In addition to singular containers we also use Docker Compose. Please make sure you have Docker Compose installed on your system. You can find documentation on doing so here: [Docker Compose](https://docs.docker.com/compose/install)
+We use Docker's Compose feature to spin up all application resources together. Please make sure you have Docker Compose installed on your system. You can find documentation on doing so here: [Docker Compose](https://docs.docker.com/compose/install)
 
 If the following commands return sensible results then Docker and Docker Compose are installed:
 
@@ -187,9 +227,9 @@ development applications, but the application is built to work with the minimum 
 
 8Knot is a multi-container application.
 
-The app-server, worker-pool, and redis-cache containers communicate with one another via docker network.
+The app-server, worker-pools, redis-cache, and postgres-cache containers communicate with one another via docker networking.
 
-All of the build/tear-down is done with `docker-compose`.
+All of the build/tear-down is done with `docker compose`.
 
 To start the application, run at the top-level of the 8Knot directory:
 
@@ -208,7 +248,7 @@ guaranteeing that there are (2 \* #CPUs = 12) available processing celery thread
 docker compose up --build --scale worker-query=2 --scale worker-callback=2
 ```
 
-To stop the application, run:
+To stop the application:
 
 ```bash
 ctrl-c
@@ -217,7 +257,7 @@ ctrl-c
 To clean up the stopped containers, run:
 
 ```bash
-docker compose down
+docker compose down --volumes
 ```
 
 The application should be available locally at 'http://localhost:8080'
