@@ -305,6 +305,39 @@ def process_data(
     directory,
     bot_switch,
 ):
+
+    # df_file preprocessing
+    df_file = df_file_clean(df_file, df_file_cntbs, bot_switch)
+
+    df_dynamic_directory = cntrb_per_directory_value(directory, df_file)
+
+    # work around for using functions, will clean later
+    if df_dynamic_directory.empty:
+        return df_dynamic_directory
+
+    df_dynamic_directory = cntrb_to_last_activity(df_actions, df_dynamic_directory)
+
+    final = file_cntrb_activity_by_month(df_dynamic_directory, df_actions)
+
+    return final
+
+
+def create_figure(df: pd.DataFrame):
+    fig = px.imshow(
+        df,
+        labels=dict(x="Time", y="Directory Entries", color="Contributors"),
+        color_continuous_scale=px.colors.sequential.deep,
+    )
+
+    fig["layout"]["yaxis"]["tickmode"] = "linear"
+    fig["layout"]["height"] = 700
+    fig["layout"]["coloraxis_colorbar_x"] = -0.15
+    fig["layout"]["yaxis"]["side"] = "right"
+
+    return fig
+
+
+def df_file_clean(df_file: pd.DataFrame, df_file_cntbs: pd.DataFrame, bot_switch):
     # strings to hold the values for each column (always the same for every row of this query)
     repo_name = df_file["repo_name"].iloc[0]
     repo_path = df_file["repo_path"].iloc[0]
@@ -326,7 +359,7 @@ def process_data(
     df_file_cntbs.drop(["repo_id", "cntrb_ids"], axis=1, inplace=True)
 
     # Left join on df_files to only get the files that are currently in the repository
-    # and the contributors that have ever opened a pr that included edits on the file
+    # and the contributors that have ever reviewed a pr that included edits on the file
     df_file = pd.merge(df_file, df_file_cntbs, on="file_path", how="left")
     # replace nan with empty string to avoid errors in list comprehension
     df_file.reviewer_ids.fillna("", inplace=True)
@@ -343,6 +376,10 @@ def process_data(
             axis=1,
         )
 
+    return df_file
+
+
+def cntrb_per_directory_value(directory, df_file):
     # determine directory level to use in later step
     level = directory.count("/")
     if directory == "Top Level Directory":
@@ -377,8 +414,10 @@ def process_data(
         lambda row: set(row.reviewer_ids),
         axis=1,
     )
+    return df_dynamic_directory
 
-    print(df_dynamic_directory)
+
+def cntrb_to_last_activity(df_actions: pd.DataFrame, df_dynamic_directory: pd.DataFrame):
 
     # date reformating
     df_actions["created_at"] = pd.to_datetime(df_actions["created_at"], utc=True)
@@ -407,6 +446,11 @@ def process_data(
     # reformat into each row being a directory value and a date of one of the contributors
     # most recent activity - preprocessing step
     df_dynamic_directory = df_dynamic_directory.explode("dates")
+
+    return df_dynamic_directory
+
+
+def file_cntrb_activity_by_month(df_dynamic_directory: pd.DataFrame, df_actions: pd.DataFrame):
 
     # get files that have no contributors and remove from set to prevent errors in grouper function
     no_contribs = df_dynamic_directory["directory_value"][df_dynamic_directory.dates.isnull()].tolist()
@@ -438,18 +482,3 @@ def process_data(
         final.loc[files] = None
 
     return final
-
-
-def create_figure(df: pd.DataFrame):
-    fig = px.imshow(
-        df,
-        labels=dict(x="Time", y="Directory Entries", color="Contributors"),
-        color_continuous_scale=px.colors.sequential.deep,
-    )
-
-    fig["layout"]["yaxis"]["tickmode"] = "linear"
-    fig["layout"]["height"] = 700
-    fig["layout"]["coloraxis_colorbar_x"] = -0.15
-    fig["layout"]["yaxis"]["side"] = "right"
-
-    return fig
