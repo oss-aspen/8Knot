@@ -189,7 +189,7 @@ def process_data(df: pd.DataFrame, interval, start_date, end_date):
     created_range = pd.to_datetime(df["created_at"]).dt.to_period(interval).value_counts().sort_index()
 
     # converts to data frame object and creates date column from period values
-    df_created = created_range.to_frame().reset_index().rename(columns={"index": "Date"})
+    df_created = created_range.to_frame().reset_index().rename(columns={"created_at": "Date", "count": "created_at"})
 
     # converts date column to a datetime object, converts to string first to handle period information
     # the period slice is to handle weekly corner case
@@ -197,7 +197,8 @@ def process_data(df: pd.DataFrame, interval, start_date, end_date):
 
     # df for closed issues in time interval
     closed_range = pd.to_datetime(df["closed_at"]).dt.to_period(interval).value_counts().sort_index()
-    df_closed = closed_range.to_frame().reset_index().rename(columns={"index": "Date"})
+    df_closed = closed_range.to_frame().reset_index().rename(columns={"closed_at": "Date", "count": "closed_at"})
+
     df_closed["Date"] = pd.to_datetime(df_closed["Date"].astype(str).str[:period_slice])
 
     # first and last elements of the dataframe are the

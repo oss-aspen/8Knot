@@ -1,0 +1,24 @@
+# top-level required modules w/o pinned dependencies
+# DON'T ADD NEW DEPENDENCIES TO REQUIREMENTS.TXT MANUALLY
+# ADD THEM TO REQUIREMENTS-BASE.TXT, THEN RUN
+# pip3 freeze -r requirement-base.txt > requirements.txt
+sqlalchemy
+celery
+dash
+dash-bootstrap-components
+dash-mantine-components
+dash-bootstrap-templates
+flask-login
+flask
+redis
+uuid
+plotly
+psycopg2-binary
+pandas
+numpy
+python-dateutil
+fuzzywuzzy
+python-Levenshtein
+datetime
+gunicorn
+pyarrow
