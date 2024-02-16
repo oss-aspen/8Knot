@@ -305,8 +305,15 @@ def process_data(
     directory,
     bot_switch,
 ):
+    """
+    Processing steps
 
-    # df_file preprocessing
+        1 - Cleans up file data to only include current files and relate files in the repository to the contributors who have reviewed them in past PRs.
+        2 - For a given level in the directory tree, aggregate the list of contributors for sub-directories and for individual files at the level.
+        3 - For each reviewer, identify their most recent contribution.
+        4 - Transforms dataframe where columns are months with counts of "last seen" dates in that month and the rows are the file/subdirectory
+    """
+
     df_file = df_file_clean(df_file, df_file_cntbs, bot_switch)
 
     df_dynamic_directory = cntrb_per_directory_value(directory, df_file)
@@ -338,6 +345,24 @@ def create_figure(df: pd.DataFrame):
 
 
 def df_file_clean(df_file: pd.DataFrame, df_file_cntbs: pd.DataFrame, bot_switch):
+    """
+    This function cleans the df_file data and combines it with the related reviewer cntrb_ids
+
+    Args:
+    -----
+        df_file : Pandas Dataframe
+            Dataframe with the output of the repo_files_query
+
+        df_file_cntrbs : Pandas Dataframe
+            Dataframe with the output of the cntrb_per_file_query
+
+        bot_switch : boolan
+            T/F for the status of the bot switch
+
+    Returns:
+    --------
+        df_file: df with file and cntrb_ids of contributors that reviewed a pr with that file in it
+    """
     # strings to hold the values for each column (always the same for every row of this query)
     repo_name = df_file["repo_name"].iloc[0]
     repo_path = df_file["repo_path"].iloc[0]
@@ -380,6 +405,21 @@ def df_file_clean(df_file: pd.DataFrame, df_file_cntbs: pd.DataFrame, bot_switch
 
 
 def cntrb_per_directory_value(directory, df_file):
+    """
+    This function cleans the df_file data and combines it with the related reviewer cntrb_ids
+
+    Args:
+    -----
+        directory : string
+            Output from the directory drop down
+
+        df_file : Pandas Dataframe
+            Dataframe with file and related reviewer_id information
+
+    Returns:
+    --------
+        df_dynamic_directory: df with the file and subdirectories and their reviewers cntrb_ids
+    """
     # determine directory level to use in later step
     level = directory.count("/")
     if directory == "Top Level Directory":
@@ -418,6 +458,21 @@ def cntrb_per_directory_value(directory, df_file):
 
 
 def cntrb_to_last_activity(df_actions: pd.DataFrame, df_dynamic_directory: pd.DataFrame):
+    """
+    This function created a df with the files and the the dates of the most recent activity for each cntrb_id.
+
+    Args:
+    -----
+        df_actions : string
+            Output from the directory drop down
+
+        df_dynamic_directory : Pandas Dataframe
+            Dataframe with file and related reviewer_id information
+
+    Returns:
+    --------
+        df_dynamic_directory: df with the file and subdirectories and the dates of the most recent activity for the reviewers.
+    """
 
     # date reformating
     df_actions["created_at"] = pd.to_datetime(df_actions["created_at"], utc=True)
@@ -451,6 +506,21 @@ def cntrb_to_last_activity(df_actions: pd.DataFrame, df_dynamic_directory: pd.Da
 
 
 def file_cntrb_activity_by_month(df_dynamic_directory: pd.DataFrame, df_actions: pd.DataFrame):
+    """
+    This function created a df with the files and the the dates of the most recent activity for each cntrb_id.
+
+    Args:
+    -----
+        df_actions : string
+            Output from the directory drop down
+
+        df_dynamic_directory : Pandas Dataframe
+            Dataframe with file and related reviewer_id information
+
+    Returns:
+    --------
+        df_final: df with files and subdirectories as rows and the months as columns
+    """
 
     # get files that have no contributors and remove from set to prevent errors in grouper function
     no_contribs = df_dynamic_directory["directory_value"][df_dynamic_directory.dates.isnull()].tolist()
