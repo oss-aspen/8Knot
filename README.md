@@ -120,7 +120,7 @@ from a local instance, be scrutinized heavily until we make a proper, stable, >1
 
 ## Communication
 
-Please feel free to join our [Matrix](https://matrix.to/#/#sandiego-rh:matrix.org) channel!
+Please feel free to join our [Matrix](https://matrix.to/#/#oss-aspen:matrix.org) channel!
 
 We would prefer any initial communication be through Matrix but if you would prefer to talk to one of our maintainers, please feel free to peruse our [AUTHORS.md](docs/AUTHORS.md) file where you can find contact details.
 

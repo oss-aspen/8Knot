@@ -27,7 +27,7 @@ IF you need to add a new query:
 
 ## Steps to create a new page
 
-1. Add a folder to the [pages](https://github.com/sandiego-rh/explorer/tree/dev/pages) folder with a visualization folder inside and a .py for the respective page
+1. Add a folder to the [pages](https://github.com/oss-aspen/8Knot/tree/dev/pages) folder with a visualization folder inside and a .py for the respective page
 2. Use the other pages for format, making sure to include dash.register_page(__name__, order=)
 
 ## Where can I go for help?
