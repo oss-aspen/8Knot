@@ -230,7 +230,7 @@ def process_data(df: pd.DataFrame, num, start_date, end_date, email_filter):
     # creates df of domains and counts
     df = pd.DataFrame(email_domains, columns=["domains"]).value_counts().to_frame().reset_index()
 
-    df = df.rename(columns={0: "occurrences"})
+    df = df.rename(columns={"count": "occurrences"})
 
     # changes the name of the organization if under a certain threshold
     df.loc[df.occurrences <= num, "domains"] = "Other"
