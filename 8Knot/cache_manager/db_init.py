@@ -280,7 +280,8 @@ def _create_application_tables() -> None:
                 name text,
                 current_release_date text,
                 latest_release_date text,
-                libyear float4
+                libyear float4,
+                dep_age text
             )
             """
         )

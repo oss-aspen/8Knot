@@ -35,7 +35,14 @@ def package_version_query(self, repos):
                     rdl.name,
                     rdl.current_release_date,
                     rdl.latest_release_date,
-                    rdl.libyear
+                    rdl.libyear,
+                    case -- categorize the dependency out-of-date-edness;
+                            WHEN rdl.libyear >= 1.0 THEN 'Greater than a year'
+                            WHEN rdl.libyear < 1.0 and rdl.libyear > 0.5 THEN '6 months to year'
+                            when rdl.libyear < 0.5 and rdl.libyear > 0 then 'Less than 6 months'
+                            when rdl.libyear = 0 then 'Up to date'
+                            else 'Unclear version history'
+                    END as dep_age
                 FROM
                     repo_deps_libyear rdl
                 WHERE
