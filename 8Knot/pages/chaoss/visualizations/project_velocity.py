@@ -328,6 +328,9 @@ def process_data(
     # df_consolidated combines the actions and unique contributors and then specific columns for visualization use are added on
     df_consolidated = pd.concat([df_actions, df_cntrbs], axis=1).reset_index()
 
+    # replace all nan to 0
+    df_consolidated.fillna(value=0, inplace=True)
+
     # log of commits and contribs
     df_consolidated["log_num_commits"] = df_consolidated["Commit"].apply(math.log)
     df_consolidated["log_num_contrib"] = df_consolidated["num_unique_contributors"].apply(math.log)
@@ -340,6 +343,9 @@ def process_data(
         + df_consolidated["PR Merged"] * pr_m_weight
         + df_consolidated["PR Closed"] * pr_c_weight
     )
+
+    # after weighting replace 0 with nan for log
+    df_consolidated["prs_issues_actions_weighted"].replace(0, np.nan, inplace=True)
 
     # column for log value of pr and issue actions
     df_consolidated["log_prs_issues_actions_weighted"] = df_consolidated["prs_issues_actions_weighted"].apply(math.log)

@@ -189,7 +189,7 @@ def process_data(df, interval):
     created_range = pd.to_datetime(df["created_at"]).dt.to_period(interval).value_counts().sort_index()
 
     # converts to data frame object and creates date column from period values
-    df_contribs = created_range.to_frame().reset_index().rename(columns={"index": "Date", "created_at": "contribs"})
+    df_contribs = created_range.to_frame().reset_index().rename(columns={"created_at": "Date", "count": "contribs"})
 
     # converts date column to a datetime object, converts to string first to handle period information
     df_contribs["Date"] = pd.to_datetime(df_contribs["Date"].astype(str))

@@ -187,7 +187,7 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
     df["company_name"] = df.index
     df = df.reset_index()
     df["company_name"] = df["company_name"].astype(str)
-    df = df.rename(columns={"index": "orginal_name", "cntrb_company": "contribution_count"})
+    df = df.rename(columns={"cntrb_company": "orginal_name", "count": "contribution_count"})
 
     # applies fuzzy matching comparing all rows to each other
     df["match"] = df.apply(lambda row: fuzzy_match(df, row["company_name"]), axis=1)
@@ -212,7 +212,7 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
     )
 
     # changes the name of the company if under a certain threshold
-    df.loc[df.contribution_count <= num, "company_name"] = "Other"
+    df.loc[df["contribution_count"] <= num, "company_name"] = "Other"
 
     # groups others together for final counts
     df = (

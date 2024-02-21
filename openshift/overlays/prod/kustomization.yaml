@@ -34,12 +34,12 @@ patches:
       - op: add
         path: /spec/replicas
         value: 10
-  - target:
-      kind: HorizontalPodAutoscaler
-    patch: |-
-      - op: add
-        path: /spec/minReplicas
-        value: 2
+  # - target:
+  #     kind: HorizontalPodAutoscaler
+  #   patch: |-
+  #     - op: add
+  #       path: /spec/minReplicas
+  #       value: 2
   - target:
       kind: Ingress
       name: eightknot-app-server

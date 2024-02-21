@@ -214,13 +214,7 @@ def process_data(df: pd.DataFrame, interval, assign_req, start_date, end_date):
     df_contrib = df[df["assignment_action"] == "assigned"]
 
     # count the assignments total for each contributor
-    df_contrib = (
-        df_contrib["assignee"]
-        .value_counts()
-        .to_frame()
-        .reset_index()
-        .rename(columns={"assignee": "count", "index": "assignee"})
-    )
+    df_contrib = df_contrib["assignee"].value_counts().to_frame().reset_index()
 
     # create list of all contributors that meet the assignment requirement
     contributors = df_contrib["assignee"][df_contrib["count"] >= assign_req].to_list()

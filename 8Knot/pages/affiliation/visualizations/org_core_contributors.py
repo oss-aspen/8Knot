@@ -243,7 +243,7 @@ def process_data(df: pd.DataFrame, contributions, contributors, start_date, end_
     # creates df of domains and counts
     df = pd.DataFrame(email_domains, columns=["domains"]).value_counts().to_frame().reset_index()
 
-    df = df.rename(columns={0: "contributors"})
+    df = df.rename(columns={"count": "contributors"})
 
     # changes the name of the org if under a certain threshold
     df.loc[df.contributors <= contributors, "domains"] = "Other"

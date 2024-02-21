@@ -11,13 +11,6 @@ RUN pip3 install --no-cache-dir -U pip setuptools && \
 # working directory.
 COPY ./8Knot/ /opt/app-root/src/
 
-# run flower
-# CMD [ "celery", "-A", "app:celery_app", "flower" ]
-
-# run worker
-# CMD [ "celery", "-A", "app:celery_app", "worker", "--loglevel=INFO" ]
-
-# run app
 # Description of how to choose the number of workers and threads.
 # common wisdom is (2*CPU)+1 workers:
 # https://medium.com/building-the-system/gunicorn-3-means-of-concurrency-efbb547674b7
