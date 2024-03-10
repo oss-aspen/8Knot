@@ -346,6 +346,21 @@ def _create_application_tables() -> None:
 
         cur.execute(
             """
+            CREATE UNLOGGED TABLE IF NOT EXISTS issue_response_query(
+                issue_id int,
+                repo_id int,
+                cntrb_id text,
+                msg_timestamp text,
+                msg_cntrb_id text,
+                created_at text,
+                closed_at text
+            )
+            """
+        )
+        logging.warning("CREATED issue_response_query TABLE")
+
+        cur.execute(
+            """
             CREATE UNLOGGED TABLE IF NOT EXISTS cache_bookkeeping(
                 cache_func text,
                 repo_id int,
