@@ -134,11 +134,11 @@ def _create_application_tables() -> None:
         cur.execute(
             """
             CREATE UNLOGGED TABLE IF NOT EXISTS issues_query(
-                repo_id int,
+                repo_id bigint,
                 repo_name text,
-                issue int,
-                issue_number int,
-                gh_issue int,
+                issue bigint,
+                issue_number bigint,
+                gh_issue bigint,
                 reporter_id text,
                 issue_closer text,
                 created_at text,
