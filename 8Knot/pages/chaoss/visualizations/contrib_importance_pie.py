@@ -136,31 +136,6 @@ gc_contrib_importance_pie = dbc.Card(
                         ),
                         dbc.Row(
                             [
-                                dbc.Label(
-                                    "Filter Out Contributors with Keyword(s) in Login:",
-                                    html_for=f"patterns-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
-                                dbc.Col(
-                                    [
-                                        dmc.MultiSelect(
-                                            id=f"patterns-{PAGE}-{VIZ_ID}",
-                                            placeholder="Bot filter values",
-                                            data=[
-                                                {"value": "bot", "label": "bot"},
-                                            ],
-                                            classNames={"values": "dmc-multiselect-custom"},
-                                            creatable=True,
-                                            searchable=True,
-                                        ),
-                                    ],
-                                    className="me-2",
-                                ),
-                            ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
                                 dbc.Col(
                                     [
                                         dcc.DatePickerRange(
@@ -227,14 +202,13 @@ def graph_title(k, action_type):
         Input("repo-choices", "data"),
         Input(f"action-type-{PAGE}-{VIZ_ID}", "value"),
         Input(f"top-k-contributors-{PAGE}-{VIZ_ID}", "value"),
-        Input(f"patterns-{PAGE}-{VIZ_ID}", "value"),
         Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "start_date"),
         Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "end_date"),
         Input("bot-switch", "value"),
     ],
     background=True,
 )
-def create_top_k_cntrbs_graph(repolist, action_type, top_k, patterns, start_date, end_date, bot_switch):
+def create_top_k_cntrbs_graph(repolist, action_type, top_k, start_date, end_date, bot_switch):
     # wait for data to asynchronously download and become available.
     while not_cached := cf.get_uncached(func_name=ctq.__name__, repolist=repolist):
         logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
@@ -265,7 +239,7 @@ def create_top_k_cntrbs_graph(repolist, action_type, top_k, patterns, start_date
         df = df[~df["cntrb_id"].isin(app.bots_list)]
 
     # function for all data pre processing
-    df = process_data(df, action_type, top_k, patterns, start_date, end_date)
+    df = process_data(df, action_type, top_k, start_date, end_date)
 
     fig = create_figure(df, action_type)
 
@@ -273,7 +247,7 @@ def create_top_k_cntrbs_graph(repolist, action_type, top_k, patterns, start_date
     return fig, False
 
 
-def process_data(df: pd.DataFrame, action_type, top_k, patterns, start_date, end_date):
+def process_data(df: pd.DataFrame, action_type, top_k, start_date, end_date):
     # convert to datetime objects rather than strings
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
 
@@ -289,30 +263,22 @@ def process_data(df: pd.DataFrame, action_type, top_k, patterns, start_date, end
     # subset the df such that it only contains rows where the Action column value is the action type
     df = df[df["Action"].str.contains(action_type)]
 
-    # option to filter out potential bots
-    if patterns:
-        # remove rows where login column value contains any keyword in patterns
-        patterns_mask = df["login"].str.contains("|".join(patterns), na=False)
-        df = df[~patterns_mask]
+    # get the number of total contributions of the specific action type
+    t_sum = df.shape[0]
 
     # count the number of contributions for each contributor
     df = (df.groupby("cntrb_id")["Action"].count()).to_frame()
 
     # sort rows according to amount of contributions from greatest to least
-    df.sort_values(by="cntrb_id", ascending=False, inplace=True)
+    df.sort_values(by="Action", ascending=False, inplace=True)
+
     df = df.reset_index()
 
     # rename Action column to action_type
     df = df.rename(columns={"Action": action_type})
 
-    # get the number of total contributions
-    t_sum = df[action_type].sum()
-
     # index df to get first k rows
     df = df.head(top_k)
-
-    # convert cntrb_id from type UUID to String
-    df["cntrb_id"] = df["cntrb_id"].apply(lambda x: str(x).split("-")[0])
 
     # get the number of total top k contributions
     df_sum = df[action_type].sum()
