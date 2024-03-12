@@ -179,7 +179,7 @@ def process_data(df: pd.DataFrame, num_days):
 
     df_responses["Date"] = df_responses["Date"].dt.strftime("%Y-%m-%d")
 
-    return df
+    return df_responses
 
 
 def create_figure(df: pd.DataFrame, num_days):
