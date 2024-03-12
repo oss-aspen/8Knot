@@ -117,7 +117,7 @@ def create_first_time_contributors_graph(repolist, bot_switch):
 def process_data(df):
     # convert to datetime objects with consistent column name
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
-    df.rename(columns={"created_at": "created"}, inplace=True)
+    # df.rename(columns={"created_at": "created"}, inplace=True)
 
     # selection for 1st contribution only
     df = df[df["rank"] == 1]
@@ -130,7 +130,7 @@ def process_data(df):
 
 def create_figure(df):
     # create plotly express histogram
-    fig = px.histogram(df, x="created", color="Action", color_discrete_sequence=color_seq)
+    fig = px.histogram(df, x="created_at", color="Action", color_discrete_sequence=color_seq)
 
     # creates bins with 3 month size and customizes the hover value for the bars
     fig.update_traces(

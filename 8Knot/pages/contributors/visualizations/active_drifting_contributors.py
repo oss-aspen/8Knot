@@ -208,14 +208,14 @@ def active_drifting_contributors_graph(repolist, interval, drift_interval, away_
 def process_data(df: pd.DataFrame, interval, drift_interval, away_interval):
     # convert to datetime objects with consistent column name
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
-    df.rename(columns={"created_at": "created"}, inplace=True)
+    # df.rename(columns={"created_at": "created"}, inplace=True)
 
     # order from beginning of time to most recent
-    df = df.sort_values("created", axis=0, ascending=True)
+    df = df.sort_values("created_at", axis=0, ascending=True)
 
     # first and last elements of the dataframe are the
     # earliest and latest events respectively
-    earliest, latest = df["created"].min(), df["created"].max()
+    earliest, latest = df["created_at"].min(), df["created_at"].max()
 
     # beginning to the end of time by the specified interval
     dates = pd.date_range(start=earliest, end=latest, freq=interval, inclusive="both")
@@ -300,7 +300,7 @@ def create_figure(df_status: pd.DataFrame, interval):
 
 def get_active_drifting_away_up_to(df, date, drift_interval, away_interval):
     # drop rows that are more recent than the date limit
-    df_lim = df[df["created"] <= date]
+    df_lim = df[df["created_at"] <= date]
 
     # keep more recent contribution per ID
     df_lim = df_lim.drop_duplicates(subset="cntrb_id", keep="last")
@@ -315,13 +315,13 @@ def get_active_drifting_away_up_to(df, date, drift_interval, away_interval):
     numTotal = df_lim.shape[0]
 
     # number of 'active' contributors, people with contributions before the drift time
-    numActive = df_lim[df_lim["created"] >= drift_mos].shape[0]
+    numActive = df_lim[df_lim["created_at"] >= drift_mos].shape[0]
 
     # set of contributions that are before the away time
-    drifting = df_lim[df_lim["created"] > away_mos]
+    drifting = df_lim[df_lim["created_at"] > away_mos]
 
     # number of the set of contributions that are after the drift time, but before away
-    numDrifting = drifting[drifting["created"] < drift_mos].shape[0]
+    numDrifting = drifting[drifting["created_at"] < drift_mos].shape[0]
 
     # difference of the total to get the away value
     numAway = numTotal - (numActive + numDrifting)

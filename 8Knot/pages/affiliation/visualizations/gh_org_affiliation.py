@@ -168,16 +168,16 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
     requiring no further processing."""
 
     # convert to datetime objects rather than strings
-    df["created"] = pd.to_datetime(df["created"], utc=True)
+    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
 
     # order values chronologically by COLUMN_TO_SORT_BY date
-    df = df.sort_values(by="created", axis=0, ascending=True)
+    df = df.sort_values(by="created_at", axis=0, ascending=True)
 
     # filter values based on date picker
     if start_date is not None:
-        df = df[df.created >= start_date]
+        df = df[df.created_at >= start_date]
     if end_date is not None:
-        df = df[df.created <= end_date]
+        df = df[df.created_at <= end_date]
 
     # intital count of same company name in github profile
     result = df.cntrb_company.value_counts(dropna=False)
@@ -187,7 +187,7 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
     df["company_name"] = df.index
     df = df.reset_index()
     df["company_name"] = df["company_name"].astype(str)
-    df = df.rename(columns={"index": "orginal_name", "cntrb_company": "contribution_count"})
+    df = df.rename(columns={"cntrb_company": "orginal_name", "count": "contribution_count"})
 
     # applies fuzzy matching comparing all rows to each other
     df["match"] = df.apply(lambda row: fuzzy_match(df, row["company_name"]), axis=1)
@@ -212,7 +212,7 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
     )
 
     # changes the name of the company if under a certain threshold
-    df.loc[df.contribution_count <= num, "company_name"] = "Other"
+    df.loc[df["contribution_count"] <= num, "company_name"] = "Other"
 
     # groups others together for final counts
     df = (

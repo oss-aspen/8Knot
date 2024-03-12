@@ -110,43 +110,11 @@ def package_version_graph(repolist):
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return nodata_graph
 
-    # function for all data pre processing
-    df = process_data(df)
-
-    fig = create_figure(df)
-
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
-    return fig
-
-
-def process_data(df: pd.DataFrame):
-
-    # get max time difference to use for grouping and round for correct format
-    max_time = round(df["libyear"].max(), 3)
-
-    # group by the 4 buckets
-    depend_pie = pd.DataFrame(
-        df["libyear"].groupby(pd.cut(df["libyear"], [0, 0.001, 0.5, 1, max_time], right=False)).count()
-    ).rename(columns={"libyear": "packages"})
-    depend_pie = depend_pie.reset_index().rename(columns={"libyear": "date_range"})
-    depend_pie["date_range"] = depend_pie["date_range"].astype(str)
-
-    # create string for naming
-    max_string = "[1.0, " + str(max_time) + ")"
-
-    # update naming for pie chart
-    depend_pie.loc[depend_pie["date_range"] == "[0.0, 0.001)", "date_range"] = "Up to date"
-    depend_pie.loc[depend_pie["date_range"] == "[0.001, 0.5)", "date_range"] = "Less than 6 months"
-    depend_pie.loc[depend_pie["date_range"] == "[0.5, 1.0)", "date_range"] = "6 months to year"
-    depend_pie.loc[depend_pie["date_range"] == max_string, "date_range"] = "Greater than a year"
-
-    return depend_pie
-
-
-def create_figure(df: pd.DataFrame):
+    # count the number of each package grouping
+    df = pd.DataFrame(df["dep_age"].value_counts().reset_index())
 
     # graph generation
-    fig = px.pie(df, names="date_range", values="packages", color_discrete_sequence=color_seq)
+    fig = px.pie(df, names="index", values="dep_age", color_discrete_sequence=color_seq)
     fig.update_traces(
         textposition="inside",
         textinfo="percent+label",
@@ -156,4 +124,5 @@ def create_figure(df: pd.DataFrame):
     # add legend title
     fig["layout"]["legend_title"] = "Date Range"
 
+    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig

@@ -201,7 +201,7 @@ def repeat_drive_by_graph(repolist, contribs, view, bot_switch):
 def process_data(df, view, contribs):
     # convert to datetime objects with consistent column name
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
-    df.rename(columns={"created_at": "created"}, inplace=True)
+    # df.rename(columns={"created_at": "created"}, inplace=True)
 
     # graph on contribution subset
     contributors = df["cntrb_id"][df["rank"] == contribs].to_list()
@@ -221,7 +221,12 @@ def process_data(df, view, contribs):
 
 def create_figure(df_cont_subset):
     # create plotly express histogram
-    fig = px.histogram(df_cont_subset, x="created", color="Action", color_discrete_sequence=color_seq)
+    fig = px.histogram(
+        df_cont_subset,
+        x="created_at",
+        color="Action",
+        color_discrete_sequence=color_seq,
+    )
 
     # creates bins with 3 month size and customizes the hover value for the bars
     fig.update_traces(

@@ -29,6 +29,7 @@ def contributors_df_action_naming(df):
 def cntrb_per_file(df):
     # pandas column and format updates
     df["cntrb_ids"] = df["cntrb_ids"].str.split(",")
+    df["reviewer_ids"] = df["reviewer_ids"].str.split(",")
     df = df.reset_index()
     df.drop("index", axis=1, inplace=True)
     return df

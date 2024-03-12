@@ -103,7 +103,7 @@ def ossf_scorecard(repo):
         return dbc.Table.from_dataframe(df, striped=True, bordered=True, hover=True)
 
     # repo id not needed for table
-    df.drop(["id"], axis=1, inplace=True)
+    df.drop(["repo_id"], axis=1, inplace=True)
 
     df.loc[df.name == "OSSF_SCORECARD_AGGREGATE_SCORE", "name"] = "Aggregate Score"
     df.sort_values("name", ascending=True, inplace=True)

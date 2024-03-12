@@ -85,7 +85,9 @@ gc_issues_over_time = dbc.Card(
                                         max_date_allowed=dt.date.today(),
                                         initial_visible_month=dt.date(dt.date.today().year, 1, 1),
                                         start_date=dt.date(
-                                            dt.date.today().year - 2, dt.date.today().month, dt.date.today().day
+                                            dt.date.today().year - 2,
+                                            dt.date.today().month,
+                                            dt.date.today().day,
                                         ),
                                         clearable=True,
                                     ),
@@ -169,11 +171,11 @@ def issues_over_time_graph(repolist, interval, start_date, end_date):
 
 def process_data(df: pd.DataFrame, interval, start_date, end_date):
     # convert to datetime objects rather than strings
-    df["created"] = pd.to_datetime(df["created"], utc=False)
-    df["closed"] = pd.to_datetime(df["closed"], utc=False)
+    df["created_at"] = pd.to_datetime(df["created_at"], utc=False)
+    df["closed_at"] = pd.to_datetime(df["closed_at"], utc=False)
 
     # order values chronologically by creation date
-    df = df.sort_values(by="created", axis=0, ascending=True)
+    df = df.sort_values(by="created_at", axis=0, ascending=True)
 
     # variable to slice on to handle weekly period edge case
     period_slice = None
@@ -184,24 +186,25 @@ def process_data(df: pd.DataFrame, interval, start_date, end_date):
     # data frames for issues created or closed. Detailed description applies for all 3.
 
     # get the count of created issues in the desired interval in pandas period format, sort index to order entries
-    created_range = pd.to_datetime(df["created"]).dt.to_period(interval).value_counts().sort_index()
+    created_range = pd.to_datetime(df["created_at"]).dt.to_period(interval).value_counts().sort_index()
 
     # converts to data frame object and creates date column from period values
-    df_created = created_range.to_frame().reset_index().rename(columns={"index": "Date"})
+    df_created = created_range.to_frame().reset_index().rename(columns={"created_at": "Date", "count": "created_at"})
 
     # converts date column to a datetime object, converts to string first to handle period information
     # the period slice is to handle weekly corner case
     df_created["Date"] = pd.to_datetime(df_created["Date"].astype(str).str[:period_slice])
 
     # df for closed issues in time interval
-    closed_range = pd.to_datetime(df["closed"]).dt.to_period(interval).value_counts().sort_index()
-    df_closed = closed_range.to_frame().reset_index().rename(columns={"index": "Date"})
+    closed_range = pd.to_datetime(df["closed_at"]).dt.to_period(interval).value_counts().sort_index()
+    df_closed = closed_range.to_frame().reset_index().rename(columns={"closed_at": "Date", "count": "closed_at"})
+
     df_closed["Date"] = pd.to_datetime(df_closed["Date"].astype(str).str[:period_slice])
 
     # first and last elements of the dataframe are the
     # earliest and latest events respectively
-    earliest = df["created"].min()
-    latest = max(df["created"].max(), df["closed"].max())
+    earliest = df["created_at"].min()
+    latest = max(df["created_at"].max(), df["closed_at"].max())
 
     # filter values based on date picker, needs to be after open issue for correct counting
     if start_date is not None:
@@ -243,7 +246,7 @@ def create_figure(df_created: pd.DataFrame, df_closed: pd.DataFrame, df_open: pd
     fig = go.Figure()
     fig.add_bar(
         x=df_created["Date"],
-        y=df_created["created"],
+        y=df_created["created_at"],
         opacity=0.9,
         hovertemplate=hover + "<br>Created: %{y}<br>" + "<extra></extra>",
         offsetgroup=0,
@@ -252,7 +255,7 @@ def create_figure(df_created: pd.DataFrame, df_closed: pd.DataFrame, df_open: pd
     )
     fig.add_bar(
         x=df_closed["Date"],
-        y=df_closed["closed"],
+        y=df_closed["closed_at"],
         opacity=0.9,
         hovertemplate=hover + "<br>Closed: %{y}<br>" + "<extra></extra>",
         offsetgroup=1,
@@ -290,13 +293,13 @@ def create_figure(df_created: pd.DataFrame, df_closed: pd.DataFrame, df_open: pd
 # for each day, this function calculates the amount of open issues
 def get_open(df, date):
     # drop rows that are more recent than the date limit
-    df_lim = df[df["created"] <= date]
+    df_lim = df[df["created_at"] <= date]
 
     # drops rows that have been closed after date
-    df_open = df_lim[df_lim["closed"] > date]
+    df_open = df_lim[df_lim["closed_at"] > date]
 
     # include issues that have not been close yet
-    df_open = pd.concat([df_open, df_lim[df_lim.closed.isnull()]])
+    df_open = pd.concat([df_open, df_lim[df_lim.closed_at.isnull()]])
 
     # generates number of columns ie open issues
     num_open = df_open.shape[0]

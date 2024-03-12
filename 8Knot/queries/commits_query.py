@@ -34,10 +34,10 @@ def commits_query(self, repos):
     query_string = """
                     SELECT
                         distinct
-                        r.repo_id as id,
-                        c.cmt_commit_hash AS commits,
+                        r.repo_id as repo_id,
+                        c.cmt_commit_hash AS commit_hash,
                         c.cmt_author_email AS author_email,
-                        c.cmt_author_date AS date,
+                        c.cmt_author_date AS author_date,
                         -- all timestamptz's are coerced to utc from their origin timezones.
                         timezone('utc', c.cmt_author_timestamp) AS author_timestamp,
                         timezone('utc', c.cmt_committer_timestamp) AS committer_timestamp

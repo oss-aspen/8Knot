@@ -146,8 +146,8 @@ def commits_over_time_graph(repolist, interval):
 def process_data(df: pd.DataFrame, interval):
     # convert to datetime objects with consistent column name
     # incoming value should be a posix integer.
-    df["date"] = pd.to_datetime(df["date"], utc=True)
-    df.rename(columns={"date": "created"}, inplace=True)
+    df["author_date"] = pd.to_datetime(df["author_date"], utc=True)
+    df.rename(columns={"author_date": "created_at"}, inplace=True)
 
     # variable to slice on to handle weekly period edge case
     period_slice = None
@@ -157,10 +157,10 @@ def process_data(df: pd.DataFrame, interval):
 
     # get the count of commits in the desired interval in pandas period format, sort index to order entries
     df_created = (
-        df.groupby(by=df.created.dt.to_period(interval))["commits"]
+        df.groupby(by=df.created_at.dt.to_period(interval))["commit_hash"]
         .nunique()
         .reset_index()
-        .rename(columns={"created": "Date"})
+        .rename(columns={"created_at": "Date"})
     )
 
     # converts date column to a datetime object, converts to string first to handle period information
@@ -178,7 +178,7 @@ def create_figure(df_created: pd.DataFrame, interval):
     fig = px.bar(
         df_created,
         x="Date",
-        y="commits",
+        y="commit_hash",
         range_x=x_r,
         labels={"x": x_name, "y": "Commits"},
         color_discrete_sequence=[color_seq[3]],

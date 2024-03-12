@@ -219,7 +219,7 @@ def retrieve_from_cache(
                 """
                 SELECT *
                 FROM {tablename} t
-                WHERE t.id IN %s;
+                WHERE t.repo_id IN %s;
                 """.format(
                     tablename=tablename
                 ),

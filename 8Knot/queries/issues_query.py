@@ -31,7 +31,7 @@ def issues_query(self, repos):
 
     query_string = f"""
                     SELECT
-                        r.repo_id as id,
+                        r.repo_id,
                         r.repo_name,
                         i.issue_id AS issue,
                         i.gh_issue_number AS issue_number,
@@ -39,8 +39,8 @@ def issues_query(self, repos):
                         left(i.reporter_id::text, 15) as reporter_id,
                         left(i.cntrb_id::text, 15) as issue_closer,
                         -- timestamps are not timestamptz
-                        i.created_at AS created,
-                        i.closed_at AS closed
+                        i.created_at,
+                        i.closed_at
                     FROM
                         repo r,
                         issues i
