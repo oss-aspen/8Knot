@@ -39,7 +39,7 @@ NOTE: Querying data from Augur is a Postgres->Postgres transaction. Any data tra
 def NAME_query(self, repos):
     """
     (Worker Query)
-    Executes SQL query against Augur database for contributor data.
+    Executes SQL query against Augur database for GitHub data.
 
     Args:
     -----
