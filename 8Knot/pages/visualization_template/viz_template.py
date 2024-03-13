@@ -13,6 +13,7 @@ import io
 import cache_manager.cache_facade as cf
 from pages.utils.job_utils import nodata_graph
 import time
+import app
 
 """
 NOTE: VARIABLES TO CHANGE:
@@ -187,6 +188,7 @@ def toggle_popover(n, is_open):
     [
         Input("repo-choices", "data"),
         Input(f"date-radio-{PAGE}-{VIZ_ID}", "value"),
+        # Input("bot-switch", "value"),
         # add additional inputs here
     ],
     background=True,
@@ -210,6 +212,13 @@ def NAME_OF_VISUALIZATION_graph(repolist, interval):
     if df.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return nodata_graph
+
+    # uncomment if bot filter applies to viz
+    """
+    # remove bot data
+    if bot_switch:
+        df = df[~df["cntrb_id"].isin(app.bots_list)]
+    """
 
     # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
     df = process_data(df, interval)
