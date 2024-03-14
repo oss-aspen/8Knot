@@ -114,7 +114,7 @@ def package_version_graph(repolist):
     df = pd.DataFrame(df["dep_age"].value_counts().reset_index())
 
     # graph generation
-    fig = px.pie(df, names="index", values="dep_age", color_discrete_sequence=color_seq)
+    fig = px.pie(df, names="dep_age", values="count", color_discrete_sequence=color_seq)
     fig.update_traces(
         textposition="inside",
         textinfo="percent+label",
