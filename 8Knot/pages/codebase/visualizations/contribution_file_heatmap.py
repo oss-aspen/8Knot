@@ -314,6 +314,65 @@ def process_data(
     directory,
     graph_view,
 ):
+    """
+    Processing steps
+
+        1 - Cleans up file data to only include current files and relate files in the repository to the prs that impact them.
+        2 - For a given level in the directory tree, aggregate the list of prs for sub-directories and for individual files at the level.
+        3 - For each pr, identify their open and merged.
+        4 - Transforms dataframe where columns are months with counts of pr open/merge dates in that month and the rows are the file/subdirectory
+    """
+
+    df_file = df_file_clean(df_file, df_file_pr)
+
+    df_dynamic_directory = pr_per_directory_value(directory, df_file)
+
+    # work around for using functions, will clean later
+    if df_dynamic_directory.empty:
+        return df_dynamic_directory
+
+    df_dynamic_directory = pr_to_dates(df_pr, df_dynamic_directory, graph_view)
+
+    final = file_pr_activity_by_month(df_dynamic_directory, df_pr, graph_view)
+
+    return final
+
+
+def create_figure(df: pd.DataFrame, graph_view):
+    legend_title = "PRs Opened"
+    if graph_view == "merged_at":
+        legend_title = "PRs Merged"
+
+    fig = px.imshow(
+        df,
+        labels=dict(x="Time", y="Directory Entries", color=legend_title),
+        color_continuous_scale=px.colors.sequential.deep,
+    )
+
+    fig["layout"]["yaxis"]["tickmode"] = "linear"
+    fig["layout"]["height"] = 700
+    fig["layout"]["coloraxis_colorbar_x"] = -0.15
+    fig["layout"]["yaxis"]["side"] = "right"
+
+    return fig
+
+
+def df_file_clean(df_file: pd.DataFrame, df_file_pr: pd.DataFrame):
+    """
+    This function cleans the df_file data and combines it with the related pull request ids
+
+    Args:
+    -----
+        df_file : Pandas Dataframe
+            Dataframe with the output of the repo_files_query
+
+        df_file_prs : Pandas Dataframe
+            Dataframe with the output of the pr_file_query
+
+    Returns:
+    --------
+        df_file: df with file and pull_request_ids of prs with that file in it
+    """
     # strings to hold the values for each column (always the same for every row of this query)
     repo_name = df_file["repo_name"].iloc[0]
     repo_path = df_file["repo_path"].iloc[0]
@@ -322,9 +381,6 @@ def process_data(
     # pattern found in each file path, used to slice to get only the root file path
     path_slice = repo_id + "-" + repo_path + "/" + repo_name + "/"
     df_file["file_path"] = df_file["file_path"].str.rsplit(path_slice, n=1).str[1]
-
-    # drop columns not in the most recent collection
-    df_file = df_file[df_file["rl_analysis_date"] == df_file["rl_analysis_date"].max()]
 
     # drop unneccessary columns not needed after preprocessing steps
     df_file = df_file.reset_index()
@@ -341,9 +397,29 @@ def process_data(
     df_file_pr = df_file_pr.groupby("file_path")["pull_request_id"].apply(list)
 
     # Left join on df_files to only get the files that are currently in the repository
-    # and the contributors that have ever opened a pr that included edits on the file
+    # and the prs that included edits on the file
     df_file = pd.merge(df_file, df_file_pr, on="file_path", how="left")
 
+    return df_file
+
+
+def pr_per_directory_value(directory, df_file):
+    """
+    This function gets the files in the specified directory, groups together any files in
+    subdirectories, and creates a list of pull_request_ids that touched those files
+
+    Args:
+    -----
+        directory : string
+            Output from the directory drop down
+
+        df_file : Pandas Dataframe
+            Dataframe with file and related pull_request_id information
+
+    Returns:
+    --------
+        df_dynamic_directory: df with the file and subdirectories and their prs pull_request_ids
+    """
     # determine directory level to use in later step
     level = directory.count("/")
     if directory == "Top Level Directory":
@@ -361,7 +437,7 @@ def process_data(
     group_column = level + 1
 
     # Groupby the level above the selected directory for all files nested in folders are together.
-    # For each, create a list of all of pull request that include that file
+    # For each, create a list of all of the contributors who have contributed
     df_dynamic_directory = (
         df_dynamic_directory.groupby(group_column)["pull_request_id"]
         .sum()
@@ -377,6 +453,27 @@ def process_data(
         lambda row: set(row.pull_request_id),
         axis=1,
     )
+    return df_dynamic_directory
+
+
+def pr_to_dates(df_pr: pd.DataFrame, df_dynamic_directory: pd.DataFrame, graph_view):
+    """
+    This function creates a df with the files and the the open and merge dates of the prs that
+    touch each file or subdirectory.
+
+    Args:
+    -----
+        df_pr : Pandas Dataframe
+            Dataframe with pull request data
+
+        df_dynamic_directory : Pandas Dataframe
+            Dataframe with file and related pull_request_id information
+
+    Returns:
+    --------
+        df_dynamic_directory: df with the file and subdirectories and the dates of open and merge dates
+        of the prs that touch each file or subdirectory.
+    """
 
     # date reformating
     df_pr["created_at"] = pd.to_datetime(df_pr["created_at"], utc=True)
@@ -406,6 +503,26 @@ def process_data(
 
     # reformat into each row being a directory value and a date of one of the pull request dates
     df_dynamic_directory = df_dynamic_directory.explode(graph_view)
+
+    return df_dynamic_directory
+
+
+def file_pr_activity_by_month(df_dynamic_directory: pd.DataFrame, df_pr: pd.DataFrame, graph_view):
+    """
+    This function transforms the df_dynamic_directory to be counts of open or merged prs by month.
+
+    Args:
+    -----
+        df_dynamic_directory : Pandas Dataframe
+            Dataframe with file and related reviewer_id information
+
+        df_pr : Pandas Dataframe
+            Dataframe with pull request data
+
+    Returns:
+    --------
+        df_final: df with files and subdirectories as rows and the months as columns
+    """
 
     # get files that have no pull requests and remove from set to prevent errors in grouper function
     no_contribs = df_dynamic_directory["directory_value"][df_dynamic_directory[graph_view].isnull()].tolist()
@@ -438,22 +555,3 @@ def process_data(
         final.loc[files] = None
 
     return final
-
-
-def create_figure(df: pd.DataFrame, graph_view):
-    legend_title = "PRs Opened"
-    if graph_view == "merged_at":
-        legend_title = "PRs Merged"
-
-    fig = px.imshow(
-        df,
-        labels=dict(x="Time", y="Directory Entries", color=legend_title),
-        color_continuous_scale=px.colors.sequential.deep,
-    )
-
-    fig["layout"]["yaxis"]["tickmode"] = "linear"
-    fig["layout"]["height"] = 700
-    fig["layout"]["coloraxis_colorbar_x"] = -0.15
-    fig["layout"]["yaxis"]["side"] = "right"
-
-    return fig
