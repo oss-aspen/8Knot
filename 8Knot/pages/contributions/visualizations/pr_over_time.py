@@ -233,7 +233,7 @@ def create_figure(
         hovertemplate=hover + "<br>Created: %{y}<br>" + "<extra></extra>",
         offsetgroup=0,
         marker=dict(color=color_seq[2]),
-        name="created_at",
+        name="Opened",
     )
     fig.add_bar(
         x=df_closed_merged["Date"],
