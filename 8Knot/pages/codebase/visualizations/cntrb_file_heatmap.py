@@ -80,6 +80,7 @@ graph_loading = html.Div(
                                     classNames={"values": "dmc-multiselect-custom"},
                                     searchable=True,
                                     clearable=False,
+                                    value="Top Level Directory",
                                 ),
                             ],
                             className="me-2",
@@ -215,7 +216,7 @@ def directory_dropdown(repo_id):
 
     # add top level directory to the list of directories
     directories.insert(0, "Top Level Directory")
-    logging.warning(f"DIRECTORY DROPDOWN - FINISHED")
+    logging.warning(f"CNTRB DIRECTORY DROPDOWN - FINISHED")
 
     return directories, "Top Level Directory"
 
@@ -533,8 +534,9 @@ def file_cntrb_activity_by_month(df_dynamic_directory: pd.DataFrame, df_actions:
     there will be a column for every month even if there is no "last contribution" date in it. This greatly
     improves the heatmap ploting"""
 
-    # dates based on action so it represents the length of the project
-    min_date = df_actions.created_at.min()
+    # dates based on action so it represents the length of the project, min based on PR
+    # open date to avoid committer inputted dates
+    min_date = df_actions[df_actions["Action"] == "PR Opened"].created_at.min()
     max_date = df_actions.created_at.max()
     dates = pd.date_range(start=min_date, end=max_date, freq="M", inclusive="both")
     df_fill = dates.to_frame(index=False, name="dates")
