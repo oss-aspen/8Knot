@@ -90,7 +90,7 @@ gc_cntrib_issue_assignment = dbc.Card(
                                     width=2,
                                 ),
                                 dbc.Alert(
-                                    children="No contributors meet assignment requirement",
+                                    children="No contributors in date range meet assignment requirement",
                                     id=f"check-alert-{PAGE}-{VIZ_ID}",
                                     dismissable=True,
                                     fade=False,
@@ -192,6 +192,11 @@ def cntrib_issue_assignment_graph(repolist, interval, assign_req, start_date, en
 
     df = process_data(df, interval, assign_req, start_date, end_date)
 
+    # test if there is data in criteria
+    if df.empty:
+        logging.warning(f"{VIZ_ID} - NO DATA IN CRITERIA AVAILABLE")
+        return nodata_graph, True
+
     fig = create_figure(df, interval)
 
     logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
@@ -219,10 +224,6 @@ def process_data(df: pd.DataFrame, interval, assign_req, start_date, end_date):
     # create list of all contributors that meet the assignment requirement
     contributors = df_contrib["assignee"][df_contrib["count"] >= assign_req].to_list()
 
-    # no update if there are not any contributors that meet the criteria
-    if len(contributors) == 0:
-        return dash.no_update, True
-
     # filter values based on date picker
     if start_date is not None:
         df = df[df.created_at >= start_date]
@@ -231,6 +232,10 @@ def process_data(df: pd.DataFrame, interval, assign_req, start_date, end_date):
 
     # only include contributors that meet the criteria
     df = df.loc[df["assignee"].isin(contributors)]
+
+    # check if there is data that meet contributor and date range criteria
+    if df.empty:
+        return pd.DataFrame()
 
     # first and last elements of the dataframe are the
     # earliest and latest events respectively

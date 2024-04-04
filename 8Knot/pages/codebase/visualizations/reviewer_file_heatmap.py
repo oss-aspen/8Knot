@@ -80,6 +80,7 @@ graph_loading = html.Div(
                                     classNames={"values": "dmc-multiselect-custom"},
                                     searchable=True,
                                     clearable=False,
+                                    value="Top Level Directory",
                                 ),
                             ],
                             className="me-2",
@@ -215,7 +216,7 @@ def directory_dropdown(repo_id):
 
     # add top level directory to the list of directories
     directories.insert(0, "Top Level Directory")
-    logging.warning(f"DIRECTORY DROPDOWN - FINISHED")
+    logging.warning(f"REVIEWER DIRECTORY DROPDOWN - FINISHED")
 
     return directories, "Top Level Directory"
 
@@ -224,18 +225,19 @@ def directory_dropdown(repo_id):
 @callback(
     Output(f"{PAGE}-{VIZ_ID}", "figure"),
     [
+        Input("repo-choices", "data"),
         Input(f"repo-{PAGE}-{VIZ_ID}", "value"),
         Input(f"directory-{PAGE}-{VIZ_ID}", "value"),
         Input("bot-switch", "value"),
     ],
     background=True,
 )
-def reviewer_file_heatmap_graph(repo_id, directory, bot_switch):
+def reviewer_file_heatmap_graph(searchbar_repos, repo_id, directory, bot_switch):
     start = time.perf_counter()
     logging.warning(f"{VIZ_ID}- START")
 
     # get dataframes of data from cache
-    df_file, df_actions, df_file_cntbs = multi_query_helper([repo_id])
+    df_file, df_actions, df_file_cntbs = multi_query_helper(searchbar_repos, [repo_id])
 
     # test if there is data
     if df_file.empty or df_actions.empty or df_file_cntbs.empty:
@@ -255,7 +257,7 @@ def reviewer_file_heatmap_graph(repo_id, directory, bot_switch):
     return fig
 
 
-def multi_query_helper(repos):
+def multi_query_helper(searchbar_repos, repo):
     """
     For reviewer_file_heatmap_graph-
     hack to put all of the cache-retrieval
@@ -263,32 +265,32 @@ def multi_query_helper(repos):
     """
 
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=repos):
+    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=repo):
         logging.warning(f"CONTRIBUTOR FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=cnq.__name__, repolist=repos):
+    while not_cached := cf.get_uncached(func_name=cnq.__name__, repolist=searchbar_repos):
         logging.warning(f"CONTRIBUTOR FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=cpfq.__name__, repolist=repos):
+    while not_cached := cf.get_uncached(func_name=cpfq.__name__, repolist=repo):
         logging.warning(f"CONTRIBUTOR FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 
     # GET ALL DATA FROM POSTGRES CACHE
     df_file = cf.retrieve_from_cache(
         tablename=rfq.__name__,
-        repolist=repos,
+        repolist=repo,
     )
     df_actions = cf.retrieve_from_cache(
         tablename=cnq.__name__,
-        repolist=repos,
+        repolist=searchbar_repos,
     )
     df_file_cntrbs = cf.retrieve_from_cache(
         tablename=cpfq.__name__,
-        repolist=repos,
+        repolist=repo,
     )
 
     # necessary preprocessing steps that were lifted out of the querying step
@@ -400,13 +402,13 @@ def df_file_clean(df_file: pd.DataFrame, df_file_cntbs: pd.DataFrame, bot_switch
             lambda row: [x for x in row.reviewer_ids],
             axis=1,
         )
-
     return df_file
 
 
 def cntrb_per_directory_value(directory, df_file):
     """
-    This function cleans the df_file data and combines it with the related reviewer cntrb_ids
+    This function gets the files in the specified directory, groups together any files in
+    subdirectories, and creates a list of their reviewers cntrb_ids.
 
     Args:
     -----
@@ -459,12 +461,12 @@ def cntrb_per_directory_value(directory, df_file):
 
 def cntrb_to_last_activity(df_actions: pd.DataFrame, df_dynamic_directory: pd.DataFrame):
     """
-    This function created a df with the files and the the dates of the most recent activity for each cntrb_id.
+    This function creates a df with the files and the the dates of the most recent activity for each cntrb_id.
 
     Args:
     -----
-        df_actions : string
-            Output from the directory drop down
+        df_actions : Pandas Dataframe
+            Dataframe with contributor activity
 
         df_dynamic_directory : Pandas Dataframe
             Dataframe with file and related reviewer_id information
@@ -507,15 +509,15 @@ def cntrb_to_last_activity(df_actions: pd.DataFrame, df_dynamic_directory: pd.Da
 
 def file_cntrb_activity_by_month(df_dynamic_directory: pd.DataFrame, df_actions: pd.DataFrame):
     """
-    This function created a df with the files and the the dates of the most recent activity for each cntrb_id.
+    This function transforms the df_dynamic_directory to be counts of "last seen" reviewers by month.
 
     Args:
     -----
-        df_actions : string
-            Output from the directory drop down
-
         df_dynamic_directory : Pandas Dataframe
             Dataframe with file and related reviewer_id information
+
+        df_actions : Pandas Dataframe
+            Dataframe with contributor activity
 
     Returns:
     --------
@@ -531,8 +533,9 @@ def file_cntrb_activity_by_month(df_dynamic_directory: pd.DataFrame, df_actions:
     there will be a column for every month even if there is no "last contribution" date in it. This greatly
     improves the heatmap ploting"""
 
-    # dates based on action so it represents the length of the project
-    min_date = df_actions.created_at.min()
+    # dates based on action so it represents the length of the project, min based on PR
+    # open date to avoid committer inputted dates
+    min_date = df_actions[df_actions["Action"] == "PR Opened"].created_at.min()
     max_date = df_actions.created_at.max()
     dates = pd.date_range(start=min_date, end=max_date, freq="M", inclusive="both")
     df_fill = dates.to_frame(index=False, name="dates")
