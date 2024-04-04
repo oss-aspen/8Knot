@@ -230,7 +230,7 @@ There are many guides to transitioning from `Docker` (Desktop) to `Podman` (Desk
 At this point, the `Podman` docs claim that one should have moved over to `Podman` as a drop-in replacement for `Docker`. However, here are two steps that we noticed were necessary in some cases.
 
 1. In `$HOME/.docker/config.json` replace "credsStore" with "credStore" (minus an 's') to solve registry credentialing problems.
-2. Set `export DOCKER_HOST=<your_podman_machine_socket_path>` to the `Podman machine`'s socket on your system, which you can find in the `Resources` tab of `Podman Desktop`. The path starts with `unix://`.  
+2. Set `export DOCKER_HOST=<your_podman_machine_socket_path>` to the `Podman machine`'s socket on your system, which you can find in the `Resources` tab of `Podman Desktop`. The path starts with `unix://`.
 
 ### Build and Run
 
