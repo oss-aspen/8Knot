@@ -331,9 +331,11 @@ def process_data(
     # replace all nan to 0
     df_consolidated.fillna(value=0, inplace=True)
 
-    # log of commits and contribs
-    df_consolidated["log_num_commits"] = df_consolidated["Commit"].apply(math.log)
-    df_consolidated["log_num_contrib"] = df_consolidated["num_unique_contributors"].apply(math.log)
+    # log of commits and contribs if values are not 0
+    df_consolidated["log_num_commits"] = df_consolidated["Commit"].apply(lambda x: math.log(x) if x != 0 else 0)
+    df_consolidated["log_num_contrib"] = df_consolidated["num_unique_contributors"].apply(
+        lambda x: math.log(x) if x != 0 else 0
+    )
 
     # column to hold the weighted values of pr and issues actions summed together
     df_consolidated["prs_issues_actions_weighted"] = (
