@@ -65,29 +65,6 @@ gc_lottery_factor_over_time = dbc.Card(
                         dbc.Row(
                             [
                                 dbc.Label(
-                                    "Threshold:",
-                                    html_for=f"threshold-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
-                                dbc.Col(
-                                    [
-                                        dcc.Slider(
-                                            id=f"threshold-{PAGE}-{VIZ_ID}",
-                                            min=10,
-                                            max=95,
-                                            value=50,
-                                            marks={i: f"{i}%" for i in range(10, 100, 5)},
-                                        ),
-                                    ],
-                                    className="me-2",
-                                    width=10,
-                                ),
-                            ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
-                                dbc.Label(
                                     "Window Width:",
                                     html_for=f"window-width-{PAGE}-{VIZ_ID}",
                                     width="auto",
@@ -137,55 +114,35 @@ gc_lottery_factor_over_time = dbc.Card(
                         dbc.Row(
                             [
                                 dbc.Label(
-                                    "Filter Out Contributors with Keyword(s) in Login:",
-                                    html_for=f"patterns-{PAGE}-{VIZ_ID}",
+                                    "Threshold:",
+                                    html_for=f"threshold-{PAGE}-{VIZ_ID}",
                                     width="auto",
                                 ),
                                 dbc.Col(
                                     [
-                                        dmc.MultiSelect(
-                                            id=f"patterns-{PAGE}-{VIZ_ID}",
-                                            placeholder="Bot filter values",
-                                            data=[
-                                                {"value": "bot", "label": "bot"},
-                                            ],
-                                            classNames={"values": "dmc-multiselect-custom"},
-                                            creatable=True,
-                                            searchable=True,
+                                        dcc.Slider(
+                                            id=f"threshold-{PAGE}-{VIZ_ID}",
+                                            min=10,
+                                            max=95,
+                                            value=50,
+                                            marks={i: f"{i}%" for i in range(10, 100, 5)},
                                         ),
                                     ],
                                     className="me-2",
+                                    width=9,
                                 ),
-                            ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
                                 dbc.Col(
-                                    dcc.DatePickerRange(
-                                        id=f"date-picker-range-{PAGE}-{VIZ_ID}",
-                                        min_date_allowed=dt.date(2005, 1, 1),
-                                        max_date_allowed=dt.date.today(),
-                                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
-                                        clearable=True,
+                                    dbc.Button(
+                                        "About Graph",
+                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                        color="secondary",
+                                        size="sm",
                                     ),
-                                    width="auto",
-                                ),
-                                dbc.Col(
-                                    [
-                                        dbc.Button(
-                                            "About Graph",
-                                            id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                            color="secondary",
-                                            size="sm",
-                                        ),
-                                    ],
                                     width="auto",
                                     style={"paddingTop": ".5em"},
                                 ),
                             ],
                             align="center",
-                            justify="between",
                         ),
                     ]
                 ),
@@ -223,33 +180,21 @@ def graph_title(window_width):
     Output(f"check-alert-{PAGE}-{VIZ_ID}", "is_open"),
     [
         Input("repo-choices", "data"),
-        Input(f"patterns-{PAGE}-{VIZ_ID}", "value"),
         Input(f"threshold-{PAGE}-{VIZ_ID}", "value"),
         Input(f"window-width-{PAGE}-{VIZ_ID}", "value"),
         Input(f"step-size-{PAGE}-{VIZ_ID}", "value"),
-        Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "start_date"),
-        Input(f"date-picker-range-{PAGE}-{VIZ_ID}", "end_date"),
         Input("bot-switch", "value"),
     ],
     background=True,
 )
-def create_contrib_prolificacy_over_time_graph(
-    repolist,
-    patterns,
-    threshold,
-    window_width,
-    step_size,
-    start_date,
-    end_date,
-    bot_switch,
-):
+def create_contrib_prolificacy_over_time_graph(repolist, threshold, window_width, step_size, bot_switch):
     # wait for data to asynchronously download and become available.
     while not_cached := cf.get_uncached(func_name=ctq.__name__, repolist=repolist):
         logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 
-    logging.warning(f"{VIZ_ID} - START")
     start = time.perf_counter()
+    logging.warning(f"{VIZ_ID} - START")
 
     # GET ALL DATA FROM POSTGRES CACHE
     df = cf.retrieve_from_cache(
@@ -263,10 +208,6 @@ def create_contrib_prolificacy_over_time_graph(
     if bot_switch:
         df = df[~df["cntrb_id"].isin(app.bots_list)]
 
-    # data ready.
-    start = time.perf_counter()
-    logging.warning(f"{VIZ_ID}- START")
-
     # test if there is data
     if df.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
@@ -276,34 +217,26 @@ def create_contrib_prolificacy_over_time_graph(
     if step_size > window_width:
         return dash.no_update, True
 
-    df_final = process_data(df, patterns, threshold, window_width, step_size, start_date, end_date)
+    df = process_data(df, threshold, window_width, step_size)
 
-    fig = create_figure(df_final, threshold, step_size)
+    fig = create_figure(df, threshold, step_size)
 
     logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig, False
 
 
-def process_data(df, patterns, threshold, window_width, step_size, start_date, end_date):
+def process_data(df, threshold, window_width, step_size):
     # convert to datetime objects rather than strings
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
 
     # order values chronologically by created_at date
     df = df.sort_values(by="created_at", ascending=True)
 
-    # if the start_date and/or the end date is not specified set them to the beginning and most recent created_at date
-    if start_date is None:
-        start_date = df["created_at"].min()
-    if end_date is None:
-        end_date = df["created_at"].max()
+    # get start and end date from created column
+    start_date = df["created_at"].min()
+    end_date = df["created_at"].max()
 
-    if patterns:
-        # remove rows where Login column value contains the substring 'bot'
-        patterns_mask = df["login"].str.contains("|".join(patterns), na=False)
-        df = df[~patterns_mask]
-
-    # threshold is an integer value eg. 10, 20,..., 90 since dcc.Slider only accepts integers as values
-    # divide by 100 to convert it to a decimal representation of a percentage eg. 0.10, 0.20,..., 0.90
+    # convert percent to its decimal representation
     threshold = threshold / 100
 
     # create bins with a size equivalent to the the step size starting from the start date up to the end date
