@@ -65,7 +65,7 @@ gc_lottery_factor_over_time = dbc.Card(
                         dbc.Row(
                             [
                                 dbc.Label(
-                                    "Window Width:",
+                                    "Window Width (Months):",
                                     html_for=f"window-width-{PAGE}-{VIZ_ID}",
                                     width="auto",
                                 ),
@@ -83,7 +83,7 @@ gc_lottery_factor_over_time = dbc.Card(
                                     width=2,
                                 ),
                                 dbc.Label(
-                                    "Step Size:",
+                                    "Step Size (Months):",
                                     html_for=f"step-size-{PAGE}-{VIZ_ID}",
                                     width="auto",
                                 ),
