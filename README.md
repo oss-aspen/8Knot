@@ -204,6 +204,8 @@ you're using.
 Note: You'll have to manually fill in the \<AUGUR_APP_ID\> in the AUGUR_USER_AUTH_ENDPOINT environment variable.
 
 In-depth instructions for enabling 8Knot + Augur integration is available in [AUGUR_LOGIN.md](docs/AUGUR_LOGIN.md).
+An overview of OAuth's implementation in 8Knot can be found here: [user-accounts-in-8knot.md](docs/user-accounts-in-8knot.md).
+
 
 ### Runtime
 
