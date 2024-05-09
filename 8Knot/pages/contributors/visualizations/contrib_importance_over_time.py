@@ -375,10 +375,12 @@ def create_figure(df_final, threshold, step_size):
         hovertemplate="%{y} people contributing to<br>%{customdata[0]}% of %{text} from<br>%{customdata[1]}<br><extra></extra>",
     )
 
+    # update xaxes to show only the year
+    fig.update_xaxes(showgrid=True, ticklabelmode="period", dtick="M12", tickformat="%Y")
+
     # layout styling
     fig.update_layout(
         xaxis_title=f"Timeline (stepsize = {step_size} months)",
-        xaxis=dict(tick0=start_date),
         yaxis_title="Lottery Factor",
         font=dict(size=14),
         margin_b=40,
