@@ -64,12 +64,9 @@ gc_pr_first_response = dbc.Card(
                                         step=1,
                                         value=2,
                                         size="sm",
+                                        style={"width": "100px"},
                                     ),
                                     className="me-2",
-                                    width=2,
-                                ),
-                                dbc.Col(
-                                    width=6,
                                 ),
                                 dbc.Col(
                                     dbc.Button(
@@ -83,7 +80,6 @@ gc_pr_first_response = dbc.Card(
                                 ),
                             ],
                             align="center",
-                            justify="between",
                         ),
                     ]
                 ),
