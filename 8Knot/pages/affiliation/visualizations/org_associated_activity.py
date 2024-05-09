@@ -221,8 +221,8 @@ def process_data(df: pd.DataFrame, num, start_date, end_date, email_filter):
     # creates list of emails for each contribution and flattens list result
     emails = df.email_list.str.split(" , ").explode("email_list").tolist()
 
-    # remove any entries not in email format
-    emails = [x for x in emails if "@" in x]
+    # remove any entries not in email format and flattens list result
+    emails = [x.lower() for x in emails if "@" in x]
 
     # creates list of email domains from the emails list
     email_domains = [x[x.rindex("@") + 1 :] for x in emails]
