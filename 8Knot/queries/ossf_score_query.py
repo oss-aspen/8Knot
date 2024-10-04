@@ -33,7 +33,8 @@ def ossf_score_query(self, repos):
                 SELECT
                     repo_id as id,
                     name,
-                    score
+                    score,
+                    data_collection_date
                 FROM
                     repo_deps_scorecard
                 WHERE

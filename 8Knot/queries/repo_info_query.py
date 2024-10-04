@@ -39,7 +39,8 @@ def repo_info_query(self, repos):
                     stars_count,
                     code_of_conduct_file,
                     security_issue_file,
-                    security_audit_file
+                    security_audit_file,
+                    data_collection_date
                 FROM
                     repo_info ri
                 WHERE
