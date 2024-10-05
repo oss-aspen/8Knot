@@ -118,7 +118,7 @@ def ossf_scorecard(repo):
     df.drop(["repo_id"], axis=1, inplace=True)
 
     # get all values from the data_collection_date column
-    updated_times = df[["data_collection_date"]]
+    updated_times = pd.to_datetime(df["data_collection_date"])
 
     # we dont need to display this column for every entry
     df.drop(["data_collection_date"], axis=1, inplace=True)
@@ -143,7 +143,6 @@ def ossf_scorecard(repo):
         
         logging.warning(f"unique_updated_times: {unique_updated_times}")
 
-        updated_date = [datetime.fromisoformat(str(ut)) for ut in unique_updated_times]
         logging.warning(f"updated_date: {updated_date}")
         updated_date = updated_date[-1].strftime("%d/%m/%Y")
         logging.warning(f"updated_date: {updated_date}")
