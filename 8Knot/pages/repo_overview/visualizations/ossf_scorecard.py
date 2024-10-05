@@ -120,12 +120,6 @@ def ossf_scorecard(repo):
     # get all values from the data_collection_date column
     updated_times = df[["data_collection_date"]]
 
-    unique_updated_times = updated_times.drop_duplicates()
-
-    if len(unique_updated_times) > 1:
-        logging.warning(f"{VIZ_ID} - MORE THAN ONE DATA COLLECTION DATE")
-    
-    
     # we dont need to display this column for every entry
     df.drop(["data_collection_date"], axis=1, inplace=True)
 
@@ -136,10 +130,27 @@ def ossf_scorecard(repo):
     table = dbc.Table.from_dataframe(df, striped=True, bordered=True, hover=True)
 
     # format the date
-    updated_date = [datetime.fromisoformat(ut) for ut in unique_updated_times]
-    logging.info(f"updated_date: {updated_date}")
-    updated_date = updated_date[-1].strftime("%d/%m/%Y")
-    logging.info(f"updated_date: {updated_date}")
+    try:
+        unique_updated_times = updated_times.drop_duplicates()
+        unique_updated_times = unique_updated_times.to_numpy().flatten()
+        logging.warning(unique_updated_times)
+        for t in unique_updated_times:
+            logging.warning(f"t: {t}, {type(t)}")
+
+        
+        if len(unique_updated_times) > 1:
+            logging.warning(f"{VIZ_ID} - MORE THAN ONE DATA COLLECTION DATE")
+        
+        logging.warning(f"unique_updated_times: {unique_updated_times}")
+
+        updated_date = [datetime.fromisoformat(str(ut)) for ut in unique_updated_times]
+        logging.warning(f"updated_date: {updated_date}")
+        updated_date = updated_date[-1].strftime("%d/%m/%Y")
+        logging.warning(f"updated_date: {updated_date}")
+    except Exception as e:
+        logging.error(f"Error converting date: {e}")
+        updated_date = "Error"
+        raise e
 
     logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return table, dbc.Label(updated_date)
