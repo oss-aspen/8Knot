@@ -104,8 +104,6 @@ def process_data(df_repo_files, df_repo_info, df_releases):
         if len(unique_updated_times) > 1:
             logging.warning(f"{VIZ_ID} - MORE THAN ONE LAST UPDATE DATE")
 
-    
-        logging.warning(f"updated_date: {updated_date}")
         updated_date = updated_date[-1].strftime("%d/%m/%Y")
         logging.warning(f"updated_date: {updated_date}")
     except Exception as e:

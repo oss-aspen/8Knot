@@ -143,7 +143,6 @@ def ossf_scorecard(repo):
         
         logging.warning(f"unique_updated_times: {unique_updated_times}")
 
-        logging.warning(f"updated_date: {updated_date}")
         updated_date = updated_date[-1].strftime("%d/%m/%Y")
         logging.warning(f"updated_date: {updated_date}")
     except Exception as e:
