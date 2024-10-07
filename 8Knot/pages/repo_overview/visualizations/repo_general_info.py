@@ -88,13 +88,14 @@ def repo_general_info(repo):
 def process_data(df_repo_files, df_repo_info, df_releases):
 
     # get all values from the data_collection_date column
-    updated_times_repo_files = pd.to_datetime(df_repo_files["data_collection_date"])
+    # updated_times_repo_files = pd.to_datetime(df_repo_files["data_collection_date"])
     updated_times_repo_info = pd.to_datetime(df_repo_info["data_collection_date"])
-    updated_times_releases = pd.to_datetime(df_releases["data_collection_date"])
+    # updated_times_releases = pd.to_datetime(df_releases["data_collection_date"])
 
     # format the date
     try:
-        updated_times = pd.concat([updated_times_repo_files, updated_times_repo_info, updated_times_releases])
+        # updated_times = pd.concat([updated_times_repo_files, updated_times_repo_info, updated_times_releases])
+        updated_times = updated_times_repo_info
         unique_updated_times = updated_times.drop_duplicates()
         unique_updated_times = unique_updated_times.to_numpy().flatten()
 
