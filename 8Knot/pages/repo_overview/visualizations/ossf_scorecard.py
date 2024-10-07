@@ -85,10 +85,7 @@ def toggle_popover(n, is_open):
 
 # callback for ossf scorecard
 @callback(
-    [
-        Output(f"{PAGE}-{VIZ_ID}", "children"),
-        Output(f"{PAGE}-{VIZ_ID}-updated", "children")
-    ],
+    [Output(f"{PAGE}-{VIZ_ID}", "children"), Output(f"{PAGE}-{VIZ_ID}-updated", "children")],
     [
         Input("repo-info-selection", "value"),
     ],
@@ -137,13 +134,12 @@ def ossf_scorecard(repo):
         for t in unique_updated_times:
             logging.warning(f"t: {t}, {type(t)}")
 
-        
         if len(unique_updated_times) > 1:
             logging.warning(f"{VIZ_ID} - MORE THAN ONE DATA COLLECTION DATE")
-        
+
         logging.warning(f"unique_updated_times: {unique_updated_times}")
 
-        updated_date =  pd.to_datetime(str(unique_updated_times[-1])).strftime("%d/%m/%Y")
+        updated_date = pd.to_datetime(str(unique_updated_times[-1])).strftime("%d/%m/%Y")
         logging.warning(f"updated_date: {updated_date}")
     except Exception as e:
         logging.error(f"Error converting date: {e}")

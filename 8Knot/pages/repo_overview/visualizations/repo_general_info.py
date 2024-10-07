@@ -37,7 +37,7 @@ gc_repo_general_info = dbc.Card(
                         dbc.Label("Last Updated:", className="mr-2"),
                         html.Div(id=f"{PAGE}-{VIZ_ID}-updated"),
                     ]
-                )
+                ),
             ]
         )
     ],
@@ -58,10 +58,7 @@ def toggle_popover(n, is_open):
 
 # callback for repo general info
 @callback(
-    [
-        Output(f"{PAGE}-{VIZ_ID}", "children"),
-        Output(f"{PAGE}-{VIZ_ID}-updated", "children")
-    ],
+    [Output(f"{PAGE}-{VIZ_ID}", "children"), Output(f"{PAGE}-{VIZ_ID}-updated", "children")],
     [
         Input("repo-info-selection", "value"),
     ],
@@ -90,7 +87,7 @@ def repo_general_info(repo):
 
 def process_data(df_repo_files, df_repo_info, df_releases):
 
-     # get all values from the data_collection_date column
+    # get all values from the data_collection_date column
     updated_times_repo_files = pd.to_datetime(df_repo_files["data_collection_date"])
     updated_times_repo_info = pd.to_datetime(df_repo_info["data_collection_date"])
     updated_times_releases = pd.to_datetime(df_releases["data_collection_date"])
