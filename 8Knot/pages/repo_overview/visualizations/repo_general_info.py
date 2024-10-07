@@ -104,7 +104,7 @@ def process_data(df_repo_files, df_repo_info, df_releases):
         if len(unique_updated_times) > 1:
             logging.warning(f"{VIZ_ID} - MORE THAN ONE LAST UPDATE DATE")
 
-        updated_date = updated_date[-1].strftime("%d/%m/%Y")
+        updated_date = pd.to_datetime(str(unique_updated_times[-1])).strftime("%d/%m/%Y")
         logging.warning(f"updated_date: {updated_date}")
     except Exception as e:
         logging.error(f"Error converting date: {e}")
