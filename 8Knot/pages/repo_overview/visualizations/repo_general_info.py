@@ -82,7 +82,7 @@ def repo_general_info(repo):
     table = dbc.Table.from_dataframe(df, striped=True, bordered=True, hover=True)
 
     logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
-    return table
+    return table, last_updated
 
 
 def process_data(df_repo_files, df_repo_info, df_releases):
