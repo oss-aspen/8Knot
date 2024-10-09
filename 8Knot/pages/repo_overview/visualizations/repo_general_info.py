@@ -90,27 +90,16 @@ def repo_general_info(repo):
 
 
 def process_data(df_repo_files, df_repo_info, df_releases):
-
-    # get all values from the data_collection_date column
-    # updated_times_repo_files = pd.to_datetime(df_repo_files["data_collection_date"])
+   
     updated_times_repo_info = pd.to_datetime(df_repo_info["data_collection_date"])
-    # updated_times_releases = pd.to_datetime(df_releases["data_collection_date"])
 
-    # format the date
-    try:
-        # updated_times = pd.concat([updated_times_repo_files, updated_times_repo_info, updated_times_releases])
-        updated_times = updated_times_repo_info
-        unique_updated_times = updated_times.drop_duplicates()
-        unique_updated_times = unique_updated_times.to_numpy().flatten()
+    unique_updated_times = updated_times_repo_info.drop_duplicates().to_numpy().flatten()
 
-        if len(unique_updated_times) > 1:
-            logging.warning(f"{VIZ_ID} - MORE THAN ONE LAST UPDATE DATE")
+    if len(unique_updated_times) > 1:
+        logging.warning(f"{VIZ_ID} - MORE THAN ONE LAST UPDATE DATE")
 
-        updated_date = pd.to_datetime(str(unique_updated_times[-1])).strftime("%d/%m/%Y")
-        logging.warning(f"updated_date: {updated_date}")
-    except Exception as e:
-        logging.error(f"Error converting date: {e}")
-        updated_date = "Error"
+    updated_date = pd.to_datetime(str(unique_updated_times[-1])).strftime("%d/%m/%Y")
+
     # convert to datetime objects rather than strings
     df_releases["release_published_at"] = pd.to_datetime(df_releases["release_published_at"], utc=True)
 

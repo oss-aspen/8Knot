@@ -130,25 +130,12 @@ def ossf_scorecard(repo):
 
     table = dbc.Table.from_dataframe(df, striped=True, bordered=True, hover=True)
 
-    # format the date
-    try:
-        unique_updated_times = updated_times.drop_duplicates()
-        unique_updated_times = unique_updated_times.to_numpy().flatten()
-        logging.warning(unique_updated_times)
-        for t in unique_updated_times:
-            logging.warning(f"t: {t}, {type(t)}")
+    unique_updated_times = updated_times.drop_duplicates().to_numpy().flatten()
 
-        if len(unique_updated_times) > 1:
-            logging.warning(f"{VIZ_ID} - MORE THAN ONE DATA COLLECTION DATE")
+    if len(unique_updated_times) > 1:
+        logging.warning(f"{VIZ_ID} - MORE THAN ONE DATA COLLECTION DATE")
 
-        logging.warning(f"unique_updated_times: {unique_updated_times}")
-
-        updated_date = pd.to_datetime(str(unique_updated_times[-1])).strftime("%d/%m/%Y")
-        logging.warning(f"updated_date: {updated_date}")
-    except Exception as e:
-        logging.error(f"Error converting date: {e}")
-        updated_date = "Error"
-        raise e
+    updated_date = pd.to_datetime(str(unique_updated_times[-1])).strftime("%d/%m/%Y")
 
     logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return table, dbc.Label(updated_date)
