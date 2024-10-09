@@ -45,10 +45,8 @@ gc_ossf_scorecard = dbc.Card(
                                     dbc.Row(
                                         [
                                             dbc.Label(
-                                                [
-                                                    "Last Updated:",
-                                                    html.Span(id=f"{PAGE}-{VIZ_ID}-updated")
-                                                ], className="mr-2"
+                                                ["Last Updated:", html.Span(id=f"{PAGE}-{VIZ_ID}-updated")],
+                                                className="mr-2",
                                             )
                                         ]
                                     ),

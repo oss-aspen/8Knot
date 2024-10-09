@@ -32,16 +32,7 @@ gc_repo_general_info = dbc.Card(
                 dcc.Loading(
                     html.Div(id=f"{PAGE}-{VIZ_ID}"),
                 ),
-                dbc.Row(
-                    [
-                        dbc.Label(
-                            [
-                                "Last Updated:",
-                                html.Span(id=f"{PAGE}-{VIZ_ID}-updated")
-                            ], className="mr-2"
-                        )
-                    ]
-                ),
+                dbc.Row([dbc.Label(["Last Updated:", html.Span(id=f"{PAGE}-{VIZ_ID}-updated")], className="mr-2")]),
             ]
         )
     ],
@@ -90,7 +81,7 @@ def repo_general_info(repo):
 
 
 def process_data(df_repo_files, df_repo_info, df_releases):
-   
+
     updated_times_repo_info = pd.to_datetime(df_repo_info["data_collection_date"])
 
     unique_updated_times = updated_times_repo_info.drop_duplicates().to_numpy().flatten()
