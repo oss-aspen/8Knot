@@ -34,8 +34,12 @@ gc_repo_general_info = dbc.Card(
                 ),
                 dbc.Row(
                     [
-                        dbc.Label("Last Updated:", className="mr-2"),
-                        html.Div(id=f"{PAGE}-{VIZ_ID}-updated"),
+                        dbc.Label(
+                            [
+                                "Last Updated:",
+                                html.Span(id=f"{PAGE}-{VIZ_ID}-updated")
+                            ], className="mr-2"
+                        )
                     ]
                 ),
             ]
