@@ -369,5 +369,10 @@ def issue_assignment(df, start_date, end_date, contrib):
         (df_in_range["assignment_action"] == "assigned") & (df_in_range["assign_date"] <= end_date)
     ]
 
-    # return the different of assignments and unassignments
-    return df_assigned.shape[0] - df_unassign.shape[0]
+    # the different of assignments and unassignments
+    assign_value = df_assigned.shape[0] - df_unassign.shape[0]
+
+    # prevent negative assignments
+    assign_value = 0 if assign_value < 0 else assign_value
+
+    return assign_value

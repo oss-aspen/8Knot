@@ -179,8 +179,8 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
     # creates list of unique emails and flattens list result
     emails = df.email_list.str.split(" , ").explode("email_list").unique().tolist()
 
-    # remove any entries not in email format
-    emails = [x for x in emails if "@" in x]
+    # remove any entries not in email format and put all emails in lowercase
+    emails = [x.lower() for x in emails if "@" in x]
 
     # creates list of email domains from the emails list
     email_domains = [x[x.rindex("@") + 1 :] for x in emails]
