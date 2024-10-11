@@ -306,7 +306,8 @@ def _create_application_tables() -> None:
             CREATE UNLOGGED TABLE IF NOT EXISTS ossf_score_query(
                 repo_id int,
                 name text,
-                score float4
+                score float4,
+                data_collection_date timestamp
             )
             """
         )
@@ -323,7 +324,8 @@ def _create_application_tables() -> None:
                 stars_count int,
                 code_of_conduct_file text,
                 security_issue_file text,
-                security_audit_file text
+                security_audit_file text,
+                data_collection_date timestamp
             )
             """
         )
