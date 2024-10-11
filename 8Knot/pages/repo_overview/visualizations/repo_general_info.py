@@ -32,7 +32,7 @@ gc_repo_general_info = dbc.Card(
                 dcc.Loading(
                     html.Div(id=f"{PAGE}-{VIZ_ID}"),
                 ),
-                dbc.Row([dbc.Label(["Last Updated:", html.Span(id=f"{PAGE}-{VIZ_ID}-updated")], className="mr-2")]),
+                dbc.Row([dbc.Label(["Last Updated: ", html.Span(id=f"{PAGE}-{VIZ_ID}-updated")], className="mr-2")]),
             ]
         )
     ],
