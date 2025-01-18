@@ -38,8 +38,8 @@ gc_issue_pr_survival = dbc.Card(
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
                             """
-                            This visualization displays the survival trends of issues and pull requests 
-                            within a repository. It highlights how long these items typically remain open 
+                            This visualization displays the survival trends of issues and pull requests
+                            within a repository. It highlights how long these items typically remain open
                             before they are closed, merged, or addressed (as indicated by the first comment).
                             """
                         ),
@@ -160,7 +160,7 @@ def issue_pr_survival_graph(repolist, interval, start_date, end_date, bot_switch
         tablename=iq.__name__,
         repolist=repolist,
     )
-    
+
     prs_df = cf.retrieve_from_cache(
         tablename=prq.__name__,
         repolist=repolist,
@@ -188,9 +188,11 @@ def issue_pr_survival_graph(repolist, interval, start_date, end_date, bot_switch
     logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
-def process_data(issues_df: pd.DataFrame, prs_df: pd.DataFrame, pr_response_df: pd.DataFrame, 
-                 interval, start_date, end_date):
-    #convert to datetime objects
+
+def process_data(
+    issues_df: pd.DataFrame, prs_df: pd.DataFrame, pr_response_df: pd.DataFrame, interval, start_date, end_date
+):
+    # convert to datetime objects
     issues_df["created_at"] = pd.to_datetime(issues_df["created_at"], utc=False)
     issues_df["closed_at"] = pd.to_datetime(issues_df["closed_at"], utc=False)
 
@@ -207,7 +209,7 @@ def process_data(issues_df: pd.DataFrame, prs_df: pd.DataFrame, pr_response_df: 
     pr_response_df = pr_response_df.sort_values(by="msg_timestamp", axis=0, ascending=True)
     pr_response_df = pr_response_df.drop_duplicates(subset="pull_request_id", keep="first")
 
-    #find earliest and latest events
+    # find earliest and latest events
     earliest = min(
         issues_df["created_at"].min(),
         prs_df["created_at"].min(),
@@ -239,43 +241,53 @@ def process_data(issues_df: pd.DataFrame, prs_df: pd.DataFrame, pr_response_df: 
     # df for survival analysis
     df_survival = dates.to_frame(index=False, name="Date")
 
-    # calculate survival probabilities 
-    df_survival["issue_closed_survival"] = (
-        df_survival["Date"].apply(
-            lambda date: (
-                (issues_df[issues_df["created_at"] <= date].shape[0] - 
-                issues_df[(issues_df["created_at"] <= date) & (issues_df["closed_at"].notnull())].shape[0]) /
+    # calculate survival probabilities
+    df_survival["issue_closed_survival"] = df_survival["Date"].apply(
+        lambda date: (
+            (
                 issues_df[issues_df["created_at"] <= date].shape[0]
-                if issues_df[issues_df["created_at"] <= date].shape[0] > 0 else 1)
+                - issues_df[(issues_df["created_at"] <= date) & (issues_df["closed_at"].notnull())].shape[0]
             )
+            / issues_df[issues_df["created_at"] <= date].shape[0]
+            if issues_df[issues_df["created_at"] <= date].shape[0] > 0
+            else 1
         )
-    df_survival["pr_merged_survival"] = (
-        df_survival["Date"].apply(
-            lambda date: (
-                (prs_df[prs_df["created_at"] <= date].shape[0] - 
-                prs_df[(prs_df["created_at"] <= date) & (prs_df["merged_at"].notnull())].shape[0]) /
+    )
+    df_survival["pr_merged_survival"] = df_survival["Date"].apply(
+        lambda date: (
+            (
                 prs_df[prs_df["created_at"] <= date].shape[0]
-                if prs_df[prs_df["created_at"] <= date].shape[0] > 0 else 1)
+                - prs_df[(prs_df["created_at"] <= date) & (prs_df["merged_at"].notnull())].shape[0]
             )
+            / prs_df[prs_df["created_at"] <= date].shape[0]
+            if prs_df[prs_df["created_at"] <= date].shape[0] > 0
+            else 1
         )
-    df_survival["pr_closed_survival"] = (
-        df_survival["Date"].apply(
-            lambda date: (
-                (prs_df[prs_df["created_at"] <= date].shape[0] - 
-                prs_df[(prs_df["created_at"] <= date) & (prs_df["closed_at"].notnull())].shape[0]) /
+    )
+    df_survival["pr_closed_survival"] = df_survival["Date"].apply(
+        lambda date: (
+            (
                 prs_df[prs_df["created_at"] <= date].shape[0]
-                if prs_df[prs_df["created_at"] <= date].shape[0] > 0 else 1)
+                - prs_df[(prs_df["created_at"] <= date) & (prs_df["closed_at"].notnull())].shape[0]
             )
+            / prs_df[prs_df["created_at"] <= date].shape[0]
+            if prs_df[prs_df["created_at"] <= date].shape[0] > 0
+            else 1
         )
-    df_survival["pr_to_first_comment_survival"] = (
-        df_survival["Date"].apply(
-            lambda date: (
-                (pr_response_df[pr_response_df["pr_created_at"] <= date].shape[0] - 
-                pr_response_df[(pr_response_df["pr_created_at"] <= date) & (pr_response_df["msg_timestamp"].notnull())].shape[0]) /
+    )
+    df_survival["pr_to_first_comment_survival"] = df_survival["Date"].apply(
+        lambda date: (
+            (
                 pr_response_df[pr_response_df["pr_created_at"] <= date].shape[0]
-                if pr_response_df[pr_response_df["pr_created_at"] <= date].shape[0] > 0 else 1)
+                - pr_response_df[
+                    (pr_response_df["pr_created_at"] <= date) & (pr_response_df["msg_timestamp"].notnull())
+                ].shape[0]
             )
+            / pr_response_df[pr_response_df["pr_created_at"] <= date].shape[0]
+            if pr_response_df[pr_response_df["pr_created_at"] <= date].shape[0] > 0
+            else 1
         )
+    )
     return df_survival
 
 
