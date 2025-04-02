@@ -241,7 +241,7 @@ At this point, the `Podman` docs claim that one should have moved over to `Podma
 1. In `$HOME/.docker/config.json` replace "credsStore" with "credStore" (minus an 's') to solve registry credentialing problems.
 2. Set `export DOCKER_HOST=<your_podman_machine_socket_path>` to the `Podman machine`'s socket on your system, which you can find in the `Resources` tab of `Podman Desktop`. The path starts with `unix://`.
 
-Podman is a daemonless container engine that's compatible with Docker containers. Here's how to set it up:
+Here's how to set it up in more details:
 
 1. **If transitioning from Docker Desktop:**
    - Uninstall Docker Desktop (requires GUI uninstall and checking for remnants)
