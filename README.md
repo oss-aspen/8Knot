@@ -213,13 +213,20 @@ We use containers to minimize the installation requirements for development and 
 
 We use Docker's Compose feature to spin up all application resources together. Please make sure you have Docker Compose installed on your system. You can find documentation on doing so here: [Docker Compose](https://docs.docker.com/compose/install)
 
-If the following commands return sensible results then Docker and Docker Compose are installed:
 
+#### Option 1: Using Docker
+
+If you choose to use Docker, you'll need:
+1. Docker installed on your system: [Install Docker](https://docs.docker.com/engine/install)
+2. Docker Compose installed: [Docker Compose](https://docs.docker.com/compose/install)
+
+If the following commands return sensible results then Docker and Docker Compose are installed:
+Verify your installation with:
 ```bash
 docker && docker compose || docker-compose
 ```
 
-(above just runs docker and docker-compose and checks if both work)
+#### Option 2: Using Podman (Recommended)
 
 NOTE: As of 3/29/24 we recommend using `Podman` and `Podman Desktop` instead of `Docker` and `Docker Desktop`. It will be our default development environment going forward.
 There are many guides to transitioning from `Docker` (Desktop) to `Podman` (Desktop), but here's a rough outline of our "golden path."
@@ -234,11 +241,59 @@ At this point, the `Podman` docs claim that one should have moved over to `Podma
 1. In `$HOME/.docker/config.json` replace "credsStore" with "credStore" (minus an 's') to solve registry credentialing problems.
 2. Set `export DOCKER_HOST=<your_podman_machine_socket_path>` to the `Podman machine`'s socket on your system, which you can find in the `Resources` tab of `Podman Desktop`. The path starts with `unix://`.
 
+Podman is a daemonless container engine that's compatible with Docker containers. Here's how to set it up:
+
+1. **If transitioning from Docker Desktop:**
+   - Uninstall Docker Desktop (requires GUI uninstall and checking for remnants)
+   - Remove any remaining Docker files/configurations
+
+2. **Install Podman:**
+   - On macOS: `brew install podman podman-desktop`
+   - On Linux: Follow the [official installation guide](https://podman.io/getting-started/installation)
+
+3. **Initial Setup:**
+   - On macOS: Initialize and start a Podman machine:
+     ```bash
+     podman machine init
+     podman machine start
+     ```
+   - Install docker-compose (used by Podman Compose):
+     ```bash
+     brew install docker-compose  # on macOS
+     # or use your system's package manager
+     ```
+
+4. **Configure Podman:**
+   - Open Podman Desktop
+   - Enable the "Docker compatibility" add-on (Settings → Extensions)
+   - If needed, edit `$HOME/.docker/config.json`:
+     ```json
+     {
+       "credStore": "desktop"  // Changed from "credsStore"
+     }
+     ```
+   - Set the Podman socket path:
+     ```bash
+     # Find your socket path in Podman Desktop → Resources
+     export DOCKER_HOST=unix:///path/to/podman.sock
+     ```
+
+5. **Verify Installation:**
+   ```bash
+   podman --version
+   podman-compose --version
+   ```
+
+
+
 ### Build and Run
 
 8Knot is a multi-container application.
 
 The app-server, worker-pools, redis-cache, and postgres-cache containers communicate with one another via docker networking.
+
+
+#### Using Docker
 
 All of the build/tear-down is done with `docker compose`.
 
@@ -270,6 +325,48 @@ To clean up the stopped containers, run:
 ```bash
 docker compose down --volumes
 ```
+
+#### Using Podman
+
+If you're using Podman, you can use either `podman-compose` or `docker compose` (thanks to the compatibility layer). Here are both options:
+
+Using podman-compose directly:
+```bash
+# Start the application
+podman-compose up --build
+
+# Scale worker pools (recommended)
+podman-compose up --build --scale worker-query=2 --scale worker-callback=2
+
+# Stop the application
+ctrl-c
+
+# Clean up containers and volumes
+podman-compose down --volumes
+```
+
+Using docker compose with Podman:
+```bash
+# The same Docker Compose commands work with Podman if you've set up the compatibility layer
+docker compose up --build
+docker compose up --build --scale worker-query=2 --scale worker-callback=2
+```
+
+Additional Podman-specific commands that might be helpful:
+```bash
+# List all containers
+podman ps -a
+
+# View container logs
+podman logs <container_name>
+
+# Remove all containers and pods
+podman pod rm -f -a
+
+# Clean up unused images and volumes
+podman system prune --volumes
+```
+
 
 The application should be available locally at 'http://localhost:8080'
 
