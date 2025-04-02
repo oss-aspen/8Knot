@@ -17,6 +17,11 @@ matrix:
           ignores:
           - code
           - pre
+	  - daemonless
+	  - macOS
+	  - podman
+	  - ctrl
+	  - ps
     sources:
       - '**/*.md|!venv/**'
     default_encoding: utf-8
