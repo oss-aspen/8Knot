@@ -263,22 +263,7 @@ Podman is a daemonless container engine that's compatible with Docker containers
      # or use your system's package manager
      ```
 
-4. **Configure Podman:**
-   - Open Podman Desktop
-   - Enable the "Docker compatibility" add-on (Settings → Extensions)
-   - If needed, edit `$HOME/.docker/config.json`:
-     ```json
-     {
-       "credStore": "desktop"  // Changed from "credsStore"
-     }
-     ```
-   - Set the Podman socket path:
-     ```bash
-     # Find your socket path in Podman Desktop → Resources
-     export DOCKER_HOST=unix:///path/to/podman.sock
-     ```
-
-5. **Verify Installation:**
+4. **Verify Installation:**
    ```bash
    podman --version
    podman-compose --version
