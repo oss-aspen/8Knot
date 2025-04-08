@@ -18,8 +18,8 @@ layout = dbc.Container(
     [
         dbc.Row(
             [
-                dbc.Col(gc_unique_domains, width=6),
                 dbc.Col(gc_commit_domains, width=6),
+                dbc.Col(gc_unique_domains, width=6),
             ],
             align="center",
             style={"marginBottom": ".5%"},
