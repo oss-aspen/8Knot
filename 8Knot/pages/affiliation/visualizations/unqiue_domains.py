@@ -211,7 +211,7 @@ def create_figure(df: pd.DataFrame):
     fig.update_traces(
         textposition="inside",
         textinfo="percent+label",
-        hovertemplate="%{label} <br>Contributions: %{value}<br><extra></extra>",
+        hovertemplate="%{label} <br>Contributors: %{value}<br><extra></extra>",
     )
 
     return fig
