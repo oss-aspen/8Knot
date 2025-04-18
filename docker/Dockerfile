@@ -2,10 +2,13 @@ FROM registry.access.redhat.com/ubi9/python-39:latest
 
 WORKDIR /opt/app-root/src
 
-# install required packages
-COPY ./requirements.txt /opt/app-root/src/
+# Install UV package installer
 RUN pip3 install --no-cache-dir -U pip setuptools && \
-    pip3 install --no-cache-dir -r requirements.txt
+    pip3 install --no-cache-dir uv
+
+# install required packages with UV
+COPY ./requirements.txt /opt/app-root/src/
+RUN uv pip install --no-cache-dir -r requirements.txt
 
 # copy the contents of current file into the
 # working directory.
