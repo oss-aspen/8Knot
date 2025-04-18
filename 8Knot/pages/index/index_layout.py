@@ -6,8 +6,51 @@ from app import augur
 import os
 import logging
 
-# if param doesn't exist, default to False. Otherwise, use the param's booly value.
-# this determines if the log in option will be shown or not
+#  login banner that will be displayed when login is disabled
+login_banner = None
+if os.getenv("AUGUR_LOGIN_ENABLED", "False") != "True":
+    login_banner = html.Div(
+        dbc.Alert(
+            [
+                html.H4(
+                    "Login is Currently Disabled",
+                    className="alert-heading",
+                    style={"color": "black", "fontWeight": "600", "margin": "0 0 8px 0", "textShadow": "none"},
+                ),
+                html.P(
+                    [
+                        "If you need to collect data on new repositories, please ",
+                        html.A(
+                            "create a repository collection request",
+                            href="https://github.com/oss-aspen/8Knot/issues/new?template=augur_load.md",
+                            target="_blank",
+                            style={"fontWeight": "500", "color": "#1565C0"},
+                        ),
+                        ".",
+                    ],
+                    style={"color": "#333333", "margin": "0 0 10px 0"},
+                ),
+            ],
+            color="light",
+            dismissable=True,
+            id="login-disabled-banner",
+            className="mb-0",
+            style={
+                "backgroundColor": "#EDF7ED",  # Light green background
+                "borderColor": "#6b8976",  # Darker green border from palette
+                "border": "1px solid #6b8976",
+                "borderLeft": "5px solid #6b8976",
+                "boxShadow": "0 2px 8px rgba(0, 0, 0, 0.15)",
+                "maxWidth": "400px",
+                "padding": "15px",
+                "zIndex": "1000",
+            },
+        ),
+        style={"position": "fixed", "top": "70px", "right": "20px", "zIndex": "1000"},  # Position below navbar
+    )
+
+# if param doesn't exist, default to False. Otherwise, use the param's value.
+# this determines if the login option will be shown or not
 if os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True":
     logging.warning("LOGIN ENABLED")
     login_navbar = [
@@ -262,6 +305,8 @@ layout = dbc.Container(
         dcc.Store(id="user-group-loading-signal", data="", storage_type="memory"),
         dcc.Location(id="url"),
         navbar,
+        # Add login banner overlay (will be positioned via CSS)
+        login_banner if login_banner else html.Div(),
         dbc.Row(
             [
                 dbc.Col(
