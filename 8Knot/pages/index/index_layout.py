@@ -177,12 +177,6 @@ navbar_bottom = dbc.NavbarSimple(
 
 search_bar = html.Div(
     [
-        # Add client-side caching component
-        dcc.Store(id="cached-options", storage_type="session"),
-        
-        # Hidden div to trigger cache initialization on page load
-        html.Div(id="_", style={"display": "none"}),
-
         dbc.Stack(
             [
                 html.Div(
@@ -193,10 +187,10 @@ search_bar = html.Div(
                             clearable=True,
                             nothingFound="No matching repos/orgs.",
                             variant="filled",
+                            debounce=300, # 300ms delay for debounce
                             data=[augur.initial_multiselect_option()],
                             value=[augur.initial_multiselect_option()["value"]],
                             style={"fontSize": 16},
-                            debounce=300,
                         ),
                         dbc.Alert(
                             children='Please ensure that your spelling is correct. \

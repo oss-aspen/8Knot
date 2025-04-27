@@ -23,20 +23,6 @@ from db_manager.augur_manager import AugurManager
 import _login
 from _celery import celery_app, celery_manager
 import _bots as bots
-import time
-import pandas as pd
-from flask import Flask, session, request
-from flask.json import jsonify
-import flask
-from flask_login import LoginManager, login_required
-import dash
-from dash import html
-from werkzeug.middleware.proxy_fix import ProxyFix
-import json
-import re
-
-# Fix path for the imports
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO)
 
