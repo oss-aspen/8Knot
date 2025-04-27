@@ -177,6 +177,12 @@ navbar_bottom = dbc.NavbarSimple(
 
 search_bar = html.Div(
     [
+        # Add client-side caching component
+        dcc.Store(id="cached-options", storage_type="session"),
+        
+        # Hidden div to trigger cache initialization on page load
+        html.Div(id="_", style={"display": "none"}),
+        
         dbc.Stack(
             [
                 html.Div(

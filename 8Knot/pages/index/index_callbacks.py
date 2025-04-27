@@ -32,6 +32,7 @@ from queries.ossf_score_query import ossf_score_query as osq
 from queries.repo_info_query import repo_info_query as riq
 import redis
 import flask
+from .search_utils import fuzzy_search
 
 
 # list of queries to be run
@@ -194,66 +195,59 @@ def format_options_with_prefix(options):
     [Input("projects", "searchValue")],
     [
         State("projects", "value"),
+        State("cached-options", "data")  # Use the cached options
     ],
 )
-def dynamic_multiselect_options(user_in: str, selections):
+def dynamic_multiselect_options(user_in: str, selections, cached_options):
     """
-    Ref: https://dash.plotly.com/dash-core-components/dropdown#dynamic-options
-
-    For all of the possible repo's / orgs, check if the substring currently
-    being searched is in the repo's name or if the repo / org name is
-    in the current list of states selected. Add it to the list if it matches
-    either of the options.
+    Enhanced search using fuzzy matching and client-side cache.
+    
+    Args:
+        user_in: User's search input
+        selections: Currently selected values
+        cached_options: All available options from client-side cache
     """
-
     if not user_in:
         return dash.no_update
 
-    options = augur.get_multiselect_options().copy()
-
-    if current_user.is_authenticated:
-        logging.warning(f"LOGINBUTTON: USER LOGGED IN {current_user}")
-        # TODO: implement more permanent interface
-        users_cache = redis.StrictRedis(
-            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
-            port=6379,
-            password=os.getenv("REDIS_PASSWORD", ""),
-            decode_responses=True,
-        )
-        try:
-            users_cache.ping()
-        except redis.exceptions.ConnectionError:
-            logging.error("MULTISELECT: Could not connect to users-cache.")
-            return dash.no_update
-
-        try:
-            if users_cache.exists(f"{current_user.get_id()}_group_options"):
-                options = options + json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
-        except redis.exceptions.ConnectionError:
-            logging.error("Searchbar: couldn't connect to Redis for user group options.")
-
-    # if the number of options changes then we're
-    # adding AUGUR_ entries somewhere.
+    # Use cached options if available, otherwise fall back to server fetch
+    if cached_options:
+        options = cached_options
+    else:
+        options = augur.get_multiselect_options().copy()
+        
+        if current_user.is_authenticated:
+            try:
+                users_cache = redis.StrictRedis(
+                    host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
+                    port=6379,
+                    password=os.getenv("REDIS_PASSWORD", ""),
+                    decode_responses=True,
+                )
+                users_cache.ping()
+                
+                if users_cache.exists(f"{current_user.get_id()}_group_options"):
+                    options = options + json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
+            except redis.exceptions.ConnectionError:
+                logging.error("MULTISELECT: Could not connect to users-cache.")
+                return dash.no_update
 
     if selections is None:
         selections = []
 
     # Remove prefixes from the search query if present
-    search_query = user_in.lower()
-    if search_query.startswith("repo:"):
+    search_query = user_in
+    if search_query.lower().startswith("repo:"):
         search_query = search_query[5:].strip()
-    elif search_query.startswith("org:"):
+    elif search_query.lower().startswith("org:"):
         search_query = search_query[4:].strip()
 
-    # match lowercase inputs with lowercase possible values
-    opts = [i for i in options if user_in.lower() in i["label"]]
-
-    # sort matches by length
-    opts = sorted(opts, key=lambda v: len(v["label"]))
-
+    # Perform fuzzy search with the refined query
+    matched_options = fuzzy_search(search_query, options, threshold=0.3)
+    
     # Format options with prefixes based on their type
     formatted_opts = []
-    for opt in opts:
+    for opt in matched_options:
         formatted_opt = opt.copy()
         if isinstance(opt["value"], str):
             # It's an org
@@ -263,8 +257,7 @@ def dynamic_multiselect_options(user_in: str, selections):
             formatted_opt["label"] = f"repo: {opt['label']}"
         formatted_opts.append(formatted_opt)
 
-    # always include the previous selections from the searchbar to avoid
-    # those values being clobbered when we truncate the total length.
+    # Always include the previous selections
     # Format selected options with prefixes
     selected_options = []
     for v in options:
@@ -278,11 +271,19 @@ def dynamic_multiselect_options(user_in: str, selections):
                 formatted_v["label"] = f"repo: {v['label']}"
             selected_options.append(formatted_v)
 
-    # arbitrarily 'small' number of matches returned..
+    # Combine results, limiting to 100 items but always including selections
     if len(formatted_opts) < 100:
-        return [formatted_opts + selected_options]
+        result = formatted_opts
     else:
-        return [formatted_opts[:100] + selected_options]
+        result = formatted_opts[:100]
+        
+    # Add selected options that aren't already in the results
+    selected_values = [opt["value"] for opt in result]
+    for opt in selected_options:
+        if opt["value"] not in selected_values:
+            result.append(opt)
+            
+    return [result]
 
 
 
@@ -515,3 +516,35 @@ def run_queries(repos):
         jobs.append(j)
 
     return [j.id for j in jobs]
+
+
+# Add a cache initialization callback that runs on page load
+@callback(
+    Output("cached-options", "data"),
+    Input("_", "children"),  # Dummy input to trigger on page load
+    prevent_initial_call=False
+)
+def initialize_cache(_):
+    """
+    Initialize the client-side cache with all options.
+    This runs once when the page loads.
+    """
+    logging.info("Initializing client-side options cache")
+    options = augur.get_multiselect_options().copy()
+    
+    if current_user.is_authenticated:
+        try:
+            users_cache = redis.StrictRedis(
+                host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
+                port=6379,
+                password=os.getenv("REDIS_PASSWORD", ""),
+                decode_responses=True,
+            )
+            users_cache.ping()
+            
+            if users_cache.exists(f"{current_user.get_id()}_group_options"):
+                options = options + json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
+        except redis.exceptions.ConnectionError:
+            logging.error("CACHE INIT: Could not connect to users-cache.")
+    
+    return options
