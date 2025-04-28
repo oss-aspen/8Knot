@@ -243,7 +243,7 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
         search_query = search_query[4:].strip()
 
     # Perform fuzzy search with the refined query
-    matched_options = fuzzy_search(search_query, options, threshold=0.3)
+    matched_options = fuzzy_search(search_query, options, threshold=0.2)
     
     # Format options with prefixes based on their type
     formatted_opts = []
