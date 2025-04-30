@@ -172,67 +172,23 @@ def login_username_button(url):
     [Input("projects", "searchValue")],
     [
         State("projects", "value"),
+        State("cached-options", "data")  # Use the cached options
     ],
 )
-def dynamic_multiselect_options(user_in: str, selections):
+def dynamic_multiselect_options(user_in: str, selections, cached_options):
     """
-    Ref: https://dash.plotly.com/dash-core-components/dropdown#dynamic-options
-
-    For all of the possible repo's / orgs, check if the substring currently
-    being searched is in the repo's name or if the repo / org name is
-    in the current list of states selected. Add it to the list if it matches
-    either of the options.
+    Enhanced search using fuzzy matching and client-side cache.
+    
+    Args:
+        user_in: User's search input
+        selections: Currently selected values
+        cached_options: All available options from client-side cache
     """
-
     if not user_in:
         return dash.no_update
 
-<<<<<<< Updated upstream
-    options = augur.get_multiselect_options().copy()
-
-    if current_user.is_authenticated:
-        logging.warning(f"LOGINBUTTON: USER LOGGED IN {current_user}")
-        # TODO: implement more permanent interface
-        users_cache = redis.StrictRedis(
-            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
-            port=6379,
-            password=os.getenv("REDIS_PASSWORD", ""),
-            decode_responses=True,
-        )
-        try:
-            users_cache.ping()
-        except redis.exceptions.ConnectionError:
-            logging.error("MULTISELECT: Could not connect to users-cache.")
-            return dash.no_update
-
-        try:
-            if users_cache.exists(f"{current_user.get_id()}_group_options"):
-                options = options + json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
-        except redis.exceptions.ConnectionError:
-            logging.error("Searchbar: couldn't connect to Redis for user group options.")
-
-    # if the number of options changes then we're
-    # adding AUGUR_ entries somewhere.
-
-    if selections is None:
-        selections = []
-
-    # match lowercase inputs with lowercase possible values
-    opts = [i for i in options if user_in.lower() in i["label"]]
-
-    # sort matches by length
-    opts = sorted(opts, key=lambda v: len(v["label"]))
-
-    # always include the previous selections from the searchbar to avoid
-    # those values being clobbered when we truncate the total length.
-    # arbitrarily 'small' number of matches returned..
-    if len(opts) < 100:
-        return [opts + [v for v in options if v["value"] in selections]]
-
-    else:
-        return [opts[:100] + [v for v in options if v["value"] in selections]]
-=======
     try:
+        start_time = time.time()
         logging.info(f"Search query: '{user_in}'")
         
         # Use cached options if available, otherwise fall back to server fetch
@@ -278,6 +234,7 @@ def dynamic_multiselect_options(user_in: str, selections):
             logging.info(f"Org prefix detected, searching for: '{search_query}'")
 
         # Perform fuzzy search with the refined query
+        from .search_utils import fuzzy_search
         matched_options = fuzzy_search(search_query, options, threshold=0.2)
         logging.info(f"Fuzzy search found {len(matched_options)} matches")
         
@@ -326,7 +283,9 @@ def dynamic_multiselect_options(user_in: str, selections):
         for opt in selected_options:
             if opt["value"] not in selected_values:
                 result.append(opt)
-                
+        
+        end_time = time.time()
+        logging.info(f"Search completed in {end_time - start_time:.2f} seconds")        
         logging.info(f"Returning {len(result)} options to dropdown")
         return [result]
     
@@ -353,10 +312,6 @@ def dynamic_multiselect_options(user_in: str, selections):
             return [default_options]
         
         return dash.no_update
-
-
-
->>>>>>> Stashed changes
 
 
 # callback for repo selections to feed into visualization call backs
@@ -555,8 +510,6 @@ def run_queries(repos):
         jobs.append(j)
 
     return [j.id for j in jobs]
-<<<<<<< Updated upstream
-=======
 
 
 # Add a cache initialization callback that runs on page load
@@ -609,4 +562,35 @@ def initialize_cache(_):
         logging.error(f"Cache initialization failed: {str(e)}")
         # Return an empty list as a fallback to prevent complete failure
         return []
->>>>>>> Stashed changes
+
+# Add search status indicator callbacks
+@callback(
+    [
+        Output("search-status", "children"),
+        Output("search-status", "className"),
+        Output("search-status", "style")
+    ],
+    [Input("projects", "searchValue")],
+    prevent_initial_call=True
+)
+def update_search_status(search_value):
+    """Update the search status indicator when a search is performed."""
+    if search_value and len(search_value) > 0:
+        return [
+            "Searching...", 
+            "search-status-indicator searching",
+            {"display": "block"}
+        ]
+    return ["", "search-status-indicator", {"display": "none"}]
+
+# Callback to hide the search status when results are loaded
+@callback(
+    [
+        Output("search-status", "style", allow_duplicate=True)
+    ],
+    [Input("projects", "data")],
+    prevent_initial_call=True
+)
+def hide_search_status_when_loaded(_):
+    """Hide the search status indicator when results are loaded."""
+    return [{"display": "none"}]
