@@ -12,7 +12,7 @@ services:
     # so it'll fail. We want this to restart when it fails, because
     # postgres will be ready eventually. we don't want it to restart
     # after it succeeds. give it 1000 attempts I guess.
-    restart: on-failure:1000
+    restart: always
 
   reverse-proxy:
     image: nginx:latest

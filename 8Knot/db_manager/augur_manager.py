@@ -103,27 +103,40 @@ class AugurManager:
         if self.engine:
             return self.engine
 
-        database_connection_string = "postgresql+psycopg2://{}:{}@{}:{}/{}".format(
-            self.user, self.password, self.host, self.port, self.database
-        )
-
-        engine = salc.create_engine(
-            database_connection_string,
-            connect_args={"options": "-csearch_path={}".format(self.schema)},
-            pool_pre_ping=True,
-        )
-
-        # verify that engine works
         try:
-            # context managed connect, closes automatically
-            with engine.connect() as conn:
-                logging.warning("AUGUR: Connection to DB succeeded")
+            logging.warning(f"AUGUR: Creating database connection to {self.host}:{self.port}")
+            database_connection_string = "postgresql+psycopg2://{}:{}@{}:{}/{}".format(
+                self.user, self.password, self.host, self.port, self.database
+            )
 
-            self.engine = engine
+            engine = salc.create_engine(
+                database_connection_string,
+                connect_args={"options": "-csearch_path={}".format(self.schema)},
+                pool_pre_ping=True,
+            )
 
-        except SQLAlchemyError as err:
-            logging.error(f"AUGUR: DB couldn't connect: {err.__cause__}")
-            raise SQLAlchemyError(err)
+            # verify that engine works
+            try:
+                # context managed connect, closes automatically
+                with engine.connect() as conn:
+                    # Execute a simple query to ensure the connection works
+                    result = conn.execute(salc.text("SELECT 1"))
+                    row = result.fetchone()
+                    if row and row[0] == 1:
+                        logging.warning(f"AUGUR: Database connection test successful")
+                    else:
+                        logging.warning(f"AUGUR: Database connection test returned unexpected result")
+                
+                self.engine = engine
+                logging.warning(f"AUGUR: Engine created successfully")
+
+            except SQLAlchemyError as err:
+                logging.error(f"AUGUR: Database connection test failed: {str(err.__cause__)}")
+                raise SQLAlchemyError(err)
+
+        except Exception as e:
+            logging.error(f"AUGUR: Failed to create database engine: {str(e)}")
+            raise e
 
         return engine
 
@@ -161,55 +174,70 @@ class AugurManager:
     def multiselect_startup(self):
         logging.warning(f"MULTISELECT_STARTUP")
 
-        query_string = f"""SELECT DISTINCT
-                            r.repo_git,
-                            r.repo_id,
-                            r.repo_name,
-                            rg.rg_name
-                        FROM
-                            repo r
-                        JOIN repo_groups rg
-                        ON rg.repo_group_id = r.repo_group_id
-                        ORDER BY rg.rg_name"""
+        try:
+            query_string = f"""SELECT DISTINCT
+                                r.repo_git,
+                                r.repo_id,
+                                r.repo_name,
+                                rg.rg_name
+                            FROM
+                                repo r
+                            JOIN repo_groups rg
+                            ON rg.repo_group_id = r.repo_group_id
+                            ORDER BY rg.rg_name"""
 
-        # query for search bar entry generation
-        df_search_bar = self.run_query(query_string)
-        logging.warning(f"MULTISELECT_QUERY")
+            # query for search bar entry generation
+            logging.warning(f"MULTISELECT_QUERY: Executing query")
+            df_search_bar = self.run_query(query_string)
+            logging.warning(f"MULTISELECT_QUERY: Query returned {len(df_search_bar)} rows")
 
-        # create a list of dictionaries for the MultiSelect dropdown
-        # component on the index page.
-        # Output is of the form: [{"label": repo_url, "value": repo_id}, ...]
-        multiselect_repos = (
-            df_search_bar[["repo_git", "repo_id"]]
-            .rename(columns={"repo_git": "label", "repo_id": "value"})
-            .to_dict("records")
-        )
+            # create a list of dictionaries for the MultiSelect dropdown
+            # component on the index page.
+            # Output is of the form: [{"label": repo_url, "value": repo_id}, ...]
+            multiselect_repos = (
+                df_search_bar[["repo_git", "repo_id"]]
+                .rename(columns={"repo_git": "label", "repo_id": "value"})
+                .to_dict("records")
+            )
+            logging.warning(f"MULTISELECT_REPOS: Created {len(multiselect_repos)} repo options")
 
-        # create a list of dictionaries for the MultiSelect dropdown
-        # Output is of the form: [{"label": org_name, "value": lower(org_name)}, ...]
-        multiselect_orgs = [{"label": v, "value": str.lower(v)} for v in list(df_search_bar["rg_name"].unique())]
+            # create a list of dictionaries for the MultiSelect dropdown
+            # Output is of the form: [{"label": org_name, "value": lower(org_name)}, ...]
+            multiselect_orgs = [{"label": v, "value": str.lower(v)} for v in list(df_search_bar["rg_name"].unique())]
+            logging.warning(f"MULTISELECT_ORGS: Created {len(multiselect_orgs)} org options")
 
-        # combine options for multiselect component and sort them by the length
-        # of their label (shorter comes first because it sorts ascending by default.)
-        self.multiselect_options = multiselect_repos + multiselect_orgs
-        self.multiselect_options = sorted(self.multiselect_options, key=lambda i: i["label"])
+            # combine options for multiselect component and sort them by the length
+            # of their label (shorter comes first because it sorts ascending by default.)
+            self.multiselect_options = multiselect_repos + multiselect_orgs
+            self.multiselect_options = sorted(self.multiselect_options, key=lambda i: i["label"])
+            logging.warning(f"MULTISELECT_OPTIONS: Combined {len(self.multiselect_options)} total options")
 
-        # create a dictionary to map github orgs to their constituent repos.
-        # used when the user selects an org
-        # Output is of the form: {group_name: [rid1, rid2, ...], group_name: [...], ...}
-        df_lower_repo_names = df_search_bar.copy()
-        df_lower_repo_names["rg_name"] = df_lower_repo_names["rg_name"].apply(str.lower)
-        self.org_name_to_repos_dict = df_lower_repo_names.groupby("rg_name")["repo_id"].apply(list).to_dict()
-        self.org_names = list(self.org_name_to_repos_dict.keys())
+            # create a dictionary to map github orgs to their constituent repos.
+            # used when the user selects an org
+            # Output is of the form: {group_name: [rid1, rid2, ...], group_name: [...], ...}
+            df_lower_repo_names = df_search_bar.copy()
+            df_lower_repo_names["rg_name"] = df_lower_repo_names["rg_name"].apply(str.lower)
+            self.org_name_to_repos_dict = df_lower_repo_names.groupby("rg_name")["repo_id"].apply(list).to_dict()
+            self.org_names = list(self.org_name_to_repos_dict.keys())
+            logging.warning(f"MULTISELECT_ORG_MAPPING: Created mapping for {len(self.org_names)} orgs")
 
-        # create a dictionary that maps the github url to the repo_id in database
-        df_repo_git_id = df_search_bar.copy()
-        df_repo_git_id = df_repo_git_id[["repo_git", "repo_id"]]
-        self.repo_git_to_repo_id = pd.Series(df_repo_git_id.repo_id.values, index=df_repo_git_id["repo_git"]).to_dict()
-        # self.repo_id_to_repo_git = {value: key for (key, value) in self.repo_git_to_repo_id.items()}
-        self.repo_id_to_repo_git = pd.Series(df_repo_git_id.repo_git.values, index=df_repo_git_id["repo_id"]).to_dict()
-
-        logging.warning(f"MULTISELECT_FINISHED")
+            # create a dictionary that maps the github url to the repo_id in database
+            df_repo_git_id = df_search_bar.copy()
+            df_repo_git_id = df_repo_git_id[["repo_git", "repo_id"]]
+            self.repo_git_to_repo_id = pd.Series(df_repo_git_id.repo_id.values, index=df_repo_git_id["repo_git"]).to_dict()
+            # self.repo_id_to_repo_git = {value: key for (key, value) in self.repo_git_to_repo_id.items()}
+            self.repo_id_to_repo_git = pd.Series(df_repo_git_id.repo_git.values, index=df_repo_git_id["repo_id"]).to_dict()
+            
+            logging.warning(f"MULTISELECT_FINISHED: Successfully initialized search bar data")
+            
+        except Exception as e:
+            logging.error(f"MULTISELECT_STARTUP_ERROR: Failed to initialize search bar data: {str(e)}")
+            # Initialize empty defaults to prevent errors
+            self.multiselect_options = []
+            self.org_name_to_repos_dict = {}
+            self.org_names = []
+            self.repo_git_to_repo_id = {}
+            self.repo_id_to_repo_git = {}
 
     def repo_git_to_id(self, git):
         """Getter method for dictionary
@@ -264,22 +292,58 @@ class AugurManager:
         Returns:
             dict(value, label): first thing the multiselect will represent on startup
         """
-        if self.initial_search_option is None:
-            # default the initial multiselect option to the
-            # first item in the list of options.
-            self.initial_search_option = self.multiselect_options[0]
+        try:
+            if self.initial_search_option is None:
+                # default the initial multiselect option to the
+                # first item in the list of options.
+                if not self.multiselect_options:
+                    logging.error("No multiselect options available for initial option")
+                    # Provide a fallback option if we have no options
+                    self.initial_search_option = {"label": "Default", "value": -1}
+                else:
+                    self.initial_search_option = self.multiselect_options[0]
 
-            if os.getenv("DEFAULT_SEARCHBAR_LABEL"):
-                logging.warning("INITIAL SEARCHBAR OPTION: DEFAULT OVERWRITTEN")
+                if os.getenv("DEFAULT_SEARCHBAR_LABEL"):
+                    logging.warning("INITIAL SEARCHBAR OPTION: DEFAULT OVERWRITTEN")
+                    default_label = os.getenv("DEFAULT_SEARCHBAR_LABEL")
+                    
+                    # search through available options for the specified overwriting default.
+                    found_option = False
+                    for opt in self.multiselect_options:
+                        if default_label == opt["label"]:
+                            # Create a copy of the option with the "repo:" prefix
+                            self.initial_search_option = opt.copy()
+                            # Add "repo:" prefix if it's a repo (integer value)
+                            if isinstance(opt["value"], int):
+                                self.initial_search_option["label"] = f"repo: {opt['label']}"
+                            else:
+                                self.initial_search_option["label"] = f"org: {opt['label']}"
+                            
+                            logging.warning(f"INITIAL SEARCHBAR OPTION: NEW DEFAULT: {self.initial_search_option}")
+                            found_option = True
+                            break
+                    
+                    if not found_option:
+                        logging.warning(f"DEFAULT_SEARCHBAR_LABEL '{default_label}' not found in available options")
+                        # If we can't find the specified default, create a mock option to avoid errors
+                        if self.multiselect_options:
+                            # Use first available option as fallback
+                            self.initial_search_option = self.multiselect_options[0]
+                            # Add prefix to fallback
+                            if isinstance(self.initial_search_option["value"], int):
+                                self.initial_search_option["label"] = f"repo: {self.initial_search_option['label']}"
+                            else:
+                                self.initial_search_option["label"] = f"org: {self.initial_search_option['label']}"
+                        else:
+                            # Create a mock entry if no options are available
+                            self.initial_search_option = {"label": f"repo: {default_label}", "value": -1}
+                            logging.warning(f"Created mock option: {self.initial_search_option}")
 
-                # search through available options for the specified overwriting default.
-                for opt in self.multiselect_options:
-                    if os.getenv("DEFAULT_SEARCHBAR_LABEL") == opt["label"]:
-                        logging.warning(f"INITIAL SEARCHBAR OPTION: NEW DEFAULT: {opt}")
-                        self.initial_search_option = opt
-                        break
-
-        return self.initial_search_option
+            return self.initial_search_option
+        except Exception as e:
+            logging.error(f"Error in initial_multiselect_option: {str(e)}")
+            # Return a fallback option in case of any error
+            return {"label": "repo: Fallback Option", "value": -1}
 
     def get_multiselect_options(self):
         """Getter method on all entries in repo+orgs options
