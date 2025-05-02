@@ -3,6 +3,7 @@ Connection Common file - accessing environment variables
 """
 import os
 import logging
+import time
 
 # credentials to access database from environment
 try:
