@@ -214,19 +214,7 @@ We use containers to minimize the installation requirements for development and 
 We use Docker's Compose feature to spin up all application resources together. Please make sure you have Docker Compose installed on your system. You can find documentation on doing so here: [Docker Compose](https://docs.docker.com/compose/install)
 
 
-#### Option 1: Using Docker
-
-If you choose to use Docker, you'll need:
-1. Docker installed on your system: [Install Docker](https://docs.docker.com/engine/install)
-2. Docker Compose installed: [Docker Compose](https://docs.docker.com/compose/install)
-
-If the following commands return sensible results then Docker and Docker Compose are installed:
-Verify your installation with:
-```bash
-docker && docker compose || docker-compose
-```
-
-#### Option 2: Using Podman (Recommended)
+#### Option 1: Using Podman (Recommended)
 
 NOTE: As of 3/29/24 we recommend using `Podman` and `Podman Desktop` instead of `Docker` and `Docker Desktop`. It will be our default development environment going forward.
 There are many guides to transitioning from `Docker` (Desktop) to `Podman` (Desktop), but here's a rough outline of our "golden path."
@@ -266,19 +254,69 @@ Podman is a daemonless container engine that's compatible with Docker containers
 4. **Verify Installation:**
    ```bash
    podman --version
-   podman-compose --version
+   podman compose --version
    ```
 
+5. **Optional but recommended to install Podman Desktop** 
 
+Further information below:
 
-### Build and Run
+#### Using Podman
 
-8Knot is a multi-container application.
+If you're using Podman, you can use either `podman compose` or `docker compose` (thanks to the compatibility layer). Here are both options:
 
-The app-server, worker-pools, redis-cache, and postgres-cache containers communicate with one another via docker networking.
+Using podman-compose directly:
+```bash
+# Start the application
+podman compose up --build
 
+# Scale worker pools (recommended)
+podman compose up --build --scale worker-query=2 --scale worker-callback=2
 
-#### Using Docker
+# Stop the application
+ctrl-c
+
+# Clean up containers and volumes
+podman compose down --volumes
+```
+
+Using docker compose with Podman:
+```bash
+# The same Docker Compose commands work with Podman if you've set up the compatibility layer
+docker compose up --build
+docker compose up --build --scale worker-query=2 --scale worker-callback=2
+```
+
+Additional Podman-specific commands that might be helpful:
+```bash
+# List all containers
+podman ps -a
+
+# View container logs
+podman logs <container_name>
+
+# Remove all containers and pods
+podman pod rm -f -a
+
+# Clean up unused images and volumes
+podman system prune --volumes
+```
+
+#### Option 2: Using Docker
+
+If you choose to use Docker, you'll need:
+1. Docker installed on your system: [Install Docker](https://docs.docker.com/engine/install)
+2. Docker Compose installed: [Docker Compose](https://docs.docker.com/compose/install)
+
+If the following commands return sensible results then Docker and Docker Compose are installed:
+Verify your installation with:
+```bash
+docker && docker compose || docker-compose
+```
+
+**Optional, but recommended to Install Docker Desktop** 
+
+Further information below:
 
 All of the build/tear-down is done with `docker compose`.
 
@@ -311,47 +349,11 @@ To clean up the stopped containers, run:
 docker compose down --volumes
 ```
 
-#### Using Podman
+### Build and Run
 
-If you're using Podman, you can use either `podman-compose` or `docker compose` (thanks to the compatibility layer). Here are both options:
+8Knot is a multi-container application.
 
-Using podman-compose directly:
-```bash
-# Start the application
-podman-compose up --build
-
-# Scale worker pools (recommended)
-podman-compose up --build --scale worker-query=2 --scale worker-callback=2
-
-# Stop the application
-ctrl-c
-
-# Clean up containers and volumes
-podman-compose down --volumes
-```
-
-Using docker compose with Podman:
-```bash
-# The same Docker Compose commands work with Podman if you've set up the compatibility layer
-docker compose up --build
-docker compose up --build --scale worker-query=2 --scale worker-callback=2
-```
-
-Additional Podman-specific commands that might be helpful:
-```bash
-# List all containers
-podman ps -a
-
-# View container logs
-podman logs <container_name>
-
-# Remove all containers and pods
-podman pod rm -f -a
-
-# Clean up unused images and volumes
-podman system prune --volumes
-```
-
+The app-server, worker-pools, redis-cache, and postgres-cache containers communicate with one another via docker networking.
 
 The application should be available locally at 'http://localhost:8080'
 
