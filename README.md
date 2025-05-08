@@ -216,22 +216,8 @@ We use Docker's Compose feature to spin up all application resources together. P
 
 #### Option 1: Using Podman (Recommended)
 
-NOTE: As of 3/29/24 we recommend using `Podman` and `Podman Desktop` instead of `Docker` and `Docker Desktop`. It will be our default development environment going forward.
-There are many guides to transitioning from `Docker` (Desktop) to `Podman` (Desktop), but here's a rough outline of our "golden path."
-
-1. Uninstall `Docker Desktop`. This will require a GUI uninstall and looking through your apps + filesystem for remnants.
-2. Install `Podman` and `Podman Desktop`. You'll also explicitly have to provision a `Podman Machine` if you're on a Mac.
-3. Enable the "Docker compatibility add-on" available in `Podman Desktop`. This will route traffic headed for a Docker machine to the running Podman machine. (Under the hood, this points Podman at the Docker socket."
-4. Install `docker-compose`. This is a standalone, open source tool that `Podman Compose` delegates compose responsibilities to.
-
-At this point, the `Podman` docs claim that one should have moved over to `Podman` as a drop-in replacement for `Docker`. However, here are two steps that we noticed were necessary in some cases.
-
-1. In `$HOME/.docker/config.json` replace "credsStore" with "credStore" (minus an 's') to solve registry credentialing problems.
-2. Set `export DOCKER_HOST=<your_podman_machine_socket_path>` to the `Podman machine`'s socket on your system, which you can find in the `Resources` tab of `Podman Desktop`. The path starts with `unix://`.
-
-Podman is a daemonless container engine that's compatible with Docker containers. Here's how to set it up:
-
-1. **If transitioning from Docker Desktop:**
+1. **If transitioning from Docker Desktop**
+Remove any remaining Docker files/configurations. Further information on this below. 
    - Uninstall Docker Desktop (requires GUI uninstall and checking for remnants)
    - Remove any remaining Docker files/configurations
 
@@ -257,9 +243,7 @@ Podman is a daemonless container engine that's compatible with Docker containers
    podman compose --version
    ```
 
-5. **Optional but recommended to install Podman Desktop** 
-
-Further information below:
+5. **Install Podman Desktop. This is optional but recommended.** 
 
 #### Using Podman
 
@@ -302,6 +286,23 @@ podman pod rm -f -a
 podman system prune --volumes
 ```
 
+##### Further Information on transitioning from Docker to Podman:
+
+NOTE: As of 3/29/24 we recommend using `Podman` and `Podman Desktop` instead of `Docker` and `Docker Desktop`. It will be our default development environment going forward.
+There are many guides to transitioning from `Docker` (Desktop) to `Podman` (Desktop), but here's a rough outline of our "golden path."
+
+1. Uninstall `Docker Desktop`. This will require a GUI uninstall and looking through your apps + filesystem for remnants.
+2. Install `Podman` and `Podman Desktop`. You'll also explicitly have to provision a `Podman Machine` if you're on a Mac.
+3. Enable the "Docker compatibility add-on" available in `Podman Desktop`. This will route traffic headed for a Docker machine to the running Podman machine. (Under the hood, this points Podman at the Docker socket."
+4. Install `docker-compose`. This is a standalone, open source tool that `Podman Compose` delegates compose responsibilities to.
+
+At this point, the `Podman` docs claim that one should have moved over to `Podman` as a drop-in replacement for `Docker`. However, here are two steps that we noticed were necessary in some cases.
+
+1. In `$HOME/.docker/config.json` replace "credsStore" with "credStore" (minus an 's') to solve registry credentialing problems.
+2. Set `export DOCKER_HOST=<your_podman_machine_socket_path>` to the `Podman machine`'s socket on your system, which you can find in the `Resources` tab of `Podman Desktop`. The path starts with `unix://`.
+
+Podman is a daemonless container engine that's compatible with Docker containers.
+
 #### Option 2: Using Docker
 
 If you choose to use Docker, you'll need:
@@ -315,8 +316,6 @@ docker && docker compose || docker-compose
 ```
 
 **Optional, but recommended to Install Docker Desktop** 
-
-Further information below:
 
 All of the build/tear-down is done with `docker compose`.
 
