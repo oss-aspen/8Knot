@@ -219,7 +219,6 @@ We use Docker's Compose feature to spin up all application resources together. P
 1. **If transitioning from Docker Desktop**
 Remove any remaining Docker files/configurations. Further information on this below. 
    - Uninstall Docker Desktop (requires GUI uninstall and checking for remnants)
-   - Remove any remaining Docker files/configurations
 
 2. **Install Podman:**
    - On macOS: `brew install podman podman-desktop`
