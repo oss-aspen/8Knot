@@ -15,6 +15,7 @@ import io
 import cache_manager.cache_facade as cf
 from pages.utils.job_utils import nodata_graph
 import time
+from datetime import datetime
 
 PAGE = "repo_info"
 VIZ_ID = "repo-general-info"
@@ -31,6 +32,7 @@ gc_repo_general_info = dbc.Card(
                 dcc.Loading(
                     html.Div(id=f"{PAGE}-{VIZ_ID}"),
                 ),
+                dbc.Row([dbc.Label(["Last Updated: ", html.Span(id=f"{PAGE}-{VIZ_ID}-updated")], className="mr-2")]),
             ]
         )
     ],
@@ -51,7 +53,7 @@ def toggle_popover(n, is_open):
 
 # callback for repo general info
 @callback(
-    Output(f"{PAGE}-{VIZ_ID}", "children"),
+    [Output(f"{PAGE}-{VIZ_ID}", "children"), Output(f"{PAGE}-{VIZ_ID}-updated", "children")],
     [
         Input("repo-info-selection", "value"),
     ],
@@ -68,17 +70,26 @@ def repo_general_info(repo):
     # test if there is data
     if df_repo_files.empty and df_repo_info.empty and df_releases.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
-        return dbc.Table.from_dataframe(pd.DataFrame(), striped=True, bordered=True, hover=True)
+        return dbc.Table.from_dataframe(pd.DataFrame(), striped=True, bordered=True, hover=True), dbc.Label("No data")
 
-    df = process_data(df_repo_files, df_repo_info, df_releases)
+    df, last_updated = process_data(df_repo_files, df_repo_info, df_releases)
 
     table = dbc.Table.from_dataframe(df, striped=True, bordered=True, hover=True)
 
     logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
-    return table
+    return table, last_updated
 
 
 def process_data(df_repo_files, df_repo_info, df_releases):
+
+    updated_times_repo_info = pd.to_datetime(df_repo_info["data_collection_date"])
+
+    unique_updated_times = updated_times_repo_info.drop_duplicates().to_numpy().flatten()
+
+    if len(unique_updated_times) > 1:
+        logging.warning(f"{VIZ_ID} - MORE THAN ONE LAST UPDATE DATE")
+
+    updated_date = pd.to_datetime(str(unique_updated_times[-1])).strftime("%d/%m/%Y")
 
     # convert to datetime objects rather than strings
     df_releases["release_published_at"] = pd.to_datetime(df_releases["release_published_at"], utc=True)
@@ -164,7 +175,7 @@ def process_data(df_repo_files, df_repo_info, df_releases):
         }
     )
 
-    return df
+    return df, dbc.Label(updated_date)
 
 
 def multi_query_helper(repos):

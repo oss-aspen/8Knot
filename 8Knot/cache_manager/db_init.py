@@ -62,10 +62,41 @@ Generally, 'int' is good for integers,
 import logging
 import sys
 import psycopg2 as pg
+import time
 
 # doesn't use relative import syntax "import .cx_common" because
 # cx_common is a neighbor of script, thus is available in PYTHON_PATH
 from cx_common import init_cx_string, cache_cx_string
+
+
+def _connect_with_retry(connection_string, max_retries=5, retry_delay=3):
+    """
+    Attempt to connect to the database with retries.
+    Args:
+        connection_string: The connection string to use
+        max_retries: Maximum number of retry attempts
+        retry_delay: Seconds to wait between retries
+    Returns:
+        PostgreSQL connection object or None if failed after retries
+    """
+    retries = 0
+    last_exception = None
+    while retries < max_retries:
+        try:
+            logging.warning(f"Attempting database connection (attempt {retries+1}/{max_retries})...")
+            conn = pg.connect(connection_string)
+            logging.warning("Database connection established successfully!")
+            return conn
+        except Exception as e:
+            last_exception = e
+            retries += 1
+            if retries < max_retries:
+                logging.warning(f"Connection failed: {e}. Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                logging.critical(f"Failed to connect after {max_retries} attempts: {e}")
+    # If we reached here, all connection attempts failed
+    raise last_exception
 
 
 def _create_application_database() -> None:
@@ -82,7 +113,7 @@ def _create_application_database() -> None:
     # we'll always connect to root-level DB
     # with these creds so they don't need to be
     # parameterized.
-    conn = pg.connect(init_cx_string)
+    conn = _connect_with_retry(init_cx_string)
 
     # required so that we can create a database
     conn.autocommit = True
@@ -113,7 +144,7 @@ def _create_application_tables() -> None:
     # TODO: timestamps being stored as strings- don't need to do that anymore.
 
     # connect to application database
-    conn = pg.connect(cache_cx_string)
+    conn = _connect_with_retry(cache_cx_string)
 
     with conn.cursor() as cur:
         # create tables if they don't already exist.
@@ -306,7 +337,8 @@ def _create_application_tables() -> None:
             CREATE UNLOGGED TABLE IF NOT EXISTS ossf_score_query(
                 repo_id int,
                 name text,
-                score float4
+                score float4,
+                data_collection_date timestamp
             )
             """
         )
@@ -323,7 +355,8 @@ def _create_application_tables() -> None:
                 stars_count int,
                 code_of_conduct_file text,
                 security_issue_file text,
-                security_audit_file text
+                security_audit_file text,
+                data_collection_date timestamp
             )
             """
         )

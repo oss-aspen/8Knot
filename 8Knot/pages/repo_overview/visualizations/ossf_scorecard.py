@@ -10,6 +10,7 @@ import io
 import cache_manager.cache_facade as cf
 from pages.utils.job_utils import nodata_graph
 import time
+from datetime import datetime
 
 PAGE = "repo_info"
 VIZ_ID = "ossf-scorecard"
@@ -40,6 +41,16 @@ gc_ossf_scorecard = dbc.Card(
                     [
                         dbc.Row(
                             [
+                                dbc.Col(
+                                    dbc.Row(
+                                        [
+                                            dbc.Label(
+                                                ["Last Updated: ", html.Span(id=f"{PAGE}-{VIZ_ID}-updated")],
+                                                className="mr-2",
+                                            )
+                                        ]
+                                    ),
+                                ),
                                 dbc.Col(
                                     dbc.Button(
                                         "Scorecard Info",
@@ -76,7 +87,7 @@ def toggle_popover(n, is_open):
 
 # callback for ossf scorecard
 @callback(
-    Output(f"{PAGE}-{VIZ_ID}", "children"),
+    [Output(f"{PAGE}-{VIZ_ID}", "children"), Output(f"{PAGE}-{VIZ_ID}-updated", "children")],
     [
         Input("repo-info-selection", "value"),
     ],
@@ -100,10 +111,16 @@ def ossf_scorecard(repo):
     # test if there is data
     if df.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
-        return dbc.Table.from_dataframe(df, striped=True, bordered=True, hover=True)
+        return dbc.Table.from_dataframe(df, striped=True, bordered=True, hover=True), dbc.Label("No data")
 
     # repo id not needed for table
     df.drop(["repo_id"], axis=1, inplace=True)
+
+    # get all values from the data_collection_date column
+    updated_times = pd.to_datetime(df["data_collection_date"])
+
+    # we dont need to display this column for every entry
+    df.drop(["data_collection_date"], axis=1, inplace=True)
 
     df.loc[df.name == "OSSF_SCORECARD_AGGREGATE_SCORE", "name"] = "Aggregate Score"
     df.sort_values("name", ascending=True, inplace=True)
@@ -111,5 +128,12 @@ def ossf_scorecard(repo):
 
     table = dbc.Table.from_dataframe(df, striped=True, bordered=True, hover=True)
 
+    unique_updated_times = updated_times.drop_duplicates().to_numpy().flatten()
+
+    if len(unique_updated_times) > 1:
+        logging.warning(f"{VIZ_ID} - MORE THAN ONE DATA COLLECTION DATE")
+
+    updated_date = pd.to_datetime(str(unique_updated_times[-1])).strftime("%d/%m/%Y")
+
     logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
-    return table
+    return table, dbc.Label(updated_date)
