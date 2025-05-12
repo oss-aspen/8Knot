@@ -5,14 +5,15 @@ services:
       dockerfile: ./docker/Dockerfile
     command: ["python3", "./cache_manager/db_init.py"]
     depends_on:
-      - postgres-cache
+      postgres-cache:
+        condition: service_healthy # to ensure that postgres is indeed initialized before this starts
     env_file:
       - ./env.list
     # sometimes, postgres-cache isn't spun up before this starts.
     # so it'll fail. We want this to restart when it fails, because
     # postgres will be ready eventually. we don't want it to restart
     # after it succeeds. give it 1000 attempts I guess.
-    restart: on-failure:1000
+    restart: on-failure:1000 
 
   reverse-proxy:
     image: nginx:latest
@@ -129,6 +130,11 @@ services:
     env_file:
       - ./env.list
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres-cache:
