@@ -220,6 +220,29 @@ navbar_bottom = dbc.NavbarSimple(
 
 search_bar = html.Div(
     [
+        # Add client-side caching component
+        dcc.Store(id="cached-options", storage_type="session"),
+        
+        # Hidden div to trigger cache initialization on page load
+        html.Div(id="_", style={"display": "none"}),
+        
+        # Storage quota warning
+        dcc.Store(id="search-cache-init-hidden", storage_type="session"),
+        html.Div(
+            dbc.Alert(
+                [
+                    html.I(className="bi bi-exclamation-triangle-fill me-2"),
+                    "Browser storage limit reached. Search will use a reduced cache which may slightly impact performance. All features will still work normally.",
+                ],
+                id="storage-quota-warning",
+                color="warning",
+                dismissable=True,
+                style={"display": "none"},  # Initially hidden, controlled by JavaScript
+                className="mt-2 mb-0",
+            ),
+            className="search-bar-component",
+        ),
+        
         dbc.Stack(
             [
                 html.Div(
@@ -230,10 +253,21 @@ search_bar = html.Div(
                             clearable=True,
                             nothingFound="No matching repos/orgs.",
                             variant="filled",
-                            debounce=100,
+                            debounce=100, # since it is client-side pre-caching, we can afford to have a lower debounce
                             data=[augur.initial_multiselect_option()],
                             value=[augur.initial_multiselect_option()["value"]],
                             style={"fontSize": 16},
+                            maxDropdownHeight=300,
+                            zIndex=9999,
+                            dropdownPosition="bottom",
+                            transitionDuration=150,
+                            className="searchbar-dropdown",
+                        ),
+                        # Add search status indicator
+                        html.Div(
+                            id="search-status",
+                            className="search-status-indicator",
+                            style={"display": "none"}
                         ),
                         dbc.Alert(
                             children='Please ensure that your spelling is correct. \
@@ -304,6 +338,36 @@ layout = dbc.Container(
         dcc.Store(id="job-ids", storage_type="session", data=[]),
         dcc.Store(id="user-group-loading-signal", data="", storage_type="memory"),
         dcc.Location(id="url"),
+        # Add client-side script to handle storage quota issues
+        html.Script("""
+            window.addEventListener('error', function(event) {
+                if (event.message && event.message.toLowerCase().includes('quota') && 
+                    event.message.toLowerCase().includes('exceeded')) {
+                    var warningEl = document.getElementById('storage-quota-warning');
+                    if (warningEl) {
+                        warningEl.style.display = 'block';
+                    }
+                }
+            });
+            
+            // Test storage capacity
+            try {
+                var testKey = 'storage_test';
+                var testString = new Array(512 * 1024).join('a');  // 512KB
+                sessionStorage.setItem(testKey, testString);
+                sessionStorage.removeItem(testKey);
+            } catch (e) {
+                if (e.name === 'QuotaExceededError' || 
+                    (e.message && 
+                    (e.message.toLowerCase().includes('quota') || 
+                     e.message.toLowerCase().includes('exceeded')))) {
+                    var warningEl = document.getElementById('storage-quota-warning');
+                    if (warningEl) {
+                        warningEl.style.display = 'block';
+                    }
+                }
+            }
+        """),
         navbar,
         # Add login banner overlay (will be positioned via CSS)
         login_banner if login_banner else html.Div(),
