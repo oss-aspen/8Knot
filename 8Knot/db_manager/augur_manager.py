@@ -264,22 +264,38 @@ class AugurManager:
         Returns:
             dict(value, label): first thing the multiselect will represent on startup
         """
-        if self.initial_search_option is None:
-            # default the initial multiselect option to the
-            # first item in the list of options.
-            self.initial_search_option = self.multiselect_options[0]
+        try:
+            if self.initial_search_option is None:
+                # default the initial multiselect option to the
+                # first item in the list of options.
 
-            if os.getenv("DEFAULT_SEARCHBAR_LABEL"):
-                logging.warning("INITIAL SEARCHBAR OPTION: DEFAULT OVERWRITTEN")
+                self.initial_search_option = self.multiselect_options[0]
 
-                # search through available options for the specified overwriting default.
-                for opt in self.multiselect_options:
-                    if os.getenv("DEFAULT_SEARCHBAR_LABEL") == opt["label"]:
-                        logging.warning(f"INITIAL SEARCHBAR OPTION: NEW DEFAULT: {opt}")
-                        self.initial_search_option = opt
-                        break
+                if os.getenv("DEFAULT_SEARCHBAR_LABEL"):
+                    logging.warning("INITIAL SEARCHBAR OPTION: DEFAULT OVERWRITTEN")
+                    default_label = os.getenv("DEFAULT_SEARCHBAR_LABEL")
 
-        return self.initial_search_option
+                    # search through available options for the specified overwriting default.
+                    found_option = False
+                    for opt in self.multiselect_options:
+                        if default_label == opt["label"]:
+                            # Create a copy of the option with the "repo:" prefix
+                            self.initial_search_option = opt.copy()
+                            # Add "repo:" prefix if it's a repo (integer value)
+                            if isinstance(opt["value"], int):
+                                self.initial_search_option["label"] = f"repo: {opt['label']}"
+                            else:
+                                self.initial_search_option["label"] = f"org: {opt['label']}"
+
+                            logging.warning(f"INITIAL SEARCHBAR OPTION: NEW DEFAULT: {self.initial_search_option}")
+                            found_option = True
+                            break
+
+            return self.initial_search_option
+        except Exception as e:
+            logging.error(f"Error in initial_multiselect_option: {str(e)}")
+            # Return a fallback option in case of any error
+            return {"label": "repo: Fallback Option", "value": -1}
 
     def get_multiselect_options(self):
         """Getter method on all entries in repo+orgs options

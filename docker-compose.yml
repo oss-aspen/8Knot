@@ -13,7 +13,7 @@ services:
     # so it'll fail. We want this to restart when it fails, because
     # postgres will be ready eventually. we don't want it to restart
     # after it succeeds. give it 1000 attempts I guess.
-    restart: on-failure:1000 
+    restart: on-failure:1000
 
   reverse-proxy:
     image: nginx:latest
@@ -50,6 +50,10 @@ services:
       - db-init
     env_file:
       - ./env.list
+    environment:
+      - EIGHTKNOT_SEARCHBAR_OPTS_SORT=shortest # Try different options: shortest, longest, alphabetical
+      - EIGHTKNOT_SEARCHBAR_OPTS_MAX_RESULTS=5500 # Maximum number of results to return (org and repo)
+      - EIGHTKNOT_SEARCHBAR_OPTS_MAX_REPOS=5000     # Max number of repos
     restart: always
 
   worker-callback:

@@ -220,6 +220,27 @@ navbar_bottom = dbc.NavbarSimple(
 
 search_bar = html.Div(
     [
+        # Add client-side caching component
+        dcc.Store(id="cached-options", storage_type="session"),
+        # Hidden div to trigger cache initialization on page load
+        html.Div(id="cache-init-trigger", style={"display": "none"}),
+        # Storage quota warning
+        dcc.Store(id="search-cache-init-hidden", storage_type="session"),
+        # Warning alert for when browser storage quota is exceeded
+        html.Div(
+            dbc.Alert(
+                [
+                    html.I(className="quota-warning-icon"),  # Warning icon
+                    "Browser storage limit reached. Search will use a reduced cache which may slightly impact performance. All features will still work normally.",
+                ],
+                id="storage-quota-warning",  # ID used by Javascript to show/hide this alert
+                color="warning",
+                dismissable=True,
+                style={"display": "none"},  # Initially hidden, controlled by JavaScript
+                className="mt-2 mb-0",
+            ),
+            className="search-bar-component",
+        ),
         dbc.Stack(
             [
                 html.Div(
@@ -230,11 +251,18 @@ search_bar = html.Div(
                             clearable=True,
                             nothingFound="No matching repos/orgs.",
                             variant="filled",
-                            debounce=100,
+                            debounce=100,  # debounce time for the search input, since we're implementing client-side caching, we can use a faster debounce
                             data=[augur.initial_multiselect_option()],
                             value=[augur.initial_multiselect_option()["value"]],
                             style={"fontSize": 16},
+                            maxDropdownHeight=300,  # limits the dropdown menu's height to 300px
+                            zIndex=9999,  # ensures the dropdown menu is on top of other elements
+                            dropdownPosition="bottom",  # forces the dropdown to open downwards
+                            transitionDuration=150,  # transition duration for the dropdown menu
+                            className="searchbar-dropdown",
                         ),
+                        # Add search status indicator
+                        html.Div(id="search-status", className="search-status-indicator", style={"display": "none"}),
                         dbc.Alert(
                             children='Please ensure that your spelling is correct. \
                                 If your selection definitely isn\'t present, please request that \
@@ -304,6 +332,45 @@ layout = dbc.Container(
         dcc.Store(id="job-ids", storage_type="session", data=[]),
         dcc.Store(id="user-group-loading-signal", data="", storage_type="memory"),
         dcc.Location(id="url"),
+        # Add client-side script to handle storage quota issues
+        # This script does two things:
+        # 1. Listens for global JavaScript errors related to storage quota being exceeded.
+        #    If such an error occurs, finds the element with id 'storage-quota-warning'
+        #    and makes it visible to alert the user.
+        # 2. Tests if sessionStorage can store a 512KB string.
+        #    If the test fails (due to quota limits), it displays the warning.
+        # The user will see the warning if the browser's session storage is full
+        html.Script(
+            """
+            window.addEventListener('error', function(event) {
+                if (event.message && event.message.toLowerCase().includes('quota') &&
+                    event.message.toLowerCase().includes('exceeded')) {
+                    var warningEl = document.getElementById('storage-quota-warning');
+                    if (warningEl) {
+                        warningEl.style.display = 'block';
+                    }
+                }
+            });
+
+            // Test storage capacity
+            try {
+                var testKey = 'storage_test';
+                var testString = new Array(512 * 1024).join('a');  // 512KB
+                sessionStorage.setItem(testKey, testString);
+                sessionStorage.removeItem(testKey);
+            } catch (e) {
+                if (e.name === 'QuotaExceededError' ||
+                    (e.message &&
+                    (e.message.toLowerCase().includes('quota') ||
+                     e.message.toLowerCase().includes('exceeded')))) {
+                    var warningEl = document.getElementById('storage-quota-warning');
+                    if (warningEl) {
+                        warningEl.style.display = 'block';
+                    }
+                }
+            }
+        """
+        ),
         navbar,
         # Add login banner overlay (will be positioned via CSS)
         login_banner if login_banner else html.Div(),
