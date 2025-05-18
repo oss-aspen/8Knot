@@ -1,16 +1,17 @@
 """
-    README -- Organization of Callback Functions
+README -- Organization of Callback Functions
 
-    In an effort to compartmentalize our development where possible, all callbacks directly relating
-    to pages in our application are in their own files.
+In an effort to compartmentalize our development where possible, all callbacks directly relating
+to pages in our application are in their own files.
 
-    For instance, this file contains the layout logic for the index page of our app-
-    this page serves all other paths by providing the searchbar, page routing faculties,
-    and data storage objects that the other pages in our app use.
+For instance, this file contains the layout logic for the index page of our app-
+this page serves all other paths by providing the searchbar, page routing faculties,
+and data storage objects that the other pages in our app use.
 
-    Having laid out the HTML-like organization of this page, we write the callbacks for this page in
-    the neighbor 'app_callbacks.py' file.
+Having laid out the HTML-like organization of this page, we write the callbacks for this page in
+the neighbor 'app_callbacks.py' file.
 """
+
 import os
 import sys
 import logging

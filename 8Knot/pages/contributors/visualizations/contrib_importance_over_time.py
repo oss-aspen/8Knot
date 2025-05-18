@@ -269,11 +269,15 @@ def create_figure(df_final, threshold, step_size):
     # create custom data to update the hovertemplate with the action type and start and end dates of a given time window in addition to the lottery factor
     # make a nested list of plural action types so that it is gramatically correct in the updated hover info eg. Commit -> Commits and PR Opened -> PRs Opened
     action_types = [
-        [action_type[:2] + "s" + action_type[2:]] * len(df_final)
-        if action_type == "PR Opened"
-        else [action_type[:5] + "s" + action_type[5:]] * len(df_final)
-        if action_type == "Issue Opened" or action_type == "Issue Closed"
-        else [action_type + "s"] * len(df_final)
+        (
+            [action_type[:2] + "s" + action_type[2:]] * len(df_final)
+            if action_type == "PR Opened"
+            else (
+                [action_type[:5] + "s" + action_type[5:]] * len(df_final)
+                if action_type == "Issue Opened" or action_type == "Issue Closed"
+                else [action_type + "s"] * len(df_final)
+            )
+        )
         for action_type in df_final.columns[2:]
     ]
     time_window = list(

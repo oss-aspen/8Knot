@@ -164,6 +164,7 @@ gc_pr_metrics = dbc.Card(
     ],
 )
 
+
 # callbacks below are for the specific queries for these cards
 @callback(
     Output("open-pr-count", "children"),

@@ -1,6 +1,7 @@
 """
 Connection Common file - accessing environment variables
 """
+
 import os
 import logging
 
