@@ -13,7 +13,7 @@ services:
     # so it'll fail. We want this to restart when it fails, because
     # postgres will be ready eventually. we don't want it to restart
     # after it succeeds. give it 1000 attempts I guess.
-    restart: on-failure:1000 
+    restart: on-failure:1000
 
   reverse-proxy:
     image: nginx:latest
@@ -101,6 +101,12 @@ services:
     env_file:
       - ./env.list
     restart: always
+    # PRODUCTION NOTE: For Linux production environments, enable the following:
+    # sysctls:
+    #   - vm.overcommit_memory=1
+    # This prevents Redis memory overcommit warnings and potential issues.
+    # For local development on macOS/Windows, keep this commented out
+    # to avoid Docker errors.
 
   # for user session storage
   redis-users:
@@ -116,6 +122,12 @@ services:
     env_file:
       - ./env.list
     restart: always
+    # PRODUCTION NOTE: For Linux production environments, enable the following:
+    # sysctls:
+    #   - vm.overcommit_memory=1
+    # This prevents Redis memory overcommit warnings and potential issues.
+    # For local development on macOS/Windows, keep this commented out
+    # to avoid Docker errors.
 
   postgres-cache:
     image: docker.io/library/postgres:16
