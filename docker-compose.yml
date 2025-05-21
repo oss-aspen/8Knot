@@ -101,11 +101,12 @@ services:
     env_file:
       - ./env.list
     restart: always
-    # NOTE: This setting is for Linux production environments.
-    # It will cause errors on macOS/Windows Docker Desktop, but is kept
-    # in the configuration for deployment to Linux servers.
-    sysctls:
-      - vm.overcommit_memory=1
+    # PRODUCTION NOTE: For Linux production environments, enable the following:
+    # sysctls:
+    #   - vm.overcommit_memory=1
+    # This prevents Redis memory overcommit warnings and potential issues.
+    # For local development on macOS/Windows, keep this commented out
+    # to avoid Docker errors.
 
   # for user session storage
   redis-users:
@@ -121,11 +122,12 @@ services:
     env_file:
       - ./env.list
     restart: always
-    # NOTE: This setting is for Linux production environments.
-    # It will cause errors on macOS/Windows Docker Desktop, but is kept
-    # in the configuration for deployment to Linux servers.
-    sysctls:
-      - vm.overcommit_memory=1
+    # PRODUCTION NOTE: For Linux production environments, enable the following:
+    # sysctls:
+    #   - vm.overcommit_memory=1
+    # This prevents Redis memory overcommit warnings and potential issues.
+    # For local development on macOS/Windows, keep this commented out
+    # to avoid Docker errors.
 
   postgres-cache:
     image: docker.io/library/postgres:16
