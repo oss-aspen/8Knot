@@ -271,12 +271,22 @@ class AugurManager:
 
             if os.getenv("DEFAULT_SEARCHBAR_LABEL"):
                 logging.warning("INITIAL SEARCHBAR OPTION: DEFAULT OVERWRITTEN")
+                default_label = os.getenv("DEFAULT_SEARCHBAR_LABEL")
 
                 # search through available options for the specified overwriting default.
+                found_option = False
                 for opt in self.multiselect_options:
-                    if os.getenv("DEFAULT_SEARCHBAR_LABEL") == opt["label"]:
+                    if default_label == opt["label"]:
+                        # create a copy of the option with "repo:" prefix
+                        self.initial_search_option = opt.copy()
+                        # add "repo:" prefix if it's a repo (integer value)
+                        if isinstance(opt["value"], int):
+                            self.initial_search_option["label"] = f"repo:{opt['label']}"
+                        else:
+                            self.initial_search_option["label"] = f"org:{opt['label']}"
+
                         logging.warning(f"INITIAL SEARCHBAR OPTION: NEW DEFAULT: {opt}")
-                        self.initial_search_option = opt
+                        found_option = True
                         break
 
         return self.initial_search_option
