@@ -171,65 +171,169 @@ def login_username_button(url):
     [Output("projects", "data")],
     [Input("projects", "searchValue")],
     [
-        State("projects", "value"),
+        State("projects", "value"), State("cached-options", "data")
     ],
 )
-def dynamic_multiselect_options(user_in: str, selections):
+def dynamic_multiselect_options(user_in: str, selections, cached_options):
     """
-    Ref: https://dash.plotly.com/dash-core-components/dropdown#dynamic-options
+    Enhanced search using fuzzy matching and client-side cache.
 
-    For all of the possible repo's / orgs, check if the substring currently
-    being searched is in the repo's name or if the repo / org name is
-    in the current list of states selected. Add it to the list if it matches
-    either of the options.
+    Args:
+        user_in: User's search input
+        selections: Currently selected values
+        cached_options: All available options from client-side cache
     """
-
     if not user_in:
         return dash.no_update
 
-    options = augur.get_multiselect_options().copy()
+    try:
+        start_time = time.time()
+        logging.info(f"Search query: '{user_in}'")
 
-    if current_user.is_authenticated:
-        logging.warning(f"LOGINBUTTON: USER LOGGED IN {current_user}")
-        # TODO: implement more permanent interface
-        users_cache = redis.StrictRedis(
-            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
-            port=6379,
-            password=os.getenv("REDIS_PASSWORD", ""),
-            decode_responses=True,
-        )
-        try:
-            users_cache.ping()
-        except redis.exceptions.ConnectionError:
-            logging.error("MULTISELECT: Could not connect to users-cache.")
-            return dash.no_update
+        # Use cached options if available, otherwise fall back to server fetch
+        if cached_options:
+            logging.info(f"Using client-side cache with {len(cached_options)} options")
+            options = cached_options
+        else:
+            logging.info("Client-side cache empty, fetching from server")
+            options = augur.get_multiselect_options().copy()
+            logging.info(f"Fetched {len(options)} options from server")
+            if current_user.is_authenticated:
+                try:
+                    users_cache = redis.StrictRedis(
+                        host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
+                        port=6379,
+                        password=os.getenv("REDIS_PASSWORD", ""),
+                        decode_responses=True,
+                    )
+                    users_cache.ping()
+                    if users_cache.exists(f"{current_user.get_id()}_group_options"):
+                        user_options = json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
+                        options = options + user_options
+                        logging.info(f"Added {len(user_options)} user options from Redis")
+                except redis.exceptions.ConnectionError as e:
+                    logging.error(f"MULTISELECT: Could not connect to users-cache. Error: {str(e)}")
 
-        try:
-            if users_cache.exists(f"{current_user.get_id()}_group_options"):
-                options = options + json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
-        except redis.exceptions.ConnectionError:
-            logging.error("Searchbar: couldn't connect to Redis for user group options.")
+        if selections is None:
+            selections = []
+    
+        # Remove prefixes from the search query if present
+        search_query = user_in
+        prefix_type = None
 
-    # if the number of options changes then we're
-    # adding AUGUR_ entries somewhere.
+        if search_query.lower().startswith("repo:"):
+            search_query = search_query[5:].strip()
+            prefix_type = "repo"
+            logging.info(f"Repo prefix detected, searching for: '{search_query}'")
+        elif search_query.lower().startswith("org:"):
+            search_query = search_query[4:].strip()
+            prefix_type = "org"
+            logging.info(f"Org prefix detected, searching for: '{search_query}'")
 
-    if selections is None:
-        selections = []
+        # Perform fuzzy search with the refined query
+        from .search_utils import fuzzy_search
 
-    # match lowercase inputs with lowercase possible values
-    opts = [i for i in options if user_in.lower() in i["label"]]
+        matched_options = fuzzy_search(search_query, options, threshold=0.2)
+        logging.info(f"Fuzzy search found {len(matched_options)} matches")
 
-    # sort matches by length
-    opts = sorted(opts, key=lambda v: len(v["label"]))
+        # Filter by prefix type if specified
+        if prefix_type == "repo":
+            matched_options = [opt for opt in matched_options if isinstance(opt["value"], int)]
+            logging.info(f"Filtered to {len(matched_options)} repos")
+        elif prefix_type == "org":
+            matched_options = [opt for opt in matched_options if isinstance(opt["value"], str)]
+            logging.info(f"Filtered to {len(matched_options)} orgs")
 
-    # always include the previous selections from the searchbar to avoid
-    # those values being clobbered when we truncate the total length.
-    # arbitrarily 'small' number of matches returned..
-    if len(opts) < 100:
-        return [opts + [v for v in options if v["value"] in selections]]
+        # Format options with prefixes based on their type
+        formatted_opts = []
+        for opt in matched_options:
+            formatted_opt = opt.copy()
+            if isinstance(opt["value"], str):
+                # It's an org
+                formatted_opt["label"] = f"org: {opt['label']}"
+            else:
+                # It's a repo
+                formatted_opt["label"] = f"repo: {opt['label']}"
+            formatted_opts.append(formatted_opt)
 
-    else:
-        return [opts[:100] + [v for v in options if v["value"] in selections]]
+        # Always include the previous selections
+        # Format selected options with prefixes
+        selected_options = []
+
+        # First check if selections are in our cache
+        cached_selection_values = set(opt["value"] for opt in options)
+        missing_selections = [v for v in selections if v not in cached_selection_values]
+
+        # If any selections aren't in cache, fetch them from the server
+        if missing_selections:
+            logging.info(f"Fetching {len(missing_selections)} missing selections from server")
+            all_options = augur.get_multiselect_options().copy()
+            for v in selections:
+                matched_opts = [opt for opt in all_options if opt["value"] == v]
+                if matched_opts:
+                    formatted_v = matched_opts[0].copy()
+                    if isinstance(v, str):
+                        # It's an org
+                        formatted_v["label"] = f"org: {formatted_v['label']}"
+                    else:
+                        # It's a repo
+                        formatted_v["label"] = f"repo: {formatted_v['label']}"
+                    selected_options.append(formatted_v)
+        else:
+            # All selections are in cache
+            for v in selections:
+                for opt in options:
+                    if opt["value"] == v:
+                        formatted_v = opt.copy()
+                        if isinstance(v, str):
+                            # It's an org
+                            formatted_v["label"] = f"org: {opt['label']}"
+                        else:
+                            # It's a repo
+                            formatted_v["label"] = f"repo: {opt['label']}"
+                        selected_options.append(formatted_v)
+                        break
+
+        # Combine results, limiting to 100 items but always including selections
+        if len(formatted_opts) < 100:
+            result = formatted_opts
+        else:
+            result = formatted_opts[:100]
+
+        # Add selected options that aren't already in the results
+        selected_values = [opt["value"] for opt in result]
+        for opt in selected_options:
+            if opt["value"] not in selected_values:
+                result.append(opt)
+
+        end_time = time.time()
+        logging.info(f"Search completed in {end_time - start_time:.2f} seconds")
+        logging.info(f"Returning {len(result)} options to dropdown")
+        return [result]
+
+    except Exception as e:
+        logging.error(f"Error in dynamic_multiselect_options: {str(e)}")
+        # Return at least the current selections as a fallback
+        if selections:
+            default_options = []
+            try:
+                # Try to get the labels for the current selections
+                options = augur.get_multiselect_options()
+                for v in options:
+                    if v["value"] in selections:
+                        formatted_v = v.copy()
+                        if isinstance(v["value"], str):
+                            formatted_v["label"] = f"org: {v['label']}"
+                        else:
+                            formatted_v["label"] = f"repo: {v['label']}"
+                        default_options.append(formatted_v)
+            except:
+                # If that fails, just return the raw selection values
+                default_options = [{"value": v, "label": f"ID: {v}"} for v in selections]
+
+            return [default_options]
+
+        return dash.no_update
 
 
 # callback for repo selections to feed into visualization call backs
@@ -428,3 +532,79 @@ def run_queries(repos):
         jobs.append(j)
 
     return [j.id for j in jobs]
+
+# Add a cache initialization callback that runs on page load
+@callback(
+    Output("cached-options", "data"),
+    Input("_", "children"),  # Dummy input to trigger on page load
+    prevent_initial_call=False,
+)
+def initialize_cache(_):
+    """
+    Initialize the client-side cache with all options.
+    This runs once when the page loads.
+    """
+    try:
+        logging.info("Initializing client-side options cache")
+        options = augur.get_multiselect_options().copy()
+        logging.info(f"Retrieved {len(options)} options from augur")
+
+        if current_user.is_authenticated:
+            try:
+                users_cache = redis.StrictRedis(
+                    host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
+                    port=6379,
+                    password=os.getenv("REDIS_PASSWORD", ""),
+                    decode_responses=True,
+                )
+                users_cache.ping()
+                logging.info("Successfully connected to Redis")
+
+                if users_cache.exists(f"{current_user.get_id()}_group_options"):
+                    user_options = json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
+                    options = options + user_options
+                    logging.info(f"Added {len(user_options)} user-specific options from Redis")
+            except redis.exceptions.ConnectionError as e:
+                logging.error(f"CACHE INIT: Could not connect to users-cache. Error: {str(e)}")
+
+        # Reduce data size by limiting to the top 2000 results and removing extra fields
+        # Sort by label length to prioritize shorter names
+        options.sort(key=lambda x: len(x.get("label", "")))
+
+        # For repos, keep the most recent 1500
+        repos = [opt for opt in options if isinstance(opt.get("value"), int)][:1500]
+
+        # For orgs, keep all (there are usually only a few hundred)
+        orgs = [opt for opt in options if isinstance(opt.get("value"), str)]
+
+        # Combine and prepare for storage
+        minimal_options = repos + orgs
+
+        logging.info(f"Cache initialized with {len(minimal_options)} total options (reduced from {len(options)})")
+        return minimal_options
+    except Exception as e:
+        logging.error(f"Cache initialization failed: {str(e)}")
+        # Return an empty list as a fallback to prevent complete failure
+        return []
+    
+# Add search status indicator callbacks
+@callback(
+    [Output("search-status", "children"), Output("search-status", "className"), Output("search-status", "style")],
+    [Input("projects", "searchValue")],
+    prevent_initial_call=True,
+)
+def update_search_status(search_value):
+    """Update the search status indicator when a search is performed."""
+    if search_value and len(search_value) > 0:
+        return ["Searching...", "search-status-indicator searching", {"display": "block"}]
+    return ["", "search-status-indicator", {"display": "none"}]
+
+
+# Callback to hide the search status when results are loaded
+@callback(
+    [Output("search-status", "style", allow_duplicate=True)], [Input("projects", "data")], prevent_initial_call=True
+)
+def hide_search_status_when_loaded(_):
+    """Hide the search status indicator when results are loaded."""
+    return [{"display": "none"}]
+
