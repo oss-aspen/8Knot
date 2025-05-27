@@ -38,6 +38,7 @@ services:
         "1",
         "--threads",
         "2",
+        "--timeout", "180",
       ]
     # ports:
     #   - 8080:8080
@@ -55,6 +56,11 @@ services:
       - EIGHTKNOT_SEARCHBAR_OPTS_MAX_RESULTS=5500 # Maximum number of results to return (org and repo)
       - EIGHTKNOT_SEARCHBAR_OPTS_MAX_REPOS=5000     # Max number of repos
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   worker-callback:
     build:
