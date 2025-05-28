@@ -27,6 +27,31 @@
 - Application server responsiveness
 - Service startup order
 
+## 🌙 Nightly Dependency Testing
+
+Every night at 2 AM UTC, the system automatically:
+- **Updates all dependencies** to their latest versions
+- **Rebuilds and tests** the application with new packages using `uv` for fast installation
+- **Runs security vulnerability scans** using `safety` tool
+- **Tests all endpoints** to ensure compatibility
+- **Creates GitHub issues** automatically if problems are found
+- **Saves artifacts** for debugging (security reports, package lists)
+
+### What gets tested nightly:
+- **Latest package versions** - Removes version pins from `requirements.txt`
+- **Security vulnerabilities** - Scans for known CVEs in dependencies
+- **Breaking changes** - Tests if new versions break existing functionality
+- **Dependency conflicts** - Checks if packages can resolve together
+- **Application stability** - Ensures all endpoints still work
+
+### Automatic issue creation:
+If the nightly test fails, it automatically creates a GitHub issue with:
+- **Detailed error information** and workflow links
+- **Security scan results** if vulnerabilities are found
+- **Artifact downloads** for debugging
+- **Recommended next steps** for fixing issues
+- **Prevents duplicate issues** (one per day maximum)
+
 ## 🛠️ For Developers
 
 ### Testing locally before PR:
@@ -66,6 +91,43 @@ podman compose logs app-server
 ```
 
 > **Note**: CI always uses Docker, but you can use either Docker or Podman locally. Both should produce same results.
+
+### Testing dependency updates locally:
+```bash
+# Test with latest dependencies (same as nightly CI)
+# 1. Backup your requirements
+cp requirements.txt requirements.txt.backup
+
+# 2. Remove version pins to get latest
+sed 's/==.*$//' requirements.txt > requirements_latest.txt
+mv requirements_latest.txt requirements.txt
+
+# 3. Install uv if not already available
+curl -LsSf https://astral.sh/uv/install.sh | sh
+source $HOME/.cargo/env
+
+# 4. Test with Docker or Podman
+docker compose up --build -d
+# OR
+podman compose up --build -d
+
+# 5. Run security scan (using uv for faster installation)
+uv pip install --system safety
+safety check
+
+# 6. Check dependency compatibility
+uv pip check --system
+
+# 7. Test all endpoints
+curl http://localhost:8080/health
+curl http://localhost:8080/contributions
+# ... test other endpoints
+
+# 8. Restore original requirements when done
+mv requirements.txt.backup requirements.txt
+```
+
+> **Note**: The nightly CI uses `uv` instead of `pip` for faster dependency resolution and installation.
 
 ### If CI fails:
 1. **Check the logs** in the GitHub Actions tab
@@ -141,6 +203,13 @@ Returns:
 - Password configuration problem
 - Check Redis service logs
 
+### "Nightly dependency test failed"
+- **Security vulnerabilities found** - Check the safety report artifact
+- **Breaking changes in packages** - Review the workflow logs for specific errors
+- **Dependency conflicts** - Check pip compatibility issues in logs
+- **New package versions incompatible** - Pin problematic packages in requirements.txt
+- **Application errors with latest deps** - Test locally with updated dependencies
+
 ## 📈 Best Practices
 
 ### Before creating a PR:
@@ -157,9 +226,10 @@ Returns:
 
 ### For dependency changes:
 1. Pin specific versions in `requirements.txt`
-2. Monitor nightly test results for compatibility
+2. Monitor nightly test results for compatibility issues
 3. Update documentation if new env vars are needed
-4. Test security implications
+4. Test security implications with `safety check`
+5. Use `uv` for faster local dependency testing
 
 ## 🎯 Goals of CI Testing
 
