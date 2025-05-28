@@ -6,14 +6,14 @@ services:
     command: ["python3", "./cache_manager/db_init.py"]
     depends_on:
       postgres-cache:
-        condition: service_healthy # to ensure that postgres is indeed initialized before this starts
+        condition: service_healthy  # to ensure that postgres is indeed initialized before this starts
     env_file:
       - ./env.list
     # sometimes, postgres-cache isn't spun up before this starts.
     # so it'll fail. We want this to restart when it fails, because
     # postgres will be ready eventually. we don't want it to restart
     # after it succeeds. give it 1000 attempts I guess.
-    restart: on-failure:1000 
+    restart: on-failure:1000
 
   reverse-proxy:
     image: nginx:latest
@@ -22,7 +22,7 @@ services:
     depends_on:
       - app-server
     ports:
-      - "8080:8080" # bound to host port, exposed app endpoint
+      - "8080:8080"  # bound to host port, exposed app endpoint
 
   app-server:
     build:
@@ -38,6 +38,10 @@ services:
         "1",
         "--threads",
         "2",
+        "--timeout",
+        "300",
+        "--keep-alive",
+        "5"
       ]
     # ports:
     #   - 8080:8080
@@ -56,7 +60,7 @@ services:
     build:
       context: .
       dockerfile: ./docker/Dockerfile
-    command: ["celery", "-A", "app:celery_app", "worker", "--loglevel=INFO", "--concurrency=1"]
+    command: ["celery", "-A", "app:celery_app", "worker", "--loglevel=INFO", "--concurrency=1", "--time-limit=300", "--soft-time-limit=240"]
     depends_on:
       - redis-cache
       - redis-users
@@ -78,7 +82,9 @@ services:
         "--loglevel=INFO",
         "-Q",
         "data",
-        "--concurrency=1"
+        "--concurrency=1",
+        "--time-limit=600",
+        "--soft-time-limit=540"
       ]
     depends_on:
       - redis-cache
