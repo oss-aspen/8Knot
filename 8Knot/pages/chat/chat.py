@@ -4,9 +4,9 @@ import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 import numpy as np
 import warnings
-from .visualizations.code_languages import gc_code_language
-from .visualizations.ossf_scorecard import gc_ossf_scorecard
-from .visualizations.package_version import gc_package_version
+from ..repo_overview.visualizations.code_languages import gc_code_language
+from ..repo_overview.visualizations.ossf_scorecard import gc_ossf_scorecard
+from ..repo_overview.visualizations.package_version import gc_package_version
 from llama_stack_client import LlamaStackClient
 import json
 
