@@ -4,6 +4,7 @@ import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 import numpy as np
 import warnings
+from .visualizations.code_languages import gc_code_language
 
 warnings.filterwarnings("ignore")
 
@@ -36,7 +37,6 @@ layout = dbc.Container(
                                             type="text",
                                             autoComplete="off",
                                         ),
-                                        dbc.Button("Send", id="send-btn", color="primary", n_clicks=0),
                                     ]
                                 ),
                                 html.Div(id="ai-response", className="mt-3"),
@@ -51,7 +51,7 @@ layout = dbc.Container(
         # 📈 Generative graph directly below chat card
         dbc.Row(
             dbc.Col(
-                dcc.Graph(id="ui-graph"),
+                dbc.Card(id="ui-graph"),
                 width={"size": 6, "offset": 3},
             )
         ),
@@ -65,8 +65,8 @@ layout = dbc.Container(
 
 @callback(
     Output("ai-response", "children"),
-    Output("ui-graph", "figure"),
-    Input("send-btn", "n_clicks"),
+    Output("ui-graph", "children", allow_duplicate=True),
+    Input("user-input", "n_submit"),
     State("user-input", "value"),
     prevent_initial_call=True,
 )
@@ -78,10 +78,12 @@ def update_response(n_clicks: int, message: str):
     # 🔗 TODO: Replace with your AI backend call
     ai_reply = f"You said: {message}"  # placeholder response
 
-    # 📈 Generate a random line chart for demonstration
-    x = np.arange(0, 10, 1)
-    y = np.random.randint(0, 10, size=10)
-    fig = go.Figure(data=go.Scatter(x=x, y=y, mode="lines+markers"))
-    fig.update_layout(margin=dict(l=0, r=0, t=30, b=0), title="Generative UI Graph")
+    card = gc_code_language
 
-    return html.P(ai_reply), fig
+    # # 📈 Generate a random line chart for demonstration
+    # x = np.arange(0, 10, 1)
+    # y = np.random.randint(0, 10, size=10)
+    # fig = go.Figure(data=go.Scatter(x=x, y=y, mode="lines+markers"))
+    # fig.update_layout(margin=dict(l=0, r=0, t=30, b=0), title="Generative UI Graph")
+
+    return html.P(ai_reply), card
