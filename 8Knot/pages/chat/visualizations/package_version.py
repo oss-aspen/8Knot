@@ -14,8 +14,8 @@ import time
 import datetime as dt
 import cache_manager.cache_facade as cf
 
-PAGE = "repo_info"
-VIZ_ID = "package-version"
+PAGE = "repo_info-llm"
+VIZ_ID = "package-version-llm"
 
 gc_package_version = dbc.Card(
     [

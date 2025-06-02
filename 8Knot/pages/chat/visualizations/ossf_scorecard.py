@@ -12,8 +12,8 @@ from pages.utils.job_utils import nodata_graph
 import time
 from datetime import datetime
 
-PAGE = "repo_info"
-VIZ_ID = "ossf-scorecard"
+PAGE = "repo_info-llm"
+VIZ_ID = "ossf-scorecard-llm"
 
 gc_ossf_scorecard = dbc.Card(
     [

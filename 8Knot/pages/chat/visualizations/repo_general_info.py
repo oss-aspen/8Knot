@@ -17,8 +17,8 @@ from pages.utils.job_utils import nodata_graph
 import time
 from datetime import datetime
 
-PAGE = "repo_info"
-VIZ_ID = "repo-general-info"
+PAGE = "repo_info-llm"
+VIZ_ID = "repo-general-info-llm"
 
 gc_repo_general_info = dbc.Card(
     [
