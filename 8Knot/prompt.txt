@@ -24,3 +24,5 @@ Guidelines:
 ```json
 [0, 2, 5]
 ```
+
+Remember that the index for the graphs starts at 0

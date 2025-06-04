@@ -67,9 +67,16 @@ llama_url = os.getenv("LLAMA_HOST")
 client = LlamaStackClient(base_url=f"http://{llama_url}:8321")
 
 models = client.models.list()
+print(models)
 
-llm = next(m for m in models if m.model_type == "llm")
-model_id = llm.identifier
+model_id = None
+
+for model in models:
+    if model.identifier == "qwen3:0.6b":
+        print("Found model qwen3:0.6b")
+        model_id = model.identifier
+        break
+
 print(model_id)
 
 warnings.filterwarnings("ignore")
