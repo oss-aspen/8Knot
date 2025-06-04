@@ -115,7 +115,7 @@ def extract_json_array(text: str) -> str:
     return ""
 
 load_dotenv()
-llama_url = os.getenv("AUGUR_HOST")
+llama_url = os.getenv("LLAMA_HOST")
 client = LlamaStackClient(base_url=f"http://{llama_url}:8321")
 
 models = client.models.list()
