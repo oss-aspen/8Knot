@@ -9,7 +9,7 @@ Guidelines:
 
 * Use the user's intent to determine which visualizations offer direct insight.
 * Do not explain your reasoning or include any extra text.
-* Return between 1–5 indices, prioritizing quality and relevance over quantity.
+* Return between 2–5 indices, prioritizing quality and relevance over quantity.
 * Be precise: only choose visualizations directly useful for the user’s request.
 * Consider whether the user is asking about:
 
@@ -23,10 +23,4 @@ Guidelines:
 
 ```json
 [0, 2, 5]
-```
-
-If none are relevant, return an empty array:
-
-```json
-[]
 ```

@@ -6,6 +6,10 @@ import numpy as np
 import warnings
 from dotenv import load_dotenv
 import os
+from llama_stack_client import LlamaStackClient
+import json
+import re
+
 from ..repo_overview.visualizations.code_languages import gc_code_language
 from ..repo_overview.visualizations.ossf_scorecard import gc_ossf_scorecard
 from ..repo_overview.visualizations.package_version import gc_package_version
@@ -30,77 +34,21 @@ from ..contributors.visualizations.contrib_activity_cycle import gc_contrib_acti
 from ..contributors.visualizations.contribs_by_action import gc_contribs_by_action
 from ..contributors.visualizations.contrib_importance_pie import gc_contrib_importance_pie
 from ..contributors.visualizations.contrib_importance_over_time import gc_lottery_factor_over_time
-from llama_stack_client import LlamaStackClient
-import json
 
-prompt_text = '''
-**SYSTEM PROMPT**
-
-You are a recommendation engine that helps select the most relevant visualizations for a user from a predefined list of charts. The user will describe their goal, interest, or question related to software repositories, open source communities, or codebase analytics. You must decide which visualizations from the provided list are most appropriate to help the user achieve their objective.
-The JSON charts included above will include the name of the graph, some information about the graph, along with their ID.
-
-**Your output must be a JSON array of indices** that point to the most relevant charts in the list. Each index corresponds to the position in the list (starting from 0).
-
-Guidelines:
-
-* Use the user's intent to determine which visualizations offer direct insight.
-* Do not explain your reasoning or include any extra text.
-* Return between 1–5 indices, prioritizing quality and relevance over quantity.
-* Be precise: only choose visualizations directly useful for the user’s request.
-* Consider whether the user is asking about:
-
-  * Code language usage → suggest language distribution charts.
-  * Dependency management → suggest package version insights.
-  * Contributor behavior → suggest engagement, arrival, or retention charts.
-  * Risk or reliance → suggest lottery/bus factor visualizations.
-  * Activity patterns → suggest timing or action-type breakdown charts.
-
-**Return only a JSON array of integers. Example:**
-
-```json
-[0, 2, 5]
-```
-
-If none are relevant, return an empty array:
-
-```json
-[]
-```
-Again, **Your output must be a JSON array of indices** that point to the most relevant charts in the list. Each index corresponds to the position in the list (starting from 0).
-
-DO NOT INCLUDE ANY OTHER TEXT OR EXPLANATION. JUST THE JSON ARRAY OF INDICES.
-'''
-json_text = '''
-[
-    {
-        "name" : "File Language By File",
-        "about" : "Visualizes the percent of files or lines of code by language.",
-        "id" : "gc_code_language"
-    },
-    {
-        "name" : "Package Version Updates",
-        "about" : "Visualizes for each packaged dependancy, if it is up to date and if not if it is less than 6 months out, between 6 months and a year, or greater than a year.",
-        "id" : "gc_package_version"
-    },
-    {
-        "name" : "Contributor Growth By Engagement",
-        "about" : "Visualizes growth of contributor population, including sub-populations in consideration of how recently a contributor has contributed. Please see definitions of 'Contributor Recency' on Info page.",
-        "id" : "gc_active_drifting_contributors"
-    },
-    {
-        "name" : "Contributor Activity Cycle",
-        "about" : "Visualizes the distribution of Commit timestamps by Weekday or Hour. Helps to describe operating-hours of community code contributions.",
-        "id" : "gc_contrib_activity_cycle"
-    }
-]
-'''
-
-
-def load_and_combine(prompt_text: str, json_text: str) -> str:
-    combined = f"List of Visualizations:\n{json_text.strip()}\n\n{prompt_text.strip()}"
-    return combined
-
-import re
+def load_and_combine(prompt_file: str, json_file: str) -> str:
+    """
+    Load a prompt from a text file and a JSON file, and combine them into a single string.
+    """
+    with open(prompt_file, 'r') as f:
+        prompt_text = f.read()
+    
+    with open(json_file, 'r') as f:
+        json_data = json.load(f)
+    
+    # Convert JSON data to a formatted string
+    json_text = json.dumps(json_data, indent=2)
+    
+    return f"{json_text}\n\n{prompt_text}"
 
 def extract_json_array(text: str) -> str:
     """
@@ -193,13 +141,10 @@ def update_response(n_clicks: int, message: str):
     if not message:
         return "", go.Figure()
 
-    # # 🔗 TODO: Replace with your AI backend call
-    # ai_reply = f"You said: {message}"  # placeholder response
-
     response = client.inference.chat_completion(
             model_id=model_id,
             messages=[
-                {"role": "system", "content": load_and_combine(prompt_text, json_text)},
+                {"role": "system", "content": load_and_combine("prompt.txt", "graphs.json")},
                 {"role": "user", "content": f"{message}"},
             ],
             stream=False
@@ -211,32 +156,11 @@ def update_response(n_clicks: int, message: str):
     ai_reply = response.completion_message.content.strip()
     # actual_response = response.completion_message.content.strip()
     parsed_response = json.loads(extract_json_array(ai_reply))
-    graph_data = json.loads(json_text)
 
-    # with open("graphs.json", "r") as f:
-    #     graph_data = json.load(f)
+    with open("graphs.json", "r") as f:
+        graph_data = json.load(f)
 
     for number in parsed_response:
         card_components.append(globals().get(f"{graph_data[number]['id']}"))
-    
-
-    # if "graph_type" not in parsed_response:
-    #     ai_reply = "I couldn't understand your request. Please try again."
-    #     return html.P(ai_reply), go.Figure()
-    # graph_type = parsed_response["graph_type"]
-    # ai_reply = f"Generating graph for: {graph_type}"
-
-    # if graph_type == "File-Language-By-File":
-    #     card = gc_code_language
-    # elif graph_type == "Package-Version-Updates":
-    #     card = gc_package_version
-    # else:
-    #     card = gc_ossf_scorecard
-
-    # # 📈 Generate a random line chart for demonstration
-    # x = np.arange(0, 10, 1)
-    # y = np.random.randint(0, 10, size=10)
-    # fig = go.Figure(data=go.Scatter(x=x, y=y, mode="lines+markers"))
-    # fig.update_layout(margin=dict(l=0, r=0, t=30, b=0), title="Generative UI Graph")
 
     return html.P(ai_reply), html.Div(card_components)
