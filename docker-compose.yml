@@ -38,6 +38,10 @@ services:
         "1",
         "--threads",
         "2",
+        "--timeout",
+        "300",
+        "--keep-alive",
+        "5"
       ]
     # ports:
     #   - 8080:8080
@@ -55,12 +59,18 @@ services:
       - EIGHTKNOT_SEARCHBAR_OPTS_MAX_RESULTS=5500 # Maximum number of results to return (org and repo)
       - EIGHTKNOT_SEARCHBAR_OPTS_MAX_REPOS=5000     # Max number of repos
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
 
   worker-callback:
     build:
       context: .
       dockerfile: ./docker/Dockerfile
-    command: ["celery", "-A", "app:celery_app", "worker", "--loglevel=INFO", "--concurrency=1"]
+    command: ["celery", "-A", "app:celery_app", "worker", "--loglevel=INFO", "--concurrency=1", "--time-limit=300", "--soft-time-limit=240"]
     depends_on:
       - redis-cache
       - redis-users
@@ -68,6 +78,12 @@ services:
     env_file:
       - ./env.list
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
 
   worker-query:
     build:
@@ -82,7 +98,9 @@ services:
         "--loglevel=INFO",
         "-Q",
         "data",
-        "--concurrency=1"
+        "--concurrency=1",
+        "--time-limit=600",
+        "--soft-time-limit=540"
       ]
     depends_on:
       - redis-cache
@@ -90,6 +108,13 @@ services:
     env_file:
       - ./env.list
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
 
   # for data blob caching
   redis-cache:
