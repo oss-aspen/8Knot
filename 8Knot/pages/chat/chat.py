@@ -50,17 +50,21 @@ def load_and_combine(prompt_file: str, json_file: str) -> str:
     
     return f"{json_text}\n\n{prompt_text}"
 
-def extract_json_array(text: str) -> str:
+def extract_id_array(text: str):
     """
-    Extract the first occurrence of a JSON-style array (e.g. "[0,1,2,3]") from the input string.
+    Extracts the first array of IDs from text and returns a Python list of quoted strings.
+    Example: '[gc_a, gc_b, gc_c]' -> ['gc_a', 'gc_b', 'gc_c']
     """
-    # This regex matches an opening bracket [, then one or more digits separated by commas,
-    # followed by an optional trailing '..' pattern, and a closing bracket ].
-    pattern = r'\[\s*\d+(?:\s*,\s*\d+)*(?:\s*,\s*\.\.)?\s*\]'
+    pattern = r'\[\s*[\w_]+(?:\s*,\s*[\w_]+)*\s*\]'
     match = re.search(pattern, text)
-    if match:
-        return match.group(0)
-    return ""
+    if not match:
+        return []
+    array_str = match.group(0)
+    # Remove brackets and split by comma
+    elements = [elem.strip() for elem in array_str[1:-1].split(',')]
+    # Filter out empty strings and add quotes
+    return [f"{elem}" for elem in elements if elem]
+
 
 load_dotenv()
 llama_url = os.getenv("LLAMA_HOST")
@@ -161,13 +165,11 @@ def update_response(n_clicks: int, message: str):
     card_components = []
 
     ai_reply = response.completion_message.content.strip()
+    graph_array = extract_id_array(ai_reply)
     # actual_response = response.completion_message.content.strip()
-    parsed_response = json.loads(extract_json_array(ai_reply))
+    # card_components = json.loads(extract_id_array(ai_reply))
 
-    with open("graphs.json", "r") as f:
-        graph_data = json.load(f)
-
-    for number in parsed_response:
-        card_components.append(globals().get(f"{graph_data[number]['id']}"))
+    for graph_id in graph_array:
+        card_components.append(globals().get(f"{graph_id}"))
 
     return html.P(ai_reply), html.Div(card_components)
