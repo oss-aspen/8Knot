@@ -10,10 +10,13 @@ from llama_stack_client import LlamaStackClient
 import json
 import re
 
+# Repo Overview visualizations
 from ..repo_overview.visualizations.code_languages import gc_code_language
 from ..repo_overview.visualizations.ossf_scorecard import gc_ossf_scorecard
 from ..repo_overview.visualizations.package_version import gc_package_version
 from ..repo_overview.visualizations.repo_general_info import gc_repo_general_info
+
+# Contributions visualizations
 from ..contributions.visualizations.commits_over_time import gc_commits_over_time
 from ..contributions.visualizations.issues_over_time import gc_issues_over_time
 from ..contributions.visualizations.issue_staleness import gc_issue_staleness
@@ -25,6 +28,8 @@ from ..contributions.visualizations.pr_assignment import gc_pr_assignment
 from ..contributions.visualizations.cntrb_pr_assignment import gc_cntrib_pr_assignment
 from ..contributions.visualizations.pr_first_response import gc_pr_first_response
 from ..contributions.visualizations.pr_review_response import gc_pr_review_response
+
+# Contributors visualizations
 from ..contributors.visualizations.contrib_drive_repeat import gc_contrib_drive_repeat
 from ..contributors.visualizations.first_time_contributions import gc_first_time_contributions
 from ..contributors.visualizations.contributors_types_over_time import gc_contributors_over_time
@@ -34,6 +39,22 @@ from ..contributors.visualizations.contrib_activity_cycle import gc_contrib_acti
 from ..contributors.visualizations.contribs_by_action import gc_contribs_by_action
 from ..contributors.visualizations.contrib_importance_pie import gc_contrib_importance_pie
 from ..contributors.visualizations.contrib_importance_over_time import gc_lottery_factor_over_time
+
+# CHAOSS metrics visualizations
+from ..chaoss.visualizations.contrib_importance_pie import gc_contrib_importance_pie
+from ..chaoss.visualizations.project_velocity import gc_project_velocity
+
+# Codebase Visualizations
+from ..codebase.visualizations.cntrb_file_heatmap import gc_cntrb_file_heatmap
+from ..codebase.visualizations.contribution_file_heatmap import gc_contribution_file_heatmap
+from ..codebase.visualizations.reviewer_file_heatmap import gc_reviewer_file_heatmap
+
+# Affiliations Visualizations
+from ..affiliation.visualizations.commit_domains import gc_commit_domains
+from ..affiliation.visualizations.gh_org_affiliation import gc_gh_org_affiliation
+from ..affiliation.visualizations.org_associated_activity import gc_org_associated_activity
+from ..affiliation.visualizations.org_core_contributors import gc_org_core_contributors
+from ..affiliation.visualizations.unqiue_domains import gc_unique_domains
 
 def load_and_combine(prompt_file: str, json_file: str) -> str:
     """
