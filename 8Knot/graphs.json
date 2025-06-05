@@ -58,5 +58,85 @@
         "name" : "Contributor Pull Request Review Assignment",
         "about" : "Visualizes number of pull request reviews assigned to each each contributor in the specifed time bucket. The visualization only includes contributors that meet the user inputed the assignment criteria.",
         "id" : "gc_cntrib_pr_assignment"
+    },
+    {
+        "name" : "Contributor Issue Assignment",
+        "about" : "Visualizes number of issue assigned to each each contributor in the specifed time bucket. The visualization only includes contributors that meet the user inputed the assignment criteria.",
+        "id" : "gc_cntrib_issue_assignment"
+    },
+    {
+        "name" : "Commits Over Time",
+        "about" : "Visualizes the number of commits added to the project. Commits are counted relative to a user-selected time window.",
+        "id" : "gc_commits_over_time"
+    },
+    {
+        "name" : "Issue Assignment Status Counts",
+        "about" : "Visualizes the number of assigned and unassigned issues in each time bucket.",
+        "id" : "gc_issue_assignment"
+    },
+    {
+        "name" : "Issue Activity - Staleness",
+        "about" : "Visualizes growth of Issue backlog. Differentiates sub-populations of issues by their 'Staleness.' Please see the definition of 'Staleness' on the Info page.",
+        "id" : "gc_issue_staleness"
+    },
+    {
+        "name" : "Issues Over Time",
+        "about" : "Visualizes the activity of issues being Opened and Closed paritioned by time-window. Also shows the total volume of Open issues over time.",
+        "id" : "gc_issues_over_time"
+    },
+    {
+        "name" : "Pull Request Review Status Counts",
+        "about" : "Visualizes the number of assigned and unassigned pull requests in each time bucket.",
+        "id" : "gc_pr_assignment"
+    },
+    {
+        "name" : "Pull Request Time to First Response",
+        "about" : "Compares the volume of PRs being opened against the number of those PRs that receive at least one response within the parameterized timeframe after being opened.",
+        "id" : "gc_pr_first_response"
+    },
+    {
+        "name" : "Pull Requests Over Time",
+        "about" : "Visualizes PR behavior by tracking Created, Merged, and Closed-Not-Merged PRs over time. Also shows Created PR count as a trend over lifespan.",
+        "id" : "gc_pr_over_time"
+    },
+    {
+        "name" : "Pull Request Conversation Engagement",
+        "about" : "Tracks the number of PRs that are open on a given day vs. those that have received a comment or a review within a time interval, or that are waiting on a response from the opener.",
+        "id" : "gc_pr_review_response"
+    },
+    {
+        "name" : "Pull Request Activity- Staleness",
+        "about" : "Visualizes growth of Open Pull Request backlog. Differentiates sub-populations of PRs by their 'Staleness.' Please see the definition of 'Staleness' on the Info page.",
+        "id" : "gc_pr_staleness"
+    },
+    {
+        "name" : "Commit Activity by Domain",
+        "about" : "Visualizes the proportion of commit activity done by specific email domains. e.g. if there are 100 commits and 75 commits were authored by a contributor with a '@gmail.com' email address, 75 percent of the chart will be represented '@gmail.com.' This can help to capture the relative magnitude of commit contribution by various corporate or institutional entities.",
+        "id" : "gc_commit_domains"
+    },
+    {
+        "name" : "Organization Affiliation by GitHub Account Info",
+        "about" : "Visualizes GitHub account institution affiliation. Many individuals don't report an affiliated institution, but this count may be considered an absolute lower-bound on affiliation.",
+        "id" : "gc_gh_org_affiliation"
+    },
+    {
+        "name" : "Organization Associated Activity",
+        "about" : "For non-commit contributions (see definition of Contribution on Info page) we only know which contributor account contributed. We don't know which email, and therefore which possible institution the contribution represented. e.g. if we know that a PR comment was made by JaneDoe, and they have a '@redhat.com' and an '@gmail.com' email, we don't know whether they contributed individually or as a representative of an instituion. Therefore, we lower-bound the contribution of representation by counting each contribution as being made by ALL of the contributors linked email domains. This graph can therefore be interpreted as 'The minimum number of individuals who have been associated with each domain.' e.g. If there are 100 contributions and 20 contributors, and each contributor has an '@redhat.com' email associated with their account and one other random email, '@redhat.com' will be counted 100 times and the other contributor emails will also total a count of 100.",
+        "id" : "gc_org_associated_activity"
+    },
+    {
+        "name" : "Organization Core Contributors",
+        "about" : "This graph counts the number of core contributions that COULD be linked to each organization. The methodology behind this is to take each associated email to someones GitHub account and link the contributions to each as it is unknown which initity the actvity was done for. Then the graph groups contributions by contributors and filters by contributors that are core. Contributions required is the amount of contributions necessary to be consider a core contributor Core Contributors required is the amount of core contributors needed to have the domain listed.",
+        "id" : "gc_org_core_contributors"
+    },
+    {
+        "name" : "Unique Contributor Email Domains",
+        "about" : "Visualizes the population of unique commit email addresses per represented domain. e.g. if there are 100 distinct commit contributors and 50 use an '@gmail.com' email address, and another 50 use an '@redhat.com' email address, 50 percent of of emails wll be '@gmail.com' and 50% will be '@redhat.com'.",
+        "id" : "gc_unique_domains "
+    },
+    {
+        "name" : "Project Velocity",
+        "about" : "This visualization gives a view into the development speed of a repository in relation to the other selected repositories. For more context of this visualization see https://chaoss.community/kb/metric-project-velocity/ https://www.cncf.io/blog/2017/06/05/30-highest-velocity-open-source-projects/",
+        "id" : "gc_project_velocity"
     }
 ]
