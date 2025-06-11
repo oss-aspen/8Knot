@@ -176,7 +176,7 @@ def update_response(n_clicks: int, message: str):
     response = client.inference.chat_completion(
             model_id=model_id,
             messages=[
-                {"role": "system", "content": load_and_combine("prompt.txt", "graphs.json")},
+                {"role": "system", "content": load_and_combine("prompt.md", "graphs.json")},
                 {"role": "user", "content": f"{message}"},
             ],
             stream=False
