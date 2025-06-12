@@ -9,6 +9,9 @@ import os
 from llama_stack_client import LlamaStackClient
 import json
 import re
+import requests
+from pymilvus import MilvusClient
+import logging
 
 # Repo Overview visualizations
 from ..repo_overview.visualizations.code_languages import gc_code_language
@@ -56,6 +59,8 @@ from ..affiliation.visualizations.org_associated_activity import gc_org_associat
 from ..affiliation.visualizations.org_core_contributors import gc_org_core_contributors
 from ..affiliation.visualizations.unqiue_domains import gc_unique_domains
 
+m_client = MilvusClient("milvus_demo.db")
+
 def load_and_combine(prompt_file: str, json_file: str) -> str:
     """
     Load a prompt from a text file and a JSON file, and combine them into a single string.
@@ -70,6 +75,40 @@ def load_and_combine(prompt_file: str, json_file: str) -> str:
     json_text = json.dumps(json_data, indent=2)
     
     return f"{json_text}\n\n{prompt_text}"
+
+def calculate_embedding(text: str) -> list:
+    url = f"http://host.docker.internal:11434/api/embeddings"
+
+    """
+    Calculate the embedding for a given text using the Nomic API.
+    """
+    payload = {
+        "model": "nomic-embed-text",
+        "prompt": text
+    }
+    response = requests.post(url, json=payload)
+
+    if response.status_code == 200:
+        return response.json()['embedding']
+    else:
+        raise Exception(f"Error calculating embedding: {response.text}")
+
+def find_similar_graphs(query: str, top_k: int = 5, score_threshold: float = None):
+    embedding = calculate_embedding(query)
+    results = m_client.search(
+        collection_name="demo_collection",
+        anns_field="vector",           # Name of the vector field
+        data=[embedding],              # List of query vectors
+        limit=top_k,
+        search_params={"metric_type": "COSINE"},  # or "L2" or "COSINE" as appropriate
+        output_fields=["title", "about", "identifier"],  # Fields to return in the results
+    )
+    # Optionally filter by score threshold
+    if score_threshold is not None:
+        results = [r for r in results[0] if r.score >= score_threshold]
+    else:
+        results = results[0]
+    return results
 
 def extract_id_array(text: str):
     """
@@ -173,24 +212,41 @@ def update_response(n_clicks: int, message: str):
     if not message:
         return "", go.Figure()
 
-    response = client.inference.chat_completion(
-            model_id=model_id,
-            messages=[
-                {"role": "system", "content": load_and_combine("prompt.md", "graphs.json")},
-                {"role": "user", "content": f"{message}"},
-            ],
-            stream=False
-        )
+    # response = client.inference.chat_completion(
+    #         model_id=model_id,
+    #         messages=[
+    #             {"role": "system", "content": load_and_combine("prompt.md", "graphs.json")},
+    #             {"role": "user", "content": f"{message}"},
+    #         ],
+    #         stream=False
+    #     )
+    
+    graphs = find_similar_graphs(message, top_k=5)
 
     # card_components = [gc_package_version, gc_code_language, gc_active_drifting_contributors]
     card_components = []
 
-    ai_reply = response.completion_message.content.strip()
-    graph_array = extract_id_array(ai_reply)
+    ai_reply = graphs
+
+    # ai_reply = response.completion_message.content.strip()
+    # graph_array = extract_id_array(ai_reply)
+
+    for graph in graphs:
+        graph_id = graph.get("identifier")
+        logging.info(f"Graph ID: {graph_id}")
+        # if graph_id and graph_id in globals():
+        #     fgraph = globals()[graph_id]
+        #     if callable(fgraph):
+        #         # If the graph is a function, call it to get the component
+        #         card_components.append(fgraph())
+        #     else:
+        #         # Otherwise, assume it's a pre-defined component
+        card_components.append(globals().get(f"{graph_id}"))
+
     # actual_response = response.completion_message.content.strip()
     # card_components = json.loads(extract_id_array(ai_reply))
 
-    for graph_id in graph_array:
-        card_components.append(globals().get(f"{graph_id}"))
+    # for graph_id in graph_array:
+    #     card_components.append(globals().get(f"{graph_id}"))
 
-    return html.P(ai_reply), html.Div(card_components)
+    return html.P(str(ai_reply)), html.Div(card_components)
