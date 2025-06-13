@@ -15,6 +15,7 @@ import os
 import sys
 import logging
 import dash
+import pandas as pd
 from sqlalchemy.exc import SQLAlchemyError
 import plotly.io as plt_io
 import dash_bootstrap_components as dbc
@@ -49,6 +50,12 @@ augur.multiselect_startup()
 """IMPORT AFTER GLOBAL VARIABLES SET"""
 import pages.index.index_callbacks as index_callbacks
 
+# Import testing utilities for enhanced error detection in CI
+if os.getenv("8KNOT_DEBUG", "False") == "True":
+    import testing_utils
+
+    testing_utils.log_service_status()
+
 
 """SET STYLING FOR APPLICATION"""
 dbt.load_figure_template(["sandstone", "minty", "slate"])
@@ -82,6 +89,22 @@ app = dash.Dash(
 """CONFIGURE FLASK-LOGIN"""
 server = app.server
 server = _login.configure_server_login(server)
+
+"""HEALTH CHECK ENDPOINT"""
+
+
+@server.route("/health")
+def health_check():
+    """Simple health check endpoint for CI/CD testing"""
+    try:
+        # Test database connection
+        with engine.connect() as conn:
+            conn.execute("SELECT 1")
+
+        return {"status": "healthy", "database": "connected", "timestamp": str(pd.Timestamp.now())}, 200
+    except Exception as e:
+        logging.error(f"Health check failed: {e}")
+        return {"status": "unhealthy", "error": str(e), "timestamp": str(pd.Timestamp.now())}, 500
 
 
 """DASH PAGES LAYOUT"""

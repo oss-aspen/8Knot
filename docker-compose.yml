@@ -6,7 +6,7 @@ services:
     command: ["python3", "./cache_manager/db_init.py"]
     depends_on:
       postgres-cache:
-        condition: service_healthy # to ensure that postgres is indeed initialized before this starts
+        condition: service_healthy  # to ensure that postgres is indeed initialized before this starts
     env_file:
       - ./env.list
     # sometimes, postgres-cache isn't spun up before this starts.
@@ -22,7 +22,7 @@ services:
     depends_on:
       - app-server
     ports:
-      - "8080:8080" # bound to host port, exposed app endpoint
+      - "8080:8080"  # bound to host port, exposed app endpoint
 
   app-server:
     build:
@@ -55,9 +55,9 @@ services:
     env_file:
       - ./env.list
     environment:
-      - EIGHTKNOT_SEARCHBAR_OPTS_SORT=shortest # Try different options: shortest, longest, alphabetical
-      - EIGHTKNOT_SEARCHBAR_OPTS_MAX_RESULTS=5500 # Maximum number of results to return (org and repo)
-      - EIGHTKNOT_SEARCHBAR_OPTS_MAX_REPOS=5000     # Max number of repos
+      - EIGHTKNOT_SEARCHBAR_OPTS_SORT=shortest  # Try different options: shortest, longest, alphabetical
+      - EIGHTKNOT_SEARCHBAR_OPTS_MAX_RESULTS=5500  # Maximum number of results to return (org and repo)
+      - EIGHTKNOT_SEARCHBAR_OPTS_MAX_REPOS=5000  # Max number of repos
     restart: always
     deploy:
       resources:
