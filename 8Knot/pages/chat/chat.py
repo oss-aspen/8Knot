@@ -77,19 +77,28 @@ def load_and_combine(prompt_file: str, json_file: str) -> str:
     return f"{json_text}\n\n{prompt_text}"
 
 def calculate_embedding(text: str) -> list:
-    url = f"http://host.docker.internal:11434/api/embeddings"
-
     """
     Calculate the embedding for a given text using the Nomic API.
     """
-    payload = {
-        "model": "nomic-embed-text",
-        "prompt": text
+
+    url = f"https://nomic-embed-text-v1-5-maas-apicast-production.apps.prod.rhoai.rh-aiservices-bu.com/v1/embeddings"
+
+    headers = {
+        "Authorization": f"Bearer {os.getenv('NOMIC_API_KEY')}",
     }
-    response = requests.post(url, json=payload)
+
+    payload = {
+        "encoding_format" : "float",
+        "input": text,
+        "model": "/mnt/models/",
+        "user" : "null"
+    }
+    response = requests.post(url, headers=headers, json=payload)
+
+    logging.info(f"Response from Nomic API: {response.status_code} - {response.text}")
 
     if response.status_code == 200:
-        return response.json()['embedding']
+        return response.json()['data'][0]['embedding']
     else:
         raise Exception(f"Error calculating embedding: {response.text}")
 
@@ -103,6 +112,7 @@ def find_similar_graphs(query: str, top_k: int = 5, score_threshold: float = Non
         search_params={"metric_type": "COSINE"},  # or "L2" or "COSINE" as appropriate
         output_fields=["title", "about", "identifier"],  # Fields to return in the results
     )
+    logging.info(f"Search results: {results}")
     # Optionally filter by score threshold
     if score_threshold is not None:
         results = [r for r in results[0] if r.score >= score_threshold]
