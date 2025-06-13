@@ -60,32 +60,16 @@ from ..affiliation.visualizations.org_core_contributors import gc_org_core_contr
 from ..affiliation.visualizations.unqiue_domains import gc_unique_domains
 
 m_client = MilvusClient("milvus_demo.db")
-
-def load_and_combine(prompt_file: str, json_file: str) -> str:
-    """
-    Load a prompt from a text file and a JSON file, and combine them into a single string.
-    """
-    with open(prompt_file, 'r') as f:
-        prompt_text = f.read()
-    
-    with open(json_file, 'r') as f:
-        json_data = json.load(f)
-    
-    # Convert JSON data to a formatted string
-    json_text = json.dumps(json_data, indent=2)
-    
-    return f"{json_text}\n\n{prompt_text}"
+load_dotenv()
 
 def calculate_embedding(text: str) -> list:
     """
     Calculate the embedding for a given text using the Nomic API.
     """
 
-    url = f"https://nomic-embed-text-v1-5-maas-apicast-production.apps.prod.rhoai.rh-aiservices-bu.com/v1/embeddings"
+    url = f"{os.getenv('NOMIC_URL')}"
 
-    headers = {
-        "Authorization": f"Bearer {os.getenv('NOMIC_API_KEY')}",
-    }
+    headers = {"Authorization": f"Bearer {os.getenv('NOMIC_API_KEY')}"}
 
     payload = {
         "encoding_format" : "float",
@@ -93,9 +77,8 @@ def calculate_embedding(text: str) -> list:
         "model": "/mnt/models/",
         "user" : "null"
     }
-    response = requests.post(url, headers=headers, json=payload)
 
-    logging.info(f"Response from Nomic API: {response.status_code} - {response.text}")
+    response = requests.post(url, headers=headers, json=payload)
 
     if response.status_code == 200:
         return response.json()['data'][0]['embedding']
@@ -113,6 +96,7 @@ def find_similar_graphs(query: str, top_k: int = 5, score_threshold: float = Non
         output_fields=["title", "about", "identifier"],  # Fields to return in the results
     )
     logging.info(f"Search results: {results}")
+    
     # Optionally filter by score threshold
     if score_threshold is not None:
         results = [r for r in results[0] if r.score >= score_threshold]
@@ -120,38 +104,25 @@ def find_similar_graphs(query: str, top_k: int = 5, score_threshold: float = Non
         results = results[0]
     return results
 
-def extract_id_array(text: str):
-    """
-    Extracts the first array of IDs from text and returns a Python list of quoted strings.
-    Example: '[gc_a, gc_b, gc_c]' -> ['gc_a', 'gc_b', 'gc_c']
-    """
-    pattern = r'\[\s*[\w_]+(?:\s*,\s*[\w_]+)*\s*\]'
-    match = re.search(pattern, text)
-    if not match:
-        return []
-    array_str = match.group(0)
-    # Remove brackets and split by comma
-    elements = [elem.strip() for elem in array_str[1:-1].split(',')]
-    # Filter out empty strings and add quotes
-    return [f"{elem}" for elem in elements if elem]
 
 
-load_dotenv()
-llama_url = os.getenv("LLAMA_HOST")
-client = LlamaStackClient(base_url=f"http://{llama_url}:8321")
+# Initialize LlamaStack client. We're shelving this code for now
 
-models = client.models.list()
-print(models)
+# llama_url = os.getenv("LLAMA_HOST")
+# client = LlamaStackClient(base_url=f"http://{llama_url}:8321")
 
-model_id = None
+# models = client.models.list()
+# print(models)
 
-for model in models:
-    if model.identifier == "qwen3:0.6b":
-        print("Found model qwen3:0.6b")
-        model_id = model.identifier
-        break
+# model_id = None
 
-print(model_id)
+# for model in models:
+#     if model.identifier == "qwen3:0.6b":
+#         print("Found model qwen3:0.6b")
+#         model_id = model.identifier
+#         break
+
+# print(model_id)
 
 warnings.filterwarnings("ignore")
 
@@ -199,7 +170,7 @@ layout = dbc.Container(
         dbc.Row(
             dbc.Col(
                 html.Div(id="ui-graph", style={"width": "100%"}),
-                width={"size": 8, "offset": 2},
+                width={"size": 6, "offset": 3},
             )
         ),
     ],
@@ -218,45 +189,15 @@ layout = dbc.Container(
     prevent_initial_call=True,
 )
 def update_response(n_clicks: int, message: str):
-    """Respond to the latest user message and generate a simple random graph."""
+    # If there's no message, return empty response
     if not message:
         return "", go.Figure()
 
-    # response = client.inference.chat_completion(
-    #         model_id=model_id,
-    #         messages=[
-    #             {"role": "system", "content": load_and_combine("prompt.md", "graphs.json")},
-    #             {"role": "user", "content": f"{message}"},
-    #         ],
-    #         stream=False
-    #     )
-    
     graphs = find_similar_graphs(message, top_k=5)
-
-    # card_components = [gc_package_version, gc_code_language, gc_active_drifting_contributors]
     card_components = []
-
-    ai_reply = graphs
-
-    # ai_reply = response.completion_message.content.strip()
-    # graph_array = extract_id_array(ai_reply)
-
+    ai_reply = " "
     for graph in graphs:
         graph_id = graph.get("identifier")
         logging.info(f"Graph ID: {graph_id}")
-        # if graph_id and graph_id in globals():
-        #     fgraph = globals()[graph_id]
-        #     if callable(fgraph):
-        #         # If the graph is a function, call it to get the component
-        #         card_components.append(fgraph())
-        #     else:
-        #         # Otherwise, assume it's a pre-defined component
         card_components.append(globals().get(f"{graph_id}"))
-
-    # actual_response = response.completion_message.content.strip()
-    # card_components = json.loads(extract_id_array(ai_reply))
-
-    # for graph_id in graph_array:
-    #     card_components.append(globals().get(f"{graph_id}"))
-
     return html.P(str(ai_reply)), html.Div(card_components)
