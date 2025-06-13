@@ -174,7 +174,7 @@ def login_username_button(url):
 )
 def dynamic_multiselect_options(user_in: str, selections, cached_options):
     """
-    Enhanced search using fuzzy matching and client-side cache.
+    Enhanced search using fuzzy matching and client-side cache with server fallback.
 
     Args:
         user_in: User's search input
@@ -188,7 +188,7 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
         start_time = time.time()
         logging.info(f"Search query: '{user_in}'")
 
-        # Use cached options if available, otherwise fall back to server fetch
+        # Start with cached options if available
         if cached_options:
             logging.info(f"Using client-side cache with {len(cached_options)} options")
             options = cached_options
@@ -232,7 +232,89 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
         from .search_utils import fuzzy_search
 
         matched_options = fuzzy_search(search_query, options, threshold=0.2)
-        logging.info(f"Fuzzy search found {len(matched_options)} matches")
+        logging.info(f"Fuzzy search found {len(matched_options)} matches in cache")
+
+        # ENSURE EXACT ORG MATCHES: If searching for an org name, make sure it's included
+        # This handles cases where fuzzy search limits might exclude exact org matches
+        if len(search_query) >= 3:  # Only for meaningful queries
+            exact_org_matches = []
+
+            # Check for org matches in the FULL server dataset, not just cache
+            # because orgs might not be in the limited cache
+            try:
+                server_options = augur.get_multiselect_options().copy()
+                if current_user.is_authenticated:
+                    try:
+                        users_cache = redis.StrictRedis(
+                            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
+                            port=6379,
+                            password=os.getenv("REDIS_PASSWORD", ""),
+                            decode_responses=True,
+                        )
+                        users_cache.ping()
+                        if users_cache.exists(f"{current_user.get_id()}_group_options"):
+                            user_options = json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
+                            server_options = server_options + user_options
+                    except redis.exceptions.ConnectionError as e:
+                        logging.error(f"ORG CHECK: Could not connect to users-cache. Error: {str(e)}")
+
+                for opt in server_options:
+                    if isinstance(opt.get("value"), str):  # It's an org
+                        org_label = opt["label"].lower()
+                        if (
+                            search_query.lower() == org_label
+                            or search_query.lower() in org_label
+                            or org_label.startswith(search_query.lower())
+                        ):
+                            # Check if this org is already in matched_options
+                            if not any(existing["value"] == opt["value"] for existing in matched_options):
+                                exact_org_matches.append(opt)
+
+            except Exception as e:
+                logging.error(f"ORG CHECK: Failed to fetch server options: {str(e)}")
+
+            # Add exact org matches to the beginning
+            if exact_org_matches:
+                matched_options = exact_org_matches + matched_options
+                logging.info(f"Added {len(exact_org_matches)} exact org matches from server")
+
+        # FALLBACK MECHANISM: If we have very few matches and we were using cache,
+        # search the full server dataset
+        use_server_fallback = False
+        if cached_options and len(matched_options) < 5 and len(search_query) >= 3:
+            logging.info("Few matches found in cache, falling back to server search")
+            try:
+                server_options = augur.get_multiselect_options().copy()
+                if current_user.is_authenticated:
+                    try:
+                        users_cache = redis.StrictRedis(
+                            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
+                            port=6379,
+                            password=os.getenv("REDIS_PASSWORD", ""),
+                            decode_responses=True,
+                        )
+                        users_cache.ping()
+                        if users_cache.exists(f"{current_user.get_id()}_group_options"):
+                            user_options = json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
+                            server_options = server_options + user_options
+                    except redis.exceptions.ConnectionError as e:
+                        logging.error(f"FALLBACK: Could not connect to users-cache. Error: {str(e)}")
+
+                server_matches = fuzzy_search(search_query, server_options, threshold=0.2)
+                logging.info(f"Server fallback found {len(server_matches)} matches")
+
+                # Combine cache and server results, prioritizing cache matches
+                seen_values = set(opt["value"] for opt in matched_options)
+                for server_match in server_matches:
+                    if server_match["value"] not in seen_values:
+                        matched_options.append(server_match)
+                        seen_values.add(server_match["value"])
+
+                use_server_fallback = True
+                logging.info(f"Combined results: {len(matched_options)} total matches")
+
+            except Exception as e:
+                logging.error(f"Server fallback failed: {str(e)}")
 
         # Filter by prefix type if specified
         if prefix_type == "repo":
@@ -261,15 +343,22 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
                 formatted_opt["label"] = f"repo: {opt['label']}"
             formatted_opts.append(formatted_opt)
 
+        # Simple reordering: put organizations first, then repositories
+        orgs_first = [opt for opt in formatted_opts if isinstance(opt["value"], str)]
+        repos_after = [opt for opt in formatted_opts if isinstance(opt["value"], int)]
+        formatted_opts = orgs_first + repos_after
+
         # Always include the previous selections
         # Format selected options with prefixes
         selected_options = []
 
-        # First check if selections are in our cache
-        cached_selection_values = set(opt["value"] for opt in options)
-        missing_selections = [v for v in selections if v not in cached_selection_values]
+        # First check if selections are in our current options (cache + any server fallback)
+        current_selection_values = set(
+            opt["value"] for opt in (cached_options or []) + (matched_options if use_server_fallback else [])
+        )
+        missing_selections = [v for v in selections if v not in current_selection_values]
 
-        # If any selections aren't in cache, fetch them from the server
+        # If any selections aren't in our current options, fetch them from the server
         if missing_selections:
             logging.info(f"Fetching {len(missing_selections)} missing selections from server")
             all_options = augur.get_multiselect_options().copy()
@@ -285,9 +374,10 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
                         formatted_v["label"] = f"repo: {formatted_v['label']}"
                     selected_options.append(formatted_v)
         else:
-            # All selections are in cache
+            # All selections are in our current options
+            all_current_options = (cached_options or []) + matched_options
             for v in selections:
-                for opt in options:
+                for opt in all_current_options:
                     if opt["value"] == v:
                         formatted_v = opt.copy()
                         if isinstance(v, str):
@@ -300,10 +390,21 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
                         break
 
         # Combine results, limiting to 100 items but always including selections
+        # ENSURE ORGS ARE ALWAYS INCLUDED: Separate orgs and repos, then combine smartly
+        orgs_in_results = [opt for opt in formatted_opts if isinstance(opt["value"], str)]
+        repos_in_results = [opt for opt in formatted_opts if isinstance(opt["value"], int)]
+
         if len(formatted_opts) < 100:
             result = formatted_opts
         else:
-            result = formatted_opts[:100]
+            # Always include all orgs (there are usually very few)
+            # Then fill remaining slots with repos
+            remaining_slots = 100 - len(orgs_in_results)
+            if remaining_slots > 0:
+                result = orgs_in_results + repos_in_results[:remaining_slots]
+            else:
+                # Edge case: more than 100 orgs (very unlikely)
+                result = orgs_in_results[:100]
 
         # Add selected options that aren't already in the results
         selected_values = [opt["value"] for opt in result]
@@ -313,7 +414,8 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
 
         end_time = time.time()
         logging.info(f"Search completed in {end_time - start_time:.2f} seconds")
-        logging.info(f"Returning {len(result)} options to dropdown")
+        logging.info(f"Returning {len(result)} options to dropdown (fallback used: {use_server_fallback})")
+
         return [result]
 
     except Exception as e:
@@ -564,7 +666,6 @@ def initialize_cache(_):
                     decode_responses=True,
                 )
                 users_cache.ping()
-                logging.info("Successfully connected to Redis")
 
                 if users_cache.exists(f"{current_user.get_id()}_group_options"):
                     user_options = json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
