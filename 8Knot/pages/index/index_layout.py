@@ -133,6 +133,7 @@ navbar = dbc.Navbar(
                             dbc.Nav(
                                 [
                                     dbc.NavLink("Welcome", href="/", active="exact"),
+                                    dbc.NavLink("Chat", href="/chat", active="exact"),
                                     dbc.NavLink("Repo Overview", href="/repo_overview", active="exact"),
                                     dbc.NavLink(
                                         "Contributions",

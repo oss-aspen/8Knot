@@ -22,3 +22,4 @@ python-Levenshtein
 datetime
 gunicorn
 pyarrow
+llama-stack
