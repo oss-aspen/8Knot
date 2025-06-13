@@ -9,6 +9,9 @@ import os
 from llama_stack_client import LlamaStackClient
 import json
 import re
+import requests
+from pymilvus import MilvusClient
+import logging
 
 # Repo Overview visualizations
 from ..repo_overview.visualizations.code_languages import gc_code_language
@@ -56,53 +59,70 @@ from ..affiliation.visualizations.org_associated_activity import gc_org_associat
 from ..affiliation.visualizations.org_core_contributors import gc_org_core_contributors
 from ..affiliation.visualizations.unqiue_domains import gc_unique_domains
 
-def load_and_combine(prompt_file: str, json_file: str) -> str:
-    """
-    Load a prompt from a text file and a JSON file, and combine them into a single string.
-    """
-    with open(prompt_file, 'r') as f:
-        prompt_text = f.read()
-    
-    with open(json_file, 'r') as f:
-        json_data = json.load(f)
-    
-    # Convert JSON data to a formatted string
-    json_text = json.dumps(json_data, indent=2)
-    
-    return f"{json_text}\n\n{prompt_text}"
-
-def extract_id_array(text: str):
-    """
-    Extracts the first array of IDs from text and returns a Python list of quoted strings.
-    Example: '[gc_a, gc_b, gc_c]' -> ['gc_a', 'gc_b', 'gc_c']
-    """
-    pattern = r'\[\s*[\w_]+(?:\s*,\s*[\w_]+)*\s*\]'
-    match = re.search(pattern, text)
-    if not match:
-        return []
-    array_str = match.group(0)
-    # Remove brackets and split by comma
-    elements = [elem.strip() for elem in array_str[1:-1].split(',')]
-    # Filter out empty strings and add quotes
-    return [f"{elem}" for elem in elements if elem]
-
-
+m_client = MilvusClient("milvus_demo.db")
 load_dotenv()
-llama_url = os.getenv("LLAMA_HOST")
-client = LlamaStackClient(base_url=f"http://{llama_url}:8321")
 
-models = client.models.list()
-print(models)
+def calculate_embedding(text: str) -> list:
+    """
+    Calculate the embedding for a given text using the Nomic API.
+    """
 
-model_id = None
+    url = f"{os.getenv('NOMIC_URL')}"
 
-for model in models:
-    if model.identifier == "qwen3:0.6b":
-        print("Found model qwen3:0.6b")
-        model_id = model.identifier
-        break
+    headers = {"Authorization": f"Bearer {os.getenv('NOMIC_API_KEY')}"}
 
-print(model_id)
+    payload = {
+        "encoding_format" : "float",
+        "input": text,
+        "model": "/mnt/models/",
+        "user" : "null"
+    }
+
+    response = requests.post(url, headers=headers, json=payload)
+
+    if response.status_code == 200:
+        return response.json()['data'][0]['embedding']
+    else:
+        raise Exception(f"Error calculating embedding: {response.text}")
+
+def find_similar_graphs(query: str, top_k: int = 5, score_threshold: float = None):
+    embedding = calculate_embedding(query)
+    results = m_client.search(
+        collection_name="demo_collection",
+        anns_field="vector",           # Name of the vector field
+        data=[embedding],              # List of query vectors
+        limit=top_k,
+        search_params={"metric_type": "COSINE"},  # or "L2" or "COSINE" as appropriate
+        output_fields=["title", "about", "identifier"],  # Fields to return in the results
+    )
+    logging.info(f"Search results: {results}")
+    
+    # Optionally filter by score threshold
+    if score_threshold is not None:
+        results = [r for r in results[0] if r.score >= score_threshold]
+    else:
+        results = results[0]
+    return results
+
+
+
+# Initialize LlamaStack client. We're shelving this code for now
+
+# llama_url = os.getenv("LLAMA_HOST")
+# client = LlamaStackClient(base_url=f"http://{llama_url}:8321")
+
+# models = client.models.list()
+# print(models)
+
+# model_id = None
+
+# for model in models:
+#     if model.identifier == "qwen3:0.6b":
+#         print("Found model qwen3:0.6b")
+#         model_id = model.identifier
+#         break
+
+# print(model_id)
 
 warnings.filterwarnings("ignore")
 
@@ -150,7 +170,7 @@ layout = dbc.Container(
         dbc.Row(
             dbc.Col(
                 html.Div(id="ui-graph", style={"width": "100%"}),
-                width={"size": 8, "offset": 2},
+                width={"size": 6, "offset": 3},
             )
         ),
     ],
@@ -169,28 +189,15 @@ layout = dbc.Container(
     prevent_initial_call=True,
 )
 def update_response(n_clicks: int, message: str):
-    """Respond to the latest user message and generate a simple random graph."""
+    # If there's no message, return empty response
     if not message:
         return "", go.Figure()
 
-    response = client.inference.chat_completion(
-            model_id=model_id,
-            messages=[
-                {"role": "system", "content": load_and_combine("prompt.txt", "graphs.json")},
-                {"role": "user", "content": f"{message}"},
-            ],
-            stream=False
-        )
-
-    # card_components = [gc_package_version, gc_code_language, gc_active_drifting_contributors]
+    graphs = find_similar_graphs(message, top_k=5)
     card_components = []
-
-    ai_reply = response.completion_message.content.strip()
-    graph_array = extract_id_array(ai_reply)
-    # actual_response = response.completion_message.content.strip()
-    # card_components = json.loads(extract_id_array(ai_reply))
-
-    for graph_id in graph_array:
+    ai_reply = " "
+    for graph in graphs:
+        graph_id = graph.get("identifier")
+        logging.info(f"Graph ID: {graph_id}")
         card_components.append(globals().get(f"{graph_id}"))
-
-    return html.P(ai_reply), html.Div(card_components)
+    return html.P(str(ai_reply)), html.Div(card_components)

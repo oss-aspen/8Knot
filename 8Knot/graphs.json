@@ -138,5 +138,20 @@
         "name" : "Project Velocity",
         "about" : "This visualization gives a view into the development speed of a repository in relation to the other selected repositories. For more context of this visualization see https://chaoss.community/kb/metric-project-velocity/ https://www.cncf.io/blog/2017/06/05/30-highest-velocity-open-source-projects/",
         "id" : "gc_project_velocity"
+    },
+    {
+        "name" : "Contributor File Heatmap",
+        "about" : "This visualization analyzes the activity of the contributors to sub-sections (files or folders) of a repository. Specifically, this heatmap identifies the last time a sub-section's contributors (those people who have opened at least one pull request to a sub-section) last contributed to therepository. See the definition of \"contribution\" on the Info page for more information. This could be interpreted as monitoring technical knowledge retention of codebase components: if a sub-section's past contributors are no longer active in the repository, maintainership of that sub-section could be insufficient and require attention.",
+        "id" : "gc_cntrb_file_heatmap"
+    },
+    {
+        "name" : "Contribution File Heatmap",
+        "about" : "This visualization analyzes the activity of the open or merged pull requests to sub-sections (files or folders) of a repository.",
+        "id" : "gc_contribution_file_heatmap"
+    },
+    {
+        "name" : "Reviewer File Heatmap",
+        "about" : "This visualization analyzes the activity of the reviewers to sub-sections (files or folders) of a repository. Specifically, this heatmap identifies the last time a sub-section's reviewer (those people who have reviewed at least one pull request to a sub-section) last contributed to the repository. See the definition of \"contribution\" on the Info page for more information. This could be interpreted as monitoring technical knowledge retention of codebase components: if a sub-section's past reviewers are no longer active in the repository, maintainership of that sub-section could be insufficient and require attention.",
+        "id" : "gc_reviewer_file"
     }
-]
+]   
