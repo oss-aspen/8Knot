@@ -20,12 +20,15 @@ layout = dbc.Container(
     [
         html.H1("Search Bar Populated Analysis", style={"text-align": "center", "marginBottom": "1%"}),
         dbc.Row(
-            [
-                dbc.Col(gc_code_language, width=5),
-                dbc.Col(gc_package_version, width=5),
-            ],
+            [dbc.Col(gc_code_language, width=12)],
             align="center",
-            justify="evenly",
+            justify="center",
+            style={"marginBottom": "1%"},
+        ),
+        dbc.Row(
+            [dbc.Col(gc_package_version, width=12)],
+            align="center",
+            justify="center",
             style={"marginBottom": "1%"},
         ),
         dbc.Row(
@@ -74,6 +77,10 @@ layout = dbc.Container(
     [Input("repo-choices", "data")],
 )
 def repo_dropdown(repo_ids):
+    # Handle empty repo_ids list
+    if not repo_ids or len(repo_ids) == 0:
+        return [], None
+    
     # array to hold repo_id and git url pairing for dropdown
     data_array = []
     for repo_id in repo_ids:

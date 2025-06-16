@@ -1,0 +1,119 @@
+/**
+ * 8Knot Theme Colors & Typography
+ * ================================
+ * 
+ * This file contains the core color palette and typography styles for the 8Knot application.
+ * The color scheme uses earthy tones with a dark theme approach.
+ * 
+ * Color Palette:
+ * - Primary Green: #6b8976 (main brand color)
+ * - Secondary Green: #b5b683 (lighter accent)
+ * - Background: #242424 (main dark background)
+ * - Card Background: #1D1D1D (darker panels)
+ * - Text Primary: #ffffff (main text)
+ * - Text Secondary: #B0B0B0 (muted text)
+ */
+
+/* =============================================================================
+   TYPOGRAPHY HIERARCHY
+   ============================================================================= */
+
+/**
+ * Heading styles follow a hierarchical color system:
+ * - H1, H3: Primary brand color (#6b8976) - for main titles
+ * - H2, H4, H5, H6: Secondary color (#b5b683) - for subtitles and sections
+ */
+h1,
+h3 {
+  color: #6b8976 !important;
+}
+
+h2,
+h4,
+h5,
+h6 {
+  color: #b5b683 !important;
+}
+
+/* =============================================================================
+   CONTENT BLOCKS
+   ============================================================================= */
+
+/**
+ * Blockquote styling for documentation and callouts
+ * Uses muted colors and subtle left border for visual hierarchy
+ */
+blockquote {
+  color: #8d9d92 !important;
+  font-style: normal;
+  font-size: 18px;
+  margin-left: 32px;
+  font-family: Consolas, "Times New Roman", Verdana;
+  border-left: 4px solid #787878;
+  padding-left: 8px;
+}
+
+blockquote h5 {
+  color: #aaa !important;
+}
+
+blockquote p {
+  margin-top: 1px;
+  margin-bottom: 1px;
+  width: auto;
+  min-width: 50px;
+  max-width: 950px;
+}
+
+/* =============================================================================
+   CONTENT CONTAINERS
+   ============================================================================= */
+
+/**
+ * Paragraph containers for explanatory text
+ * Ensures readable line lengths and proper spacing
+ */
+.explanation-p {
+  width: auto;
+  min-width: 50px;
+  max-width: 550px;
+}
+
+/**
+ * Brand elements
+ */
+.navbar-brand {
+  color: #6b8976 !important;
+}
+
+/**
+ * Main background theme
+ * Applied to major container elements
+ */
+.bg-dark {
+    --bs-bg-opacity: 1;
+    background-color: #242424 !important;
+}
+
+/**
+ * Data display elements
+ * Ensures dark theme consistency for metric displays
+ */
+.metric_data {
+  color: #000000 !important;
+  text-shadow: none !important;
+  padding-bottom: 15px !important;
+}
+
+.glace_headers {
+  color: #000000 !important;
+  text-shadow: none !important;
+  font-weight: "normal" !important;
+}
+
+/**
+ * Card titles - ensures visibility in dark theme
+ */
+.card-title {
+  color: white !important;
+} 

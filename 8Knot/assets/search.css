@@ -1,0 +1,154 @@
+/**
+ * 8Knot Search Functionality
+ * ===========================
+ * 
+ * This file contains styling for the search functionality including:
+ * - Search result hover effects
+ * - Selected tag styling (for chosen repositories/organizations)
+ * - Tag removal button styling
+ * - Search input container focus effects
+ * 
+ * The search interface follows the dark theme with blue accent colors
+ * for selected items and interactive elements.
+ */
+
+/* =============================================================================
+   SEARCH RESULTS
+   ============================================================================= */
+
+/**
+ * Search Result Item Hover Effects
+ * Provides visual feedback when hovering over search results
+ * Uses a subtle background color change to indicate interactivity
+ */
+.search-result-item:hover {
+    background-color: #3A3A3A !important;
+}
+
+/* =============================================================================
+   SELECTED TAGS (REPOSITORY/ORGANIZATION TAGS)
+   ============================================================================= */
+
+/**
+ * Selected Tag Styling
+ * Visual representation of selected repositories or organizations
+ * Features:
+ * - Blue background (#119DFF) for brand consistency
+ * - Rounded corners for modern appearance
+ * - Flexible layout with ellipsis for long names
+ * - Consistent spacing and typography
+ */
+.selected-tag {
+    background-color: #119DFF;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* =============================================================================
+   TAG REMOVAL FUNCTIONALITY
+   ============================================================================= */
+
+/**
+ * Tag Remove Button
+ * Small 'X' button for removing selected tags
+ * Features:
+ * - Minimal design with no background or border
+ * - Perfect circle shape for clean appearance
+ * - Flexible layout to prevent shrinking
+ * - Accessible cursor pointer
+ */
+.tag-remove-btn {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    width: 14px;
+    height: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/**
+ * Tag Remove Button Hover Effect
+ * Subtle background highlight on hover for better UX
+ * Semi-transparent white background for gentle feedback
+ */
+.tag-remove-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* =============================================================================
+   SEARCH INPUT CONTAINER
+   ============================================================================= */
+
+/**
+ * Search Input Container Focus Effects
+ * Enhanced visual feedback when search input is focused
+ * Features:
+ * - Blue border to match selected tags
+ * - Subtle box-shadow for depth
+ * - Smooth transition effects
+ * 
+ * This applies to the container that holds both tags and input field,
+ * providing a unified focus experience.
+ */
+#search-input-container:focus-within {
+    border-color: #119DFF;
+    box-shadow: 0 0 0 2px rgba(17, 157, 255, 0.2);
+}
+
+/* =============================================================================
+   SEARCH DROPDOWN SCROLLBAR
+   ============================================================================= */
+
+/**
+ * Search Dropdown Scrollbar Styling
+ * Matches the main card scrollbar for visual consistency
+ * Features:
+ * - Subtle appearance that doesn't draw attention
+ * - Smooth transitions on hover
+ * - Rounded corners for modern look
+ * - Consistent with main content area
+ */
+#search-dropdown-popup::-webkit-scrollbar {
+    width: 10px;
+    background: transparent;
+    transition: background 0.3s;
+}
+
+#search-dropdown-popup:hover::-webkit-scrollbar {
+    background: rgba(60, 60, 60, 0.15);
+}
+
+#search-dropdown-popup::-webkit-scrollbar-thumb {
+    background: rgba(120, 120, 120, 0.35);
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    transition: background 0.3s;
+}
+
+#search-dropdown-popup:hover::-webkit-scrollbar-thumb {
+    background: rgba(120, 120, 120, 0.65);
+}
+
+/* Firefox scrollbar styling for search dropdown */
+#search-dropdown-popup {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(120,120,120,0.35) rgba(60,60,60,0.10);
+} 

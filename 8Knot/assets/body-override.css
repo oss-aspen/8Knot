@@ -1,0 +1,33 @@
+/**
+ * Body Background Override
+ * ========================
+ * 
+ * This file overrides the Bootstrap SLATE theme's body background color
+ * to eliminate the bottom region overflow issue. The SLATE theme sets
+ * its own body background which creates a visual separation at the bottom
+ * of the page when content doesn't fill the full viewport.
+ * 
+ * Using !important to ensure these styles override Bootstrap's theme.
+ */
+
+/* =============================================================================
+   BODY & HTML BACKGROUND OVERRIDE
+   ============================================================================= */
+
+body {
+    background-color: #242424 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+html {
+    background-color: #242424 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Ensure the root Dash app container also has proper background */
+#react-entry-point {
+    background-color: #242424;
+    min-height: 100vh;
+} 

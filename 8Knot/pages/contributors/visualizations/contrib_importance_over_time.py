@@ -26,14 +26,56 @@ gc_lottery_factor_over_time = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    id=f"graph-title-{PAGE}-{VIZ_ID}",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                id=f"graph-title-{PAGE}-{VIZ_ID}",
+                                className="card-title",
+                                style={"textAlign": "left", "fontSize": "20px", "color": "white"},
+                            ),
+                            width=10,
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
+                                style={
+                                    "backgroundColor": "#292929",
+                                    "borderColor": "#404040", 
+                                    "color": "white",
+                                    "borderRadius": "20px",
+                                    "padding": "6px 12px",
+                                    "fontSize": "14px",
+                                    "fontWeight": "500",
+                                    "border": "1px solid #404040",
+                                    "cursor": "pointer",
+                                    "transition": "all 0.2s ease",
+                                    "backgroundImage": "none",
+                                    "boxShadow": "none"
+                                }
+                            ),
+                            width=2,
+                            className="d-flex justify-content-end",
+                        ),
+                    ],
+                    align="center",
                 ),
                 dbc.Popover(
                     [
-                        dbc.PopoverHeader("Graph Info:"),
+                        dbc.PopoverHeader(
+                            "Graph Info:",
+                            style={
+                                "backgroundColor": "#404040",
+                                "color": "white",
+                                "border": "none",
+                                "borderBottom": "1px solid #606060",
+                                "fontSize": "16px",
+                                "fontWeight": "600",
+                                "padding": "12px 16px"
+                            }
+                        ),
                         dbc.PopoverBody(
                             """
                                         This analysis is also referred to as "Bus Factor". For each action type, visualizes
@@ -50,6 +92,15 @@ gc_lottery_factor_over_time = dbc.Card(
                                         in the graph indicate that no contributions of a specific action type(s) were made
                                         during that time period.
                                         """
+                        ,
+                            style={
+                                "backgroundColor": "#292929",
+                                "color": "#E0E0E0",
+                                "border": "none",
+                                "fontSize": "14px",
+                                "lineHeight": "1.5",
+                                "padding": "16px"
+                            }
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
@@ -60,95 +111,105 @@ gc_lottery_factor_over_time = dbc.Card(
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
+                html.Hr(style={
+                    "borderColor": "#e0e0e0", 
+                    "margin": "1.5rem -2rem", 
+                    "width": "calc(100% + 4rem)",
+                    "marginLeft": "-2rem"
+                }),
                 dbc.Form(
                     [
                         dbc.Row(
                             [
-                                dbc.Label(
-                                    "Window Width (Months):",
-                                    html_for=f"window-width-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
                                 dbc.Col(
-                                    dbc.Input(
-                                        id=f"window-width-{PAGE}-{VIZ_ID}",
-                                        type="number",
-                                        min=1,
-                                        max=12,
-                                        step=1,
-                                        value=6,
-                                        size="sm",
-                                    ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                                dbc.Label(
-                                    "Step Size (Months):",
-                                    html_for=f"step-size-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id=f"step-size-{PAGE}-{VIZ_ID}",
-                                        type="number",
-                                        min=1,
-                                        max=12,
-                                        step=1,
-                                        value=6,
-                                        size="sm",
-                                    ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                                dbc.Alert(
-                                    children="Please ensure that 'Step Size' is less than or equal to 'Window Size'",
-                                    id=f"check-alert-{PAGE}-{VIZ_ID}",
-                                    dismissable=True,
-                                    fade=False,
-                                    is_open=False,
-                                    color="warning",
-                                ),
-                            ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Threshold:",
-                                    html_for=f"threshold-{PAGE}-{VIZ_ID}",
-                                    width="auto",
+                                    [
+                                        dbc.Label(
+                                            "Window Width (Months):",
+                                            html_for=f"window-width-{PAGE}-{VIZ_ID}",
+                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                        ),
+                                        dbc.Input(
+                                            id=f"window-width-{PAGE}-{VIZ_ID}",
+                                            type="number",
+                                            min=1,
+                                            max=12,
+                                            step=1,
+                                            value=6,
+                                            size="sm",
+                                            className="dark-input"
+                                        ),
+                                    ],
+                                    width=3,
                                 ),
                                 dbc.Col(
                                     [
+                                        dbc.Label(
+                                            "Step Size (Months):",
+                                            html_for=f"step-size-{PAGE}-{VIZ_ID}",
+                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                        ),
+                                        dbc.Input(
+                                            id=f"step-size-{PAGE}-{VIZ_ID}",
+                                            type="number",
+                                            min=1,
+                                            max=12,
+                                            step=1,
+                                            value=6,
+                                            size="sm",
+                                            className="dark-input"
+                                        ),
+                                    ],
+                                    width=3,
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.Label(
+                                            "Threshold:",
+                                            html_for=f"threshold-{PAGE}-{VIZ_ID}",
+                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                        ),
                                         dcc.Slider(
                                             id=f"threshold-{PAGE}-{VIZ_ID}",
                                             min=10,
                                             max=95,
                                             value=50,
                                             marks={i: f"{i}%" for i in range(10, 100, 5)},
+                                            className="dark-slider"
                                         ),
                                     ],
-                                    className="me-2",
-                                    width=9,
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
+                                    width=6,
                                 ),
                             ],
-                            align="center",
+                            className="mb-3",
+                        ),
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    [
+                                        dbc.Alert(
+                                            children="Please ensure that 'Step Size' is less than or equal to 'Window Size'",
+                                            id=f"check-alert-{PAGE}-{VIZ_ID}",
+                                            dismissable=True,
+                                            fade=False,
+                                            is_open=False,
+                                            color="warning",
+                                        ),
+                                    ],
+                                    width=12,
+                                ),
+                            ],
                         ),
                     ]
                 ),
             ]
         )
     ],
+    style={
+        "padding": "2rem",
+        "borderRadius": "15px",
+        "backgroundColor": "#292929",
+        "border": "1px solid #404040",
+    },
 )
 
 
@@ -385,6 +446,9 @@ def create_figure(df_final, threshold, step_size):
         font=dict(size=14),
         margin_b=40,
         legend_title="Action Type",
+        plot_bgcolor='#292929',
+        paper_bgcolor='#292929',
+        font_color='white'
     )
 
     return fig

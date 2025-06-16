@@ -19,76 +19,137 @@ gc_pr_over_time = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "Pull Requests Over Time",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "Pull Requests Over Time",
+                                className="card-title",
+                                style={"textAlign": "left", "fontSize": "20px"},
+                            ),
+                            width=10,
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
+                                style={
+                                    "backgroundColor": "#292929",
+                                    "borderColor": "#404040", 
+                                    "color": "white",
+                                    "borderRadius": "20px",
+                                    "padding": "6px 12px",
+                                    "fontSize": "14px",
+                                    "fontWeight": "500",
+                                    "border": "1px solid #404040",
+                                    "cursor": "pointer",
+                                    "transition": "all 0.2s ease",
+                                    "backgroundImage": "none",
+                                    "boxShadow": "none"
+                                }
+                            ),
+                            width=2,
+                            className="d-flex justify-content-end",
+                        ),
+                    ],
+                    align="center",
                 ),
                 dbc.Popover(
                     [
-                        dbc.PopoverHeader("Graph Info:"),
+                        dbc.PopoverHeader(
+                            "Graph Info:",
+                            style={
+                                "backgroundColor": "#404040",
+                                "color": "white",
+                                "border": "none",
+                                "borderBottom": "1px solid #606060",
+                                "fontSize": "16px",
+                                "fontWeight": "600",
+                                "padding": "12px 16px"
+                            }
+                        ),
                         dbc.PopoverBody(
                             """
                             Visualizes PR behavior by tracking Created, Merged, and Closed-Not-Merged PRs over time.\n
                             Also shows Created PR count as a trend over lifespan.
                             """
+                        ,
+                            style={
+                                "backgroundColor": "#292929",
+                                "color": "#E0E0E0",
+                                "border": "none",
+                                "fontSize": "14px",
+                                "lineHeight": "1.5",
+                                "padding": "16px"
+                            }
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
                     target=f"popover-target-{PAGE}-{VIZ_ID}",
                     placement="top",
                     is_open=False,
-                ),
+
+                    style={
+                        "backgroundColor": "#292929",
+                        "border": "1px solid #606060",
+                        "borderRadius": "8px",
+                        "boxShadow": "0 4px 12px rgba(0, 0, 0, 0.3)",
+                        "maxWidth": "400px"
+                    }
+
+                    ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
+                html.Hr(style={
+                    "borderColor": "#e0e0e0", 
+                    "margin": "1.5rem -2rem", 
+                    "width": "calc(100% + 4rem)",
+                    "marginLeft": "-2rem"
+                }),
                 dbc.Form(
                     [
                         dbc.Row(
                             [
-                                dbc.Label(
-                                    "Date Interval:",
-                                    html_for=f"date-interval-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
                                 dbc.Col(
-                                    dbc.RadioItems(
-                                        id=f"date-interval-{PAGE}-{VIZ_ID}",
-                                        options=[
-                                            {
-                                                "label": "Day",
-                                                "value": "D",
-                                            },
-                                            {
-                                                "label": "Week",
-                                                "value": "W",
-                                            },
-                                            {"label": "Month", "value": "M"},
-                                            {"label": "Year", "value": "Y"},
-                                        ],
-                                        value="M",
-                                        inline=True,
-                                    ),
-                                    className="me-2",
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
+                                    [
+                                        dbc.Label(
+                                            "Date Interval:",
+                                            html_for=f"date-interval-{PAGE}-{VIZ_ID}",
+                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                        ),
+                                        dbc.RadioItems(
+                                            id=f"date-interval-{PAGE}-{VIZ_ID}",
+                                            className="modern-radio-buttons-small",
+                                            options=[
+                                                {
+                                                    "label": "Day",
+                                                    "value": "D",
+                                                },
+                                                {
+                                                    "label": "Week",
+                                                    "value": "W",
+                                                },
+                                                {"label": "Month", "value": "M"},
+                                                {"label": "Year", "value": "Y"},
+                                            ],
+                                            value="M",
+                                            inline=True,
+                                        ),
+                                    ],
+                                    width="auto"
                                 ),
                             ],
-                            align="center",
+                            justify="start",
                         ),
                     ]
                 ),
-            ]
-        ),
+            ],
+            style={"padding": "2rem"}
+        )
     ],
+    style={"borderRadius": "15px", "backgroundColor": "#292929"}
 )
 
 
@@ -232,8 +293,8 @@ def create_figure(
         opacity=0.9,
         hovertemplate=hover + "<br>Created: %{y}<br>" + "<extra></extra>",
         offsetgroup=0,
-        marker=dict(color=color_seq[2]),
-        name="Opened",
+        marker=dict(color="#1f4e79"),  # Dark blue for Created_at
+        name="Created_at",
     )
     fig.add_bar(
         x=df_closed_merged["Date"],
@@ -241,7 +302,7 @@ def create_figure(
         opacity=0.9,
         hovertemplate=hover + "<br>Merged: %{y}<br>" + "<extra></extra>",
         offsetgroup=1,
-        marker=dict(color=color_seq[4]),
+        marker=dict(color="#ffffff"),  # Solid white for Merged
         name="Merged",
     )
     fig.add_bar(
@@ -251,9 +312,9 @@ def create_figure(
         hovertemplate=[f"{hover}<br>Closed: {val}<br><extra></extra>" for val in df_closed_merged["closed_at"]],
         offsetgroup=1,
         base=df_closed_merged["merged_at"],
-        marker=dict(color=color_seq[3]),
+        marker=dict(color="#5fa3d3"),  # Light blue for Closed
         name="Closed",
-    )
+    ),
     fig.update_xaxes(
         showgrid=True,
         ticklabelmode="period",
@@ -267,13 +328,16 @@ def create_figure(
         bargroupgap=0.1,
         margin_b=40,
         font=dict(size=14),
+        plot_bgcolor="#292929",  # Set plot area background to match card
+        paper_bgcolor="#292929",  # Set entire figure background to match card
     )
     fig.add_trace(
         go.Scatter(
             x=df_open["Date"],
             y=df_open["Open"],
             mode="lines",
-            marker=dict(color=color_seq[5]),
+            marker=dict(color="#ffbf00"),  # Yellow/orange for Open line
+            line=dict(color="#ffbf00", width=3),  # Ensure line color is also set
             name="Open",
             hovertemplate="PRs Open: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
         )

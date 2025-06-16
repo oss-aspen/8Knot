@@ -1,0 +1,441 @@
+/**
+ * 8Knot Form Controls
+ * ===================
+ * 
+ * This file contains all form-related styling including:
+ * - Text inputs and form controls
+ * - Radio buttons (modern and small variants)
+ * - Dropdown/Select components
+ * - Sliders and range controls
+ * - Date picker components
+ * - Mantine UI components
+ * 
+ * All form controls are designed for dark theme consistency.
+ */
+
+/* =============================================================================
+   RADIO BUTTON COMPONENTS
+   ============================================================================= */
+
+/**
+ * Modern Radio Buttons (Standard Size)
+ * Custom-styled radio buttons with clean, modern appearance
+ * Features white borders and fills to contrast with dark backgrounds
+ */
+.modern-radio-buttons .form-check-input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background-color: transparent;
+  position: relative;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+.modern-radio-buttons .form-check-input[type="radio"]:checked {
+  border-color: white;
+  background-color: transparent;
+}
+
+.modern-radio-buttons .form-check-input[type="radio"]:checked::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: white;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.modern-radio-buttons .form-check-input[type="radio"]:focus {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+  outline: none;
+}
+
+.modern-radio-buttons .form-check-label {
+  color: white;
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+/**
+ * Modern Radio Buttons (Small Size)
+ * Compact version for space-constrained layouts
+ * Maintains the same design language with reduced dimensions
+ */
+.modern-radio-buttons-small .form-check-input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background-color: transparent;
+  position: relative;
+  cursor: pointer;
+  margin-right: 6px;
+  margin-top: 0;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.modern-radio-buttons-small .form-check-input[type="radio"]:checked {
+  border-color: white;
+  background-color: transparent;
+}
+
+.modern-radio-buttons-small .form-check-input[type="radio"]:checked::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: white;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.modern-radio-buttons-small .form-check-input[type="radio"]:focus {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+  outline: none;
+}
+
+.modern-radio-buttons-small .form-check-label {
+  color: white;
+  cursor: pointer;
+  margin-left: 2px;
+  font-size: 13px;
+  line-height: 14px;
+  margin-top: 0;
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+}
+
+.modern-radio-buttons-small .form-check {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 12px;
+  margin-top: 0;
+  margin-bottom: 0;
+  min-height: auto;
+}
+
+/* =============================================================================
+   TEXT INPUT CONTROLS
+   ============================================================================= */
+
+/**
+ * Dark Theme Input Fields
+ * Comprehensive styling for all text input variants
+ * Ensures consistent dark theme across different input types and contexts
+ */
+.dark-input,
+input.dark-input,
+.form-control.dark-input,
+input[type="number"].dark-input,
+input[type="text"].dark-input,
+.form-control.form-control-sm.dark-input,
+.form-control.form-control-sm.dark-input[type="number"],
+div .form-control.dark-input,
+div input.dark-input.form-control {
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+  color: white !important;
+  background-image: none !important;
+}
+
+/**
+ * Focus states for dark inputs
+ * Provides visual feedback with subtle color and shadow changes
+ */
+.dark-input:focus,
+input.dark-input:focus,
+.form-control.dark-input:focus,
+input[type="number"].dark-input:focus,
+input[type="text"].dark-input:focus,
+.form-control.form-control-sm.dark-input:focus,
+.form-control.form-control-sm.dark-input[type="number"]:focus,
+div .form-control.dark-input:focus,
+div input.dark-input.form-control:focus {
+  background-color: #404040 !important;
+  border-color: #555555 !important;
+  color: white !important;
+  box-shadow: 0 0 0 0.2rem rgba(64, 64, 64, 0.25) !important;
+  background-image: none !important;
+}
+
+/**
+ * Placeholder text styling for dark inputs
+ * Ensures placeholders are visible but subtle in dark theme
+ */
+.dark-input::placeholder,
+input.dark-input::placeholder,
+.form-control.dark-input::placeholder {
+  color: #cccccc !important;
+  opacity: 1 !important;
+}
+
+/**
+ * Specific input field overrides
+ * Targeted styles for known form fields that need explicit dark theme
+ */
+#staling-days-contributions-pr-staleness,
+#stale-days-contributions-pr-staleness {
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+  color: white !important;
+}
+
+#staling-days-contributions-pr-staleness:focus,
+#stale-days-contributions-pr-staleness:focus {
+  background-color: #404040 !important;
+  border-color: #555555 !important;
+  color: white !important;
+  box-shadow: 0 0 0 0.2rem rgba(64, 64, 64, 0.25) !important;
+}
+
+/**
+ * High-specificity selectors for stubborn inputs
+ * "Nuclear option" selectors to ensure dark theme is applied
+ * Use when component libraries override our styles
+ */
+body .container-fluid .form-control.dark-input,
+body div .form-control.dark-input,
+body input.form-control.dark-input {
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+  color: white !important;
+  background-image: none !important;
+}
+
+body .container-fluid .form-control.dark-input:focus,
+body div .form-control.dark-input:focus,
+body input.form-control.dark-input:focus {
+  background-color: #404040 !important;
+  border-color: #555555 !important;
+  color: white !important;
+  box-shadow: 0 0 0 0.2rem rgba(64, 64, 64, 0.25) !important;
+  background-image: none !important;
+}
+
+/* =============================================================================
+   DROPDOWN COMPONENTS
+   ============================================================================= */
+
+/**
+ * Custom Select/Dropdown Styling
+ * Dark theme for React-Select and similar dropdown components
+ */
+.custom-dropdown .Select-control,
+.custom-dropdown .dropdown-toggle,
+.Select .Select-control {
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+  color: white !important;
+}
+
+.custom-dropdown .Select-menu-outer,
+.Select .Select-menu-outer {
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+}
+
+.custom-dropdown .Select-option,
+.Select .Select-option {
+  background-color: #404040 !important;
+  color: white !important;
+}
+
+.custom-dropdown .Select-option:hover,
+.Select .Select-option:hover {
+  background-color: #555555 !important;
+  color: white !important;
+}
+
+.custom-dropdown .Select-option.is-focused,
+.Select .Select-option.is-focused {
+  background-color: #555555 !important;
+  color: white !important;
+}
+
+/**
+ * Dropdown Fix for Vertical Bar Issue
+ * Addresses visual glitches in certain dropdown implementations
+ */
+.custom-dropdown-fix .Select-control,
+.custom-dropdown-fix .Select-control:hover,
+.custom-dropdown-fix .Select-control:focus,
+.custom-dropdown-fix .is-focused .Select-control {
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+  color: white !important;
+  box-shadow: none !important;
+  border-right: none !important;
+}
+
+.custom-dropdown-fix .Select-arrow-zone {
+  border-left: none !important;
+}
+
+.custom-dropdown-fix .Select-arrow {
+  border-color: white transparent transparent !important;
+}
+
+.custom-dropdown-fix .Select-input {
+  color: white !important;
+}
+
+.custom-dropdown-fix .Select-placeholder {
+  color: white !important;
+}
+
+.custom-dropdown-fix .Select-single-value {
+  color: white !important;
+}
+
+/* =============================================================================
+   SLIDER COMPONENTS
+   ============================================================================= */
+
+/**
+ * Dark Slider Styling
+ * Custom styling for RC-Slider components to match dark theme
+ */
+.dark-slider .rc-slider {
+  background-color: transparent !important;
+}
+
+.dark-slider .rc-slider-track {
+  background-color: #6b8976 !important;
+}
+
+.dark-slider .rc-slider-handle {
+  border-color: #6b8976 !important;
+  background-color: #6b8976 !important;
+}
+
+.dark-slider .rc-slider-rail {
+  background-color: #404040 !important;
+}
+
+/* =============================================================================
+   DATE PICKER COMPONENTS
+   ============================================================================= */
+
+/**
+ * Date Picker Dark Theme
+ * Styling for React-Dates and similar date picker components
+ */
+.dark-date-picker .DateInput_input {
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+  color: white !important;
+}
+
+.dark-date-picker .DateInput_input:focus {
+  background-color: #404040 !important;
+  border-color: #555555 !important;
+  color: white !important;
+}
+
+.dark-date-picker .DateRangePickerInput {
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+}
+
+/**
+ * Date Range Picker Specific Styling
+ * Additional customization for date range selection components
+ */
+.DateRangePickerInput .DateInput_input,
+.DateInput_input__focused {
+    height: 16px;
+    outline: 0;
+    background: #404040 !important;
+    border: 0 !important;
+    border-top: 0 !important;
+    border-right: 0;
+    border-bottom: 2px solid #008489;
+    border-left: 0;
+}
+
+.DateInput_input {
+  font-weight: 400;
+  font-size: 19px;
+  color: #ffffff
+}
+
+.DateInput {
+  background: #404040
+}
+
+.DateRangePickerInput {
+    background-color: #404040;
+    display: inline-block;
+}
+
+.DateRangePickerInput__withBorder {
+    border-radius: 7px;
+    border: 1px solid #404040;
+}
+
+/**
+ * Date Picker Arrow Customization
+ * Hides default SVG arrow and replaces with text-based arrow
+ */
+.DateRangePickerInput_arrow_svg {
+    display: none !important;
+}
+
+.DateRangePickerInput_arrow::before {
+  content: "→" !important;
+  font-size: 1.2em !important;
+  color: #fff9f9 !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+}
+
+/* =============================================================================
+   MANTINE UI COMPONENTS
+   ============================================================================= */
+
+/**
+ * Mantine Search Input Styling
+ * Custom styling for Mantine UI search/input components
+ */
+.mantine-fi0ix7 {
+  border-radius: 30px !important;
+  background-color: #292929;
+  min-height: 48px;
+  border: 1px solid #404040;
+}
+
+/**
+ * Mantine Input Focus States
+ * Gradient border effect on focus for enhanced visual feedback
+ */
+.mantine-fi0ix7:focus-within, .mantine-fi0ix7:focus {
+  border: 1px solid transparent;
+  background-image:
+    linear-gradient(#292929, #292929),
+    linear-gradient(90deg, #3a8dde, #1e3c72, #2a5298, #6dd5ed, #2193b0);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+}
+
+/**
+ * Mantine Input Text Styling
+ */
+.mantine-zmh4e {
+    color: #ffffff;
+    font-size: 16px;
+} 

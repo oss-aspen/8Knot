@@ -22,43 +22,110 @@ gc_cntrib_pr_assignment = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "Contributor Pull Request Review Assignment",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "Contributor Pull Request Review Assignment",
+                                className="card-title",
+                                style={"textAlign": "left", "fontSize": "20px"},
+                            ),
+                            width=10,
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
+                                style={
+                                    "backgroundColor": "#292929",
+                                    "borderColor": "#404040", 
+                                    "color": "white",
+                                    "borderRadius": "20px",
+                                    "padding": "6px 12px",
+                                    "fontSize": "14px",
+                                    "fontWeight": "500",
+                                    "border": "1px solid #404040",
+                                    "cursor": "pointer",
+                                    "transition": "all 0.2s ease",
+                                    "backgroundImage": "none",
+                                    "boxShadow": "none"
+                                }
+                            ),
+                            width=2,
+                            className="d-flex justify-content-end",
+                        ),
+                    ],
+                    align="center",
                 ),
                 dbc.Popover(
                     [
-                        dbc.PopoverHeader("Graph Info:"),
+                        dbc.PopoverHeader(
+                            "Graph Info:",
+                            style={
+                                "backgroundColor": "#404040",
+                                "color": "white",
+                                "border": "none",
+                                "borderBottom": "1px solid #606060",
+                                "fontSize": "16px",
+                                "fontWeight": "600",
+                                "padding": "12px 16px"
+                            }
+                        ),
                         dbc.PopoverBody(
                             """
                             Visualizes number of pull request reviews assigned to each each contributor\n
                             in the specifed time bucket. The visualization only includes contributors\n
                             that meet the user inputed the assignment criteria.
                             """
+                        ,
+                            style={
+                                "backgroundColor": "#292929",
+                                "color": "#E0E0E0",
+                                "border": "none",
+                                "fontSize": "14px",
+                                "lineHeight": "1.5",
+                                "padding": "16px"
+                            }
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
                     target=f"popover-target-{PAGE}-{VIZ_ID}",
                     placement="top",
                     is_open=False,
-                ),
+
+                    style={
+                        "backgroundColor": "#292929",
+                        "border": "1px solid #606060",
+                        "borderRadius": "8px",
+                        "boxShadow": "0 4px 12px rgba(0, 0, 0, 0.3)",
+                        "maxWidth": "400px"
+                    }
+
+                    ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
+                html.Hr(style={
+                    "borderColor": "#e0e0e0", 
+                    "margin": "1.5rem -2rem", 
+                    "width": "calc(100% + 4rem)",
+                    "marginLeft": "-2rem"
+                }),
                 dbc.Form(
                     [
                         dbc.Row(
                             [
-                                dbc.Label(
-                                    "Date Interval:",
-                                    html_for=f"date-radio-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
                                 dbc.Col(
                                     [
+                                        dbc.Label(
+                                            "Date Interval:",
+                                            html_for=f"date-radio-{PAGE}-{VIZ_ID}",
+                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                        ),
                                         dbc.RadioItems(
                                             id=f"date-radio-{PAGE}-{VIZ_ID}",
+                                            className="modern-radio-buttons-small",
                                             options=[
                                                 {"label": "Trend", "value": "D"},
                                                 {"label": "Week", "value": "W"},
@@ -67,75 +134,73 @@ gc_cntrib_pr_assignment = dbc.Card(
                                             ],
                                             value="W",
                                             inline=True,
+                                            style = {"marginTop": "4px"}
                                         ),
                                     ],
-                                    width=4,
-                                ),
-                                dbc.Label(
-                                    "Total Assignments Required:",
-                                    html_for=f"assignments-required-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
+                                    width="auto",
                                 ),
                                 dbc.Col(
-                                    dbc.Input(
-                                        id=f"assignments-required-{PAGE}-{VIZ_ID}",
-                                        type="number",
-                                        min=1,
-                                        max=250,
-                                        step=1,
-                                        value=10,
-                                        size="sm",
-                                    ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                                dbc.Alert(
-                                    children="No contributors in date range meet assignment requirement",
-                                    id=f"check-alert-{PAGE}-{VIZ_ID}",
-                                    dismissable=True,
-                                    fade=False,
-                                    is_open=False,
-                                    color="warning",
-                                ),
-                            ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
-                                dbc.Col(
-                                    dcc.DatePickerRange(
-                                        id=f"date-picker-range-{PAGE}-{VIZ_ID}",
-                                        min_date_allowed=dt.date(2005, 1, 1),
-                                        max_date_allowed=dt.date.today(),
-                                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
-                                        start_date=dt.date(
-                                            dt.date.today().year - 2,
-                                            dt.date.today().month,
-                                            dt.date.today().day,
+                                    [
+                                        dcc.DatePickerRange(
+                                            id=f"date-picker-range-{PAGE}-{VIZ_ID}",
+                                            min_date_allowed=dt.date(2005, 1, 1),
+                                            max_date_allowed=dt.date.today(),
+                                            initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                                            start_date=dt.date(
+                                                dt.date.today().year - 2,
+                                                dt.date.today().month,
+                                                dt.date.today().day,
+                                            ),
+                                            clearable=True,
+                                            style={
+                                                "marginTop": "32px",
+                                            }
                                         ),
-                                        clearable=True,
-                                    ),
-                                    width="auto",
+                                    ],
+                                    width="auto"
                                 ),
                                 dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
+                                    [
+                                        dbc.Label(
+                                            "Total Assignments Required:",
+                                            html_for=f"assignments-required-{PAGE}-{VIZ_ID}",
+                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                        ),
+                                        dbc.Input(
+                                            id=f"assignments-required-{PAGE}-{VIZ_ID}",
+                                            type="number",
+                                            min=1,
+                                            max=250,
+                                            step=1,
+                                            value=10,
+                                            size="sm",
+                                            className="dark-input",
+                                            style={"width": "70px"},
+                                        ),
+                                    ],
                                     width="auto",
-                                    style={"paddingTop": ".5em"},
+                                    className="me-4"
                                 ),
+                                
                             ],
-                            align="center",
-                            justify="between",
+                            justify="start",
+                        ),
+                        dbc.Alert(
+                            children="No contributors in date range meet assignment requirement",
+                            id=f"check-alert-{PAGE}-{VIZ_ID}",
+                            dismissable=True,
+                            fade=False,
+                            is_open=False,
+                            color="warning",
+                            style={"marginTop": "1rem"}
                         ),
                     ]
                 ),
-            ]
+            ],
+            style={"padding": "2rem"}
         )
     ],
+    style={"backgroundColor": "#292929", "borderRadius": "15px", "border": "1px solid #404040"}
 )
 
 
@@ -323,6 +388,8 @@ def create_figure(df: pd.DataFrame, interval):
         yaxis_title="PR Review Assignments",
         legend_title="Contributor ID",
         font=dict(size=14),
+        plot_bgcolor="#292929",
+        paper_bgcolor="#292929",
     )
 
     return fig

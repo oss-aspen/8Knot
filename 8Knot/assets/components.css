@@ -1,0 +1,104 @@
+/**
+ * 8Knot UI Components
+ * ===================
+ * 
+ * This file contains styles for reusable UI components including:
+ * - Alerts and notifications
+ * - Buttons and interactive elements  
+ * - Loading spinners
+ * - Specialized containers
+ * - Popover elements
+ * 
+ * All components follow the dark theme design system.
+ */
+
+/* =============================================================================
+   LOADING & FEEDBACK COMPONENTS
+   ============================================================================= */
+
+/**
+ * Dash spinner customization
+ * Applies color filter to match the 8Knot brand colors
+ * Note: Dash spinners can't be styled directly, requires filter approach
+ */
+.dash-spinner.dash-default-spinner {
+  filter: contrast(1.2) hue-rotate(308deg) grayscale(0.76) !important;
+}
+
+/* =============================================================================
+   ALERT COMPONENTS
+   ============================================================================= */
+
+/**
+ * Warning alerts
+ * Uses secondary brand color for better visibility and brand consistency
+ */
+.alert-warning {
+    background-color: #B5B682 !important;
+}
+
+/* =============================================================================
+   BUTTON COMPONENTS
+   ============================================================================= */
+
+/**
+ * Custom hover button for "About Graph" functionality
+ * Provides subtle elevation and highlighting on hover
+ */
+.custom-hover-button:hover {
+  background-color: #3f3f3f !important;
+  border-color: #404040 !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3) !important;
+  /* transform: translateY(-2px) !important; */ /* Disabled - can be enabled for lift effect */
+}
+
+/* =============================================================================
+   SPECIALIZED CONTAINERS
+   ============================================================================= */
+
+/**
+ * Box emissions styling
+ * Used for displaying environmental/emissions data
+ * Features dark theme with subtle shadow for depth
+ */
+.box_emissions {
+  background-color: #505050;
+  color: #505050;
+  margin: 2px;
+  box-shadow: 4px 4px 4px rgb(33, 33, 33);
+  justify-content: center;
+  text-align: center;
+}
+
+/**
+ * DMC MultiSelect component customization
+ * Ensures dark theme consistency for visualization controls
+ */
+.dmc-multiselect-custom {
+  background-color: #272b30;
+}
+
+/* =============================================================================
+   SWITCH COMPONENTS
+   ============================================================================= */
+
+/**
+ * Bot list filter switch
+ * Uses primary brand color when active to maintain visual consistency
+ */
+.botlist-filter-switch:checked {
+  background-color: #6b8976;
+}
+
+/* =============================================================================
+   POPOVER COMPONENTS
+   ============================================================================= */
+
+/**
+ * Popover sizing
+ * Increases max-width to allow more descriptive text per line
+ * Improves readability of help text and tooltips
+ */
+.popover {
+  max-width: 500px;
+} 

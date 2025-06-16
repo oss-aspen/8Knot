@@ -1,0 +1,29 @@
+/* Modern, minimal, grayish scrollbar for the main card - no layout shift on hover */
+.big-main-card::-webkit-scrollbar {
+  width: 10px;
+  background: transparent;
+  transition: background 0.3s;
+}
+
+.big-main-card:hover::-webkit-scrollbar {
+  background: rgba(60, 60, 60, 0.15);
+}
+
+.big-main-card::-webkit-scrollbar-thumb {
+  background: rgba(120, 120, 120, 0.35);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background 0.3s;
+}
+
+.big-main-card:hover::-webkit-scrollbar-thumb {
+  background: rgba(120, 120, 120, 0.65);
+}
+
+/* Always reserve space for the scrollbar to prevent layout shift */
+.big-main-card {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120,120,120,0.35) rgba(60,60,60,0.10);
+  border: none !important; /* Remove all default Bootstrap card borders */
+}

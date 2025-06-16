@@ -1,0 +1,284 @@
+/**
+ * 8Knot Navigation & Sidebar
+ * ===========================
+ * 
+ * This file contains all navigation-related styling including:
+ * - Sidebar navigation links and hover effects
+ * - Contributors dropdown functionality
+ * - Icon and text styling for navigation items
+ * - Active and inactive state management
+ * - Responsive navigation behaviors
+ * 
+ * The navigation follows a dark theme with subtle hover effects
+ * and clear visual hierarchy for better user experience.
+ */
+
+/* =============================================================================
+   SIDEBAR NAVIGATION LINKS
+   ============================================================================= */
+
+/**
+ * Navigation Link Hover Effects
+ * Provides smooth visual feedback when users hover over navigation items
+ * Creates a subtle background highlight while maintaining accessibility
+ */
+.sidebar-nav-link:hover {
+    background-color: #2A2A2A !important;
+    color: #FFFFFF !important;
+    border-radius: 12px !important;
+}
+
+/**
+ * Remove rounded rectangle hover effect when sidebar is collapsed
+ */
+.sidebar-card.collapsed .sidebar-nav-link:hover {
+    background-color: transparent !important;
+    border-radius: 0 !important;
+}
+
+.sidebar-card.collapsed #contributors-dropdown-wrapper:hover {
+    background-color: transparent !important;
+    border-radius: 0 !important;
+}
+
+/**
+ * Remove rounded rectangle active/selected effect when sidebar is collapsed
+ */
+.sidebar-card.collapsed .sidebar-nav-link.active {
+    background-color: transparent !important;
+    border-radius: 0 !important;
+}
+
+/**
+ * Navigation Icon Hover Effects
+ * Icons become fully white and slightly brighter on hover
+ * Uses CSS filter to convert colored icons to white
+ */
+.sidebar-nav-link:hover img {
+    filter: brightness(0) invert(1) !important;
+    /* drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)) */ /* Optional glow effect */
+}
+
+/**
+ * Navigation Text Hover Effects
+ * Text becomes pure white on hover for better contrast
+ */
+.sidebar-nav-link:hover span {
+    color: #FFFFFF !important;
+    /* text-shadow: 0 0 8px rgba(255, 255, 255, 0.6) !important; */ /* Optional glow effect */
+}
+
+/**
+ * Active Navigation Link Styling
+ * Distinguishes the currently active page with darker background
+ * and bold text for clear visual hierarchy
+ */
+.sidebar-nav-link.active {
+    background-color: #3A3A3A !important;
+    color: #FFFFFF !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+}
+
+/**
+ * Active Navigation Icon Styling
+ * Icons in active state are inverted to white for visibility
+ */
+.sidebar-nav-link.active img {
+    filter: brightness(0) invert(1) !important;
+    /* drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)) */ /* Optional glow effect */
+}
+
+/**
+ * Active Navigation Text Styling
+ * Active text is white and bold for clear indication
+ */
+.sidebar-nav-link.active span {
+    color: #FFFFFF !important;
+    /* text-shadow: 0 0 8px rgba(255, 255, 255, 0.6) !important; */ /* Optional glow effect */
+    font-weight: 600 !important;
+}
+
+/**
+ * Navigation Link Base Styling
+ * Standard padding and spacing for consistent navigation layout
+ */
+.sidebar-nav-link {
+    padding: 12px 16px !important;
+}
+
+/**
+ * Navigation Icon Spacing
+ * Consistent spacing between icons and text labels
+ */
+.sidebar-nav-link img {
+    margin-right: 12px !important;
+}
+
+/* =============================================================================
+   CONTRIBUTORS DROPDOWN NAVIGATION
+   ============================================================================= */
+
+/**
+ * Contributors Dropdown Wrapper Hover Effects
+ * Hover effect for the entire dropdown container
+ * Provides visual feedback before user clicks to expand
+ */
+#contributors-dropdown-wrapper:hover {
+    background-color: #2A2A2A !important;
+    border-radius: 12px !important;
+}
+
+/**
+ * Contributors Dropdown Toggle Hover Behavior
+ * Ensures transparent background for the toggle within the wrapper
+ * Prevents double background colors during hover
+ */
+#contributors-dropdown-wrapper:hover #contributors-dropdown-toggle {
+    background-color: transparent !important;
+}
+
+/**
+ * Contributors Dropdown Icon Hover Effects
+ * Icon becomes white on hover for better visibility
+ */
+#contributors-dropdown-wrapper:hover #contributors-dropdown-toggle img {
+    filter: brightness(0) invert(1) !important;
+    /* drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)) */ /* Optional glow effect */
+}
+
+/**
+ * Contributors Dropdown Text Hover Effects
+ * Text becomes white on hover for better contrast
+ */
+#contributors-dropdown-wrapper:hover #contributors-dropdown-toggle span {
+    color: #FFFFFF !important;
+    /* text-shadow: 0 0 8px rgba(255, 255, 255, 0.6) !important; */ /* Optional glow effect */
+}
+
+/**
+ * Contributors Dropdown Arrow Icon Hover Effects
+ * Arrow icon becomes white on hover
+ */
+#contributors-dropdown-wrapper:hover #contributors-dropdown-icon {
+    color: #FFFFFF !important;
+    /* filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)) !important; */ /* Optional glow effect */
+}
+
+/* =============================================================================
+   CONTRIBUTORS DROPDOWN OPEN STATE
+   ============================================================================= */
+
+/**
+ * Contributors Dropdown Open State - Wrapper
+ * Styling when dropdown is expanded/open
+ * Maintains hover appearance while dropdown is active
+ */
+#contributors-dropdown-wrapper.dropdown-open {
+    background-color: #2A2A2A !important;
+    border-radius: 12px !important;
+}
+
+/**
+ * Contributors Dropdown Open State - Toggle
+ * Toggle button styling when dropdown is open
+ * Creates visual separation between toggle and content
+ */
+#contributors-dropdown-wrapper.dropdown-open #contributors-dropdown-toggle {
+    background-color: transparent !important;
+    border-radius: 12px 12px 0 0 !important;
+}
+
+/**
+ * Contributors Dropdown Open State - Icon
+ * Icon remains white when dropdown is open
+ */
+#contributors-dropdown-wrapper.dropdown-open #contributors-dropdown-toggle img {
+    filter: brightness(0) invert(1) !important;
+    /* drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)) */ /* Optional glow effect */
+}
+
+/**
+ * Contributors Dropdown Open State - Text
+ * Text remains white and bold when dropdown is open
+ */
+#contributors-dropdown-wrapper.dropdown-open #contributors-dropdown-toggle span {
+    color: #FFFFFF !important;
+    /* text-shadow: 0 0 8px rgba(255, 255, 255, 0.6) !important; */ /* Optional glow effect */
+    font-weight: 600 !important;
+}
+
+/**
+ * Contributors Dropdown Open State - Arrow
+ * Arrow icon remains white when dropdown is open
+ */
+#contributors-dropdown-wrapper.dropdown-open #contributors-dropdown-icon {
+    color: #FFFFFF !important;
+    /* filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)) !important; */ /* Optional glow effect */
+}
+
+/* =============================================================================
+   CONTRIBUTORS DROPDOWN CONTENT
+   ============================================================================= */
+
+/**
+ * Dropdown Content Item Hover Effects
+ * Styling for individual items within the contributors dropdown
+ * Darker background than main hover for visual hierarchy
+ */
+#contributors-dropdown-content .nav-link:hover {
+    background-color: #3A3A3A !important;
+    color: #FFFFFF !important;
+    border-radius: 8px !important;
+    /* text-shadow: 0 0 8px rgba(255, 255, 255, 0.6) !important; */ /* Optional glow effect */
+}
+
+/**
+ * Dropdown Content Active Item Styling
+ * Even darker background for active items within dropdown
+ * Creates clear visual distinction for current page
+ */
+#contributors-dropdown-content .nav-link.active {
+    background-color: #4A4A4A !important;
+    color: #FFFFFF !important;
+    border-radius: 8px !important;
+    /* text-shadow: 0 0 8px rgba(255, 255, 255, 0.6) !important; */ /* Optional glow effect */
+    font-weight: 600 !important;
+}
+
+/* =============================================================================
+   DROPDOWN ANIMATION & INTERACTION
+   ============================================================================= */
+
+/**
+ * Contributors Dropdown Icon Animation
+ * Smooth transition effects for arrow rotation and color changes
+ * Provides smooth visual feedback during interaction
+ */
+#contributors-dropdown-icon {
+    transition: transform 0.2s ease, color 0.2s ease, filter 0.2s ease !important;
+}
+
+/**
+ * Contributors Dropdown Arrow Rotation
+ * Rotates arrow 180 degrees when dropdown is open
+ * Visual indicator of dropdown state
+ */
+#contributors-dropdown-wrapper.dropdown-open #contributors-dropdown-icon {
+    transform: rotate(180deg) !important;
+}
+
+/* =============================================================================
+   CONTRIBUTORS DROPDOWN TYPOGRAPHY
+   ============================================================================= */
+
+/**
+ * Contributors Dropdown Font Sizing
+ * Consistent typography across dropdown elements
+ * Ensures readability and visual hierarchy
+ */
+#contributors-dropdown-wrapper,
+#contributors-dropdown-toggle,
+#contributors-dropdown-content .nav-link {
+    font-size: 16px !important;
+} 

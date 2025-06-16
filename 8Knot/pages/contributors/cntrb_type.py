@@ -17,16 +17,28 @@ layout = dbc.Container(
     [
         dbc.Row(
             [
-                dbc.Col(gc_contribs_by_action, width=6),
-                dbc.Col(gc_contrib_activity_cycle, width=6),
+                dbc.Col(gc_contribs_by_action, width=12),
             ],
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
             [
-                dbc.Col(gc_contrib_importance_pie, width=6),
-                dbc.Col(gc_lottery_factor_over_time, width=6),
+                dbc.Col(gc_contrib_activity_cycle, width=12),
+            ],
+            align="center",
+            style={"marginBottom": ".5%"},
+        ),
+        dbc.Row(
+            [
+                dbc.Col(gc_contrib_importance_pie, width=12),
+            ],
+            align="center",
+            style={"marginBottom": ".5%"},
+        ),
+        dbc.Row(
+            [
+                dbc.Col(gc_lottery_factor_over_time, width=12),
             ],
             align="center",
             style={"marginBottom": ".5%"},

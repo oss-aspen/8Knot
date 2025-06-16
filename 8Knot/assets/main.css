@@ -1,0 +1,59 @@
+/**
+ * 8Knot Main Stylesheet
+ * =====================
+ * 
+ * This is the main CSS file that imports all specialized stylesheets
+ * for the 8Knot application. Files are imported in order of specificity
+ * and dependency to ensure proper CSS cascade.
+ * 
+ * Import Order:
+ * 1. Theme Colors & Typography - Base styling and color palette
+ * 2. Components - Reusable UI components (buttons, alerts, etc.)
+ * 3. Forms - All form controls and input styling
+ * 4. Navigation - Sidebar and navigation elements
+ * 5. Search - Search functionality specific styling
+ * 6. Scrollbar - Custom scrollbar styling (kept separate for specificity)
+ * 7. Body Override - Override Bootstrap theme defaults
+ * 
+ * This modular approach provides:
+ * - Better organization and maintainability
+ * - Easier debugging and development
+ * - Clear separation of concerns
+ * - Improved performance through browser caching
+ */
+
+/* =============================================================================
+   BASE THEME & TYPOGRAPHY
+   ============================================================================= */
+@import url('theme-colors.css');
+
+/* =============================================================================
+   UI COMPONENTS
+   ============================================================================= */
+@import url('components.css');
+
+/* =============================================================================
+   FORM CONTROLS
+   ============================================================================= */
+@import url('forms.css');
+
+/* =============================================================================
+   NAVIGATION & SIDEBAR
+   ============================================================================= */
+@import url('navigation.css');
+
+/* =============================================================================
+   SEARCH FUNCTIONALITY
+   ============================================================================= */
+@import url('search.css');
+
+/* =============================================================================
+   BOOTSTRAP THEME OVERRIDES
+   ============================================================================= */
+@import url('body-override.css');
+
+/* =============================================================================
+   SPECIALIZED STYLING
+   ============================================================================= */
+/* Note: scrollbar.css is kept separate and loaded independently 
+   due to its specific webkit selectors and browser compatibility needs */ 
