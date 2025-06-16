@@ -51,7 +51,7 @@ augur.multiselect_startup()
 import pages.index.index_callbacks as index_callbacks
 
 # Import testing utilities for enhanced error detection in CI
-if os.getenv("8KNOT_DEBUG", "False") == "True":
+if os.getenv("DEBUG_8KNOT", "False") == "True":
     import testing_utils
 
     testing_utils.log_service_status()
@@ -91,8 +91,6 @@ server = app.server
 server = _login.configure_server_login(server)
 
 """HEALTH CHECK ENDPOINT"""
-
-
 @server.route("/health")
 def health_check():
     """Simple health check endpoint for CI/CD testing"""
@@ -116,7 +114,7 @@ app.layout = layout
 """DASH STARTUP PARAMETERS"""
 
 if os.getenv("8KNOT_DEBUG", "False") == "True":
-    app.enable_dev_tools(dev_tools_ui=True, dev_tools_hot_reload=False)
+    app.enable_dev_tools(dev_tools_ui=True, dev_tools_hot_reload=True)
 
 """GITHUB BOTS LIST"""
 bots_list = bots.get_bots_list()
