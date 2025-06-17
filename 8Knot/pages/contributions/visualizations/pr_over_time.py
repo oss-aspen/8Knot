@@ -118,7 +118,7 @@ gc_pr_over_time = dbc.Card(
             style={"padding": "2rem"}
         )
     ],
-    style={"borderRadius": "15px"}
+    style={"borderRadius": "15px", "backgroundColor": "#292929"}
 )
 
 
@@ -297,6 +297,8 @@ def create_figure(
         bargroupgap=0.1,
         margin_b=40,
         font=dict(size=14),
+        plot_bgcolor="#292929",  # Set plot area background to match card
+        paper_bgcolor="#292929",  # Set entire figure background to match card
     )
     fig.add_trace(
         go.Scatter(
