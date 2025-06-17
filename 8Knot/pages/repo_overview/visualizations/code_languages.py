@@ -110,6 +110,7 @@ gc_code_language = dbc.Card(
             style={"padding": "2rem"}  # Add extra padding to make card larger
         )
     ],
+    style={"borderRadius": "15px"}  # Add custom border radius
 )
 
 
