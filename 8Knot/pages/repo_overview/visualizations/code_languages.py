@@ -74,6 +74,12 @@ gc_code_language = dbc.Card(
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
+                html.Hr(style={
+                    "borderColor": "#e0e0e0", 
+                    "margin": "1.5rem -2rem", 
+                    "width": "calc(100% + 4rem)",
+                    "marginLeft": "-2rem"
+                }),
                 dbc.Form(
                     [
                         dbc.Row(
