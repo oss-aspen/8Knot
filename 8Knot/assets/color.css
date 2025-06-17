@@ -138,3 +138,8 @@ blockquote p {
   cursor: pointer;
   margin-left: 4px;
 }
+
+/* Override slate theme for specific graph title */
+#graph-title-repo_info-code-languages {
+  color: white !important;
+}
