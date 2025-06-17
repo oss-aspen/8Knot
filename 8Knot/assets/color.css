@@ -93,5 +93,5 @@ blockquote p {
   background-color: #3f3f3f !important;
   border-color: #404040 !important;
   box-shadow: 0 8px 20px rgba(0,0,0,0.3) !important;
-  transform: translateY(-2px) !important;
+  /* transform: translateY(-2px) !important; */
 }
