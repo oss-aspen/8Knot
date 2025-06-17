@@ -95,3 +95,46 @@ blockquote p {
   box-shadow: 0 8px 20px rgba(0,0,0,0.3) !important;
   /* transform: translateY(-2px) !important; */
 }
+
+/* Modern radio button styling */
+.modern-radio-buttons .form-check-input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background-color: transparent;
+  position: relative;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+.modern-radio-buttons .form-check-input[type="radio"]:checked {
+  border-color: white;
+  background-color: transparent;
+}
+
+.modern-radio-buttons .form-check-input[type="radio"]:checked::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: white;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.modern-radio-buttons .form-check-input[type="radio"]:focus {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+  outline: none;
+}
+
+.modern-radio-buttons .form-check-label {
+  color: white;
+  cursor: pointer;
+  margin-left: 4px;
+}

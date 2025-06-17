@@ -92,6 +92,7 @@ gc_code_language = dbc.Card(
                                 dbc.Col(
                                     dbc.RadioItems(
                                         id=f"graph-view-{PAGE}-{VIZ_ID}",
+                                        className="modern-radio-buttons",
                                         options=[
                                             {
                                                 "label": "Files",
