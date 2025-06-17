@@ -19,10 +19,41 @@ gc_pr_over_time = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "Pull Requests Over Time",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "Pull Requests Over Time",
+                                className="card-title",
+                                style={"textAlign": "left"},
+                            ),
+                            width=10,
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
+                                style={
+                                    "backgroundColor": "#292929",
+                                    "borderColor": "#404040", 
+                                    "color": "white",
+                                    "borderRadius": "20px",
+                                    "padding": "6px 12px",
+                                    "fontSize": "14px",
+                                    "fontWeight": "500",
+                                    "border": "1px solid #404040",
+                                    "cursor": "pointer",
+                                    "transition": "all 0.2s ease",
+                                    "backgroundImage": "none",
+                                    "boxShadow": "none"
+                                }
+                            ),
+                            width=2,
+                            className="d-flex justify-content-end",
+                        ),
+                    ],
+                    align="center",
                 ),
                 dbc.Popover(
                     [
@@ -42,6 +73,12 @@ gc_pr_over_time = dbc.Card(
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
+                html.Hr(style={
+                    "borderColor": "#e0e0e0", 
+                    "margin": "1.5rem -2rem", 
+                    "width": "calc(100% + 4rem)",
+                    "marginLeft": "-2rem"
+                }),
                 dbc.Form(
                     [
                         dbc.Row(
@@ -54,6 +91,7 @@ gc_pr_over_time = dbc.Card(
                                 dbc.Col(
                                     dbc.RadioItems(
                                         id=f"date-interval-{PAGE}-{VIZ_ID}",
+                                        className="modern-radio-buttons",
                                         options=[
                                             {
                                                 "label": "Day",
@@ -71,24 +109,16 @@ gc_pr_over_time = dbc.Card(
                                     ),
                                     className="me-2",
                                 ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
-                                ),
                             ],
                             align="center",
                         ),
                     ]
                 ),
-            ]
-        ),
+            ],
+            style={"padding": "2rem"}
+        )
     ],
+    style={"borderRadius": "15px"}
 )
 
 

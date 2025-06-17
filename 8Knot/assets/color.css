@@ -143,3 +143,8 @@ blockquote p {
 #graph-title-repo_info-code-languages {
   color: white !important;
 }
+
+/* Override slate theme for Pull Requests Over Time title */
+.card-title {
+  color: white !important;
+}
