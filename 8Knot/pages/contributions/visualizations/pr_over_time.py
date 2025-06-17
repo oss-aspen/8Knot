@@ -262,8 +262,8 @@ def create_figure(
         opacity=0.9,
         hovertemplate=hover + "<br>Created: %{y}<br>" + "<extra></extra>",
         offsetgroup=0,
-        marker=dict(color=color_seq[2]),
-        name="Opened",
+        marker=dict(color="#1f4e79"),  # Dark blue for Created_at
+        name="Created_at",
     )
     fig.add_bar(
         x=df_closed_merged["Date"],
@@ -271,7 +271,7 @@ def create_figure(
         opacity=0.9,
         hovertemplate=hover + "<br>Merged: %{y}<br>" + "<extra></extra>",
         offsetgroup=1,
-        marker=dict(color=color_seq[4]),
+        marker=dict(color="#ffffff"),  # Solid white for Merged
         name="Merged",
     )
     fig.add_bar(
@@ -281,9 +281,9 @@ def create_figure(
         hovertemplate=[f"{hover}<br>Closed: {val}<br><extra></extra>" for val in df_closed_merged["closed_at"]],
         offsetgroup=1,
         base=df_closed_merged["merged_at"],
-        marker=dict(color=color_seq[3]),
+        marker=dict(color="#5fa3d3"),  # Light blue for Closed
         name="Closed",
-    )
+    ),
     fig.update_xaxes(
         showgrid=True,
         ticklabelmode="period",
@@ -303,7 +303,8 @@ def create_figure(
             x=df_open["Date"],
             y=df_open["Open"],
             mode="lines",
-            marker=dict(color=color_seq[5]),
+            marker=dict(color="#ffbf00"),  # Yellow/orange for Open line
+            line=dict(color="#ffbf00", width=3),  # Ensure line color is also set
             name="Open",
             hovertemplate="PRs Open: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
         )
