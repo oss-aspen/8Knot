@@ -74,8 +74,21 @@ gc_code_language = dbc.Card(
                                     dbc.Button(
                                         "About Graph",
                                         id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
+                                        className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
+                                        style={
+                                            "backgroundColor": "#292929",
+                                            "borderColor": "#404040", 
+                                            "color": "white",
+                                            "borderRadius": "20px",
+                                            "padding": "6px 12px",
+                                            "fontSize": "14px",
+                                            "fontWeight": "500",
+                                            "border": "1px solid #404040",
+                                            "cursor": "pointer",
+                                            "transition": "all 0.2s ease",
+                                            "backgroundImage": "none",
+                                            "boxShadow": "none"
+                                        }
                                     ),
                                     width="auto",
                                     style={"paddingTop": ".5em"},
