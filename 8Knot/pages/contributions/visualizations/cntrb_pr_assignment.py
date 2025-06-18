@@ -134,10 +134,6 @@ gc_cntrib_pr_assignment = dbc.Card(
                                 ),
                                 dbc.Col(
                                     [
-                                        dbc.Label(
-                                            "Date Range:",
-                                            style={"marginBottom": "8px", "fontSize": "14px"}
-                                        ),
                                         dcc.DatePickerRange(
                                             id=f"date-picker-range-{PAGE}-{VIZ_ID}",
                                             min_date_allowed=dt.date(2005, 1, 1),
