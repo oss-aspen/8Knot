@@ -21,41 +21,10 @@ gc_pr_staleness = dbc.Card(
     [
         dbc.CardBody(
             [
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            html.H3(
-                                "Pull Request Activity- Staleness",
-                                className="card-title",
-                                style={"textAlign": "left", "fontSize": "20px"},
-                            ),
-                            width=10,
-                        ),
-                        dbc.Col(
-                            dbc.Button(
-                                "About Graph",
-                                id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
-                                style={
-                                    "backgroundColor": "#292929",
-                                    "borderColor": "#404040", 
-                                    "color": "white",
-                                    "borderRadius": "20px",
-                                    "padding": "6px 12px",
-                                    "fontSize": "14px",
-                                    "fontWeight": "500",
-                                    "border": "1px solid #404040",
-                                    "cursor": "pointer",
-                                    "transition": "all 0.2s ease",
-                                    "backgroundImage": "none",
-                                    "boxShadow": "none"
-                                }
-                            ),
-                            width=2,
-                            className="d-flex justify-content-end",
-                        ),
-                    ],
-                    align="center",
+                html.H3(
+                    "Pull Request Activity- Staleness",
+                    className="card-title",
+                    style={"textAlign": "center"},
                 ),
                 dbc.Popover(
                     [
@@ -76,83 +45,48 @@ gc_pr_staleness = dbc.Card(
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
-                html.Hr(style={
-                    "borderColor": "#e0e0e0", 
-                    "margin": "1.5rem -2rem", 
-                    "width": "calc(100% + 4rem)",
-                    "marginLeft": "-2rem"
-                }),
                 dbc.Form(
                     [
                         dbc.Row(
                             [
-                                dbc.Col(
-                                    [
-                                        dbc.Label(
-                                            "Days Until Staling:",
-                                            html_for=f"staling-days-{PAGE}-{VIZ_ID}",
-                                            style={"marginBottom": "8px", "fontSize": "14px"}
-                                        ),
-                                        dbc.Input(
-                                            id=f"staling-days-{PAGE}-{VIZ_ID}",
-                                            type="number",
-                                            min=1,
-                                            max=120,
-                                            step=1,
-                                            value=7,
-                                            size="sm",
-                                            className="dark-input",
-                                            style={"width": "70px"},
-                                        ),
-                                    ],
-                                    width="auto",
-                                    className="me-4"
+                                dbc.Label(
+                                    "Days Until Staling:",
+                                    html_for=f"staling-days-{PAGE}-{VIZ_ID}",
+                                    width={"size": "auto"},
                                 ),
                                 dbc.Col(
-                                    [
-                                        dbc.Label(
-                                            "Days Until Stale:",
-                                            html_for=f"stale-days-{PAGE}-{VIZ_ID}",
-                                            style={"marginBottom": "8px", "fontSize": "14px"}
-                                        ),
-                                        dbc.Input(
-                                            id=f"stale-days-{PAGE}-{VIZ_ID}",
-                                            type="number",
-                                            min=1,
-                                            max=120,
-                                            step=1,
-                                            value=30,
-                                            size="sm",
-                                            className="dark-input",
-                                            style={"width": "70px"},
-                                        ),
-                                    ],
-                                    width="auto",
-                                    className="me-4"
+                                    dbc.Input(
+                                        id=f"staling-days-{PAGE}-{VIZ_ID}",
+                                        type="number",
+                                        min=1,
+                                        max=120,
+                                        step=1,
+                                        value=7,
+                                        size="sm",
+                                    ),
+                                    className="me-2",
+                                    width=2,
+                                ),
+                                dbc.Label(
+                                    "Days Until Stale:",
+                                    html_for=f"stale-days-{PAGE}-{VIZ_ID}",
+                                    width={"size": "auto"},
                                 ),
                                 dbc.Col(
-                                    [
-                                        dbc.Label(
-                                            "Date Interval:",
-                                            html_for=f"date-interval-{PAGE}-{VIZ_ID}",
-                                            style={"marginBottom": "8px", "fontSize": "14px"}
-                                        ),
-                                        dbc.RadioItems(
-                                            id=f"date-interval-{PAGE}-{VIZ_ID}",
-                                            className="modern-radio-buttons-small",
-                                            options=[
-                                                {"label": "Trend", "value": "D"},
-                                                {"label": "Month", "value": "M"},
-                                                {"label": "Year", "value": "Y"},
-                                            ],
-                                            value="M",
-                                            inline=True,
-                                        ),
-                                    ],
-                                    width="auto"
+                                    dbc.Input(
+                                        id=f"stale-days-{PAGE}-{VIZ_ID}",
+                                        type="number",
+                                        min=1,
+                                        max=120,
+                                        step=1,
+                                        value=30,
+                                        size="sm",
+                                    ),
+                                    className="me-2",
+                                    width=2,
                                 ),
                             ],
-                            justify="start",
+                            align="center",
                         ),
                         dbc.Alert(
                             children="Please ensure that 'Days Until Staling' is less than 'Days Until Stale'",
@@ -161,15 +95,46 @@ gc_pr_staleness = dbc.Card(
                             fade=False,
                             is_open=False,
                             color="warning",
-                            style={"marginTop": "1rem"}
+                        ),
+                        dbc.Row(
+                            [
+                                dbc.Label(
+                                    "Date Interval:",
+                                    html_for=f"date-interval-{PAGE}-{VIZ_ID}",
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.RadioItems(
+                                            id=f"date-interval-{PAGE}-{VIZ_ID}",
+                                            options=[
+                                                {"label": "Trend", "value": "D"},
+                                                {"label": "Month", "value": "M"},
+                                                {"label": "Year", "value": "Y"},
+                                            ],
+                                            value="M",
+                                            inline=True,
+                                        ),
+                                    ]
+                                ),
+                                dbc.Col(
+                                    dbc.Button(
+                                        "About Graph",
+                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                        color="secondary",
+                                        size="sm",
+                                    ),
+                                    width="auto",
+                                    style={"paddingTop": ".5em"},
+                                ),
+                            ],
+                            align="center",
                         ),
                     ]
                 ),
-            ],
-            style={"padding": "2rem"}
+            ]
         )
     ],
-    style={"backgroundColor": "#292929", "borderRadius": "15px", "border": "1px solid #404040"}
 )
 
 
@@ -284,7 +249,7 @@ def create_figure(df_status: pd.DataFrame, interval):
                     mode="lines",
                     showlegend=True,
                     hovertemplate="PRs New: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
-                    marker=dict(color="#76C5EF"),  # Light blue for new PRs
+                    marker=dict(color=color_seq[1]),
                 ),
                 go.Scatter(
                     name="Staling",
@@ -293,7 +258,7 @@ def create_figure(df_status: pd.DataFrame, interval):
                     mode="lines",
                     showlegend=True,
                     hovertemplate="PRs Staling: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
-                    marker=dict(color="#199AD6"),  # Medium blue for staling PRs
+                    marker=dict(color=color_seq[5]),
                 ),
                 go.Scatter(
                     name="Stale",
@@ -302,7 +267,7 @@ def create_figure(df_status: pd.DataFrame, interval):
                     mode="lines",
                     showlegend=True,
                     hovertemplate="PRs Stale: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
-                    marker=dict(color="#0F5880"),  # Dark blue for stale PRs
+                    marker=dict(color=color_seq[2]),
                 ),
             ]
         )
@@ -311,7 +276,7 @@ def create_figure(df_status: pd.DataFrame, interval):
             df_status,
             x="Date",
             y=["New", "Staling", "Stale"],
-            color_discrete_sequence=["#76C5EF", "#199AD6", "#0F5880"],  # Custom blue color scheme
+            color_discrete_sequence=[color_seq[1], color_seq[5], color_seq[2]],
         )
 
         # edit hover values
@@ -322,8 +287,6 @@ def create_figure(df_status: pd.DataFrame, interval):
         yaxis_title="Pull Requests",
         legend_title="Type",
         font=dict(size=14),
-        plot_bgcolor="#292929",
-        paper_bgcolor="#292929",
     )
 
     return fig

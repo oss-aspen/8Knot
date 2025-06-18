@@ -21,41 +21,10 @@ gc_code_language = dbc.Card(
     [
         dbc.CardBody(
             [
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            html.H3(
-                                id=f"graph-title-{PAGE}-{VIZ_ID}",
-                                className="card-title",
-                                style={"textAlign": "left"},
-                            ),
-                            width=10,
-                        ),
-                        dbc.Col(
-                            dbc.Button(
-                                "About Graph",
-                                id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
-                                style={
-                                    "backgroundColor": "#292929",
-                                    "borderColor": "#404040", 
-                                    "color": "white",
-                                    "borderRadius": "20px",
-                                    "padding": "6px 12px",
-                                    "fontSize": "14px",
-                                    "fontWeight": "500",
-                                    "border": "1px solid #404040",
-                                    "cursor": "pointer",
-                                    "transition": "all 0.2s ease",
-                                    "backgroundImage": "none",
-                                    "boxShadow": "none"
-                                }
-                            ),
-                            width=2,
-                            className="d-flex justify-content-end",
-                        ),
-                    ],
-                    align="center",
+                html.H3(
+                    id=f"graph-title-{PAGE}-{VIZ_ID}",
+                    className="card-title",
+                    style={"textAlign": "center"},
                 ),
                 dbc.Popover(
                     [
@@ -74,12 +43,6 @@ gc_code_language = dbc.Card(
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
-                html.Hr(style={
-                    "borderColor": "#e0e0e0", 
-                    "margin": "1.5rem -2rem", 
-                    "width": "calc(100% + 4rem)",
-                    "marginLeft": "-2rem"
-                }),
                 dbc.Form(
                     [
                         dbc.Row(
@@ -92,7 +55,6 @@ gc_code_language = dbc.Card(
                                 dbc.Col(
                                     dbc.RadioItems(
                                         id=f"graph-view-{PAGE}-{VIZ_ID}",
-                                        className="modern-radio-buttons",
                                         options=[
                                             {
                                                 "label": "Files",
@@ -108,16 +70,24 @@ gc_code_language = dbc.Card(
                                     ),
                                     className="me-2",
                                 ),
+                                dbc.Col(
+                                    dbc.Button(
+                                        "About Graph",
+                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                        color="secondary",
+                                        size="sm",
+                                    ),
+                                    width="auto",
+                                    style={"paddingTop": ".5em"},
+                                ),
                             ],
                             align="center",
                         ),
                     ]
                 ),
-            ],
-            style={"padding": "2rem"}  # Add extra padding to make card larger
+            ]
         )
     ],
-    style={"borderRadius": "15px"}  # Add custom border radius
 )
 
 

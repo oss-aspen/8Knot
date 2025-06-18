@@ -31,7 +31,6 @@ services:
     command:
       [
         "gunicorn",
-        "--reload",
         "--bind",
         ":8080",
         "app:server",
@@ -44,8 +43,6 @@ services:
         "--keep-alive",
         "5"
       ]
-    volumes:
-      - ./8Knot:/opt/app-root/src/
     # ports:
     #   - 8080:8080
     depends_on:
