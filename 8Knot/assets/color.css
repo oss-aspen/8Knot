@@ -209,3 +209,45 @@ blockquote p {
 .card-title {
   color: white !important;
 }
+
+/* Custom styling for dark theme input fields */
+.dark-input,
+input.dark-input,
+.form-control.dark-input {
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+  color: white !important;
+}
+
+.dark-input:focus,
+input.dark-input:focus,
+.form-control.dark-input:focus {
+  background-color: #404040 !important;
+  border-color: #555555 !important;
+  color: white !important;
+  box-shadow: 0 0 0 0.2rem rgba(64, 64, 64, 0.25) !important;
+}
+
+/* Placeholder text styling for dark inputs */
+.dark-input::placeholder,
+input.dark-input::placeholder,
+.form-control.dark-input::placeholder {
+  color: #cccccc !important;
+  opacity: 1 !important;
+}
+
+/* Specific selectors for backward compatibility */
+#staling-days-contributions-pr-staleness,
+#stale-days-contributions-pr-staleness {
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+  color: white !important;
+}
+
+#staling-days-contributions-pr-staleness:focus,
+#stale-days-contributions-pr-staleness:focus {
+  background-color: #404040 !important;
+  border-color: #555555 !important;
+  color: white !important;
+  box-shadow: 0 0 0 0.2rem rgba(64, 64, 64, 0.25) !important;
+}
