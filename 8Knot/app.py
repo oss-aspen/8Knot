@@ -91,8 +91,6 @@ server = app.server
 server = _login.configure_server_login(server)
 
 """HEALTH CHECK ENDPOINT"""
-#HELLO????
-
 @server.route("/health")
 def health_check():
     """Simple health check endpoint for CI/CD testing"""
