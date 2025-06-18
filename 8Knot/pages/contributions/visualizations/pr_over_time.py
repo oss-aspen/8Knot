@@ -25,7 +25,7 @@ gc_pr_over_time = dbc.Card(
                             html.H3(
                                 "Pull Requests Over Time",
                                 className="card-title",
-                                style={"textAlign": "left"},
+                                style={"textAlign": "left", "fontSize": "20px"},
                             ),
                             width=10,
                         ),
