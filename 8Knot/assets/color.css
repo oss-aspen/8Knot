@@ -213,19 +213,33 @@ blockquote p {
 /* Custom styling for dark theme input fields */
 .dark-input,
 input.dark-input,
-.form-control.dark-input {
+.form-control.dark-input,
+input[type="number"].dark-input,
+input[type="text"].dark-input,
+.form-control.form-control-sm.dark-input,
+.form-control.form-control-sm.dark-input[type="number"],
+div .form-control.dark-input,
+div input.dark-input.form-control {
   background-color: #404040 !important;
   border-color: #404040 !important;
   color: white !important;
+  background-image: none !important;
 }
 
 .dark-input:focus,
 input.dark-input:focus,
-.form-control.dark-input:focus {
+.form-control.dark-input:focus,
+input[type="number"].dark-input:focus,
+input[type="text"].dark-input:focus,
+.form-control.form-control-sm.dark-input:focus,
+.form-control.form-control-sm.dark-input[type="number"]:focus,
+div .form-control.dark-input:focus,
+div input.dark-input.form-control:focus {
   background-color: #404040 !important;
   border-color: #555555 !important;
   color: white !important;
   box-shadow: 0 0 0 0.2rem rgba(64, 64, 64, 0.25) !important;
+  background-image: none !important;
 }
 
 /* Placeholder text styling for dark inputs */
@@ -250,4 +264,24 @@ input.dark-input::placeholder,
   border-color: #555555 !important;
   color: white !important;
   box-shadow: 0 0 0 0.2rem rgba(64, 64, 64, 0.25) !important;
+}
+
+/* Nuclear option - most specific selectors for dark inputs */
+body .container-fluid .form-control.dark-input,
+body div .form-control.dark-input,
+body input.form-control.dark-input {
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+  color: white !important;
+  background-image: none !important;
+}
+
+body .container-fluid .form-control.dark-input:focus,
+body div .form-control.dark-input:focus,
+body input.form-control.dark-input:focus {
+  background-color: #404040 !important;
+  border-color: #555555 !important;
+  color: white !important;
+  box-shadow: 0 0 0 0.2rem rgba(64, 64, 64, 0.25) !important;
+  background-image: none !important;
 }
