@@ -139,6 +139,67 @@ blockquote p {
   margin-left: 4px;
 }
 
+/* Smaller modern radio button styling */
+.modern-radio-buttons-small .form-check-input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background-color: transparent;
+  position: relative;
+  cursor: pointer;
+  margin-right: 6px;
+  margin-top: 0;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.modern-radio-buttons-small .form-check-input[type="radio"]:checked {
+  border-color: white;
+  background-color: transparent;
+}
+
+.modern-radio-buttons-small .form-check-input[type="radio"]:checked::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: white;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.modern-radio-buttons-small .form-check-input[type="radio"]:focus {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+  outline: none;
+}
+
+.modern-radio-buttons-small .form-check-label {
+  color: white;
+  cursor: pointer;
+  margin-left: 2px;
+  font-size: 13px;
+  line-height: 14px;
+  margin-top: 0;
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+}
+
+.modern-radio-buttons-small .form-check {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 12px;
+  margin-top: 0;
+  margin-bottom: 0;
+  min-height: auto;
+}
+
 /* Override slate theme for specific graph title */
 #graph-title-repo_info-code-languages {
   color: white !important;

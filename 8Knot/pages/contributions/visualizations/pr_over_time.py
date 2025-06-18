@@ -83,34 +83,36 @@ gc_pr_over_time = dbc.Card(
                     [
                         dbc.Row(
                             [
-                                dbc.Label(
-                                    "Date Interval:",
-                                    html_for=f"date-interval-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
                                 dbc.Col(
-                                    dbc.RadioItems(
-                                        id=f"date-interval-{PAGE}-{VIZ_ID}",
-                                        className="modern-radio-buttons",
-                                        options=[
-                                            {
-                                                "label": "Day",
-                                                "value": "D",
-                                            },
-                                            {
-                                                "label": "Week",
-                                                "value": "W",
-                                            },
-                                            {"label": "Month", "value": "M"},
-                                            {"label": "Year", "value": "Y"},
-                                        ],
-                                        value="M",
-                                        inline=True,
-                                    ),
-                                    className="me-2",
+                                    [
+                                        dbc.Label(
+                                            "Date Interval:",
+                                            html_for=f"date-interval-{PAGE}-{VIZ_ID}",
+                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                        ),
+                                        dbc.RadioItems(
+                                            id=f"date-interval-{PAGE}-{VIZ_ID}",
+                                            className="modern-radio-buttons-small",
+                                            options=[
+                                                {
+                                                    "label": "Day",
+                                                    "value": "D",
+                                                },
+                                                {
+                                                    "label": "Week",
+                                                    "value": "W",
+                                                },
+                                                {"label": "Month", "value": "M"},
+                                                {"label": "Year", "value": "Y"},
+                                            ],
+                                            value="M",
+                                            inline=True,
+                                        ),
+                                    ],
+                                    width="auto"
                                 ),
                             ],
-                            align="center",
+                            justify="start",
                         ),
                     ]
                 ),
