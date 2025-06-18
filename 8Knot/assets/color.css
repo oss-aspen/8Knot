@@ -200,10 +200,10 @@ blockquote p {
   min-height: auto;
 }
 
-/* Override slate theme for specific graph title */
+/* Override slate theme for specific graph title
 #graph-title-repo_info-code-languages {
   color: white !important;
-}
+} */
 
 /* Override slate theme for Pull Requests Over Time title */
 .card-title {
