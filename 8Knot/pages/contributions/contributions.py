@@ -24,77 +24,47 @@ layout = dbc.Container(
     [
         dbc.Row(
             [
-                dbc.Col(gc_pr_staleness, width=12),
+                dbc.Col(gc_pr_staleness, width=6),
+                dbc.Col(gc_pr_over_time, width=6),
             ],
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
             [
-                dbc.Col(gc_pr_over_time, width=12),
+                dbc.Col(gc_cntrib_pr_assignment, width=6),
+                dbc.Col(gc_pr_assignment, width=6),
             ],
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
             [
-                dbc.Col(gc_cntrib_pr_assignment, width=12),
+                dbc.Col(gc_issue_staleness, width=6),
+                dbc.Col(gc_issues_over_time, width=6),
             ],
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
             [
-                dbc.Col(gc_pr_assignment, width=12),
+                dbc.Col(gc_cntrib_issue_assignment, width=6),
+                dbc.Col(gc_issue_assignment, width=6),
             ],
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
             [
-                dbc.Col(gc_issue_staleness, width=12),
+                dbc.Col(gc_commits_over_time, width=6),
+                dbc.Col(gc_pr_first_response, width=6),
             ],
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
             [
-                dbc.Col(gc_issues_over_time, width=12),
-            ],
-            align="center",
-            style={"marginBottom": ".5%"},
-        ),
-        dbc.Row(
-            [
-                dbc.Col(gc_cntrib_issue_assignment, width=12),
-            ],
-            align="center",
-            style={"marginBottom": ".5%"},
-        ),
-        dbc.Row(
-            [
-                dbc.Col(gc_issue_assignment, width=12),
-            ],
-            align="center",
-            style={"marginBottom": ".5%"},
-        ),
-        dbc.Row(
-            [
-                dbc.Col(gc_commits_over_time, width=12),
-            ],
-            align="center",
-            style={"marginBottom": ".5%"},
-        ),
-        dbc.Row(
-            [
-                dbc.Col(gc_pr_first_response, width=12),
-            ],
-            align="center",
-            style={"marginBottom": ".5%"},
-        ),
-        dbc.Row(
-            [
-                dbc.Col(gc_pr_review_response, width=12),
+                dbc.Col(gc_pr_review_response, width=6),
             ],
             align="center",
             style={"marginBottom": ".5%"},

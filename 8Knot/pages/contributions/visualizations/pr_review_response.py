@@ -21,41 +21,10 @@ gc_pr_review_response = dbc.Card(
     [
         dbc.CardBody(
             [
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            html.H3(
-                                "Pull Request Conversation Engagement",
-                                className="card-title",
-                                style={"textAlign": "left", "fontSize": "20px", "color": "white"},
-                            ),
-                            width=10,
-                        ),
-                        dbc.Col(
-                            dbc.Button(
-                                "About Graph",
-                                id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
-                                style={
-                                    "backgroundColor": "#292929",
-                                    "borderColor": "#404040", 
-                                    "color": "white",
-                                    "borderRadius": "20px",
-                                    "padding": "6px 12px",
-                                    "fontSize": "14px",
-                                    "fontWeight": "500",
-                                    "border": "1px solid #404040",
-                                    "cursor": "pointer",
-                                    "transition": "all 0.2s ease",
-                                    "backgroundImage": "none",
-                                    "boxShadow": "none"
-                                }
-                            ),
-                            width=2,
-                            className="d-flex justify-content-end",
-                        ),
-                    ],
-                    align="center",
+                html.H3(
+                    "Pull Request Conversation Engagement",
+                    className="card-title",
+                    style={"textAlign": "center"},
                 ),
                 dbc.Popover(
                     [
@@ -76,51 +45,46 @@ gc_pr_review_response = dbc.Card(
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
-                html.Hr(style={
-                    "borderColor": "#e0e0e0", 
-                    "margin": "1.5rem -2rem", 
-                    "width": "calc(100% + 4rem)",
-                    "marginLeft": "-2rem"
-                }),
                 dbc.Form(
                     [
                         dbc.Row(
                             [
+                                dbc.Label(
+                                    "Response Days:",
+                                    html_for=f"response-days-{PAGE}-{VIZ_ID}",
+                                    width="auto",
+                                ),
                                 dbc.Col(
-                                    [
-                                        dbc.Label(
-                                            "Response Days:",
-                                            html_for=f"response-days-{PAGE}-{VIZ_ID}",
-                                            style={"marginBottom": "8px", "fontSize": "14px"}
-                                        ),
-                                        dbc.Input(
-                                            id=f"response-days-{PAGE}-{VIZ_ID}",
-                                            type="number",
-                                            min=1,
-                                            max=120,
-                                            step=1,
-                                            value=2,
-                                            size="sm",
-                                            className="dark-input",
-                                            style={"width": "80px"},
-                                        ),
-                                    ],
-                                    width="auto"
+                                    dbc.Input(
+                                        id=f"response-days-{PAGE}-{VIZ_ID}",
+                                        type="number",
+                                        min=1,
+                                        max=120,
+                                        step=1,
+                                        value=2,
+                                        size="sm",
+                                        style={"width": "100px"},
+                                    ),
+                                    className="me-2",
+                                ),
+                                dbc.Col(
+                                    dbc.Button(
+                                        "About Graph",
+                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                        color="secondary",
+                                        size="sm",
+                                    ),
+                                    width="auto",
+                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
-                            justify="start",
+                            align="center",
                         ),
                     ]
                 ),
             ]
         )
     ],
-    style={
-        "padding": "20px",
-        "borderRadius": "10px",
-        "backgroundColor": "#292929",
-        "border": "1px solid #404040"
-    },
 )
 
 
@@ -241,8 +205,6 @@ def create_figure(df: pd.DataFrame, num_days):
         xaxis_title="Time",
         yaxis_title="Number of PRs",
         font=dict(size=14),
-        plot_bgcolor="#292929",
-        paper_bgcolor="#292929",
     )
 
     return fig
