@@ -21,10 +21,41 @@ gc_issues_over_time = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "Issues Over Time",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "Issues Over Time",
+                                className="card-title",
+                                style={"textAlign": "left", "fontSize": "20px", "color": "white"},
+                            ),
+                            width=10,
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
+                                style={
+                                    "backgroundColor": "#292929",
+                                    "borderColor": "#404040", 
+                                    "color": "white",
+                                    "borderRadius": "20px",
+                                    "padding": "6px 12px",
+                                    "fontSize": "14px",
+                                    "fontWeight": "500",
+                                    "border": "1px solid #404040",
+                                    "cursor": "pointer",
+                                    "transition": "all 0.2s ease",
+                                    "backgroundImage": "none",
+                                    "boxShadow": "none"
+                                }
+                            ),
+                            width=2,
+                            className="d-flex justify-content-end",
+                        ),
+                    ],
+                    align="center",
                 ),
                 dbc.Popover(
                     [
@@ -44,74 +75,75 @@ gc_issues_over_time = dbc.Card(
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
+                html.Hr(style={
+                    "borderColor": "#e0e0e0", 
+                    "margin": "1.5rem -2rem", 
+                    "width": "calc(100% + 4rem)",
+                    "marginLeft": "-2rem"
+                }),
                 dbc.Form(
                     [
                         dbc.Row(
                             [
-                                dbc.Label(
-                                    "Date Interval:",
-                                    html_for=f"date-interval-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
                                 dbc.Col(
-                                    dbc.RadioItems(
-                                        id=f"date-interval-{PAGE}-{VIZ_ID}",
-                                        options=[
-                                            {
-                                                "label": "Day",
-                                                "value": "D",
-                                            },
-                                            {
-                                                "label": "Week",
-                                                "value": "W",
-                                            },
-                                            {"label": "Month", "value": "M"},
-                                            {"label": "Year", "value": "Y"},
-                                        ],
-                                        value="M",
-                                        inline=True,
-                                    ),
-                                    className="me-2",
-                                ),
-                            ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
-                                dbc.Col(
-                                    dcc.DatePickerRange(
-                                        id=f"date-picker-range-{PAGE}-{VIZ_ID}",
-                                        min_date_allowed=dt.date(2005, 1, 1),
-                                        max_date_allowed=dt.date.today(),
-                                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
-                                        start_date=dt.date(
-                                            dt.date.today().year - 2,
-                                            dt.date.today().month,
-                                            dt.date.today().day,
+                                    [
+                                        dbc.Label(
+                                            "Date Interval:",
+                                            html_for=f"date-interval-{PAGE}-{VIZ_ID}",
+                                            style={"marginBottom": "8px", "fontSize": "14px"}
                                         ),
-                                        clearable=True,
-                                    ),
+                                        dbc.RadioItems(
+                                            id=f"date-interval-{PAGE}-{VIZ_ID}",
+                                            className="modern-radio-buttons-small",
+                                            options=[
+                                                {"label": "Day", "value": "D"},
+                                                {"label": "Week", "value": "W"},
+                                                {"label": "Month", "value": "M"},
+                                                {"label": "Year", "value": "Y"},
+                                            ],
+                                            value="M",
+                                            inline=True,
+                                        ),
+                                    ],
                                     width="auto",
+                                    className="me-4"
                                 ),
                                 dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
+                                    [
+                                        dbc.Label(
+                                            "Date Range:",
+                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                        ),
+                                        dcc.DatePickerRange(
+                                            id=f"date-picker-range-{PAGE}-{VIZ_ID}",
+                                            min_date_allowed=dt.date(2005, 1, 1),
+                                            max_date_allowed=dt.date.today(),
+                                            initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                                            start_date=dt.date(
+                                                dt.date.today().year - 2,
+                                                dt.date.today().month,
+                                                dt.date.today().day,
+                                            ),
+                                            clearable=True,
+                                            style={"fontSize": "14px"}
+                                        ),
+                                    ],
+                                    width="auto"
                                 ),
                             ],
-                            align="center",
-                            justify="between",
+                            justify="start",
                         ),
                     ]
                 ),
             ]
         ),
     ],
+    style={
+        "padding": "20px",
+        "borderRadius": "10px",
+        "backgroundColor": "#292929",
+        "border": "1px solid #404040"
+    },
 )
 
 
@@ -275,6 +307,8 @@ def create_figure(df_created: pd.DataFrame, df_closed: pd.DataFrame, df_open: pd
         bargroupgap=0.1,
         margin_b=40,
         font=dict(size=14),
+        plot_bgcolor="#292929",
+        paper_bgcolor="#292929",
     )
     fig.add_trace(
         go.Scatter(
