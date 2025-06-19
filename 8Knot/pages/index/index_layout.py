@@ -184,40 +184,6 @@ navbar = dbc.Navbar(
     sticky="top",
 )
 
-navbar_bottom = dbc.NavbarSimple(
-    children=[
-        dbc.NavItem(
-            dbc.NavLink(
-                "Visualization request",
-                href="https://github.com/oss-aspen/8Knot/issues/new?assignees=&labels=enhancement%2Cvisualization&template=visualizations.md",
-                external_link="True",
-                target="_blank",
-            )
-        ),
-        dbc.NavItem(
-            dbc.NavLink(
-                "Bug",
-                href="https://github.com/oss-aspen/8Knot/issues/new?assignees=&labels=bug&template=bug_report.md",
-                external_link="True",
-                target="_blank",
-            )
-        ),
-        dbc.NavItem(
-            dbc.NavLink(
-                "Repo/Org Request",
-                href="https://github.com/oss-aspen/8Knot/issues/new?assignees=&labels=augur&template=augur_load.md",
-                external_link="True",
-                target="_blank",
-            )
-        ),
-    ],
-    brand="",
-    brand_href="#",
-    color="primary",
-    dark=True,
-    fluid=True,
-)
-
 search_bar = html.Div(
     [
         # Add client-side caching component
@@ -324,22 +290,12 @@ search_bar = html.Div(
     ]
 )
 
-layout = dbc.Container(
+layout = html.Div(
     [
-        # componets to store data from queries
         dcc.Store(id="repo-choices", storage_type="session", data=[]),
-        # components to store job-ids for the worker queue
         dcc.Store(id="job-ids", storage_type="session", data=[]),
         dcc.Store(id="user-group-loading-signal", data="", storage_type="memory"),
         dcc.Location(id="url"),
-        # Add client-side script to handle storage quota issues
-        # This script does two things:
-        # 1. Listens for global JavaScript errors related to storage quota being exceeded.
-        #    If such an error occurs, finds the element with id 'storage-quota-warning'
-        #    and makes it visible to alert the user.
-        # 2. Tests if sessionStorage can store a 512KB string.
-        #    If the test fails (due to quota limits), it displays the warning.
-        # The user will see the warning if the browser's session storage is full
         html.Script(
             """
             window.addEventListener('error', function(event) {
@@ -371,47 +327,59 @@ layout = dbc.Container(
             }
         """
         ),
-        navbar,
-        # Add login banner overlay (will be positioned via CSS)
-        login_banner if login_banner else html.Div(),
-        dbc.Row(
+        dbc.Card(
             [
-                dbc.Col(
+                login_banner if login_banner else html.Div(),
+                dbc.Row(
                     [
-                        dbc.Label(
-                            "Select GitHub repos or orgs:",
-                            html_for="projects",
-                            width="auto",
-                            size="lg",
+                        dbc.Col(
+                            [
+                                dbc.Label(
+                                    "Select GitHub repos or orgs:",
+                                    html_for="projects",
+                                    width="auto",
+                                    size="lg",
+                                ),
+                                search_bar,
+                                dcc.Loading(
+                                    children=[html.Div(id="results-output-container", className="mb-4")],
+                                    color="#119DFF",
+                                    type="dot",
+                                    fullscreen=True,
+                                ),
+                                dcc.Loading(
+                                    dbc.Badge(
+                                        children="Data Loaded",
+                                        id="data-badge",
+                                        color="#436755",
+                                        className="me-1",
+                                        style={"marginBottom": ".5%"},
+                                        text_color="dark",
+                                    ),
+                                    type="cube",
+                                    color="#436755",
+                                ),
+                                dash.page_container,
+                            ],
+                            style={"padding": "32px"},  # Added padding to main content
                         ),
-                        search_bar,
-                        dcc.Loading(
-                            children=[html.Div(id="results-output-container", className="mb-4")],
-                            color="#119DFF",
-                            type="dot",
-                            fullscreen=True,
-                        ),
-                        dcc.Loading(
-                            dbc.Badge(
-                                children="Data Loaded",
-                                id="data-badge",
-                                color="#436755",
-                                className="me-1",
-                                style={"marginBottom": ".5%"},
-                                text_color="dark",
-                            ),
-                            type="cube",
-                            color="#436755",
-                        ),
-                        # where our page will be rendered
-                        dash.page_container,
                     ],
+                    justify="start",
                 ),
             ],
-            justify="start",
+            style={
+                "borderRadius": "7px",
+                "padding": "40px 40px 40px 40px",  # uniform padding for better balance
+                "margin": "40px 10px 20px 10px",  # increased top margin for space from top of screen
+                "width": "99vw",  # increased width to use more screen space
+                "maxWidth": "100vw",
+                "boxShadow": "0 8px 32px rgba(0,0,0,0.12)",
+                "background": "#1D1D1D",
+                "height": "95vh",  # increased height for more vertical space
+                "overflowY": "auto",
+                "overflowX": "hidden",
+            },
+            className="big-main-card",
         ),
-        navbar_bottom,
-    ],
-    fluid=True,
-    className="dbc",
+    ]
 )
