@@ -252,39 +252,59 @@ search_bar = html.Div(
                         ),
                     ],
                     style={
-                        "width": "50%",
-                        "paddingRight": "10px",
+                        "width": "100%",
+                        "marginBottom": "16px",
                     },
                 ),
-                dbc.Button(
-                    "Search",
-                    id="search",
-                    n_clicks=0,
-                    size="md",
+                html.Div(
+                    [
+                        dbc.Button(
+                            "Search",
+                            id="search",
+                            n_clicks=0,
+                            size="md",
+                            className="me-2 mb-2",
+                        ),
+                        dbc.Button(
+                            "Help",
+                            id="search-help",
+                            n_clicks=0,
+                            size="md",
+                            className="me-2 mb-2",
+                        ),
+                        dbc.Button(
+                            "Repo List",
+                            id="repo-list-button",
+                            n_clicks=0,
+                            size="md",
+                            className="mb-2",
+                        ),
+                    ],
+                    style={
+                        "display": "flex",
+                        "flexWrap": "wrap",
+                        "marginBottom": "16px",
+                    },
                 ),
-                dbc.Button(
-                    "Help",
-                    id="search-help",
-                    n_clicks=0,
-                    size="md",
-                ),
-                dbc.Button(
-                    "Repo List",
-                    id="repo-list-button",
-                    n_clicks=0,
-                    size="md",
-                ),
-                dbc.Switch(
-                    id="bot-switch",
-                    label="GitHub Bot Filter",
-                    value=True,
-                    input_class_name="botlist-filter-switch",
-                    style={"fontSize": 18},
+                html.Div(
+                    [
+                        dbc.Switch(
+                            id="bot-switch",
+                            label="GitHub Bot Filter",
+                            value=True,
+                            input_class_name="botlist-filter-switch",
+                            style={"fontSize": 16},
+                        ),
+                    ],
+                    style={
+                        "marginTop": "8px",
+                        "marginBottom": "16px",
+                    },
                 ),
             ],
-            direction="horizontal",
+            direction="vertical",
             style={
-                "width": "70%",
+                "width": "100%",
             },
         ),
     ]
@@ -327,59 +347,108 @@ layout = html.Div(
             }
         """
         ),
-        dbc.Card(
+        html.Div(
             [
-                login_banner if login_banner else html.Div(),
-                dbc.Row(
+                # Sidebar Card (larger, with search bar and buttons)
+                dbc.Card(
                     [
-                        dbc.Col(
+                        html.H4("Sidebar"),
+                        html.Hr(),
+                        # Search bar and buttons moved here
+                        search_bar,
+                        dbc.Nav(
                             [
-                                dbc.Label(
-                                    "Select GitHub repos or orgs:",
-                                    html_for="projects",
-                                    width="auto",
-                                    size="lg",
-                                ),
-                                search_bar,
-                                dcc.Loading(
-                                    children=[html.Div(id="results-output-container", className="mb-4")],
-                                    color="#119DFF",
-                                    type="dot",
-                                    fullscreen=True,
-                                ),
-                                dcc.Loading(
-                                    dbc.Badge(
-                                        children="Data Loaded",
-                                        id="data-badge",
-                                        color="#436755",
-                                        className="me-1",
-                                        style={"marginBottom": ".5%"},
-                                        text_color="dark",
-                                    ),
-                                    type="cube",
-                                    color="#436755",
-                                ),
-                                dash.page_container,
+                                dbc.NavLink("Home", href="/", active="exact"),
+                                dbc.NavLink("Repo Overview", href="/repo_overview", active="exact"),
+                                dbc.NavLink("Contributions", href="/contributions", active="exact"),
+                                dbc.NavLink("Affiliation", href="/affiliation", active="exact"),
+                                dbc.NavLink("CHAOSS", href="/chaoss", active="exact"),
+                                dbc.NavLink("Codebase", href="/codebase", active="exact"),
+                                dbc.NavLink("Info", href="/info", active="exact"),
                             ],
-                            style={"padding": "32px"},  # Added padding to main content
+                            vertical=True,
+                            pills=True,
                         ),
                     ],
-                    justify="start",
+                    style={
+                        "borderRadius": "14px 0 0 14px",
+                        "height": "95vh",
+                        "width": "340px",
+                        "background": "#232323",
+                        "color": "#fff",
+                        "padding": "32px 18px 32px 18px",
+                        "boxShadow": "0 8px 32px rgba(0,0,0,0.12)",
+                        "display": "flex",
+                        "flexDirection": "column",
+                        "justifyContent": "flex-start",
+                        "margin": "40px 0 20px 10px",
+                        "zIndex": 2,
+                    },
+                    className="sidebar-card",
+                ),
+                # Main Card
+                dbc.Card(
+                    [
+                        login_banner if login_banner else html.Div(),
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    [
+                                        dbc.Label(
+                                            "Select GitHub repos or orgs:",
+                                            html_for="projects",
+                                            width="auto",
+                                            size="lg",
+                                        ),
+                                        dcc.Loading(
+                                            children=[html.Div(id="results-output-container", className="mb-4")],
+                                            color="#119DFF",
+                                            type="dot",
+                                            fullscreen=True,
+                                        ),
+                                        dcc.Loading(
+                                            dbc.Badge(
+                                                children="Data Loaded",
+                                                id="data-badge",
+                                                color="#436755",
+                                                className="me-1",
+                                                style={"marginBottom": ".5%"},
+                                                text_color="dark",
+                                            ),
+                                            type="cube",
+                                            color="#436755",
+                                        ),
+                                        dash.page_container,
+                                    ],
+                                    style={"padding": "32px"},  # Added padding to main content
+                                ),
+                            ],
+                            justify="start",
+                        ),
+                    ],
+                    style={
+                        "borderRadius": "0 14px 14px 0",
+                        "padding": "40px 40px 40px 40px",
+                        "margin": "40px 10px 20px 0",
+                        "width": "calc(99vw - 340px)",
+                        "maxWidth": "calc(100vw - 340px)",
+                        "boxShadow": "0 8px 32px rgba(0,0,0,0.12)",
+                        "background": "#1D1D1D",
+                        "height": "95vh",
+                        "overflowY": "auto",
+                        "overflowX": "hidden",
+                        "display": "flex",
+                        "flexDirection": "column",
+                    },
+                    className="big-main-card",
                 ),
             ],
             style={
-                "borderRadius": "7px",
-                "padding": "40px 40px 40px 40px",  # uniform padding for better balance
-                "margin": "40px 10px 20px 10px",  # increased top margin for space from top of screen
-                "width": "99vw",  # increased width to use more screen space
-                "maxWidth": "100vw",
-                "boxShadow": "0 8px 32px rgba(0,0,0,0.12)",
-                "background": "#1D1D1D",
-                "height": "95vh",  # increased height for more vertical space
-                "overflowY": "auto",
-                "overflowX": "hidden",
+                "display": "flex",
+                "flexDirection": "row",
+                "alignItems": "stretch",
+                "width": "100vw",
             },
-            className="big-main-card",
         ),
     ]
 )
