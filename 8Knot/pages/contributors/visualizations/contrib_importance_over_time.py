@@ -189,7 +189,6 @@ gc_lottery_factor_over_time = dbc.Card(
         "borderRadius": "15px",
         "backgroundColor": "#292929",
         "border": "1px solid #404040",
-        "marginBottom": "2rem",
     },
 )
 

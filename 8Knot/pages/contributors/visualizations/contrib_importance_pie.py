@@ -212,7 +212,6 @@ gc_contrib_importance_pie = dbc.Card(
         "borderRadius": "15px",
         "backgroundColor": "#292929",
         "border": "1px solid #404040",
-        "marginBottom": "2rem",
     },
 )
 
