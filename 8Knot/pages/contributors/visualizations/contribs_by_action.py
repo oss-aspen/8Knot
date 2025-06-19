@@ -23,10 +23,41 @@ gc_contribs_by_action = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "Contributors by Action Type",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "Contributors by Action Type",
+                                className="card-title",
+                                style={"textAlign": "left", "fontSize": "20px", "color": "white"},
+                            ),
+                            width=10,
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
+                                style={
+                                    "backgroundColor": "#292929",
+                                    "borderColor": "#404040", 
+                                    "color": "white",
+                                    "borderRadius": "20px",
+                                    "padding": "6px 12px",
+                                    "fontSize": "14px",
+                                    "fontWeight": "500",
+                                    "border": "1px solid #404040",
+                                    "cursor": "pointer",
+                                    "transition": "all 0.2s ease",
+                                    "backgroundImage": "none",
+                                    "boxShadow": "none"
+                                }
+                            ),
+                            width=2,
+                            className="d-flex justify-content-end",
+                        ),
+                    ],
+                    align="center",
                 ),
                 dbc.Popover(
                     [
@@ -46,100 +77,94 @@ gc_contribs_by_action = dbc.Card(
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
+                html.Hr(style={
+                    "borderColor": "#404040", 
+                    "borderWidth": "1px",
+                    "opacity": "0.3",
+                    "margin": "1.5rem 0", 
+                }),
                 dbc.Form(
                     [
                         dbc.Row(
                             [
-                                dbc.Label(
-                                    "Action Type:",
-                                    html_for=f"action-dropdown-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
                                 dbc.Col(
                                     [
-                                        dcc.Dropdown(
+                                        dbc.Label(
+                                            "Action Type:",
+                                            html_for=f"action-dropdown-{PAGE}-{VIZ_ID}",
+                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                        ),
+                                        dbc.Select(
                                             id=f"action-dropdown-{PAGE}-{VIZ_ID}",
                                             options=[
-                                                {
-                                                    "label": "PR Open",
-                                                    "value": "PR Opened",
-                                                },
-                                                {
-                                                    "label": "Comment",
-                                                    "value": "Comment",
-                                                },
-                                                {
-                                                    "label": "PR Review",
-                                                    "value": "PR Review",
-                                                },
-                                                {
-                                                    "label": "Issue Opened",
-                                                    "value": "Issue Opened",
-                                                },
-                                                {
-                                                    "label": "Issue Closed",
-                                                    "value": "Issue Closed",
-                                                },
+                                                {"label": "PR Open", "value": "PR Opened"},
+                                                {"label": "Comment", "value": "Comment"},
+                                                {"label": "PR Review", "value": "PR Review"},
+                                                {"label": "Issue Opened", "value": "Issue Opened"},
+                                                {"label": "Issue Closed", "value": "Issue Closed"},
                                                 {"label": "Commit", "value": "Commit"},
                                             ],
                                             value="PR Opened",
-                                            clearable=False,
-                                        ),
-                                        dbc.Alert(
-                                            children="""No contributions of this type have been made.\n
-                                            Please select a different contribution type.""",
-                                            id=f"check-alert-{PAGE}-{VIZ_ID}",
-                                            dismissable=True,
-                                            fade=False,
-                                            is_open=False,
-                                            color="warning",
+                                            size="sm",
+                                            style={
+                                                "fontSize": "14px",
+                                                "backgroundColor": "#404040",
+                                                "borderColor": "#404040",
+                                                "color": "white",
+                                                "height": "32px",
+                                                "padding": "4px 8px"
+                                            }
                                         ),
                                     ],
-                                    className="me-2",
-                                    width=3,
+                                    width="auto",
+                                    className="me-4"
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.Label(
+                                            "Date Interval:",
+                                            html_for=f"date-interval-{PAGE}-{VIZ_ID}",
+                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                        ),
+                                        dbc.RadioItems(
+                                            id=f"date-interval-{PAGE}-{VIZ_ID}",
+                                            className="modern-radio-buttons-small",
+                                            options=[
+                                                {"label": "Month", "value": "M1"},
+                                                {"label": "Quarter", "value": "M3"},
+                                                {"label": "6 Months", "value": "M6"},
+                                                {"label": "Year", "value": "M12"},
+                                            ],
+                                            value="M1",
+                                            inline=True,
+                                        ),
+                                    ],
+                                    width="auto"
                                 ),
                             ],
-                            align="center",
+                            justify="start",
                         ),
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Date Interval:",
-                                    html_for=f"date-interval-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
-                                dbc.Col(
-                                    dbc.RadioItems(
-                                        id=f"date-interval-{PAGE}-{VIZ_ID}",
-                                        options=[
-                                            {"label": "Month", "value": "M1"},
-                                            {"label": "Quarter", "value": "M3"},
-                                            {"label": "6 Months", "value": "M6"},
-                                            {"label": "Year", "value": "M12"},
-                                        ],
-                                        value="M1",
-                                        inline=True,
-                                    ),
-                                    className="me-2",
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
-                                ),
-                            ],
-                            align="center",
+                        dbc.Alert(
+                            children="""No contributions of this type have been made.\n
+                            Please select a different contribution type.""",
+                            id=f"check-alert-{PAGE}-{VIZ_ID}",
+                            dismissable=True,
+                            fade=False,
+                            is_open=False,
+                            color="warning",
+                            style={"marginTop": "1rem"}
                         ),
                     ]
                 ),
             ]
         )
     ],
+    style={
+        "padding": "20px",
+        "borderRadius": "10px",
+        "backgroundColor": "#292929",
+        "border": "1px solid #404040"
+    },
 )
 
 
@@ -249,6 +274,8 @@ def create_figure(df: pd.DataFrame, interval, action):
         yaxis_title="Contributors",
         margin_b=40,
         font=dict(size=14),
+        plot_bgcolor="#292929",
+        paper_bgcolor="#292929",
     )
 
     return fig

@@ -285,3 +285,104 @@ body input.form-control.dark-input:focus {
   box-shadow: 0 0 0 0.2rem rgba(64, 64, 64, 0.25) !important;
   background-image: none !important;
 }
+
+/* Custom dropdown styling for dark theme */
+.custom-dropdown .Select-control,
+.custom-dropdown .dropdown-toggle,
+.Select .Select-control {
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+  color: white !important;
+}
+
+.custom-dropdown .Select-menu-outer,
+.Select .Select-menu-outer {
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+}
+
+.custom-dropdown .Select-option,
+.Select .Select-option {
+  background-color: #404040 !important;
+  color: white !important;
+}
+
+.custom-dropdown .Select-option:hover,
+.Select .Select-option:hover {
+  background-color: #555555 !important;
+  color: white !important;
+}
+
+.custom-dropdown .Select-option.is-focused,
+.Select .Select-option.is-focused {
+  background-color: #555555 !important;
+  color: white !important;
+}
+
+/* Dark slider styling */
+.dark-slider .rc-slider {
+  background-color: transparent !important;
+}
+
+.dark-slider .rc-slider-track {
+  background-color: #6b8976 !important;
+}
+
+.dark-slider .rc-slider-handle {
+  border-color: #6b8976 !important;
+  background-color: #6b8976 !important;
+}
+
+.dark-slider .rc-slider-rail {
+  background-color: #404040 !important;
+}
+
+/* Dark date picker styling */
+.dark-date-picker .DateInput_input {
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+  color: white !important;
+}
+
+.dark-date-picker .DateInput_input:focus {
+  background-color: #404040 !important;
+  border-color: #555555 !important;
+  color: white !important;
+}
+
+.dark-date-picker .DateRangePickerInput {
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+}
+
+/* Fix for dropdown vertical bar issue */
+.custom-dropdown-fix .Select-control,
+.custom-dropdown-fix .Select-control:hover,
+.custom-dropdown-fix .Select-control:focus,
+.custom-dropdown-fix .is-focused .Select-control {
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+  color: white !important;
+  box-shadow: none !important;
+  border-right: none !important;
+}
+
+.custom-dropdown-fix .Select-arrow-zone {
+  border-left: none !important;
+}
+
+.custom-dropdown-fix .Select-arrow {
+  border-color: white transparent transparent !important;
+}
+
+.custom-dropdown-fix .Select-input {
+  color: white !important;
+}
+
+.custom-dropdown-fix .Select-placeholder {
+  color: white !important;
+}
+
+.custom-dropdown-fix .Select-single-value {
+  color: white !important;
+}

@@ -25,10 +25,41 @@ gc_contrib_importance_pie = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    id=f"graph-title-{PAGE}-{VIZ_ID}",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                id=f"graph-title-{PAGE}-{VIZ_ID}",
+                                className="card-title",
+                                style={"textAlign": "left", "fontSize": "20px", "color": "white"},
+                            ),
+                            width=10,
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
+                                style={
+                                    "backgroundColor": "#292929",
+                                    "borderColor": "#404040", 
+                                    "color": "white",
+                                    "borderRadius": "20px",
+                                    "padding": "6px 12px",
+                                    "fontSize": "14px",
+                                    "fontWeight": "500",
+                                    "border": "1px solid #404040",
+                                    "cursor": "pointer",
+                                    "transition": "all 0.2s ease",
+                                    "backgroundImage": "none",
+                                    "boxShadow": "none"
+                                }
+                            ),
+                            width=2,
+                            className="d-flex justify-content-end",
+                        ),
+                    ],
+                    align="center",
                 ),
                 dbc.Popover(
                     [
@@ -53,18 +84,24 @@ gc_contrib_importance_pie = dbc.Card(
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
+                html.Hr(style={
+                    "borderColor": "#e0e0e0", 
+                    "margin": "1.5rem -2rem", 
+                    "width": "calc(100% + 4rem)",
+                    "marginLeft": "-2rem"
+                }),
                 dbc.Form(
                     [
                         dbc.Row(
                             [
-                                dbc.Label(
-                                    "Action Type:",
-                                    html_for=f"action-type-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
                                 dbc.Col(
                                     [
-                                        dcc.Dropdown(
+                                        dbc.Label(
+                                            "Action Type:",
+                                            html_for=f"action-type-{PAGE}-{VIZ_ID}",
+                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                        ),
+                                        dbc.Select(
                                             id=f"action-type-{PAGE}-{VIZ_ID}",
                                             options=[
                                                 {"label": "Commit", "value": "Commit"},
@@ -94,8 +131,63 @@ gc_contrib_importance_pie = dbc.Card(
                                                 },
                                             ],
                                             value="Commit",
-                                            clearable=False,
+                                            size="sm",
+                                            style={
+                                                "fontSize": "14px",
+                                                "backgroundColor": "#404040",
+                                                "borderColor": "#404040",
+                                                "color": "white",
+                                                "height": "32px",
+                                                "padding": "4px 8px"
+                                            }
                                         ),
+                                    ],
+                                    width=4,
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.Label(
+                                            "Top K Contributors:",
+                                            html_for=f"top-k-contributors-{PAGE}-{VIZ_ID}",
+                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                        ),
+                                        dbc.Input(
+                                            id=f"top-k-contributors-{PAGE}-{VIZ_ID}",
+                                            type="number",
+                                            min=2,
+                                            max=100,
+                                            step=1,
+                                            value=10,
+                                            size="sm",
+                                            className="dark-input"
+                                        ),
+                                    ],
+                                    width=3,
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.Label(
+                                            "Date Range:",
+                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                        ),
+                                        dcc.DatePickerRange(
+                                            id=f"date-picker-range-{PAGE}-{VIZ_ID}",
+                                            min_date_allowed=dt.date(2005, 1, 1),
+                                            max_date_allowed=dt.date.today(),
+                                            initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                                            clearable=True,
+                                            className="dark-date-picker"
+                                        ),
+                                    ],
+                                    width=5,
+                                ),
+                            ],
+                            className="mb-3",
+                        ),
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    [
                                         dbc.Alert(
                                             children="""No contributions of this type have been made.\n
                                             Please select a different contribution type.""",
@@ -106,66 +198,22 @@ gc_contrib_importance_pie = dbc.Card(
                                             color="warning",
                                         ),
                                     ],
-                                    className="me-2",
-                                    width=3,
-                                ),
-                                dbc.Label(
-                                    "Top K Contributors:",
-                                    html_for=f"top-k-contributors-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
-                                dbc.Col(
-                                    [
-                                        dbc.Input(
-                                            id=f"top-k-contributors-{PAGE}-{VIZ_ID}",
-                                            type="number",
-                                            min=2,
-                                            max=100,
-                                            step=1,
-                                            value=10,
-                                            size="sm",
-                                        ),
-                                    ],
-                                    className="me-2",
-                                    width=2,
+                                    width=12,
                                 ),
                             ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
-                                dbc.Col(
-                                    [
-                                        dcc.DatePickerRange(
-                                            id=f"date-picker-range-{PAGE}-{VIZ_ID}",
-                                            min_date_allowed=dt.date(2005, 1, 1),
-                                            max_date_allowed=dt.date.today(),
-                                            initial_visible_month=dt.date(dt.date.today().year, 1, 1),
-                                            clearable=True,
-                                        ),
-                                    ],
-                                ),
-                                dbc.Col(
-                                    [
-                                        dbc.Button(
-                                            "About Graph",
-                                            id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                            color="secondary",
-                                            size="sm",
-                                        ),
-                                    ],
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
-                                ),
-                            ],
-                            align="center",
-                            justify="between",
                         ),
                     ]
                 ),
             ]
         )
     ],
+    style={
+        "padding": "2rem",
+        "borderRadius": "15px",
+        "backgroundColor": "#292929",
+        "border": "1px solid #404040",
+        "marginBottom": "2rem",
+    },
 )
 
 
@@ -312,6 +360,11 @@ def create_figure(df: pd.DataFrame, action_type):
     )
 
     # add legend title
-    fig.update_layout(legend_title_text="Contributor ID")
+    fig.update_layout(
+        legend_title_text="Contributor ID",
+        plot_bgcolor='#292929',
+        paper_bgcolor='#292929',
+        font=dict(color='white')
+    )
 
     return fig
