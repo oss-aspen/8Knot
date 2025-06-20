@@ -576,12 +576,12 @@ layout = html.Div(
                             [
                                 dbc.Col(
                                     [
-                                        dbc.Label(
-                                            "Select GitHub repos or orgs:",
-                                            html_for="projects",
-                                            width="auto",
-                                            size="lg",
-                                        ),
+                                        # dbc.Label(
+                                        #     "Select GitHub repos or orgs:",
+                                        #     html_for="projects",
+                                        #     width="auto",
+                                        #     size="lg",
+                                        # ),
                                         dcc.Loading(
                                             children=[html.Div(id="results-output-container", className="mb-4")],
                                             color="#119DFF",
