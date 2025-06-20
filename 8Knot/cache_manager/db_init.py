@@ -256,42 +256,43 @@ def _create_application_tables() -> None:
         )
         logging.warning("CREATED pr_assignments TABLE")
 
-        cur.execute(
-            """
-            CREATE UNLOGGED TABLE IF NOT EXISTS cntrb_per_file_query(
-                repo_id int,
-                file_path text,
-                cntrb_ids text,
-                reviewer_ids text
-            )
-            """
-        )
-        logging.warning("CREATED cntrb_per_file_query TABLE")
+        # Commented out tables - not currently needed
+        # cur.execute(
+        #     """
+        #     CREATE UNLOGGED TABLE IF NOT EXISTS cntrb_per_file_query(
+        #         repo_id int,
+        #         file_path text,
+        #         cntrb_ids text,
+        #         reviewer_ids text
+        #     )
+        #     """
+        # )
+        # logging.warning("CREATED cntrb_per_file_query TABLE")
 
-        cur.execute(
-            """
-            CREATE UNLOGGED TABLE IF NOT EXISTS pr_file_query(
-                file_path text,
-                pull_request_id int,
-                repo_id int
-            )
-            """
-        )
-        logging.warning("CREATED pr_file_query TABLE")
+        # cur.execute(
+        #     """
+        #     CREATE UNLOGGED TABLE IF NOT EXISTS pr_file_query(
+        #         file_path text,
+        #         pull_request_id int,
+        #         repo_id int
+        #     )
+        #     """
+        # )
+        # logging.warning("CREATED pr_file_query TABLE")
 
-        cur.execute(
-            """
-            CREATE UNLOGGED TABLE IF NOT EXISTS repo_files_query(
-                repo_id int,
-                repo_name text,
-                repo_path text,
-                rl_analysis_date text,
-                file_path text,
-                file_name text
-            )
-            """
-        )
-        logging.warning("CREATED repo_files_query TABLE")
+        # cur.execute(
+        #     """
+        #     CREATE UNLOGGED TABLE IF NOT EXISTS repo_files_query(
+        #         repo_id int,
+        #         repo_name text,
+        #         repo_path text,
+        #         rl_analysis_date text,
+        #         file_path text,
+        #         file_name text
+        #     )
+        #     """
+        # )
+        # logging.warning("CREATED repo_files_query TABLE")
 
         cur.execute(
             """
