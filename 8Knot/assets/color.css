@@ -387,9 +387,11 @@ body input.form-control.dark-input:focus {
   color: white !important;
 }
 
+
 .DateRangePickerInput
 .DateInput_input,
 .DateInput_input__focused {
+    height: 16px;
     outline: 0;
     background: #404040 !important;
     border: 0 !important;
@@ -397,6 +399,16 @@ body input.form-control.dark-input:focus {
     border-right: 0;
     border-bottom: 2px solid #008489;
     border-left: 0;
+}
+
+.DateInput_input {
+  font-weight: 400;
+  font-size: 19px;
+  color: #ffffff
+}
+
+.DateInput {
+  background: #404040
 }
 
 .DateRangePickerInput {
