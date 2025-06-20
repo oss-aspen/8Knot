@@ -22,10 +22,41 @@ gc_pr_assignment = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "Pull Request Review Status Counts",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "Pull Request Review Status Counts",
+                                className="card-title",
+                                style={"textAlign": "left", "fontSize": "20px"},
+                            ),
+                            width=10,
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
+                                style={
+                                    "backgroundColor": "#292929",
+                                    "borderColor": "#404040", 
+                                    "color": "white",
+                                    "borderRadius": "20px",
+                                    "padding": "6px 12px",
+                                    "fontSize": "14px",
+                                    "fontWeight": "500",
+                                    "border": "1px solid #404040",
+                                    "cursor": "pointer",
+                                    "transition": "all 0.2s ease",
+                                    "backgroundImage": "none",
+                                    "boxShadow": "none"
+                                }
+                            ),
+                            width=2,
+                            className="d-flex justify-content-end",
+                        ),
+                    ],
+                    align="center",
                 ),
                 dbc.Popover(
                     [
@@ -45,19 +76,26 @@ gc_pr_assignment = dbc.Card(
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
+                html.Hr(style={
+                    "borderColor": "#e0e0e0", 
+                    "margin": "1.5rem -2rem", 
+                    "width": "calc(100% + 4rem)",
+                    "marginLeft": "-2rem"
+                }),
                 dbc.Form(
                     [
                         dbc.Row(
                             [
-                                dbc.Label(
-                                    "Date Interval:",
-                                    html_for=f"date-radio-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
                                 dbc.Col(
                                     [
+                                        dbc.Label(
+                                            "Date Interval:",
+                                            html_for=f"date-radio-{PAGE}-{VIZ_ID}",
+                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                        ),
                                         dbc.RadioItems(
                                             id=f"date-radio-{PAGE}-{VIZ_ID}",
+                                            className="modern-radio-buttons-small",
                                             options=[
                                                 {"label": "Trend", "value": "D"},
                                                 {"label": "Week", "value": "W"},
@@ -67,26 +105,19 @@ gc_pr_assignment = dbc.Card(
                                             value="W",
                                             inline=True,
                                         ),
-                                    ]
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
+                                    ],
+                                    width="auto"
                                 ),
                             ],
-                            align="center",
+                            justify="start",
                         ),
                     ]
                 ),
-            ]
+            ],
+            style={"padding": "2rem"}
         )
     ],
+    style={"backgroundColor": "#292929", "borderRadius": "15px", "border": "1px solid #404040"}
 )
 
 
@@ -251,6 +282,8 @@ def create_figure(df: pd.DataFrame, interval):
         yaxis_title="Pull Requests",
         legend_title="Types",
         font=dict(size=14),
+        plot_bgcolor="#292929",
+        paper_bgcolor="#292929",
     )
 
     return fig

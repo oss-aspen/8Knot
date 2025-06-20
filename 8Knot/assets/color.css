@@ -87,3 +87,201 @@ blockquote p {
 .popover {
   max-width: 500px;
 }
+
+/* Custom hover styles for About Graph button */
+.custom-hover-button:hover {
+  background-color: #3f3f3f !important;
+  border-color: #404040 !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3) !important;
+  /* transform: translateY(-2px) !important; */
+}
+
+/* Modern radio button styling */
+.modern-radio-buttons .form-check-input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background-color: transparent;
+  position: relative;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+.modern-radio-buttons .form-check-input[type="radio"]:checked {
+  border-color: white;
+  background-color: transparent;
+}
+
+.modern-radio-buttons .form-check-input[type="radio"]:checked::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: white;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.modern-radio-buttons .form-check-input[type="radio"]:focus {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+  outline: none;
+}
+
+.modern-radio-buttons .form-check-label {
+  color: white;
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+/* Smaller modern radio button styling */
+.modern-radio-buttons-small .form-check-input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background-color: transparent;
+  position: relative;
+  cursor: pointer;
+  margin-right: 6px;
+  margin-top: 0;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.modern-radio-buttons-small .form-check-input[type="radio"]:checked {
+  border-color: white;
+  background-color: transparent;
+}
+
+.modern-radio-buttons-small .form-check-input[type="radio"]:checked::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: white;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.modern-radio-buttons-small .form-check-input[type="radio"]:focus {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+  outline: none;
+}
+
+.modern-radio-buttons-small .form-check-label {
+  color: white;
+  cursor: pointer;
+  margin-left: 2px;
+  font-size: 13px;
+  line-height: 14px;
+  margin-top: 0;
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+}
+
+.modern-radio-buttons-small .form-check {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 12px;
+  margin-top: 0;
+  margin-bottom: 0;
+  min-height: auto;
+}
+
+/* Override slate theme for specific graph title
+#graph-title-repo_info-code-languages {
+  color: white !important;
+} */
+
+/* Override slate theme for Pull Requests Over Time title */
+.card-title {
+  color: white !important;
+}
+
+/* Custom styling for dark theme input fields */
+.dark-input,
+input.dark-input,
+.form-control.dark-input,
+input[type="number"].dark-input,
+input[type="text"].dark-input,
+.form-control.form-control-sm.dark-input,
+.form-control.form-control-sm.dark-input[type="number"],
+div .form-control.dark-input,
+div input.dark-input.form-control {
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+  color: white !important;
+  background-image: none !important;
+}
+
+.dark-input:focus,
+input.dark-input:focus,
+.form-control.dark-input:focus,
+input[type="number"].dark-input:focus,
+input[type="text"].dark-input:focus,
+.form-control.form-control-sm.dark-input:focus,
+.form-control.form-control-sm.dark-input[type="number"]:focus,
+div .form-control.dark-input:focus,
+div input.dark-input.form-control:focus {
+  background-color: #404040 !important;
+  border-color: #555555 !important;
+  color: white !important;
+  box-shadow: 0 0 0 0.2rem rgba(64, 64, 64, 0.25) !important;
+  background-image: none !important;
+}
+
+/* Placeholder text styling for dark inputs */
+.dark-input::placeholder,
+input.dark-input::placeholder,
+.form-control.dark-input::placeholder {
+  color: #cccccc !important;
+  opacity: 1 !important;
+}
+
+/* Specific selectors for backward compatibility */
+#staling-days-contributions-pr-staleness,
+#stale-days-contributions-pr-staleness {
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+  color: white !important;
+}
+
+#staling-days-contributions-pr-staleness:focus,
+#stale-days-contributions-pr-staleness:focus {
+  background-color: #404040 !important;
+  border-color: #555555 !important;
+  color: white !important;
+  box-shadow: 0 0 0 0.2rem rgba(64, 64, 64, 0.25) !important;
+}
+
+/* Nuclear option - most specific selectors for dark inputs */
+body .container-fluid .form-control.dark-input,
+body div .form-control.dark-input,
+body input.form-control.dark-input {
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+  color: white !important;
+  background-image: none !important;
+}
+
+body .container-fluid .form-control.dark-input:focus,
+body div .form-control.dark-input:focus,
+body input.form-control.dark-input:focus {
+  background-color: #404040 !important;
+  border-color: #555555 !important;
+  color: white !important;
+  box-shadow: 0 0 0 0.2rem rgba(64, 64, 64, 0.25) !important;
+  background-image: none !important;
+}
