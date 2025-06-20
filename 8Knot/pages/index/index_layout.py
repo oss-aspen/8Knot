@@ -5,6 +5,7 @@ import dash_mantine_components as dmc
 from app import augur
 import os
 import logging
+from dash.dependencies import Input, Output, State
 
 #  login banner that will be displayed when login is disabled
 login_banner = None
@@ -310,11 +311,15 @@ search_bar = html.Div(
     ]
 )
 
+# Add a Store to keep sidebar state
+sidebar_state_store = dcc.Store(id="sidebar-collapsed", data=False, storage_type="session")
+
 layout = html.Div(
     [
         dcc.Store(id="repo-choices", storage_type="session", data=[]),
         dcc.Store(id="job-ids", storage_type="session", data=[]),
         dcc.Store(id="user-group-loading-signal", data="", storage_type="memory"),
+        sidebar_state_store,
         dcc.Location(id="url"),
         html.Script(
             """
@@ -349,42 +354,219 @@ layout = html.Div(
         ),
         html.Div(
             [
-                # Sidebar Card (larger, with search bar and buttons)
-                dbc.Card(
+                # Sidebar Card (retractable)
+                html.Div(
                     [
-                        html.H4("Sidebar"),
-                        html.Hr(),
-                        # Search bar and buttons moved here
-                        search_bar,
-                        dbc.Nav(
+                        dbc.Button(
+                            id="sidebar-toggle-btn",
+                            n_clicks=0,
+                            color="secondary",
+                            style={
+                                "borderRadius": "50%",
+                                "width": "36px",
+                                "height": "36px",
+                                "position": "absolute",
+                                "top": "64px",  # moved further down from the top
+                                "right": "-18px",
+                                "zIndex": 10,
+                                "boxShadow": "0 2px 8px rgba(0,0,0,0.15)",
+                                "padding": 0,
+                                "display": "flex",
+                                "alignItems": "center",
+                                "justifyContent": "center",
+                                "background": "#232323",
+                                "color": "#fff",
+                                "border": "2px solid #fff",
+                            },
+                            children=html.I(id="sidebar-toggle-icon", className="bi bi-chevron-left"),
+                        ),
+                        dbc.Card(
                             [
-                                dbc.NavLink("Home", href="/", active="exact"),
-                                dbc.NavLink("Repo Overview", href="/repo_overview", active="exact"),
-                                dbc.NavLink("Contributions", href="/contributions", active="exact"),
-                                dbc.NavLink("Affiliation", href="/affiliation", active="exact"),
-                                dbc.NavLink("CHAOSS", href="/chaoss", active="exact"),
-                                dbc.NavLink("Codebase", href="/codebase", active="exact"),
-                                dbc.NavLink("Info", href="/info", active="exact"),
+                                html.Div(
+                                    [
+                                        html.H4("Sidebar"),
+                                        html.Hr(),
+                                        search_bar,
+                                    ],
+                                    id="sidebar-full-content",
+                                    style={"display": "block"}
+                                ),
+                                dbc.Nav(
+                                    [
+                                        dbc.NavLink(
+                                            [
+                                                html.I(className="fas fa-home", style={"width": "20px", "textAlign": "center", "marginRight": "12px"}),
+                                                html.Span("Home", id="home-text")
+                                            ],
+                                            href="/",
+                                            active="exact",
+                                            className="sidebar-nav-link",
+                                            style={
+                                                "display": "flex",
+                                                "alignItems": "center",
+                                                "padding": "12px 16px",
+                                                "marginBottom": "8px",
+                                                "borderRadius": "8px",
+                                                "color": "#ffffff",
+                                                "textDecoration": "none",
+                                                "fontSize": "16px",
+                                                "fontWeight": "400",
+                                            }
+                                        ),
+                                        dbc.NavLink(
+                                            [
+                                                html.I(className="fas fa-chart-bar", style={"width": "20px", "textAlign": "center", "marginRight": "12px"}),
+                                                html.Span("Repo Overview", id="repo-overview-text")
+                                            ],
+                                            href="/repo_overview",
+                                            active="exact",
+                                            className="sidebar-nav-link",
+                                            style={
+                                                "display": "flex",
+                                                "alignItems": "center",
+                                                "padding": "12px 16px",
+                                                "marginBottom": "8px",
+                                                "borderRadius": "8px",
+                                                "color": "#ffffff",
+                                                "textDecoration": "none",
+                                                "fontSize": "16px",
+                                                "fontWeight": "400",
+                                            }
+                                        ),
+                                        dbc.NavLink(
+                                            [
+                                                html.I(className="fas fa-code-branch", style={"width": "20px", "textAlign": "center", "marginRight": "12px"}),
+                                                html.Span("Contributions", id="contributions-text")
+                                            ],
+                                            href="/contributions",
+                                            active="exact",
+                                            className="sidebar-nav-link",
+                                            style={
+                                                "display": "flex",
+                                                "alignItems": "center",
+                                                "padding": "12px 16px",
+                                                "marginBottom": "8px",
+                                                "borderRadius": "8px",
+                                                "color": "#ffffff",
+                                                "textDecoration": "none",
+                                                "fontSize": "16px",
+                                                "fontWeight": "400",
+                                            }
+                                        ),
+                                        dbc.NavLink(
+                                            [
+                                                html.I(className="fas fa-users", style={"width": "20px", "textAlign": "center", "marginRight": "12px"}),
+                                                html.Span("Contributors", id="contributors-text")
+                                            ],
+                                            href="/contributors",
+                                            active="exact",
+                                            className="sidebar-nav-link",
+                                            style={
+                                                "display": "flex",
+                                                "alignItems": "center",
+                                                "padding": "12px 16px",
+                                                "marginBottom": "8px",
+                                                "borderRadius": "8px",
+                                                "color": "#ffffff",
+                                                "textDecoration": "none",
+                                                "fontSize": "16px",
+                                                "fontWeight": "400",
+                                            }
+                                        ),
+                                        dbc.NavLink(
+                                            [
+                                                html.I(className="fas fa-building", style={"width": "20px", "textAlign": "center", "marginRight": "12px"}),
+                                                html.Span("Affiliation", id="affiliation-text")
+                                            ],
+                                            href="/affiliation",
+                                            active="exact",
+                                            className="sidebar-nav-link",
+                                            style={
+                                                "display": "flex",
+                                                "alignItems": "center",
+                                                "padding": "12px 16px",
+                                                "marginBottom": "8px",
+                                                "borderRadius": "8px",
+                                                "color": "#ffffff",
+                                                "textDecoration": "none",
+                                                "fontSize": "16px",
+                                                "fontWeight": "400",
+                                            }
+                                        ),
+                                        dbc.NavLink(
+                                            [
+                                                html.I(className="fas fa-cog", style={"width": "20px", "textAlign": "center", "marginRight": "12px"}),
+                                                html.Span("CHAOSS", id="chaoss-text")
+                                            ],
+                                            href="/chaoss",
+                                            active="exact",
+                                            className="sidebar-nav-link",
+                                            style={
+                                                "display": "flex",
+                                                "alignItems": "center",
+                                                "padding": "12px 16px",
+                                                "marginBottom": "8px",
+                                                "borderRadius": "8px",
+                                                "color": "#ffffff",
+                                                "textDecoration": "none",
+                                                "fontSize": "16px",
+                                                "fontWeight": "400",
+                                            }
+                                        ),
+                                        dbc.NavLink(
+                                            [
+                                                html.I(className="fas fa-code", style={"width": "20px", "textAlign": "center", "marginRight": "12px"}),
+                                                html.Span("Codebase", id="codebase-text")
+                                            ],
+                                            href="/codebase",
+                                            active="exact",
+                                            className="sidebar-nav-link",
+                                            style={
+                                                "display": "flex",
+                                                "alignItems": "center",
+                                                "padding": "12px 16px",
+                                                "marginBottom": "8px",
+                                                "borderRadius": "8px",
+                                                "color": "#ffffff",
+                                                "textDecoration": "none",
+                                                "fontSize": "16px",
+                                                "fontWeight": "400",
+                                            }
+                                        ),
+                                    ],
+                                    vertical=True,
+                                    className="sidebar-nav",
+                                    style={"marginTop": "24px"}
+                                ),
                             ],
-                            vertical=True,
-                            pills=True,
+                            id="sidebar-card",
+                            style={
+                                "borderRadius": "14px 0 0 14px",
+                                "height": "95vh",
+                                "width": "340px",
+                                "background": "#232323",
+                                "color": "#fff",
+                                "padding": "32px 18px 32px 18px",
+                                "boxShadow": "0 8px 32px rgba(0,0,0,0.12)",
+                                "display": "flex",
+                                "flexDirection": "column",
+                                "justifyContent": "flex-start",
+                                "margin": "40px 0 20px 10px",
+                                "zIndex": 2,
+                                "transition": "width 0.3s cubic-bezier(.4,2,.6,1)",
+                                "overflow": "hidden",
+                            },
+                            className="sidebar-card",
                         ),
                     ],
+                    id="sidebar-container",
                     style={
-                        "borderRadius": "14px 0 0 14px",
-                        "height": "95vh",
-                        "width": "340px",
-                        "background": "#232323",
-                        "color": "#fff",
-                        "padding": "32px 18px 32px 18px",
-                        "boxShadow": "0 8px 32px rgba(0,0,0,0.12)",
+                        "position": "relative",
+                        "transition": "width 0.3s cubic-bezier(.4,2,.6,1)",
                         "display": "flex",
-                        "flexDirection": "column",
-                        "justifyContent": "flex-start",
-                        "margin": "40px 0 20px 10px",
-                        "zIndex": 2,
+                        "flexDirection": "row",
+                        "alignItems": "stretch",
                     },
-                    className="sidebar-card",
                 ),
                 # Main Card
                 dbc.Card(
@@ -439,8 +621,10 @@ layout = html.Div(
                         "overflowX": "hidden",
                         "display": "flex",
                         "flexDirection": "column",
+                        "transition": "margin-left 0.3s cubic-bezier(.4,2,.6,1)",
                     },
                     className="big-main-card",
+                    id="main-card",
                 ),
             ],
             style={
@@ -452,3 +636,76 @@ layout = html.Div(
         ),
     ]
 )
+
+# Dash callback for sidebar toggle
+@dash.callback(
+    [
+        Output("sidebar-card", "style"),
+        Output("sidebar-full-content", "style"),
+        Output("home-text", "style"),
+        Output("repo-overview-text", "style"),
+        Output("contributions-text", "style"),
+        Output("contributors-text", "style"),
+        Output("affiliation-text", "style"),
+        Output("chaoss-text", "style"),
+        Output("codebase-text", "style"),
+        Output("main-card", "style"),
+        Output("sidebar-toggle-icon", "className"),
+        Output("sidebar-collapsed", "data"),
+    ],
+    [Input("sidebar-toggle-btn", "n_clicks")],
+    [State("sidebar-collapsed", "data")],
+    prevent_initial_call=True,
+)
+def toggle_sidebar(n, collapsed):
+    if not n:
+        raise dash.exceptions.PreventUpdate
+    collapsed = not collapsed
+    
+    # Text visibility style
+    text_style = {"display": "none"} if collapsed else {"display": "inline"}
+    
+    # Full content visibility style
+    full_content_style = {"display": "none"} if collapsed else {"display": "block"}
+    
+    sidebar_style = {
+        "borderRadius": "14px 0 0 14px",
+        "height": "95vh",
+        "width": "60px" if collapsed else "340px",
+        "background": "#232323",
+        "color": "#fff",
+        "padding": "32px 6px 32px 6px" if collapsed else "32px 18px 32px 18px",
+        "boxShadow": "0 8px 32px rgba(0,0,0,0.12)",
+        "display": "flex",
+        "flexDirection": "column",
+        "justifyContent": "flex-start",
+        "margin": "40px 0 20px 10px",
+        "zIndex": 2,
+        "transition": "width 0.3s cubic-bezier(.4,2,.6,1)",
+        "overflow": "hidden",
+    }
+    main_style = {
+        "borderRadius": "0 14px 14px 0",
+        "padding": "40px 40px 40px 40px",
+        "margin": "40px 10px 20px 0",
+        "width": f"calc(99vw - {'60px' if collapsed else '340px'})",
+        "maxWidth": f"calc(100vw - {'60px' if collapsed else '340px'})",
+        "boxShadow": "0 8px 32px rgba(0,0,0,0.12)",
+        "background": "#1D1D1D",
+        "height": "95vh",
+        "overflowY": "auto",
+        "overflowX": "hidden",
+        "display": "flex",
+        "flexDirection": "column",
+        "transition": "margin-left 0.3s cubic-bezier(.4,2,.6,1)",
+    }
+    icon = "bi bi-chevron-right" if collapsed else "bi bi-chevron-left"
+    
+    return (
+        sidebar_style, 
+        full_content_style, 
+        text_style, text_style, text_style, text_style, text_style, text_style, text_style,
+        main_style, 
+        icon, 
+        collapsed
+    )
