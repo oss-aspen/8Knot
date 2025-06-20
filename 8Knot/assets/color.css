@@ -96,7 +96,7 @@ blockquote p {
   /* transform: translateY(-2px) !important; */
 }
 
-/* Modern radio button styling */
+/* Existing styles for modern radio buttons */
 .modern-radio-buttons .form-check-input[type="radio"] {
   appearance: none;
   -webkit-appearance: none;
@@ -385,4 +385,26 @@ body input.form-control.dark-input:focus {
 
 .custom-dropdown-fix .Select-single-value {
   color: white !important;
+}
+
+.DateRangePickerInput
+.DateInput_input,
+.DateInput_input__focused {
+    outline: 0;
+    background: #404040 !important;
+    border: 0 !important;
+    border-top: 0 !important;
+    border-right: 0;
+    border-bottom: 2px solid #008489;
+    border-left: 0;
+}
+
+.DateRangePickerInput {
+    background-color: #404040;
+    display: inline-block;
+}
+
+.DateRangePickerInput__withBorder {
+    border-radius: 7px;
+    border: 1px solid #404040;
 }
