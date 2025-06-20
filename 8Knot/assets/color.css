@@ -408,3 +408,16 @@ body input.form-control.dark-input:focus {
     border-radius: 7px;
     border: 1px solid #404040;
 }
+
+/* Hide the SVG arrow inside the container, not the container itself */
+.DateRangePickerInput_arrow_svg {
+    display: none !important;
+}
+
+.DateRangePickerInput_arrow::before {
+  content: "→" !important;
+  font-size: 1.2em !important;
+  color: #fff9f9 !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+}
