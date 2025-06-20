@@ -22,9 +22,10 @@ from queries.pr_assignee_query import pr_assignee_query as praq
 from queries.issue_assignee_query import issue_assignee_query as iaq
 from queries.user_groups_query import user_groups_query as ugq
 from queries.pr_response_query import pr_response_query as prr
-from queries.cntrb_per_file_query import cntrb_per_file_query as cpfq
-from queries.repo_files_query import repo_files_query as rfq
-from queries.pr_files_query import pr_file_query as prfq
+
+# from queries.cntrb_per_file_query import cntrb_per_file_query as cpfq - codebase page disabled
+# from queries.repo_files_query import repo_files_query as rfq - codebase page disabled
+# from queries.pr_files_query import pr_file_query as prfq - codebase page disabled
 from queries.repo_languages_query import repo_languages_query as rlq
 from queries.package_version_query import package_version_query as pvq
 from queries.repo_releases_query import repo_releases_query as rrq
@@ -35,7 +36,8 @@ import flask
 
 
 # list of queries to be run
-QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq]
+# QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq] - codebase page disabled
+QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, rlq, pvq, rrq, osq, riq]
 
 
 # check if login has been enabled in config
