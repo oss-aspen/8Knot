@@ -433,3 +433,20 @@ body input.form-control.dark-input:focus {
   display: inline-block !important;
   vertical-align: middle !important;
 }
+
+.mantine-fi0ix7 {
+  border-radius: 30px !important;
+  background-color: #292929;
+  min-height: 48px;
+  border: 1px solid #404040;
+}
+
+.mantine-fi0ix7:focus-within, .mantine-fi0ix7:focus {
+  border: 1px solid transparent;
+  background-image:
+    linear-gradient(#292929, #292929),
+    linear-gradient(90deg, #3a8dde, #1e3c72, #2a5298, #6dd5ed, #2193b0);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+}
+

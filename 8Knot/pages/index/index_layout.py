@@ -384,8 +384,6 @@ layout = html.Div(
                             [
                                 html.Div(
                                     [
-                                        html.H4("Sidebar"),
-                                        html.Hr(),
                                         search_bar,
                                     ],
                                     id="sidebar-full-content",
