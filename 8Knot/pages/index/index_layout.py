@@ -420,7 +420,17 @@ layout = html.Div(
                                                     src=dash.get_asset_url("repo_overview.svg"),
                                                     style={"width": "30px", "height": "30px", "marginRight": "12px", "verticalAlign": "middle"},
                                                 ),
-                                                html.Span("Repo Overview", id="repo-overview-text")
+                                                html.Span(
+                                                    "Repo Overview",
+                                                    id="repo-overview-text",
+                                                    style={
+                                                        "color": "#B0B0B0",  # match icon color (light gray)
+                                                        "fontWeight": 300,   # thinner font
+                                                        "fontSize": "16px",
+                                                        "verticalAlign": "middle",
+                                                        "letterSpacing": "0.01em",
+                                                    },
+                                                )
                                             ],
                                             href="/repo_overview",
                                             active="exact",
@@ -431,10 +441,10 @@ layout = html.Div(
                                                 "padding": "12px 16px",
                                                 "marginBottom": "8px",
                                                 "borderRadius": "8px",
-                                                "color": "#ffffff",
+                                                "color": "#B0B0B0",  # match icon color
                                                 "textDecoration": "none",
                                                 "fontSize": "16px",
-                                                "fontWeight": "400",
+                                                "fontWeight": 300,  # thinner font
                                             }
                                         ),
                                         dbc.NavLink(
@@ -443,7 +453,17 @@ layout = html.Div(
                                                     src=dash.get_asset_url("contributions.svg"),
                                                     style={"width": "30px", "height": "30px", "marginRight": "12px", "verticalAlign": "middle"},
                                                 ),
-                                                html.Span("Contributions", id="contributions-text")
+                                                html.Span(
+                                                    "Contributions",
+                                                    id="contributions-text",
+                                                    style={
+                                                        "color": "#B0B0B0",  # match icon color (light gray)
+                                                        "fontWeight": 300,   # thinner font
+                                                        "fontSize": "16px",
+                                                        "verticalAlign": "middle",
+                                                        "letterSpacing": "0.01em",
+                                                    },
+                                                )
                                             ],
                                             href="/contributions",
                                             active="exact",
@@ -454,10 +474,10 @@ layout = html.Div(
                                                 "padding": "12px 16px",
                                                 "marginBottom": "8px",
                                                 "borderRadius": "8px",
-                                                "color": "#ffffff",
+                                                "color": "#B0B0B0",  # match icon color
                                                 "textDecoration": "none",
                                                 "fontSize": "16px",
-                                                "fontWeight": "400",
+                                                "fontWeight": 300,  # thinner font
                                             }
                                         ),
                                         dbc.NavLink(
@@ -466,7 +486,17 @@ layout = html.Div(
                                                     src=dash.get_asset_url("contributors.svg"),
                                                     style={"width": "30px", "height": "30px", "marginRight": "12px", "verticalAlign": "middle"},
                                                 ),
-                                                html.Span("Contributors", id="contributors-text")
+                                                html.Span(
+                                                    "Contributors",
+                                                    id="contributors-text",
+                                                    style={
+                                                        "color": "#B0B0B0",  # match icon color (light gray)
+                                                        "fontWeight": 300,   # thinner font
+                                                        "fontSize": "16px",
+                                                        "verticalAlign": "middle",
+                                                        "letterSpacing": "0.01em",
+                                                    },
+                                                )
                                             ],
                                             href="/contributors",
                                             active="exact",
@@ -477,10 +507,10 @@ layout = html.Div(
                                                 "padding": "12px 16px",
                                                 "marginBottom": "8px",
                                                 "borderRadius": "8px",
-                                                "color": "#ffffff",
+                                                "color": "#B0B0B0",  # match icon color
                                                 "textDecoration": "none",
                                                 "fontSize": "16px",
-                                                "fontWeight": "400",
+                                                "fontWeight": 300,  # thinner font
                                             }
                                         ),
                                         dbc.NavLink(
@@ -489,7 +519,17 @@ layout = html.Div(
                                                     src=dash.get_asset_url("affiliation.svg"),
                                                     style={"width": "30px", "height": "30px", "marginRight": "12px", "verticalAlign": "middle"},
                                                 ),
-                                                html.Span("Affiliation", id="affiliation-text")
+                                                html.Span(
+                                                    "Affiliation",
+                                                    id="affiliation-text",
+                                                    style={
+                                                        "color": "#B0B0B0",  # match icon color (light gray)
+                                                        "fontWeight": 300,   # thinner font
+                                                        "fontSize": "16px",
+                                                        "verticalAlign": "middle",
+                                                        "letterSpacing": "0.01em",
+                                                    },
+                                                )
                                             ],
                                             href="/affiliation",
                                             active="exact",
@@ -500,10 +540,10 @@ layout = html.Div(
                                                 "padding": "12px 16px",
                                                 "marginBottom": "8px",
                                                 "borderRadius": "8px",
-                                                "color": "#ffffff",
+                                                "color": "#B0B0B0",  # match icon color
                                                 "textDecoration": "none",
                                                 "fontSize": "16px",
-                                                "fontWeight": "400",
+                                                "fontWeight": 300,  # thinner font
                                             }
                                         ),
                                         dbc.NavLink(
@@ -512,7 +552,17 @@ layout = html.Div(
                                                     src=dash.get_asset_url("chaoss.svg"),
                                                     style={"width": "30px", "height": "30px", "marginRight": "12px", "verticalAlign": "middle"},
                                                 ),
-                                                html.Span("CHAOSS", id="chaoss-text")
+                                                html.Span(
+                                                    "CHAOSS",
+                                                    id="chaoss-text",
+                                                    style={
+                                                        "color": "#B0B0B0",  # match icon color (light gray)
+                                                        "fontWeight": 300,   # thinner font
+                                                        "fontSize": "16px",
+                                                        "verticalAlign": "middle",
+                                                        "letterSpacing": "0.01em",
+                                                    },
+                                                )
                                             ],
                                             href="/chaoss",
                                             active="exact",
@@ -523,10 +573,10 @@ layout = html.Div(
                                                 "padding": "12px 16px",
                                                 "marginBottom": "8px",
                                                 "borderRadius": "8px",
-                                                "color": "#ffffff",
+                                                "color": "#B0B0B0",  # match icon color
                                                 "textDecoration": "none",
                                                 "fontSize": "16px",
-                                                "fontWeight": "400",
+                                                "fontWeight": 300,  # thinner font
                                             }
                                         ),
                                         dbc.NavLink(
@@ -535,7 +585,17 @@ layout = html.Div(
                                                     src=dash.get_asset_url("codebase.svg"),
                                                     style={"width": "30px", "height": "30px", "marginRight": "12px", "verticalAlign": "middle"},
                                                 ),
-                                                html.Span("Codebase", id="codebase-text")
+                                                html.Span(
+                                                    "Codebase",
+                                                    id="codebase-text",
+                                                    style={
+                                                        "color": "#B0B0B0",  # match icon color (light gray)
+                                                        "fontWeight": 300,   # thinner font
+                                                        "fontSize": "16px",
+                                                        "verticalAlign": "middle",
+                                                        "letterSpacing": "0.01em",
+                                                    },
+                                                )
                                             ],
                                             href="/codebase",
                                             active="exact",
@@ -546,10 +606,10 @@ layout = html.Div(
                                                 "padding": "12px 16px",
                                                 "marginBottom": "8px",
                                                 "borderRadius": "8px",
-                                                "color": "#ffffff",
+                                                "color": "#B0B0B0",  # match icon color
                                                 "textDecoration": "none",
                                                 "fontSize": "16px",
-                                                "fontWeight": "400",
+                                                "fontWeight": 300,  # thinner font
                                             }
                                         ),
                                     ],
