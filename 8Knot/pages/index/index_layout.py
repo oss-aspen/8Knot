@@ -113,74 +113,17 @@ else:
 navbar = dbc.Navbar(
     dbc.Container(
         [
-            dbc.Row(
-                [
-                    dbc.Col(
-                        [
-                            html.Img(
-                                src=dash.get_asset_url("8knot-logo-vertical.png"),
-                                height="40px",
-                            ),
-                            dbc.NavbarBrand(
-                                "8Knot",
-                                id="navbar-title",
-                                className="ms-2",
-                            ),
-                        ],
-                        width={"size": "auto"},
-                    ),
-                    dbc.Col(
-                        [
-                            dbc.Nav(
-                                [
-                                    dbc.NavLink("Welcome", href="/", active="exact"),
-                                    dbc.NavLink("Repo Overview", href="/repo_overview", active="exact"),
-                                    dbc.NavLink(
-                                        "Contributions",
-                                        href="/contributions",
-                                        active="exact",
-                                    ),
-                                    dbc.DropdownMenu(
-                                        [
-                                            dbc.DropdownMenuItem(
-                                                "Behavior",
-                                                href="/contributors/behavior",
-                                            ),
-                                            dbc.DropdownMenuItem(
-                                                "Contribution Types",
-                                                href="/contributors/contribution_types",
-                                            ),
-                                        ],
-                                        label="Contributors",
-                                        nav=True,
-                                    ),
-                                    dbc.NavLink(
-                                        "Affiliation",
-                                        href="/affiliation",
-                                        active="exact",
-                                    ),
-                                    dbc.NavLink("CHAOSS", href="/chaoss", active="exact"),
-                                    dbc.NavLink("Codebase", href="/codebase", active="exact"),
-                                    dbc.NavLink("Info", href="/info", active="exact"),
-                                ],
-                                navbar=True,
-                            )
-                        ],
-                        width={"size": "auto"},
-                    ),
-                ],
-                align="center",
-                className="g-0",
-                justify="start",
+            html.Img(
+                src=dash.get_asset_url("8KnotMainLogo.svg"),
+                height="32px",
+                style={"margin": "8px 0 8px 32px"},  # Add left margin to shift right
+                id="main-logo-img",
             ),
-            # packaged as a list to make linter happy-
-            # it keeps making the login_navpar page-wrap as a tuple,
-            # so I wrapped it in a list.
-            login_navbar[0],
         ],
         fluid=True,
     ),
-    color="primary",
+    color="dark",  # Ensures dark Bootstrap background
+    style={"backgroundColor": "#131313"},
     dark=True,
     sticky="top",
 )
@@ -352,6 +295,7 @@ layout = html.Div(
             }
         """
         ),
+        navbar,
         html.Div(
             [
                 # Sidebar Card (retractable)
@@ -623,7 +567,7 @@ layout = html.Div(
                                 "borderRadius": "14px 0 0 14px",
                                 "height": "95vh",
                                 "width": "340px",
-                                "background": "#1D1D1D",
+                                "background": "#1D1D1D",  # set to #1D1D1D
                                 "color": "#fff",
                                 "padding": "32px 18px 32px 18px",
                                 "boxShadow": "0 8px 32px rgba(0,0,0,0.12)",
@@ -646,6 +590,7 @@ layout = html.Div(
                         "display": "flex",
                         "flexDirection": "row",
                         "alignItems": "stretch",
+                        "background": "#242424",  # set background for sidebar container back to #242424
                     },
                 ),
                 # Main Card
@@ -690,12 +635,12 @@ layout = html.Div(
                     ],
                     style={
                         "borderRadius": "0 14px 14px 0",
-                        "padding": "40px 40px 40px 40px",
+                        "padding": "0px 40px 40px 40px",
                         "margin": "40px 10px 20px 0",
                         "width": "calc(99vw - 340px)",
                         "maxWidth": "calc(100vw - 340px)",
                         "boxShadow": "0 8px 32px rgba(0,0,0,0.12)",
-                        "background": "#1D1D1D",
+                        "background": "#1D1D1D",  # set to #1D1D1D
                         "height": "95vh",
                         "overflowY": "auto",
                         "overflowX": "hidden",
@@ -713,6 +658,7 @@ layout = html.Div(
                 "flexDirection": "row",
                 "alignItems": "stretch",
                 "width": "100vw",
+                "background": "#242424",  # set background for the flex row
             },
         ),
     ]
@@ -753,7 +699,7 @@ def toggle_sidebar(n, collapsed):
         "borderRadius": "14px 0 0 14px",
         "height": "95vh",
         "width": "60px" if collapsed else "340px",
-        "background": "#1D1D1D",
+        "background": "#242424",  # changed from #1D1D1D
         "color": "#fff",
         "padding": "32px 6px 32px 6px" if collapsed else "32px 18px 32px 18px",
         "boxShadow": "0 8px 32px rgba(0,0,0,0.12)",
@@ -773,7 +719,7 @@ def toggle_sidebar(n, collapsed):
         "width": f"calc(99vw - {'60px' if collapsed else '340px'})",
         "maxWidth": f"calc(100vw - {'60px' if collapsed else '340px'})",
         "boxShadow": "0 8px 32px rgba(0,0,0,0.12)",
-        "background": "#1D1D1D",
+        "background": "#242424",  # changed from #1D1D1D
         "height": "95vh",
         "overflowY": "auto",
         "overflowX": "hidden",

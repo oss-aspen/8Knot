@@ -467,3 +467,8 @@ body input.form-control.dark-input:focus {
     line-height: 34px;
     width: 100%; */
 }
+
+.bg-dark {
+    --bs-bg-opacity: 1;
+    background-color: #242424 !important;
+}
