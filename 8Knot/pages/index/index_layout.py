@@ -113,17 +113,28 @@ else:
 navbar = dbc.Navbar(
     dbc.Container(
         [
-            html.Img(
-                src=dash.get_asset_url("8KnotMainLogo.svg"),
-                height="32px",
-                style={"margin": "8px 0 8px 32px"},  # Add left margin to shift right
-                id="main-logo-img",
+            html.Div(
+                [
+                    html.Img(
+                        src=dash.get_asset_url("8KnotMainLogo.svg"),
+                        height="24px",  # reduced from 32px
+                        style={"margin": "8px 0 8px 32px"},  # Add left margin to shift right
+                        id="main-logo-img",
+                    ),
+                    html.Img(
+                        src=dash.get_asset_url("chaosslogo.svg"),
+                        height="28px",
+                        style={"margin": "8px 0 8px 16px"},  # Add left margin for spacing
+                        id="chaoss-logo-img",
+                    ),
+                ],
+                style={"display": "flex", "alignItems": "center"}
             ),
         ],
         fluid=True,
     ),
     color="dark",  # Ensures dark Bootstrap background
-    style={"backgroundColor": "#131313"},
+    style={"backgroundColor": "#131313", "border": "none", "height": "60px", "minHeight": "60px"},  # Increase navbar height
     dark=True,
     sticky="top",
 )
@@ -567,7 +578,7 @@ layout = html.Div(
                                 "borderRadius": "14px 0 0 14px",
                                 "height": "95vh",
                                 "width": "340px",
-                                "background": "#1D1D1D",  # set to #1D1D1D
+                                "background": "#1D1D1D",
                                 "color": "#fff",
                                 "padding": "32px 18px 32px 18px",
                                 "boxShadow": "0 8px 32px rgba(0,0,0,0.12)",
@@ -575,7 +586,7 @@ layout = html.Div(
                                 "display": "flex",
                                 "flexDirection": "column",
                                 "justifyContent": "flex-start",
-                                "margin": "40px 0 20px 10px",
+                                "margin": "0px 0 20px 10px",  # set top margin to 0 to remove space below navbar
                                 "zIndex": 2,
                                 "transition": "width 0.3s cubic-bezier(.4,2,.6,1)",
                                 "overflow": "hidden",
@@ -635,12 +646,12 @@ layout = html.Div(
                     ],
                     style={
                         "borderRadius": "0 14px 14px 0",
-                        "padding": "0px 40px 40px 40px",
-                        "margin": "40px 10px 20px 0",
+                        "padding": "0px 40px 40px 40px",  # set top padding to 0 to remove space below navbar
+                        "margin": "0px 10px 20px 0",      # set top margin to 0 to remove space below navbar
                         "width": "calc(99vw - 340px)",
                         "maxWidth": "calc(100vw - 340px)",
                         "boxShadow": "0 8px 32px rgba(0,0,0,0.12)",
-                        "background": "#1D1D1D",  # set to #1D1D1D
+                        "background": "#1D1D1D",
                         "height": "95vh",
                         "overflowY": "auto",
                         "overflowX": "hidden",
@@ -707,15 +718,15 @@ def toggle_sidebar(n, collapsed):
         "display": "flex",
         "flexDirection": "column",
         "justifyContent": "flex-start",
-        "margin": "40px 0 20px 10px",
+        "margin": "0px 0 20px 10px",  # always 0 top margin to keep content flush with navbar
         "zIndex": 2,
         "transition": "width 0.3s cubic-bezier(.4,2,.6,1)",
         "overflow": "hidden",
     }
     main_style = {
         "borderRadius": "0 14px 14px 0",
-        "padding": "40px 40px 40px 40px",
-        "margin": "40px 10px 20px 0",
+        "padding": "0px 40px 40px 40px",  # always 0 top padding
+        "margin": "0px 10px 20px 0",      # always 0 top margin
         "width": f"calc(99vw - {'60px' if collapsed else '340px'})",
         "maxWidth": f"calc(100vw - {'60px' if collapsed else '340px'})",
         "boxShadow": "0 8px 32px rgba(0,0,0,0.12)",
