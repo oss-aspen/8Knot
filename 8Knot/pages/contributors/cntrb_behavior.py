@@ -18,23 +18,35 @@ layout = dbc.Container(
     [
         dbc.Row(
             [
-                dbc.Col(gc_contrib_drive_repeat, width=6),
-                dbc.Col(gc_first_time_contributions, width=6),
+                dbc.Col(gc_contrib_drive_repeat, width=12),
             ],
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
             [
-                dbc.Col(gc_active_drifting_contributors, width=6),
-                dbc.Col(gc_new_contributor, width=6),
+                dbc.Col(gc_first_time_contributions, width=12),
             ],
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
             [
-                dbc.Col(gc_contributors_over_time, width=6),
+                dbc.Col(gc_active_drifting_contributors, width=12),
+            ],
+            align="center",
+            style={"marginBottom": ".5%"},
+        ),
+        dbc.Row(
+            [
+                dbc.Col(gc_new_contributor, width=12),
+            ],
+            align="center",
+            style={"marginBottom": ".5%"},
+        ),
+        dbc.Row(
+            [
+                dbc.Col(gc_contributors_over_time, width=12),
             ],
             align="center",
             style={"marginBottom": ".5%"},

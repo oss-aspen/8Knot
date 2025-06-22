@@ -23,10 +23,41 @@ gc_contrib_drive_repeat = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    id=f"graph-title-{PAGE}-{VIZ_ID}",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                id=f"graph-title-{PAGE}-{VIZ_ID}",
+                                className="card-title",
+                                style={"textAlign": "left", "fontSize": "20px", "color": "white"},
+                            ),
+                            width=10,
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
+                                style={
+                                    "backgroundColor": "#292929",
+                                    "borderColor": "#404040", 
+                                    "color": "white",
+                                    "borderRadius": "20px",
+                                    "padding": "6px 12px",
+                                    "fontSize": "14px",
+                                    "fontWeight": "500",
+                                    "border": "1px solid #404040",
+                                    "cursor": "pointer",
+                                    "transition": "all 0.2s ease",
+                                    "backgroundImage": "none",
+                                    "boxShadow": "none"
+                                }
+                            ),
+                            width=2,
+                            className="d-flex justify-content-end",
+                        ),
+                    ],
+                    align="center",
                 ),
                 dbc.Popover(
                     [
@@ -49,74 +80,72 @@ gc_contrib_drive_repeat = dbc.Card(
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
+                html.Hr(style={
+                    "borderColor": "#e0e0e0", 
+                    "margin": "1.5rem -2rem", 
+                    "width": "calc(100% + 4rem)",
+                    "marginLeft": "-2rem"
+                }),
                 dbc.Form(
                     [
                         dbc.Row(
                             [
-                                dbc.Label(
-                                    "Contributions Required:",
-                                    html_for=f"contributions-required-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
+                                dbc.Col(
+                                    [
+                                        dbc.Label(
+                                            "Contributions Required:",
+                                            html_for=f"contributions-required-{PAGE}-{VIZ_ID}",
+                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                        ),
+                                        dbc.Input(
+                                            id=f"contributions-required-{PAGE}-{VIZ_ID}",
+                                            type="number",
+                                            min=1,
+                                            max=15,
+                                            step=1,
+                                            value=4,
+                                            size="sm",
+                                            className="dark-input",
+                                            style={"width": "80px"},
+                                        ),
+                                    ],
+                                    width="auto",
+                                    className="me-4"
                                 ),
                                 dbc.Col(
-                                    dbc.Input(
-                                        id=f"contributions-required-{PAGE}-{VIZ_ID}",
-                                        type="number",
-                                        min=1,
-                                        max=15,
-                                        step=1,
-                                        value=4,
-                                        size="sm",
-                                    ),
-                                    className="me-2",
-                                    width=2,
+                                    [
+                                        dbc.Label(
+                                            "Graph View:",
+                                            html_for=f"graph-view-{PAGE}-{VIZ_ID}",
+                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                        ),
+                                        dbc.RadioItems(
+                                            id=f"graph-view-{PAGE}-{VIZ_ID}",
+                                            className="modern-radio-buttons-small",
+                                            options=[
+                                                {"label": "Repeat", "value": "repeat"},
+                                                {"label": "Drive-Thru", "value": "drive"},
+                                            ],
+                                            value="drive",
+                                            inline=True,
+                                        ),
+                                    ],
+                                    width="auto"
                                 ),
                             ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Graph View:",
-                                    html_for=f"graph-view-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
-                                dbc.Col(
-                                    dbc.RadioItems(
-                                        id=f"graph-view-{PAGE}-{VIZ_ID}",
-                                        options=[
-                                            {
-                                                "label": "Repeat",
-                                                "value": "repeat",
-                                            },
-                                            {
-                                                "label": "Drive-Thru",
-                                                "value": "drive",
-                                            },
-                                        ],
-                                        value="drive",
-                                        inline=True,
-                                    ),
-                                    className="me-2",
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
-                                ),
-                            ],
-                            align="center",
+                            justify="start",
                         ),
                     ]
                 ),
             ]
         ),
     ],
+    style={
+        "padding": "20px",
+        "borderRadius": "10px",
+        "backgroundColor": "#292929",
+        "border": "1px solid #404040"
+    },
 )
 
 
@@ -243,5 +272,7 @@ def create_figure(df_cont_subset):
         yaxis_title="Contributions",
         margin_b=40,
         font=dict(size=14),
+        plot_bgcolor="#292929",
+        paper_bgcolor="#292929",
     )
     return fig

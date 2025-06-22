@@ -105,10 +105,30 @@ gc_cntrib_pr_assignment = dbc.Card(
                                             ],
                                             value="W",
                                             inline=True,
+                                            style = {"marginTop": "4px"}
                                         ),
                                     ],
                                     width="auto",
-                                    className="me-4"
+                                ),
+                                dbc.Col(
+                                    [
+                                        dcc.DatePickerRange(
+                                            id=f"date-picker-range-{PAGE}-{VIZ_ID}",
+                                            min_date_allowed=dt.date(2005, 1, 1),
+                                            max_date_allowed=dt.date.today(),
+                                            initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                                            start_date=dt.date(
+                                                dt.date.today().year - 2,
+                                                dt.date.today().month,
+                                                dt.date.today().day,
+                                            ),
+                                            clearable=True,
+                                            style={
+                                                "marginTop": "32px",
+                                            }
+                                        ),
+                                    ],
+                                    width="auto"
                                 ),
                                 dbc.Col(
                                     [
@@ -132,23 +152,7 @@ gc_cntrib_pr_assignment = dbc.Card(
                                     width="auto",
                                     className="me-4"
                                 ),
-                                dbc.Col(
-                                    [
-                                        dcc.DatePickerRange(
-                                            id=f"date-picker-range-{PAGE}-{VIZ_ID}",
-                                            min_date_allowed=dt.date(2005, 1, 1),
-                                            max_date_allowed=dt.date.today(),
-                                            initial_visible_month=dt.date(dt.date.today().year, 1, 1),
-                                            start_date=dt.date(
-                                                dt.date.today().year - 2,
-                                                dt.date.today().month,
-                                                dt.date.today().day,
-                                            ),
-                                            clearable=True,
-                                        ),
-                                    ],
-                                    width="auto"
-                                ),
+                                
                             ],
                             justify="start",
                         ),

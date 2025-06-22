@@ -64,7 +64,7 @@ gc_contrib_importance_pie = dbc.Card(
                                 ),
                                 dbc.Col(
                                     [
-                                        dcc.Dropdown(
+                                        dbc.Select(
                                             id=f"action-type-{PAGE}-{VIZ_ID}",
                                             options=[
                                                 {"label": "Commit", "value": "Commit"},
@@ -94,7 +94,15 @@ gc_contrib_importance_pie = dbc.Card(
                                                 },
                                             ],
                                             value="Commit",
-                                            clearable=False,
+                                            size="sm",
+                                            style={
+                                                "fontSize": "14px",
+                                                "backgroundColor": "#404040",
+                                                "borderColor": "#404040",
+                                                "color": "white",
+                                                "height": "32px",
+                                                "padding": "4px 8px"
+                                            }
                                         ),
                                         dbc.Alert(
                                             children="""No contributions of this type have been made.\n
