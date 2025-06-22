@@ -399,11 +399,12 @@ layout = html.Div(
                                                 "alignItems": "center",
                                                 "padding": "12px 16px",
                                                 "marginBottom": "8px",
-                                                "borderRadius": "8px",
+                                                "borderRadius": "12px",
                                                 "color": "#B0B0B0",  # match icon color
                                                 "textDecoration": "none",
                                                 "fontSize": "16px",
                                                 "fontWeight": 300,  # thinner font
+                                                "transition": "background-color 0.2s ease",
                                             }
                                         ),
                                         dbc.NavLink(
@@ -432,11 +433,12 @@ layout = html.Div(
                                                 "alignItems": "center",
                                                 "padding": "12px 16px",
                                                 "marginBottom": "8px",
-                                                "borderRadius": "8px",
+                                                "borderRadius": "12px",
                                                 "color": "#B0B0B0",  # match icon color
                                                 "textDecoration": "none",
                                                 "fontSize": "16px",
                                                 "fontWeight": 300,  # thinner font
+                                                "transition": "background-color 0.2s ease",
                                             }
                                         ),
                                         # Contributors Dropdown
@@ -466,6 +468,7 @@ layout = html.Div(
                                                                 "marginLeft": "auto",
                                                                 "fontSize": "12px",
                                                                 "color": "#B0B0B0",
+                                                                "transition": "transform 0.2s ease",
                                                             }
                                                         )
                                                     ],
@@ -474,13 +477,13 @@ layout = html.Div(
                                                         "display": "flex",
                                                         "alignItems": "center",
                                                         "padding": "12px 16px",
-                                                        "marginBottom": "8px",
-                                                        "borderRadius": "8px",
+                                                        "borderRadius": "12px",
                                                         "color": "#B0B0B0",  # match icon color
                                                         "textDecoration": "none",
                                                         "fontSize": "16px",
                                                         "fontWeight": 300,  # thinner font
                                                         "cursor": "pointer",
+                                                        "transition": "background-color 0.2s ease",
                                                     }
                                                 ),
                                                 html.Div(
@@ -497,6 +500,7 @@ layout = html.Div(
                                                                 "marginBottom": "4px",
                                                                 "borderRadius": "6px",
                                                                 "textDecoration": "none",
+                                                                "transition": "background-color 0.2s ease",
                                                             }
                                                         ),
                                                         dbc.NavLink(
@@ -511,14 +515,24 @@ layout = html.Div(
                                                                 "marginBottom": "4px",
                                                                 "borderRadius": "6px",
                                                                 "textDecoration": "none",
+                                                                "transition": "background-color 0.2s ease",
                                                             }
                                                         ),
                                                     ],
                                                     id="contributors-dropdown-content",
-                                                    style={"display": "none"}
+                                                    style={
+                                                        "display": "none",
+                                                        "paddingTop": "4px",
+                                                        "borderRadius": "0 0 8px 8px",
+                                                    }
                                                 )
                                             ],
-                                            style={"marginBottom": "0px"}
+                                            style={
+                                                "marginBottom": "8px",
+                                                "borderRadius": "12px",
+                                                "transition": "background-color 0.2s ease",
+                                            },
+                                            id="contributors-dropdown-wrapper"
                                         ),
                                         dbc.NavLink(
                                             [
@@ -546,11 +560,12 @@ layout = html.Div(
                                                 "alignItems": "center",
                                                 "padding": "12px 16px",
                                                 "marginBottom": "8px",
-                                                "borderRadius": "8px",
+                                                "borderRadius": "12px",
                                                 "color": "#B0B0B0",  # match icon color
                                                 "textDecoration": "none",
                                                 "fontSize": "16px",
                                                 "fontWeight": 300,  # thinner font
+                                                "transition": "background-color 0.2s ease",
                                             }
                                         ),
                                         dbc.NavLink(
@@ -579,11 +594,12 @@ layout = html.Div(
                                                 "alignItems": "center",
                                                 "padding": "12px 16px",
                                                 "marginBottom": "8px",
-                                                "borderRadius": "8px",
+                                                "borderRadius": "12px",
                                                 "color": "#B0B0B0",  # match icon color
                                                 "textDecoration": "none",
                                                 "fontSize": "16px",
                                                 "fontWeight": 300,  # thinner font
+                                                "transition": "background-color 0.2s ease",
                                             }
                                         ),
                                         dbc.NavLink(
@@ -612,11 +628,12 @@ layout = html.Div(
                                                 "alignItems": "center",
                                                 "padding": "12px 16px",
                                                 "marginBottom": "8px",
-                                                "borderRadius": "8px",
+                                                "borderRadius": "12px",
                                                 "color": "#B0B0B0",  # match icon color
                                                 "textDecoration": "none",
                                                 "fontSize": "16px",
                                                 "fontWeight": 300,  # thinner font
+                                                "transition": "background-color 0.2s ease",
                                             }
                                         ),
                                     ],
@@ -771,7 +788,7 @@ def toggle_sidebar(n, collapsed):
         "borderRadius": "14px 0 0 14px",
         "height": "95vh",
         "width": "60px" if collapsed else "340px",
-        "background": "#242424",  # changed from #1D1D1D
+        "background": "#1D1D1D",  # FIXED: match static style
         "color": "#fff",
         "padding": "32px 6px 32px 6px" if collapsed else "32px 18px 32px 18px",
         "boxShadow": "none",  # Remove shadow from sidebar card
@@ -791,7 +808,7 @@ def toggle_sidebar(n, collapsed):
         "width": f"calc(99vw - {'60px' if collapsed else '340px'})",
         "maxWidth": f"calc(100vw - {'60px' if collapsed else '340px'})",
         "boxShadow": "none",  # Remove shadow from main card
-        "background": "#242424",  # changed from #1D1D1D
+        "background": "#1D1D1D",  # FIXED: match static style
         "height": "95vh",
         "overflowY": "auto",
         "overflowX": "hidden",
@@ -818,6 +835,7 @@ def toggle_sidebar(n, collapsed):
         Output("contributors-dropdown-icon", "className"),
         Output("contributors-dropdown-open", "data"),
         Output("sidebar-collapsed", "data", allow_duplicate=True),
+        Output("contributors-dropdown-wrapper", "className"),
     ],
     [Input("contributors-dropdown-toggle", "n_clicks")],
     [
@@ -832,16 +850,19 @@ def toggle_contributors_dropdown(n_clicks, dropdown_open, sidebar_collapsed):
     
     # If sidebar is collapsed, expand it first and open dropdown
     if sidebar_collapsed:
-        dropdown_style = {"display": "block"}
+        dropdown_style = {"display": "block", "paddingTop": "4px", "borderRadius": "0 0 8px 8px"}
         icon_class = "bi bi-chevron-up"
-        return dropdown_style, icon_class, True, False
+        wrapper_class = "dropdown-open"
+        return dropdown_style, icon_class, True, False, wrapper_class
     
     # If sidebar is expanded, toggle dropdown
     dropdown_open = not dropdown_open
     if dropdown_open:
-        dropdown_style = {"display": "block"}
+        dropdown_style = {"display": "block", "paddingTop": "4px", "borderRadius": "0 0 8px 8px"}
+        wrapper_class = "dropdown-open"
     else:
         dropdown_style = {"display": "none", "height": 0, "overflow": "hidden", "padding": 0, "border": 0}
+        wrapper_class = ""
     icon_class = "bi bi-chevron-up" if dropdown_open else "bi bi-chevron-down"
     
-    return dropdown_style, icon_class, dropdown_open, sidebar_collapsed
+    return dropdown_style, icon_class, dropdown_open, sidebar_collapsed, wrapper_class
