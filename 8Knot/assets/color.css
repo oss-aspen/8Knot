@@ -482,12 +482,13 @@ body input.form-control.dark-input:focus {
 }
 
 .sidebar-nav-link:hover img {
-    filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)) !important;
+    filter: brightness(0) invert(1) !important;
+    /* drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)) */
 }
 
 .sidebar-nav-link:hover span {
     color: #FFFFFF !important;
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.6) !important;
+    /* text-shadow: 0 0 8px rgba(255, 255, 255, 0.6) !important; */
 }
 
 .sidebar-nav-link.active {
@@ -498,12 +499,13 @@ body input.form-control.dark-input:focus {
 }
 
 .sidebar-nav-link.active img {
-    filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)) !important;
+    filter: brightness(0) invert(1) !important;
+    /* drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)) */
 }
 
 .sidebar-nav-link.active span {
     color: #FFFFFF !important;
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.6) !important;
+    /* text-shadow: 0 0 8px rgba(255, 255, 255, 0.6) !important; */
     font-weight: 600 !important;
 }
 
@@ -518,17 +520,18 @@ body input.form-control.dark-input:focus {
 }
 
 #contributors-dropdown-wrapper:hover #contributors-dropdown-toggle img {
-    filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)) !important;
+    filter: brightness(0) invert(1) !important;
+    /* drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)) */
 }
 
 #contributors-dropdown-wrapper:hover #contributors-dropdown-toggle span {
     color: #FFFFFF !important;
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.6) !important;
+    /* text-shadow: 0 0 8px rgba(255, 255, 255, 0.6) !important; */
 }
 
 #contributors-dropdown-wrapper:hover #contributors-dropdown-icon {
     color: #FFFFFF !important;
-    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)) !important;
+    /* filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)) !important; */
 }
 
 /* When dropdown is open, style the entire wrapper */
@@ -543,18 +546,19 @@ body input.form-control.dark-input:focus {
 }
 
 #contributors-dropdown-wrapper.dropdown-open #contributors-dropdown-toggle img {
-    filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)) !important;
+    filter: brightness(0) invert(1) !important;
+    /* drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)) */
 }
 
 #contributors-dropdown-wrapper.dropdown-open #contributors-dropdown-toggle span {
     color: #FFFFFF !important;
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.6) !important;
+    /* text-shadow: 0 0 8px rgba(255, 255, 255, 0.6) !important; */
     font-weight: 600 !important;
 }
 
 #contributors-dropdown-wrapper.dropdown-open #contributors-dropdown-icon {
     color: #FFFFFF !important;
-    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)) !important;
+    /* filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)) !important; */
 }
 
 /* Dropdown content styling */
@@ -562,14 +566,14 @@ body input.form-control.dark-input:focus {
     background-color: #3A3A3A !important;
     color: #FFFFFF !important;
     border-radius: 8px !important;
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.6) !important;
+    /* text-shadow: 0 0 8px rgba(255, 255, 255, 0.6) !important; */
 }
 
 #contributors-dropdown-content .nav-link.active {
     background-color: #4A4A4A !important;
     color: #FFFFFF !important;
     border-radius: 8px !important;
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.6) !important;
+    /* text-shadow: 0 0 8px rgba(255, 255, 255, 0.6) !important; */
     font-weight: 600 !important;
 }
 
@@ -589,3 +593,19 @@ body input.form-control.dark-input:focus {
 #contributors-dropdown-content .nav-link {
     font-size: 16px !important;
 }
+
+/* Sidebar retracted mode - more padding for icons */
+.sidebar-nav-link img {
+    margin-right: 12px !important;
+}
+
+/* When sidebar width is 60px (collapsed), ensure icon spacing */
+/* This targets the specific collapsed state */
+
+/* Adjust navlink padding for collapsed sidebar to provide better right padding */
+.sidebar-nav-link {
+    padding: 12px 16px !important;
+}
+
+/* When sidebar is collapsed (80px width), provide more balanced padding */
+/* This creates better visual spacing in the collapsed state */
