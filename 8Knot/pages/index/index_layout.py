@@ -268,12 +268,16 @@ search_bar = html.Div(
 # Add a Store to keep sidebar state
 sidebar_state_store = dcc.Store(id="sidebar-collapsed", data=False, storage_type="session")
 
+# Add hidden components for contributors dropdown
+contributors_dropdown_state = dcc.Store(id="contributors-dropdown-open", data=False, storage_type="session")
+
 layout = html.Div(
     [
         dcc.Store(id="repo-choices", storage_type="session", data=[]),
         dcc.Store(id="job-ids", storage_type="session", data=[]),
         dcc.Store(id="user-group-loading-signal", data="", storage_type="memory"),
         sidebar_state_store,
+        contributors_dropdown_state,
         dcc.Location(id="url"),
         html.Script(
             """
@@ -435,38 +439,86 @@ layout = html.Div(
                                                 "fontWeight": 300,  # thinner font
                                             }
                                         ),
-                                        dbc.NavLink(
+                                        # Contributors Dropdown
+                                        html.Div(
                                             [
-                                                html.Img(
-                                                    src=dash.get_asset_url("contributors.svg"),
-                                                    style={"width": "30px", "height": "30px", "marginRight": "12px", "verticalAlign": "middle"},
-                                                ),
-                                                html.Span(
-                                                    "Contributors",
-                                                    id="contributors-text",
+                                                html.Div(
+                                                    [
+                                                        html.Img(
+                                                            src=dash.get_asset_url("contributors.svg"),
+                                                            style={"width": "30px", "height": "30px", "marginRight": "12px", "verticalAlign": "middle"},
+                                                        ),
+                                                        html.Span(
+                                                            "Contributors",
+                                                            id="contributors-text",
+                                                            style={
+                                                                "color": "#B0B0B0",  # match icon color (light gray)
+                                                                "fontWeight": 300,   # thinner font
+                                                                "fontSize": "16px",
+                                                                "verticalAlign": "middle",
+                                                                "letterSpacing": "0.01em",
+                                                            },
+                                                        ),
+                                                        html.I(
+                                                            id="contributors-dropdown-icon",
+                                                            className="bi bi-chevron-down",
+                                                            style={
+                                                                "marginLeft": "auto",
+                                                                "fontSize": "12px",
+                                                                "color": "#B0B0B0",
+                                                            }
+                                                        )
+                                                    ],
+                                                    id="contributors-dropdown-toggle",
                                                     style={
-                                                        "color": "#B0B0B0",  # match icon color (light gray)
-                                                        "fontWeight": 300,   # thinner font
+                                                        "display": "flex",
+                                                        "alignItems": "center",
+                                                        "padding": "12px 16px",
+                                                        "marginBottom": "8px",
+                                                        "borderRadius": "8px",
+                                                        "color": "#B0B0B0",  # match icon color
+                                                        "textDecoration": "none",
                                                         "fontSize": "16px",
-                                                        "verticalAlign": "middle",
-                                                        "letterSpacing": "0.01em",
-                                                    },
+                                                        "fontWeight": 300,  # thinner font
+                                                        "cursor": "pointer",
+                                                    }
+                                                ),
+                                                html.Div(
+                                                    [
+                                                        dbc.NavLink(
+                                                            "Behavior",
+                                                            href="/contributors/behavior",
+                                                            active="exact",
+                                                            style={
+                                                                "color": "#B0B0B0",
+                                                                "fontSize": "14px",
+                                                                "fontWeight": 300,
+                                                                "padding": "8px 16px 8px 58px",  # indent to align with text
+                                                                "marginBottom": "4px",
+                                                                "borderRadius": "6px",
+                                                                "textDecoration": "none",
+                                                            }
+                                                        ),
+                                                        dbc.NavLink(
+                                                            "Contribution Types",
+                                                            href="/contributors/contribution_types",
+                                                            active="exact",
+                                                            style={
+                                                                "color": "#B0B0B0",
+                                                                "fontSize": "14px",
+                                                                "fontWeight": 300,
+                                                                "padding": "8px 16px 8px 58px",  # indent to align with text
+                                                                "marginBottom": "4px",
+                                                                "borderRadius": "6px",
+                                                                "textDecoration": "none",
+                                                            }
+                                                        ),
+                                                    ],
+                                                    id="contributors-dropdown-content",
+                                                    style={"display": "none"}
                                                 )
                                             ],
-                                            href="/contributors",
-                                            active="exact",
-                                            className="sidebar-nav-link",
-                                            style={
-                                                "display": "flex",
-                                                "alignItems": "center",
-                                                "padding": "12px 16px",
-                                                "marginBottom": "8px",
-                                                "borderRadius": "8px",
-                                                "color": "#B0B0B0",  # match icon color
-                                                "textDecoration": "none",
-                                                "fontSize": "16px",
-                                                "fontWeight": 300,  # thinner font
-                                            }
+                                            style={"marginBottom": "0px"}
                                         ),
                                         dbc.NavLink(
                                             [
@@ -581,7 +633,7 @@ layout = html.Div(
                                 "background": "#1D1D1D",
                                 "color": "#fff",
                                 "padding": "32px 18px 32px 18px",
-                                "boxShadow": "0 8px 32px rgba(0,0,0,0.12)",
+                                "boxShadow": "none",  # Remove shadow from sidebar card
                                 "borderRight": "1px solid #404040",
                                 "display": "flex",
                                 "flexDirection": "column",
@@ -650,7 +702,7 @@ layout = html.Div(
                         "margin": "0px 10px 20px 0",      # set top margin to 0 to remove space below navbar
                         "width": "calc(99vw - 340px)",
                         "maxWidth": "calc(100vw - 340px)",
-                        "boxShadow": "0 8px 32px rgba(0,0,0,0.12)",
+                        "boxShadow": "none",  # Remove shadow from main card
                         "background": "#1D1D1D",
                         "height": "95vh",
                         "overflowY": "auto",
@@ -684,6 +736,7 @@ layout = html.Div(
         Output("repo-overview-text", "style"),
         Output("contributions-text", "style"),
         Output("contributors-text", "style"),
+        Output("contributors-dropdown-icon", "style"),
         Output("affiliation-text", "style"),
         Output("chaoss-text", "style"),
         Output("codebase-text", "style"),
@@ -703,6 +756,14 @@ def toggle_sidebar(n, collapsed):
     # Text visibility style
     text_style = {"display": "none"} if collapsed else {"display": "inline"}
     
+    # Contributors dropdown icon style
+    dropdown_icon_style = {
+        "marginLeft": "auto",
+        "fontSize": "12px",
+        "color": "#B0B0B0",
+        "display": "none" if collapsed else "inline"
+    }
+    
     # Full content visibility style
     full_content_style = {"display": "none"} if collapsed else {"display": "block"}
     
@@ -713,7 +774,7 @@ def toggle_sidebar(n, collapsed):
         "background": "#242424",  # changed from #1D1D1D
         "color": "#fff",
         "padding": "32px 6px 32px 6px" if collapsed else "32px 18px 32px 18px",
-        "boxShadow": "0 8px 32px rgba(0,0,0,0.12)",
+        "boxShadow": "none",  # Remove shadow from sidebar card
         "borderRight": "1px solid #404040",
         "display": "flex",
         "flexDirection": "column",
@@ -729,7 +790,7 @@ def toggle_sidebar(n, collapsed):
         "margin": "0px 10px 20px 0",      # always 0 top margin
         "width": f"calc(99vw - {'60px' if collapsed else '340px'})",
         "maxWidth": f"calc(100vw - {'60px' if collapsed else '340px'})",
-        "boxShadow": "0 8px 32px rgba(0,0,0,0.12)",
+        "boxShadow": "none",  # Remove shadow from main card
         "background": "#242424",  # changed from #1D1D1D
         "height": "95vh",
         "overflowY": "auto",
@@ -744,8 +805,43 @@ def toggle_sidebar(n, collapsed):
     return (
         sidebar_style, 
         full_content_style, 
-        text_style, text_style, text_style, text_style, text_style, text_style,
+        text_style, text_style, text_style, dropdown_icon_style, text_style, text_style, text_style,
         main_style, 
         icon, 
         collapsed
     )
+
+# Callback for contributors dropdown
+@dash.callback(
+    [
+        Output("contributors-dropdown-content", "style"),
+        Output("contributors-dropdown-icon", "className"),
+        Output("contributors-dropdown-open", "data"),
+        Output("sidebar-collapsed", "data", allow_duplicate=True),
+    ],
+    [Input("contributors-dropdown-toggle", "n_clicks")],
+    [
+        State("contributors-dropdown-open", "data"),
+        State("sidebar-collapsed", "data"),
+    ],
+    prevent_initial_call=True,
+)
+def toggle_contributors_dropdown(n_clicks, dropdown_open, sidebar_collapsed):
+    if not n_clicks:
+        raise dash.exceptions.PreventUpdate
+    
+    # If sidebar is collapsed, expand it first and open dropdown
+    if sidebar_collapsed:
+        dropdown_style = {"display": "block"}
+        icon_class = "bi bi-chevron-up"
+        return dropdown_style, icon_class, True, False
+    
+    # If sidebar is expanded, toggle dropdown
+    dropdown_open = not dropdown_open
+    if dropdown_open:
+        dropdown_style = {"display": "block"}
+    else:
+        dropdown_style = {"display": "none", "height": 0, "overflow": "hidden", "padding": 0, "border": 0}
+    icon_class = "bi bi-chevron-up" if dropdown_open else "bi bi-chevron-down"
+    
+    return dropdown_style, icon_class, dropdown_open, sidebar_collapsed
