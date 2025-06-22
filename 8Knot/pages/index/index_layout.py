@@ -391,29 +391,35 @@ layout = html.Div(
                                 ),
                                 dbc.Nav(
                                     [
+                                        # dbc.NavLink(
+                                        #     [
+                                        #         html.Img(
+                                        #             src=dash.get_asset_url("home.svg"),
+                                        #             style={"width": "30px", "height": "30px", "marginRight": "12px", "verticalAlign": "middle"},
+                                        #         ),
+                                        #         html.Span("Home", id="home-text")
+                                        #     ],
+                                        #     href="/",
+                                        #     active="exact",
+                                        #     className="sidebar-nav-link",
+                                        #     style={
+                                        #         "display": "flex",
+                                        #         "alignItems": "center",
+                                        #         "padding": "12px 16px",
+                                        #         "marginBottom": "8px",
+                                        #         "borderRadius": "8px",
+                                        #         "color": "#ffffff",
+                                        #         "textDecoration": "none",
+                                        #         "fontSize": "16px",
+                                        #         "fontWeight": "400",
+                                        #     }
+                                        # ),
                                         dbc.NavLink(
                                             [
-                                                html.I(className="fas fa-home", style={"width": "20px", "textAlign": "center", "marginRight": "12px"}),
-                                                html.Span("Home", id="home-text")
-                                            ],
-                                            href="/",
-                                            active="exact",
-                                            className="sidebar-nav-link",
-                                            style={
-                                                "display": "flex",
-                                                "alignItems": "center",
-                                                "padding": "12px 16px",
-                                                "marginBottom": "8px",
-                                                "borderRadius": "8px",
-                                                "color": "#ffffff",
-                                                "textDecoration": "none",
-                                                "fontSize": "16px",
-                                                "fontWeight": "400",
-                                            }
-                                        ),
-                                        dbc.NavLink(
-                                            [
-                                                html.I(className="fas fa-chart-bar", style={"width": "20px", "textAlign": "center", "marginRight": "12px"}),
+                                                html.Img(
+                                                    src=dash.get_asset_url("repo_overview.svg"),
+                                                    style={"width": "30px", "height": "30px", "marginRight": "12px", "verticalAlign": "middle"},
+                                                ),
                                                 html.Span("Repo Overview", id="repo-overview-text")
                                             ],
                                             href="/repo_overview",
@@ -433,7 +439,10 @@ layout = html.Div(
                                         ),
                                         dbc.NavLink(
                                             [
-                                                html.I(className="fas fa-code-branch", style={"width": "20px", "textAlign": "center", "marginRight": "12px"}),
+                                                html.Img(
+                                                    src=dash.get_asset_url("contributions.svg"),
+                                                    style={"width": "30px", "height": "30px", "marginRight": "12px", "verticalAlign": "middle"},
+                                                ),
                                                 html.Span("Contributions", id="contributions-text")
                                             ],
                                             href="/contributions",
@@ -453,7 +462,10 @@ layout = html.Div(
                                         ),
                                         dbc.NavLink(
                                             [
-                                                html.I(className="fas fa-users", style={"width": "20px", "textAlign": "center", "marginRight": "12px"}),
+                                                html.Img(
+                                                    src=dash.get_asset_url("contributors.svg"),
+                                                    style={"width": "30px", "height": "30px", "marginRight": "12px", "verticalAlign": "middle"},
+                                                ),
                                                 html.Span("Contributors", id="contributors-text")
                                             ],
                                             href="/contributors",
@@ -473,7 +485,10 @@ layout = html.Div(
                                         ),
                                         dbc.NavLink(
                                             [
-                                                html.I(className="fas fa-building", style={"width": "20px", "textAlign": "center", "marginRight": "12px"}),
+                                                html.Img(
+                                                    src=dash.get_asset_url("affiliation.svg"),
+                                                    style={"width": "30px", "height": "30px", "marginRight": "12px", "verticalAlign": "middle"},
+                                                ),
                                                 html.Span("Affiliation", id="affiliation-text")
                                             ],
                                             href="/affiliation",
@@ -493,7 +508,10 @@ layout = html.Div(
                                         ),
                                         dbc.NavLink(
                                             [
-                                                html.I(className="fas fa-cog", style={"width": "20px", "textAlign": "center", "marginRight": "12px"}),
+                                                html.Img(
+                                                    src=dash.get_asset_url("chaoss.svg"),
+                                                    style={"width": "30px", "height": "30px", "marginRight": "12px", "verticalAlign": "middle"},
+                                                ),
                                                 html.Span("CHAOSS", id="chaoss-text")
                                             ],
                                             href="/chaoss",
@@ -513,7 +531,10 @@ layout = html.Div(
                                         ),
                                         dbc.NavLink(
                                             [
-                                                html.I(className="fas fa-code", style={"width": "20px", "textAlign": "center", "marginRight": "12px"}),
+                                                html.Img(
+                                                    src=dash.get_asset_url("codebase.svg"),
+                                                    style={"width": "30px", "height": "30px", "marginRight": "12px", "verticalAlign": "middle"},
+                                                ),
                                                 html.Span("Codebase", id="codebase-text")
                                             ],
                                             href="/codebase",
@@ -642,7 +663,7 @@ layout = html.Div(
     [
         Output("sidebar-card", "style"),
         Output("sidebar-full-content", "style"),
-        Output("home-text", "style"),
+        # Output("home-text", "style"),
         Output("repo-overview-text", "style"),
         Output("contributions-text", "style"),
         Output("contributors-text", "style"),
@@ -706,7 +727,7 @@ def toggle_sidebar(n, collapsed):
     return (
         sidebar_style, 
         full_content_style, 
-        text_style, text_style, text_style, text_style, text_style, text_style, text_style,
+        text_style, text_style, text_style, text_style, text_style, text_style,
         main_style, 
         icon, 
         collapsed
