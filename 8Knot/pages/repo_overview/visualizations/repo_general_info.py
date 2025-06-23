@@ -27,15 +27,42 @@ gc_repo_general_info = dbc.Card(
                 html.H3(
                     "Repo General Info",
                     className="card-title",
-                    style={"textAlign": "center"},
+                    style={"textAlign": "left", "fontSize": "20px", "color": "white"},
                 ),
                 dcc.Loading(
                     html.Div(id=f"{PAGE}-{VIZ_ID}"),
                 ),
-                dbc.Row([dbc.Label(["Last Updated: ", html.Span(id=f"{PAGE}-{VIZ_ID}-updated")], className="mr-2")]),
+                html.Hr(style={
+                    "borderColor": "#e0e0e0", 
+                    "margin": "1.5rem -2rem", 
+                    "width": "calc(100% + 4rem)",
+                    "marginLeft": "-2rem"
+                }),
+                dbc.Form(
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    dbc.Label(
+                                        ["Last Updated: ", html.Span(id=f"{PAGE}-{VIZ_ID}-updated")],
+                                        style={"fontSize": "14px"}
+                                    ),
+                                    width="auto",
+                                ),
+                            ],
+                            justify="start",
+                        ),
+                    ]
+                ),
             ]
         )
     ],
+    style={
+        "padding": "20px",
+        "borderRadius": "10px",
+        "backgroundColor": "#292929",
+        "border": "1px solid #404040"
+    },
 )
 
 
