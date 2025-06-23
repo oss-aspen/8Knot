@@ -322,11 +322,11 @@ layout = html.Div(
                             color="secondary",
                             style={
                                 "borderRadius": "50%",
-                                "width": "36px",
-                                "height": "36px",
+                                "width": "32px",
+                                "height": "32px",
                                 "position": "absolute",
                                 "top": "64px",  # moved further down from the top
-                                "right": "-18px",
+                                "right": "-16px",
                                 "zIndex": 10,
                                 "boxShadow": "0 2px 8px rgba(0,0,0,0.15)",
                                 "padding": 0,
@@ -337,7 +337,14 @@ layout = html.Div(
                                 "color": "#fff",
                                 "border": "2px solid #fff",
                             },
-                            children=html.I(id="sidebar-toggle-icon", className="bi bi-chevron-left"),
+                            children=html.I(
+                                id="sidebar-toggle-icon", 
+                                className="fas fa-chevron-left",
+                                style={
+                                    "fontSize": "14px",
+                                    "lineHeight": "1"
+                                }
+                            ),
                         ),
                         dbc.Card(
                             [
@@ -818,7 +825,7 @@ def toggle_sidebar(n, collapsed):
         "transition": "margin-left 0.3s cubic-bezier(.4,2,.6,1)",
         "marginLeft": "0",
     }
-    icon = "bi bi-chevron-right" if collapsed else "bi bi-chevron-left"
+    icon = "fas fa-chevron-right" if collapsed else "fas fa-chevron-left"
     
     # When sidebar is collapsed, always close the contributors dropdown
     if collapsed:
@@ -963,7 +970,7 @@ def toggle_contributors_dropdown(dropdown_clicks, repo_clicks, contrib_clicks, a
         }
         
         # Toggle icon (expanded)
-        toggle_icon = "bi bi-chevron-left"
+        toggle_icon = "fas fa-chevron-left"
         
         return dropdown_style, icon_class, dropdown_open, collapsed, wrapper_class, sidebar_style, full_content_style, text_style, text_style, text_style, text_style, text_style, text_style, main_style, toggle_icon
     
