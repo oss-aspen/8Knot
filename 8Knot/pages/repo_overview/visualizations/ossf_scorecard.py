@@ -19,10 +19,41 @@ gc_ossf_scorecard = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "OSSF Scorecard",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "OSSF Scorecard",
+                                className="card-title",
+                                style={"textAlign": "left", "fontSize": "20px", "color": "white"},
+                            ),
+                            width=10,
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "Scorecard Info",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
+                                style={
+                                    "backgroundColor": "#292929",
+                                    "borderColor": "#404040", 
+                                    "color": "white",
+                                    "borderRadius": "20px",
+                                    "padding": "6px 12px",
+                                    "fontSize": "14px",
+                                    "fontWeight": "500",
+                                    "border": "1px solid #404040",
+                                    "cursor": "pointer",
+                                    "transition": "all 0.2s ease",
+                                    "backgroundImage": "none",
+                                    "boxShadow": "none"
+                                }
+                            ),
+                            width=2,
+                            className="d-flex justify-content-end",
+                        ),
+                    ],
+                    align="center",
                 ),
                 dbc.Popover(
                     [
@@ -37,39 +68,37 @@ gc_ossf_scorecard = dbc.Card(
                 dcc.Loading(
                     html.Div(id=f"{PAGE}-{VIZ_ID}"),
                 ),
+                html.Hr(style={
+                    "borderColor": "#e0e0e0", 
+                    "margin": "1.5rem -2rem", 
+                    "width": "calc(100% + 4rem)",
+                    "marginLeft": "-2rem"
+                }),
                 dbc.Form(
                     [
                         dbc.Row(
                             [
                                 dbc.Col(
-                                    dbc.Row(
-                                        [
-                                            dbc.Label(
-                                                ["Last Updated: ", html.Span(id=f"{PAGE}-{VIZ_ID}-updated")],
-                                                className="mr-2",
-                                            )
-                                        ]
-                                    ),
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "Scorecard Info",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
+                                    dbc.Label(
+                                        ["Last Updated: ", html.Span(id=f"{PAGE}-{VIZ_ID}-updated")],
+                                        style={"fontSize": "14px"}
                                     ),
                                     width="auto",
-                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
-                            align="center",
-                            justify="end",
+                            justify="start",
                         ),
                     ]
                 ),
             ]
         )
     ],
+    style={
+        "padding": "20px",
+        "borderRadius": "10px",
+        "backgroundColor": "#292929",
+        "border": "1px solid #404040"
+    },
 )
 
 

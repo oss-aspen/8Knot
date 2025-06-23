@@ -27,7 +27,7 @@ gc_code_language = dbc.Card(
                             html.H3(
                                 id=f"graph-title-{PAGE}-{VIZ_ID}",
                                 className="card-title",
-                                style={"textAlign": "left"},
+                                style={"textAlign": "left", "fontSize": "20px", "color": "white"},
                             ),
                             width=10,
                         ),
@@ -87,12 +87,12 @@ gc_code_language = dbc.Card(
                                 dbc.Label(
                                     "Graph View:",
                                     html_for=f"graph-view-{PAGE}-{VIZ_ID}",
-                                    width="auto",
+                                    style={"marginBottom": "8px", "fontSize": "14px"}
                                 ),
                                 dbc.Col(
                                     dbc.RadioItems(
                                         id=f"graph-view-{PAGE}-{VIZ_ID}",
-                                        className="modern-radio-buttons",
+                                        className="modern-radio-buttons-small",
                                         options=[
                                             {
                                                 "label": "Files",
@@ -117,7 +117,12 @@ gc_code_language = dbc.Card(
             style={"padding": "2rem"}  # Add extra padding to make card larger
         )
     ],
-    style={"borderRadius": "15px"}  # Add custom border radius
+    style={
+        "padding": "20px",
+        "borderRadius": "10px",
+        "backgroundColor": "#292929",
+        "border": "1px solid #404040"
+    },
 )
 
 
@@ -225,7 +230,11 @@ def create_figure(df: pd.DataFrame, view):
         hovertemplate="%{label} <br>Amount: %{value}<br><extra></extra>",
     )
 
-    # add legend title
-    fig.update_layout(legend_title_text="Languages")
+    # add legend title and dark theme styling
+    fig.update_layout(
+        legend_title_text="Languages",
+        plot_bgcolor="#292929",
+        paper_bgcolor="#292929"
+    )
 
     return fig

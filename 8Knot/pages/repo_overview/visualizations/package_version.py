@@ -21,10 +21,41 @@ gc_package_version = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "Package Version Updates",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "Package Version Updates",
+                                className="card-title",
+                                style={"textAlign": "left", "fontSize": "20px", "color": "white"},
+                            ),
+                            width=10,
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
+                                style={
+                                    "backgroundColor": "#292929",
+                                    "borderColor": "#404040", 
+                                    "color": "white",
+                                    "borderRadius": "20px",
+                                    "padding": "6px 12px",
+                                    "fontSize": "14px",
+                                    "fontWeight": "500",
+                                    "border": "1px solid #404040",
+                                    "cursor": "pointer",
+                                    "transition": "all 0.2s ease",
+                                    "backgroundImage": "none",
+                                    "boxShadow": "none"
+                                }
+                            ),
+                            width=2,
+                            className="d-flex justify-content-end",
+                        ),
+                    ],
+                    align="center",
                 ),
                 dbc.Popover(
                     [
@@ -44,29 +75,15 @@ gc_package_version = dbc.Card(
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
-                dbc.Form(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
-                                ),
-                            ],
-                            align="center",
-                            justify="end",
-                        ),
-                    ]
-                ),
             ]
         )
     ],
+    style={
+        "padding": "20px",
+        "borderRadius": "10px",
+        "backgroundColor": "#292929",
+        "border": "1px solid #404040"
+    },
 )
 
 
@@ -114,14 +131,33 @@ def package_version_graph(repolist):
     df = pd.DataFrame(df["dep_age"].value_counts().reset_index())
 
     # graph generation
-    fig = px.pie(df, names="dep_age", values="count", color_discrete_sequence=color_seq)
+    custom_colors = ["#DFF0FB", "#76C5EF", "#199AD6", "#0F5880"]
+    fig = px.pie(df, names="dep_age", values="count", color_discrete_sequence=custom_colors)
     fig.update_traces(
+        domain=dict(x=[0, 0.45]),
         textposition="inside",
         textinfo="percent+label",
         hovertemplate="%{label} <br>Packages: %{value}<br><extra></extra>",
     )
 
-    # add legend title
+    fig.update_layout(
+        plot_bgcolor="#292929",
+        paper_bgcolor="#292929",
+        legend=dict(
+            orientation="v",
+            x=0.42,  # Legend starts right after the pie chart
+            y=0.5,
+            xanchor="left",
+            yanchor="middle"
+        ),
+        font=dict(
+            family="Arial, sans-serif",  # Font family
+            size=14,                     # Font size
+            color="white"                # Font color
+        ),
+        margin=dict(r=50, l=50, t=50, b=50)
+    )
+    
     fig["layout"]["legend_title"] = "Date Range"
 
     logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")

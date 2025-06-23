@@ -22,10 +22,41 @@ gc_org_associated_activity = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "Organization Associated Activity",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "Organization Associated Activity",
+                                className="card-title",
+                                style={"textAlign": "left", "fontSize": "20px", "color": "white"},
+                            ),
+                            width=10,
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
+                                style={
+                                    "backgroundColor": "#292929",
+                                    "borderColor": "#404040", 
+                                    "color": "white",
+                                    "borderRadius": "20px",
+                                    "padding": "6px 12px",
+                                    "fontSize": "14px",
+                                    "fontWeight": "500",
+                                    "border": "1px solid #404040",
+                                    "cursor": "pointer",
+                                    "transition": "all 0.2s ease",
+                                    "backgroundImage": "none",
+                                    "boxShadow": "none"
+                                }
+                            ),
+                            width=2,
+                            className="d-flex justify-content-end",
+                        ),
+                    ],
+                    align="center",
                 ),
                 dbc.Popover(
                     [
@@ -56,81 +87,94 @@ gc_org_associated_activity = dbc.Card(
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
+                html.Hr(style={
+                    "borderColor": "#e0e0e0", 
+                    "margin": "1.5rem -2rem", 
+                    "width": "calc(100% + 4rem)",
+                    "marginLeft": "-2rem"
+                }),
                 dbc.Form(
                     [
                         dbc.Row(
                             [
-                                dbc.Label(
-                                    "Contributions Required:",
-                                    html_for=f"contributions-required-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
+                                dbc.Col(
+                                    [
+                                        dbc.Label(
+                                            "Contributions Required:",
+                                            html_for=f"contributions-required-{PAGE}-{VIZ_ID}",
+                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                        ),
+                                        dbc.Input(
+                                            id=f"contributions-required-{PAGE}-{VIZ_ID}",
+                                            type="number",
+                                            min=1,
+                                            max=100,
+                                            step=1,
+                                            value=10,
+                                            size="sm",
+                                            className="dark-input",
+                                            style={"width": "80px"},
+                                        ),
+                                    ],
+                                    width="auto",
+                                    className="me-4"
                                 ),
                                 dbc.Col(
-                                    dbc.Input(
-                                        id=f"contributions-required-{PAGE}-{VIZ_ID}",
-                                        type="number",
-                                        min=1,
-                                        max=100,
-                                        step=1,
-                                        value=10,
-                                        size="sm",
-                                    ),
-                                    className="me-2",
-                                    width=2,
+                                    [
+                                        dbc.Label(
+                                            "Email Filters:",
+                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                        ),
+                                        dbc.Checklist(
+                                            id=f"email-filter-{PAGE}-{VIZ_ID}",
+                                            options=[
+                                                {
+                                                    "label": "Exclude Gmail",
+                                                    "value": "gmail",
+                                                },
+                                                {
+                                                    "label": "Exclude GitHub",
+                                                    "value": "github",
+                                                },
+                                            ],
+                                            value=[""],
+                                            inline=True,
+                                            switch=True,
+                                        ),
+                                    ],
+                                    width="auto",
+                                    className="me-4"
                                 ),
                                 dbc.Col(
-                                    dbc.Checklist(
-                                        id=f"email-filter-{PAGE}-{VIZ_ID}",
-                                        options=[
-                                            {
-                                                "label": "Exclude Gmail",
-                                                "value": "gmail",
-                                            },
-                                            {
-                                                "label": "Exclude GitHub",
-                                                "value": "github",
-                                            },
-                                        ],
-                                        value=[""],
-                                        inline=True,
-                                        switch=True,
-                                    ),
-                                    width=4,
+                                    [
+                                        dbc.Label(
+                                            "Date Range:",
+                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                        ),
+                                        dcc.DatePickerRange(
+                                            id=f"date-picker-range-{PAGE}-{VIZ_ID}",
+                                            min_date_allowed=dt.date(2005, 1, 1),
+                                            max_date_allowed=dt.date.today(),
+                                            initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                                            clearable=True,
+                                        ),
+                                    ],
+                                    width="auto"
                                 ),
                             ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
-                                dbc.Col(
-                                    dcc.DatePickerRange(
-                                        id=f"date-picker-range-{PAGE}-{VIZ_ID}",
-                                        min_date_allowed=dt.date(2005, 1, 1),
-                                        max_date_allowed=dt.date.today(),
-                                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
-                                        clearable=True,
-                                    ),
-                                    width="auto",
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
-                                ),
-                            ],
-                            align="center",
-                            justify="between",
+                            justify="start",
                         ),
                     ]
                 ),
             ]
         )
     ],
+    style={
+        "padding": "20px",
+        "borderRadius": "10px",
+        "backgroundColor": "#292929",
+        "border": "1px solid #404040"
+    },
 )
 
 
@@ -267,6 +311,8 @@ def create_figure(df: pd.DataFrame):
         bargroupgap=0.1,
         margin_b=40,
         font=dict(size=14),
+        plot_bgcolor="#292929",
+        paper_bgcolor="#292929",
     )
     fig.update_traces(
         hovertemplate="%{label} <br>Contributions: %{value}<br><extra></extra>",
