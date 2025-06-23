@@ -131,7 +131,8 @@ def package_version_graph(repolist):
     df = pd.DataFrame(df["dep_age"].value_counts().reset_index())
 
     # graph generation
-    fig = px.pie(df, names="dep_age", values="count", color_discrete_sequence=color_seq)
+    custom_colors = ["#DFF0FB", "#76C5EF", "#199AD6", "#0F5880"]
+    fig = px.pie(df, names="dep_age", values="count", color_discrete_sequence=custom_colors)
     fig.update_traces(
         domain=dict(x=[0, 0.45]),
         textposition="inside",
@@ -148,6 +149,11 @@ def package_version_graph(repolist):
             y=0.5,
             xanchor="left",
             yanchor="middle"
+        ),
+        font=dict(
+            family="Arial, sans-serif",  # Font family
+            size=14,                     # Font size
+            color="white"                # Font color
         ),
         margin=dict(r=50, l=50, t=50, b=50)
     )
