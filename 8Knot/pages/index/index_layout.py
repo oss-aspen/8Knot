@@ -234,11 +234,54 @@ search_bar = html.Div(
                                 # Search results popup
                                 html.Div(
                                     [
+                                        # First card: Options and controls (Help, Repo List, Bot Filter)
                                         dbc.Card(
                                             [
                                                 dbc.CardBody(
                                                     [
-                                                        # Bot filter switch at the top of dropdown
+                                                        # Action buttons at the top of dropdown
+                                                        html.Div(
+                                                            [
+                                                                dbc.Button(
+                                                                    "Help",
+                                                                    id="search-help",
+                                                                    n_clicks=0,
+                                                                    size="sm",
+                                                                    color="secondary",
+                                                                    outline=True,
+                                                                    className="me-2",
+                                                                    style={
+                                                                        "fontSize": "12px",
+                                                                        "padding": "4px 8px",
+                                                                        "borderColor": "#555",
+                                                                        "color": "#B0B0B0"
+                                                                    }
+                                                                ),
+                                                                dbc.Button(
+                                                                    "Repo List",
+                                                                    id="repo-list-button",
+                                                                    n_clicks=0,
+                                                                    size="sm",
+                                                                    color="secondary",
+                                                                    outline=True,
+                                                                    style={
+                                                                        "fontSize": "12px",
+                                                                        "padding": "4px 8px",
+                                                                        "borderColor": "#555",
+                                                                        "color": "#B0B0B0"
+                                                                    }
+                                                                ),
+                                                            ],
+                                                            style={
+                                                                "borderBottom": "1px solid #555", 
+                                                                "paddingBottom": "8px", 
+                                                                "marginBottom": "8px",
+                                                                "display": "flex",
+                                                                "justifyContent": "center",
+                                                                "gap": "8px"
+                                                            }
+                                                        ),
+                                                        # Bot filter switch below the buttons
                                                         html.Div(
                                                             [
                                                                 dbc.Switch(
@@ -250,11 +293,28 @@ search_bar = html.Div(
                                                                 ),
                                                             ],
                                                             style={
-                                                                "borderBottom": "1px solid #555", 
-                                                                "paddingBottom": "8px", 
-                                                                "marginBottom": "8px"
+                                                                "display": "flex",
+                                                                "justifyContent": "center"
                                                             }
-                                                        ),
+                                                        )
+                                                    ],
+                                                    style={"padding": "8px"}
+                                                )
+                                            ],
+                                            style={
+                                                "backgroundColor": "#2D2D2D",
+                                                "border": "1px solid #555",
+                                                "borderRadius": "8px 8px 0 0",  # Rounded top corners only
+                                                "borderBottom": "none",  # No bottom border to connect with second card
+                                                "color": "#fff",
+                                                "marginBottom": "0"  # No margin between cards
+                                            }
+                                        ),
+                                        # Second card: Searchable content (scrollable)
+                                        dbc.Card(
+                                            [
+                                                dbc.CardBody(
+                                                    [
                                                         html.Div(
                                                             id="search-results-list",
                                                             children=[
@@ -271,8 +331,12 @@ search_bar = html.Div(
                                             style={
                                                 "backgroundColor": "#2D2D2D",
                                                 "border": "1px solid #555",
-                                                "borderRadius": "8px",
-                                                "color": "#fff"
+                                                "borderRadius": "0 0 8px 8px",  # Rounded bottom corners only
+                                                "borderTop": "none",  # No top border to connect with first card
+                                                "color": "#fff",
+                                                "maxHeight": "240px",  # Limit height for scrolling
+                                                "overflowY": "auto",  # Make this card scrollable
+                                                "marginTop": "0"  # No margin between cards
                                             }
                                         )
                                     ],
@@ -283,8 +347,6 @@ search_bar = html.Div(
                                         "left": "0",
                                         "right": "0",
                                         "zIndex": "1000",
-                                        "maxHeight": "300px",
-                                        "overflowY": "auto",
                                         "display": "none",  # Initially hidden
                                         "marginTop": "2px"
                                     }
@@ -307,6 +369,7 @@ search_bar = html.Div(
                             fade=True,
                             is_open=False,
                             color="info",
+                            style={"zIndex": "1100"},  # Higher than search dropdown (1000)
                         ),
                         dbc.Alert(
                             children="List of repos",
@@ -316,7 +379,7 @@ search_bar = html.Div(
                             is_open=False,
                             color="light",
                             # if number of repos is large, render as a scrolling window
-                            style={"overflow-y": "scroll", "max-height": "440px"},
+                            style={"overflow-y": "scroll", "max-height": "440px", "zIndex": "1100"},  # Higher than search dropdown (1000)
                         ),
                     ],
                     style={
@@ -329,20 +392,6 @@ search_bar = html.Div(
                         dbc.Button(
                             "Search",
                             id="search",
-                            n_clicks=0,
-                            size="md",
-                            className="me-2 mb-2",
-                        ),
-                        dbc.Button(
-                            "Help",
-                            id="search-help",
-                            n_clicks=0,
-                            size="md",
-                            className="me-2 mb-2",
-                        ),
-                        dbc.Button(
-                            "Repo List",
-                            id="repo-list-button",
                             n_clicks=0,
                             size="md",
                             className="mb-2",
