@@ -238,6 +238,23 @@ search_bar = html.Div(
                                             [
                                                 dbc.CardBody(
                                                     [
+                                                        # Bot filter switch at the top of dropdown
+                                                        html.Div(
+                                                            [
+                                                                dbc.Switch(
+                                                                    id="bot-switch",
+                                                                    label="GitHub Bot Filter",
+                                                                    value=True,
+                                                                    input_class_name="botlist-filter-switch",
+                                                                    style={"fontSize": 14},
+                                                                ),
+                                                            ],
+                                                            style={
+                                                                "borderBottom": "1px solid #555", 
+                                                                "paddingBottom": "8px", 
+                                                                "marginBottom": "8px"
+                                                            }
+                                                        ),
                                                         html.Div(
                                                             id="search-results-list",
                                                             children=[
@@ -334,21 +351,6 @@ search_bar = html.Div(
                     style={
                         "display": "flex",
                         "flexWrap": "wrap",
-                        "marginBottom": "16px",
-                    },
-                ),
-                html.Div(
-                    [
-                        dbc.Switch(
-                            id="bot-switch",
-                            label="GitHub Bot Filter",
-                            value=True,
-                            input_class_name="botlist-filter-switch",
-                            style={"fontSize": 16},
-                        ),
-                    ],
-                    style={
-                        "marginTop": "8px",
                         "marginBottom": "16px",
                     },
                 ),
