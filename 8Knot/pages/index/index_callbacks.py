@@ -341,66 +341,6 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
         return dash.no_update
 
 
-# callback for repo selections to feed into visualization call backs
-@callback(
-    [Output("results-output-container", "children"), Output("repo-choices", "data")],
-    [
-        Input("search", "n_clicks"),
-        State("projects", "value"),
-    ],
-)
-def multiselect_values_to_repo_ids(n_clicks, user_vals):
-    if not user_vals:
-        logging.warning("NOTHING SELECTED IN SEARCH BAR")
-        raise dash.exceptions.PreventUpdate
-
-    # individual repo numbers
-    repos = [r for r in user_vals if isinstance(r, int)]
-    logging.warning(f"REPOS: {repos}")
-
-    # names of augur groups or orgs
-    names = [n for n in user_vals if isinstance(n, str)]
-
-    org_repos = [augur.org_to_repos(o) for o in names if augur.is_org(o)]
-    # flatten list repo_ids in orgs to 1D
-    org_repos = [v for l in org_repos for v in l]
-    logging.warning(f"ORG_REPOS: {org_repos}")
-
-    user_groups = []
-    if current_user.is_authenticated:
-        logging.warning(f"LOGINBUTTON: USER LOGGED IN {current_user}")
-        # TODO: implement more permanent interface
-        users_cache = redis.StrictRedis(
-            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
-            port=6379,
-            password=os.getenv("REDIS_PASSWORD", ""),
-            decode_responses=True,
-        )
-        try:
-            users_cache.ping()
-        except redis.exceptions.ConnectionError:
-            logging.error("SEARCH-BUTTON: Could not connect to users-cache.")
-            return dash.no_update
-
-        try:
-            if users_cache.exists(f"{current_user.get_id()}_groups"):
-                user_groups = json.loads(users_cache.get(f"{current_user.get_id()}_groups"))
-                logging.warning(f"USERS Groups: {type(user_groups)}, {user_groups}")
-        except redis.exceptions.ConnectionError:
-            logging.error("Searchbar: couldn't connect to Redis for user group options.")
-
-    group_repos = [user_groups[g] for g in names if not augur.is_org(g)]
-    # flatten list repo_ids in orgs to 1D
-    group_repos = [v for l in group_repos for v in l]
-    logging.warning(f"GROUP_REPOS: {group_repos}")
-
-    # only unique repo ids
-    all_repo_ids = list(set().union(*[repos, org_repos, group_repos]))
-    logging.warning(f"SELECTED_REPOS: {all_repo_ids}")
-
-    return "", all_repo_ids
-
-
 @callback(
     Output("help-alert", "is_open"),
     Input("search-help", "n_clicks"),
@@ -431,19 +371,20 @@ def show_help_alert(n_clicks, openness):
     [Input("repo-list-button", "n_clicks")],
     [State("help-alert", "is_open"), State("repo-choices", "data")],
 )
-def show_help_alert(n_clicks, openness, repo_ids):
-    """Sets the 'open' state of a help message
-    for the search bar to encourage users to check
-    their spelling and to ask for data to be loaded
-    if not available.
+def show_repo_list_alert(n_clicks, openness, repo_ids):
+    """Sets the 'open' state of a repo list alert
+    showing all selected repository URLs.
     Args:
-        n_clicks (int): number of times 'help' button clicked.
+        n_clicks (int): number of times 'repo list' button clicked.
         openness (boolean): whether help alert is currently open.
+        repo_ids (list): list of selected repository IDs.
     Returns:
-        dash.no_update | boolean: whether the help alert should be open.
+        dash.no_update | boolean: whether the repo list alert should be open.
     """
-    print(repo_ids)
-    url_list = [augur.repo_id_to_git(i) for i in repo_ids]
+    if repo_ids:
+        url_list = [augur.repo_id_to_git(i) for i in repo_ids]
+    else:
+        url_list = []
 
     if n_clicks == 0:
         return dash.no_update, str(url_list)
@@ -850,19 +791,13 @@ def toggle_contributors_dropdown(dropdown_clicks, repo_clicks, contrib_clicks, a
 # Callback to control search dropdown popup visibility
 @callback(
     Output("search-dropdown-popup", "style"),
-    [Input("my-input", "value"), Input("my-input", "n_blur"), Input("my-input", "n_clicks")],
+    [Input("my-input", "value")],
     [State("search-dropdown-popup", "style")]
 )
-def toggle_search_popup(input_value, n_blur, n_clicks, current_style):
+def toggle_search_popup(input_value, current_style):
     """
     Show/hide the search dropdown popup based on input focus and content
     """
-    ctx = dash.callback_context
-    if not ctx.triggered:
-        return dash.no_update
-    
-    triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
-    
     # Start with the current style or default
     new_style = current_style.copy() if current_style else {
         "position": "absolute",
@@ -875,24 +810,113 @@ def toggle_search_popup(input_value, n_blur, n_clicks, current_style):
         "marginTop": "2px"
     }
     
-    # Show popup when user clicks on input or starts typing
-    if triggered_id == "my-input" and (n_clicks or input_value):
+    # Show popup when user starts typing, hide when empty
+    if input_value:
         new_style["display"] = "block"
-    # Hide popup when input loses focus (blur)
-    elif triggered_id == "my-input" and n_blur:
+    else:
         new_style["display"] = "none"
     
     return new_style
+
+
+# Callback to update search results based on input
+@callback(
+    Output("search-results-list", "children"),
+    [Input("my-input", "value")],
+    [State("cached-options", "data")],
+    prevent_initial_call=True
+)
+def update_search_results(search_value, cached_options):
+    """
+    Update search results based on user input using the existing search logic
+    """
+    if not search_value or not cached_options:
+        return [
+            html.Div(
+                "Start typing to search for repositories and organizations...",
+                style={"padding": "12px", "color": "#B0B0B0", "textAlign": "center"}
+            )
+        ]
+    
+    try:
+        # Use the same search logic as the original multiselect
+        from .search_utils import fuzzy_search
+        
+        # Remove prefixes from the search query if present
+        search_query = search_value
+        prefix_type = None
+
+        if search_query.lower().startswith("repo:"):
+            search_query = search_query[5:].strip()
+            prefix_type = "repo"
+        elif search_query.lower().startswith("org:"):
+            search_query = search_query[4:].strip()
+            prefix_type = "org"
+
+        # Perform fuzzy search
+        matched_options = fuzzy_search(search_query, cached_options, threshold=0.2)
+        
+        # Filter by prefix type if specified
+        if prefix_type == "repo":
+            matched_options = [opt for opt in matched_options if isinstance(opt["value"], int)]
+        elif prefix_type == "org":
+            matched_options = [opt for opt in matched_options if isinstance(opt["value"], str)]
+        
+        # Limit results for performance
+        matched_options = matched_options[:20]
+        
+        if not matched_options:
+            return [
+                html.Div(
+                    "No matches found. Try adjusting your search terms.",
+                    style={"padding": "12px", "color": "#B0B0B0", "textAlign": "center"}
+                )
+            ]
+        
+        # Create clickable result items
+        result_items = []
+        for opt in matched_options:
+            is_org = isinstance(opt["value"], str)
+            icon = "🏢" if is_org else "📁"
+            prefix = "org:" if is_org else "repo:"
+            
+            result_item = html.Div(
+                [
+                    html.Span(f"{icon} ", style={"marginRight": "8px"}),
+                    html.Span(f"{prefix} {opt['label']}", style={"fontWeight": "500"}),
+                ],
+                id={"type": "search-result-item", "index": opt["value"]},
+                style={
+                    "padding": "8px 12px",
+                    "cursor": "pointer",
+                    "borderRadius": "4px",
+                    "marginBottom": "2px",
+                    "transition": "background-color 0.2s ease"
+                },
+                className="search-result-item"
+            )
+            result_items.append(result_item)
+        
+        return result_items
+        
+    except Exception as e:
+        logging.error(f"Error in update_search_results: {str(e)}")
+        return [
+            html.Div(
+                "Error loading search results. Please try again.",
+                style={"padding": "12px", "color": "#ff6b6b", "textAlign": "center"}
+            )
+        ]
 
 
 # Callback to handle clicking on search results and add tags
 @callback(
     [Output("selected-tags", "data"), Output("my-input", "value")],
     [Input({"type": "search-result-item", "index": dash.dependencies.ALL}, "n_clicks")],
-    [State("selected-tags", "data"), State("my-input", "value")],
+    [State("selected-tags", "data"), State("my-input", "value"), State("cached-options", "data")],
     prevent_initial_call=True
 )
-def add_selected_tag(n_clicks_list, selected_tags, input_value):
+def add_selected_tag(n_clicks_list, selected_tags, input_value, cached_options):
     """
     Add clicked search result to selected tags
     """
@@ -904,40 +928,50 @@ def add_selected_tag(n_clicks_list, selected_tags, input_value):
     triggered_id = ctx.triggered[0]["prop_id"]
     import json
     clicked_item = json.loads(triggered_id.split('.')[0])
-    repo_name = clicked_item["index"]
+    selected_value = clicked_item["index"]
     
     # Add to selected tags if not already present
     if selected_tags is None:
         selected_tags = []
     
-    if repo_name not in selected_tags:
-        selected_tags.append(repo_name)
+    if selected_value not in selected_tags:
+        selected_tags.append(selected_value)
     
     # Clear the input and return updated tags
     return selected_tags, ""
 
 
-# Callback to display selected tags
+# Callback to display selected tags with proper labels
 @callback(
     Output("selected-tags-container", "children"),
     [Input("selected-tags", "data")],
+    [State("cached-options", "data")],
     prevent_initial_call=True
 )
-def display_selected_tags(selected_tags):
+def display_selected_tags(selected_tags, cached_options):
     """
-    Display selected tags as removable chips
+    Display selected tags as removable chips with proper labels
     """
-    if not selected_tags:
+    if not selected_tags or not cached_options:
         return []
     
     tag_elements = []
-    for tag in selected_tags:
+    for tag_value in selected_tags:
+        # Find the label for this value
+        tag_label = str(tag_value)  # fallback
+        for opt in cached_options:
+            if opt["value"] == tag_value:
+                is_org = isinstance(tag_value, str)
+                prefix = "org:" if is_org else "repo:"
+                tag_label = f"{prefix} {opt['label']}"
+                break
+        
         tag_element = html.Div(
             [
-                html.Span(tag, style={"marginRight": "6px"}),
+                html.Span(tag_label, style={"marginRight": "6px"}),
                 html.Button(
                     "×",
-                    id={"type": "remove-tag", "index": tag},
+                    id={"type": "remove-tag", "index": tag_value},
                     className="tag-remove-btn",
                     style={
                         "background": "none",
@@ -971,6 +1005,66 @@ def display_selected_tags(selected_tags):
         tag_elements.append(tag_element)
     
     return tag_elements
+
+
+# Updated callback for repo selections to work with the new tag system
+@callback(
+    [Output("results-output-container", "children"), Output("repo-choices", "data")],
+    [
+        Input("search", "n_clicks"),
+        State("selected-tags", "data"),
+    ],
+)
+def multiselect_values_to_repo_ids(n_clicks, selected_tags):
+    if not selected_tags:
+        logging.warning("NOTHING SELECTED IN SEARCH BAR")
+        raise dash.exceptions.PreventUpdate
+
+    # individual repo numbers
+    repos = [r for r in selected_tags if isinstance(r, int)]
+    logging.warning(f"REPOS: {repos}")
+
+    # names of augur groups or orgs
+    names = [n for n in selected_tags if isinstance(n, str)]
+
+    org_repos = [augur.org_to_repos(o) for o in names if augur.is_org(o)]
+    # flatten list repo_ids in orgs to 1D
+    org_repos = [v for l in org_repos for v in l]
+    logging.warning(f"ORG_REPOS: {org_repos}")
+
+    user_groups = []
+    if current_user.is_authenticated:
+        logging.warning(f"LOGINBUTTON: USER LOGGED IN {current_user}")
+        # TODO: implement more permanent interface
+        users_cache = redis.StrictRedis(
+            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
+            port=6379,
+            password=os.getenv("REDIS_PASSWORD", ""),
+            decode_responses=True,
+        )
+        try:
+            users_cache.ping()
+        except redis.exceptions.ConnectionError:
+            logging.error("SEARCH-BUTTON: Could not connect to users-cache.")
+            return dash.no_update
+
+        try:
+            if users_cache.exists(f"{current_user.get_id()}_groups"):
+                user_groups = json.loads(users_cache.get(f"{current_user.get_id()}_groups"))
+                logging.warning(f"USERS Groups: {type(user_groups)}, {user_groups}")
+        except redis.exceptions.ConnectionError:
+            logging.error("Searchbar: couldn't connect to Redis for user group options.")
+
+    group_repos = [user_groups[g] for g in names if not augur.is_org(g)]
+    # flatten list repo_ids in orgs to 1D
+    group_repos = [v for l in group_repos for v in l]
+    logging.warning(f"GROUP_REPOS: {group_repos}")
+
+    # only unique repo ids
+    all_repo_ids = list(set().union(*[repos, org_repos, group_repos]))
+    logging.warning(f"SELECTED_REPOS: {all_repo_ids}")
+
+    return "", all_repo_ids
 
 
 # Callback to handle removing tags

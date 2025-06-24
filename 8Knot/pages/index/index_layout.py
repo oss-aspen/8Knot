@@ -223,57 +223,9 @@ search_bar = html.Div(
                                                         html.Div(
                                                             id="search-results-list",
                                                             children=[
-                                                                # Sample search results
                                                                 html.Div(
-                                                                    [
-                                                                        html.Span("🏢 ", style={"marginRight": "8px"}),
-                                                                        html.Span("facebook/react", style={"fontWeight": "500"}),
-                                                                        html.Span(" - A declarative, efficient JavaScript library", 
-                                                                                style={"color": "#B0B0B0", "fontSize": "14px", "marginLeft": "8px"})
-                                                                    ],
-                                                                    id={"type": "search-result-item", "index": "facebook/react"},
-                                                                    style={
-                                                                        "padding": "8px 12px",
-                                                                        "cursor": "pointer",
-                                                                        "borderRadius": "4px",
-                                                                        "marginBottom": "2px",
-                                                                        "transition": "background-color 0.2s ease"
-                                                                    },
-                                                                    className="search-result-item"
-                                                                ),
-                                                                html.Div(
-                                                                    [
-                                                                        html.Span("🏢 ", style={"marginRight": "8px"}),
-                                                                        html.Span("microsoft/vscode", style={"fontWeight": "500"}),
-                                                                        html.Span(" - Visual Studio Code", 
-                                                                                style={"color": "#B0B0B0", "fontSize": "14px", "marginLeft": "8px"})
-                                                                    ],
-                                                                    id={"type": "search-result-item", "index": "microsoft/vscode"},
-                                                                    style={
-                                                                        "padding": "8px 12px",
-                                                                        "cursor": "pointer",
-                                                                        "borderRadius": "4px",
-                                                                        "marginBottom": "2px",
-                                                                        "transition": "background-color 0.2s ease"
-                                                                    },
-                                                                    className="search-result-item"
-                                                                ),
-                                                                html.Div(
-                                                                    [
-                                                                        html.Span("🏢 ", style={"marginRight": "8px"}),
-                                                                        html.Span("google/tensorflow", style={"fontWeight": "500"}),
-                                                                        html.Span(" - Machine Learning library", 
-                                                                                style={"color": "#B0B0B0", "fontSize": "14px", "marginLeft": "8px"})
-                                                                    ],
-                                                                    id={"type": "search-result-item", "index": "google/tensorflow"},
-                                                                    style={
-                                                                        "padding": "8px 12px",
-                                                                        "cursor": "pointer",
-                                                                        "borderRadius": "4px",
-                                                                        "marginBottom": "2px",
-                                                                        "transition": "background-color 0.2s ease"
-                                                                    },
-                                                                    className="search-result-item"
+                                                                    "Start typing to search for repositories and organizations...",
+                                                                    style={"padding": "12px", "color": "#B0B0B0", "textAlign": "center"}
                                                                 )
                                                             ]
                                                         )
