@@ -168,180 +168,6 @@ def login_username_button(url):
 
 
 @callback(
-    [Output("projects", "data")],
-    [Input("projects", "searchValue")],
-    [State("projects", "value"), State("cached-options", "data")],
-)
-def dynamic_multiselect_options(user_in: str, selections, cached_options):
-    """
-    Enhanced search using fuzzy matching and client-side cache.
-
-    Args:
-        user_in: User's search input
-        selections: Currently selected values
-        cached_options: All available options from client-side cache
-    """
-    if not user_in:
-        return dash.no_update
-
-    try:
-        start_time = time.time()
-        logging.info(f"Search query: '{user_in}'")
-
-        # Use cached options if available, otherwise fall back to server fetch
-        if cached_options:
-            logging.info(f"Using client-side cache with {len(cached_options)} options")
-            options = cached_options
-        else:
-            logging.info("Client-side cache empty, fetching from server")
-            options = augur.get_multiselect_options().copy()
-            logging.info(f"Fetched {len(options)} options from server")
-            if current_user.is_authenticated:
-                try:
-                    users_cache = redis.StrictRedis(
-                        host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
-                        port=6379,
-                        password=os.getenv("REDIS_PASSWORD", ""),
-                        decode_responses=True,
-                    )
-                    users_cache.ping()
-                    if users_cache.exists(f"{current_user.get_id()}_group_options"):
-                        user_options = json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
-                        options = options + user_options
-                        logging.info(f"Added {len(user_options)} user options from Redis")
-                except redis.exceptions.ConnectionError as e:
-                    logging.error(f"MULTISELECT: Could not connect to users-cache. Error: {str(e)}")
-
-        if selections is None:
-            selections = []
-
-        # Remove prefixes from the search query if present
-        search_query = user_in
-        prefix_type = None
-
-        if search_query.lower().startswith("repo:"):
-            search_query = search_query[5:].strip()
-            prefix_type = "repo"
-            logging.info(f"Repo prefix detected, searching for: '{search_query}'")
-        elif search_query.lower().startswith("org:"):
-            search_query = search_query[4:].strip()
-            prefix_type = "org"
-            logging.info(f"Org prefix detected, searching for: '{search_query}'")
-
-        # Perform fuzzy search with the refined query
-        from .search_utils import fuzzy_search
-
-        matched_options = fuzzy_search(search_query, options, threshold=0.2)
-        logging.info(f"Fuzzy search found {len(matched_options)} matches")
-
-        # Filter by prefix type if specified
-        if prefix_type == "repo":
-            matched_options = [opt for opt in matched_options if isinstance(opt["value"], int)]
-            logging.info(f"Filtered to {len(matched_options)} repos")
-        elif prefix_type == "org":
-            matched_options = [opt for opt in matched_options if isinstance(opt["value"], str)]
-            logging.info(f"Filtered to {len(matched_options)} orgs")
-
-        # Format options with prefixes based on their type
-        formatted_opts = []
-        seen_values = set()  # Track seen values to prevent duplicates
-
-        for opt in matched_options:
-            # Skip duplicates (based on value)
-            if opt["value"] in seen_values:
-                continue
-
-            seen_values.add(opt["value"])
-            formatted_opt = opt.copy()
-            if isinstance(opt["value"], str):
-                # It's an org
-                formatted_opt["label"] = f"org: {opt['label']}"
-            else:
-                # It's a repo
-                formatted_opt["label"] = f"repo: {opt['label']}"
-            formatted_opts.append(formatted_opt)
-
-        # Always include the previous selections
-        # Format selected options with prefixes
-        selected_options = []
-
-        # First check if selections are in our cache
-        cached_selection_values = set(opt["value"] for opt in options)
-        missing_selections = [v for v in selections if v not in cached_selection_values]
-
-        # If any selections aren't in cache, fetch them from the server
-        if missing_selections:
-            logging.info(f"Fetching {len(missing_selections)} missing selections from server")
-            all_options = augur.get_multiselect_options().copy()
-            for v in selections:
-                matched_opts = [opt for opt in all_options if opt["value"] == v]
-                if matched_opts:
-                    formatted_v = matched_opts[0].copy()
-                    if isinstance(v, str):
-                        # It's an org
-                        formatted_v["label"] = f"org: {formatted_v['label']}"
-                    else:
-                        # It's a repo
-                        formatted_v["label"] = f"repo: {formatted_v['label']}"
-                    selected_options.append(formatted_v)
-        else:
-            # All selections are in cache
-            for v in selections:
-                for opt in options:
-                    if opt["value"] == v:
-                        formatted_v = opt.copy()
-                        if isinstance(v, str):
-                            # It's an org
-                            formatted_v["label"] = f"org: {opt['label']}"
-                        else:
-                            # It's a repo
-                            formatted_v["label"] = f"repo: {opt['label']}"
-                        selected_options.append(formatted_v)
-                        break
-
-        # Combine results, limiting to 100 items but always including selections
-        if len(formatted_opts) < 100:
-            result = formatted_opts
-        else:
-            result = formatted_opts[:100]
-
-        # Add selected options that aren't already in the results
-        selected_values = [opt["value"] for opt in result]
-        for opt in selected_options:
-            if opt["value"] not in selected_values:
-                result.append(opt)
-
-        end_time = time.time()
-        logging.info(f"Search completed in {end_time - start_time:.2f} seconds")
-        logging.info(f"Returning {len(result)} options to dropdown")
-        return [result]
-
-    except Exception as e:
-        logging.error(f"Error in dynamic_multiselect_options: {str(e)}")
-        # Return at least the current selections as a fallback
-        if selections:
-            default_options = []
-            try:
-                # Try to get the labels for the current selections
-                options = augur.get_multiselect_options()
-                for v in options:
-                    if v["value"] in selections:
-                        formatted_v = v.copy()
-                        if isinstance(v["value"], str):
-                            formatted_v["label"] = f"org: {v['label']}"
-                        else:
-                            formatted_v["label"] = f"repo: {v['label']}"
-                        default_options.append(formatted_v)
-            except:
-                # If that fails, just return the raw selection values
-                default_options = [{"value": v, "label": f"ID: {v}"} for v in selections]
-
-            return [default_options]
-
-        return dash.no_update
-
-
-@callback(
     Output("help-alert", "is_open"),
     Input("search-help", "n_clicks"),
     State("help-alert", "is_open"),
@@ -454,6 +280,11 @@ def run_queries(repos):
     Args:
         repos ([int]): repositories we collect data for.
     """
+    
+    # If no repos are selected, don't run any queries
+    if not repos or len(repos) == 0:
+        logging.info("RUN_QUERIES: No repositories selected, skipping query execution")
+        return []
 
     # cache manager object
     cache = cm()
@@ -478,6 +309,39 @@ def run_queries(repos):
         jobs.append(j)
 
     return [j.id for j in jobs]
+
+
+# Callback to set default tag on page load
+@callback(
+    Output("selected-tags", "data", allow_duplicate=True),
+    [Input("cached-options", "data")],
+    prevent_initial_call="initial_duplicate"
+)
+def set_default_tag_on_load(cached_options):
+    """
+    Set the default tag when the page loads, using the same logic as the old system
+    """
+    if not cached_options:
+        # If cache isn't ready yet, don't update - let it trigger again when cache is ready
+        logging.info("Default tag callback: cached_options not ready yet")
+        return dash.no_update
+    
+    try:
+        # Use the same logic as augur.initial_multiselect_option()
+        initial_option = augur.initial_multiselect_option()
+        if initial_option and initial_option["value"] != -1:  # -1 is the fallback
+            logging.info(f"Setting default tag: {initial_option['value']}")
+            return [initial_option["value"]]
+        else:
+            # Fallback to first option if available
+            if cached_options and len(cached_options) > 0:
+                logging.info(f"Setting fallback default tag: {cached_options[0]['value']}")
+                return [cached_options[0]["value"]]
+    except Exception as e:
+        logging.error(f"Error setting default tag: {str(e)}")
+    
+    logging.info("No default tag set")
+    return []
 
 
 # Add a cache initialization callback that runs on page load
@@ -546,27 +410,6 @@ def initialize_cache(_):
         # Return an empty list as a fallback to prevent complete failure
         return []
 
-
-# Add search status indicator callbacks
-@callback(
-    [Output("search-status", "children"), Output("search-status", "className"), Output("search-status", "style")],
-    [Input("projects", "searchValue")],
-    prevent_initial_call=True,
-)
-def update_search_status(search_value):
-    """Update the search status indicator when a search is performed."""
-    if search_value and len(search_value) > 0:
-        return ["Searching...", "search-status-indicator searching", {"display": "block"}]
-    return ["", "search-status-indicator", {"display": "none"}]
-
-
-# Callback to hide the search status when results are loaded
-@callback(
-    [Output("search-status", "style", allow_duplicate=True)], [Input("projects", "data")], prevent_initial_call=True
-)
-def hide_search_status_when_loaded(_):
-    """Hide the search status indicator when results are loaded."""
-    return [{"display": "none"}]
 
 # Dash callback for sidebar toggle
 @dash.callback(
@@ -946,14 +789,58 @@ def add_selected_tag(n_clicks_list, selected_tags, input_value, cached_options):
     Output("selected-tags-container", "children"),
     [Input("selected-tags", "data")],
     [State("cached-options", "data")],
-    prevent_initial_call=True
+    prevent_initial_call=False  # Allow initial call to display default tags
 )
 def display_selected_tags(selected_tags, cached_options):
     """
-    Display selected tags as removable chips with proper labels
+    Display selected tags as removable chips with proper labels (inline style)
     """
-    if not selected_tags or not cached_options:
+    if not selected_tags:
         return []
+    
+    # If cached_options not ready yet, return placeholder tags with just the values
+    if not cached_options:
+        tag_elements = []
+        for tag_value in selected_tags:
+            display_label = f"Loading... {tag_value}"
+            tag_element = html.Div(
+                [
+                    html.Span(display_label, style={"marginRight": "4px"}),
+                    html.Button(
+                        "×",
+                        id={"type": "remove-tag", "index": tag_value},
+                        className="tag-remove-btn",
+                        style={
+                            "background": "none",
+                            "border": "none",
+                            "color": "white",
+                            "cursor": "pointer",
+                            "fontSize": "16px",
+                            "lineHeight": "1",
+                            "padding": "0",
+                            "width": "16px",
+                            "height": "16px",
+                            "display": "flex",
+                            "alignItems": "center",
+                            "justifyContent": "center",
+                            "borderRadius": "50%"
+                        }
+                    )
+                ],
+                className="selected-tag",
+                style={
+                    "backgroundColor": "#119DFF",
+                    "color": "white",
+                    "padding": "4px 8px",
+                    "borderRadius": "12px",
+                    "fontSize": "14px",
+                    "display": "inline-flex",
+                    "alignItems": "center",
+                    "gap": "6px"
+                }
+            )
+            tag_elements.append(tag_element)
+        return tag_elements
     
     tag_elements = []
     for tag_value in selected_tags:
@@ -966,9 +853,12 @@ def display_selected_tags(selected_tags, cached_options):
                 tag_label = f"{prefix} {opt['label']}"
                 break
         
+        # Truncate long labels for inline display
+        display_label = tag_label if len(tag_label) <= 25 else tag_label[:22] + "..."
+        
         tag_element = html.Div(
             [
-                html.Span(tag_label, style={"marginRight": "6px"}),
+                html.Span(display_label, style={"marginRight": "4px"}),
                 html.Button(
                     "×",
                     id={"type": "remove-tag", "index": tag_value},
@@ -1012,13 +902,16 @@ def display_selected_tags(selected_tags, cached_options):
     [Output("results-output-container", "children"), Output("repo-choices", "data")],
     [
         Input("search", "n_clicks"),
-        State("selected-tags", "data"),
+        Input("selected-tags", "data"),  # Auto-trigger when tags change
     ],
+    prevent_initial_call=False  # Allow initial call to fire with default tags
 )
 def multiselect_values_to_repo_ids(n_clicks, selected_tags):
+    # Allow triggering from either search button or tag changes
     if not selected_tags:
         logging.warning("NOTHING SELECTED IN SEARCH BAR")
-        raise dash.exceptions.PreventUpdate
+        # Don't prevent update - let it run with empty list to show empty state
+        return "", []
 
     # individual repo numbers
     repos = [r for r in selected_tags if isinstance(r, int)]
@@ -1093,3 +986,18 @@ def remove_selected_tag(n_clicks_list, selected_tags):
         selected_tags.remove(tag_to_remove)
     
     return selected_tags
+
+# Callback to update placeholder text based on whether tags are present
+@callback(
+    Output("my-input", "placeholder"),
+    [Input("selected-tags", "data")],
+    prevent_initial_call=False  # Allow initial call to set proper placeholder
+)
+def update_placeholder(selected_tags):
+    """
+    Update placeholder text based on whether tags are selected
+    """
+    if selected_tags and len(selected_tags) > 0:
+        return "Add more repos/organizations..."
+    else:
+        return "Search for repos/organizations..."

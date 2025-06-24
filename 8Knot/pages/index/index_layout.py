@@ -186,32 +186,50 @@ search_bar = html.Div(
                         # ),
                         html.Div(
                             [
-                                # Tags display area
+                                # Combined search container with tags inside
                                 html.Div(
-                                    id="selected-tags-container",
-                                    children=[],
+                                    [
+                                        # Tags display area (inside the search bar)
+                                        html.Div(
+                                            id="selected-tags-container",
+                                            children=[],
+                                            style={
+                                                "display": "flex",
+                                                "flexWrap": "wrap",
+                                                "gap": "4px",
+                                                "alignItems": "center",
+                                                "paddingRight": "8px"
+                                            }
+                                        ),
+                                        # Search input (flex-grow to fill remaining space)
+                                        dcc.Input(
+                                            id='my-input',
+                                            type='text',
+                                            placeholder='Search for repos/organizations...',
+                                            style={
+                                                'flex': '1',
+                                                'backgroundColor': 'transparent',
+                                                'color': '#fff',
+                                                'border': 'none',
+                                                'outline': 'none',
+                                                'padding': '0',
+                                                'fontSize': '16px',
+                                                'minWidth': '200px'
+                                            }
+                                        ),
+                                    ],
                                     style={
-                                        "display": "flex",
-                                        "flexWrap": "wrap",
-                                        "gap": "6px",
-                                        "marginBottom": "8px",
-                                        "minHeight": "0px"
-                                    }
-                                ),
-                                # Search input
-                                dcc.Input(
-                                    id='my-input',
-                                    type='text',
-                                    placeholder='Search for repos/organizations...',
-                                    style={
-                                        'width': '100%',
+                                        'display': 'flex',
+                                        'alignItems': 'center',
+                                        'flexWrap': 'wrap',
                                         'backgroundColor': '#232323',
-                                        'color': '#fff',
                                         'border': '1px solid #555',
                                         'borderRadius': '8px',
-                                        'padding': '10px',
-                                        'fontSize': '16px'
-                                    }
+                                        'padding': '8px 12px',
+                                        'minHeight': '44px',
+                                        'gap': '4px'
+                                    },
+                                    id="search-input-container"
                                 ),
                                 # Search results popup
                                 html.Div(
@@ -359,7 +377,7 @@ layout = html.Div(
         dcc.Location(id="url"),
         html.Script(
             """
-            // CSS for search result hover effects
+            // CSS for search result hover effects and inline tags
             const style = document.createElement('style');
             style.textContent = `
                 .search-result-item:hover {
@@ -368,30 +386,39 @@ layout = html.Div(
                 .selected-tag {
                     background-color: #119DFF;
                     color: white;
-                    padding: 4px 8px;
+                    padding: 2px 6px;
                     border-radius: 12px;
-                    font-size: 14px;
+                    font-size: 13px;
                     display: inline-flex;
                     align-items: center;
-                    gap: 6px;
+                    gap: 4px;
+                    white-space: nowrap;
+                    max-width: 200px;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
                 }
                 .tag-remove-btn {
                     background: none;
                     border: none;
                     color: white;
                     cursor: pointer;
-                    font-size: 16px;
+                    font-size: 14px;
                     line-height: 1;
                     padding: 0;
-                    width: 16px;
-                    height: 16px;
+                    width: 14px;
+                    height: 14px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     border-radius: 50%;
+                    flex-shrink: 0;
                 }
                 .tag-remove-btn:hover {
                     background-color: rgba(255, 255, 255, 0.2);
+                }
+                #search-input-container:focus-within {
+                    border-color: #119DFF;
+                    box-shadow: 0 0 0 2px rgba(17, 157, 255, 0.2);
                 }
             `;
             document.head.appendChild(style);
