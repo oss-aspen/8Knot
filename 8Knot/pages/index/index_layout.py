@@ -243,13 +243,26 @@ search_bar = html.Div(
                                                         html.Div(
                                                             [
                                                                 dbc.Button(
+                                                                    "Search",
+                                                                    id="search",
+                                                                    n_clicks=0,
+                                                                    size="sm",
+                                                                    color="primary",
+                                                                    style={
+                                                                        "fontSize": "12px",
+                                                                        "padding": "4px 12px",
+                                                                        "backgroundColor": "#119DFF",
+                                                                        "borderColor": "#119DFF",
+                                                                        "color": "#fff"
+                                                                    }
+                                                                ),
+                                                                dbc.Button(
                                                                     "Help",
                                                                     id="search-help",
                                                                     n_clicks=0,
                                                                     size="sm",
                                                                     color="secondary",
                                                                     outline=True,
-                                                                    className="me-2",
                                                                     style={
                                                                         "fontSize": "12px",
                                                                         "padding": "4px 8px",
@@ -385,22 +398,6 @@ search_bar = html.Div(
                     ],
                     style={
                         "width": "100%",
-                        "marginBottom": "16px",
-                    },
-                ),
-                html.Div(
-                    [
-                        dbc.Button(
-                            "Search",
-                            id="search",
-                            n_clicks=0,
-                            size="md",
-                            className="mb-2",
-                        ),
-                    ],
-                    style={
-                        "display": "flex",
-                        "flexWrap": "wrap",
                         "marginBottom": "16px",
                     },
                 ),
