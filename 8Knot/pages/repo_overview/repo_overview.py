@@ -77,6 +77,10 @@ layout = dbc.Container(
     [Input("repo-choices", "data")],
 )
 def repo_dropdown(repo_ids):
+    # Handle empty repo_ids list
+    if not repo_ids or len(repo_ids) == 0:
+        return [], None
+    
     # array to hold repo_id and git url pairing for dropdown
     data_array = []
     for repo_id in repo_ids:

@@ -143,6 +143,8 @@ search_bar = html.Div(
     [
         # Add client-side caching component
         dcc.Store(id="cached-options", storage_type="session"),
+        # Store for selected tags
+        dcc.Store(id="selected-tags", storage_type="session", data=[]),
         # Hidden div to trigger cache initialization on page load
         html.Div(id="cache-init-trigger", style={"display": "none"}),
         # Storage quota warning
@@ -166,21 +168,208 @@ search_bar = html.Div(
             [
                 html.Div(
                     [
-                        dmc.MultiSelect(
-                            id="projects",
-                            searchable=True,
-                            clearable=True,
-                            nothingFound="No matching repos/orgs.",
-                            variant="filled",
-                            debounce=100,  # debounce time for the search input, since we're implementing client-side caching, we can use a faster debounce
-                            data=[augur.initial_multiselect_option()],
-                            value=[augur.initial_multiselect_option()["value"]],
-                            style={"fontSize": 16},
-                            maxDropdownHeight=300,  # limits the dropdown menu's height to 300px
-                            zIndex=9999,  # ensures the dropdown menu is on top of other elements
-                            dropdownPosition="bottom",  # forces the dropdown to open downwards
-                            transitionDuration=150,  # transition duration for the dropdown menu
-                            className="searchbar-dropdown",
+                        # dmc.MultiSelect(
+                        #     id="projects",
+                        #     searchable=True,
+                        #     clearable=True,
+                        #     nothingFound="No matching repos/orgs.",
+                        #     variant="filled",
+                        #     debounce=100,  # debounce time for the search input, since we're implementing client-side caching, we can use a faster debounce
+                        #     data=[augur.initial_multiselect_option()],
+                        #     value=[augur.initial_multiselect_option()["value"]],
+                        #     style={"fontSize": 16},
+                        #     maxDropdownHeight=300,  # limits the dropdown menu's height to 300px
+                        #     zIndex=9999,  # ensures the dropdown menu is on top of other elements
+                        #     dropdownPosition="bottom",  # forces the dropdown to open downwards
+                        #     transitionDuration=150,  # transition duration for the dropdown menu
+                        #     className="searchbar-dropdown",
+                        # ),
+                        html.Div(
+                            [
+                                # Combined search container with tags inside
+                                html.Div(
+                                    [
+                                        # Tags display area (inside the search bar)
+                                        html.Div(
+                                            id="selected-tags-container",
+                                            children=[],
+                                            style={
+                                                "display": "flex",
+                                                "flexWrap": "wrap",
+                                                "gap": "4px",
+                                                "alignItems": "center",
+                                                "paddingRight": "8px"
+                                            }
+                                        ),
+                                        # Search input (flex-grow to fill remaining space)
+                                        dcc.Input(
+                                            id='my-input',
+                                            type='text',
+                                            placeholder='Search for repos/organizations...',
+                                            style={
+                                                'flex': '1',
+                                                'backgroundColor': 'transparent',
+                                                'color': '#fff',
+                                                'border': 'none',
+                                                'outline': 'none',
+                                                'padding': '0',
+                                                'fontSize': '16px',
+                                                'minWidth': '200px'
+                                            }
+                                        ),
+                                    ],
+                                    style={
+                                        'display': 'flex',
+                                        'alignItems': 'center',
+                                        'flexWrap': 'wrap',
+                                        'backgroundColor': '#232323',
+                                        'border': '1px solid #555',
+                                        'borderRadius': '16px',
+                                        'padding': '8px 12px',
+                                        'minHeight': '44px',
+                                        'gap': '4px'
+                                    },
+                                    id="search-input-container"
+                                ),
+                                # Search results popup
+                                html.Div(
+                                    [
+                                        # First card: Options and controls (Help, Repo List, Bot Filter)
+                                        dbc.Card(
+                                            [
+                                                dbc.CardBody(
+                                                    [
+                                                        # Action buttons at the top of dropdown
+                                                        html.Div(
+                                                            [
+                                                                dbc.Button(
+                                                                    "Search",
+                                                                    id="search",
+                                                                    n_clicks=0,
+                                                                    size="sm",
+                                                                    color="primary",
+                                                                    style={
+                                                                        "fontSize": "12px",
+                                                                        "padding": "4px 12px",
+                                                                        "backgroundColor": "#119DFF",
+                                                                        "borderColor": "#119DFF",
+                                                                        "color": "#fff"
+                                                                    }
+                                                                ),
+                                                                dbc.Button(
+                                                                    "Help",
+                                                                    id="search-help",
+                                                                    n_clicks=0,
+                                                                    size="sm",
+                                                                    color="secondary",
+                                                                    outline=True,
+                                                                    style={
+                                                                        "fontSize": "12px",
+                                                                        "padding": "4px 8px",
+                                                                        "borderColor": "#555",
+                                                                        "color": "#B0B0B0"
+                                                                    }
+                                                                ),
+                                                                dbc.Button(
+                                                                    "Repo List",
+                                                                    id="repo-list-button",
+                                                                    n_clicks=0,
+                                                                    size="sm",
+                                                                    color="secondary",
+                                                                    outline=True,
+                                                                    style={
+                                                                        "fontSize": "12px",
+                                                                        "padding": "4px 8px",
+                                                                        "borderColor": "#555",
+                                                                        "color": "#B0B0B0"
+                                                                    }
+                                                                ),
+                                                            ],
+                                                            style={
+                                                                "borderBottom": "1px solid #555", 
+                                                                "paddingBottom": "8px", 
+                                                                "marginBottom": "8px",
+                                                                "display": "flex",
+                                                                "justifyContent": "center",
+                                                                "gap": "8px"
+                                                            }
+                                                        ),
+                                                        # Bot filter switch below the buttons
+                                                        html.Div(
+                                                            [
+                                                                dbc.Switch(
+                                                                    id="bot-switch",
+                                                                    label="GitHub Bot Filter",
+                                                                    value=True,
+                                                                    input_class_name="botlist-filter-switch",
+                                                                    style={"fontSize": 14},
+                                                                ),
+                                                            ],
+                                                            style={
+                                                                "display": "flex",
+                                                                "justifyContent": "center"
+                                                            }
+                                                        )
+                                                    ],
+                                                    style={"padding": "8px"}
+                                                )
+                                            ],
+                                            style={
+                                                "backgroundColor": "#2D2D2D",
+                                                "border": "1px solid #555",
+                                                "borderRadius": "16px 16px 0 0",  # Rounded top corners only
+                                                "borderBottom": "none",  # No bottom border to connect with second card
+                                                "color": "#fff",
+                                                "marginBottom": "0"  # No margin between cards
+                                            }
+                                        ),
+                                        # Second card: Searchable content (scrollable)
+                                        dbc.Card(
+                                            [
+                                                dbc.CardBody(
+                                                    [
+                                                        html.Div(
+                                                            id="search-results-list",
+                                                            children=[
+                                                                html.Div(
+                                                                    "Start typing to search for repositories and organizations...",
+                                                                    style={"padding": "12px", "color": "#B0B0B0", "textAlign": "center"}
+                                                                )
+                                                            ]
+                                                        )
+                                                    ],
+                                                    style={"padding": "8px"}
+                                                )
+                                            ],
+                                            style={
+                                                "backgroundColor": "#2D2D2D",
+                                                "border": "1px solid #555",
+                                                "borderRadius": "0 0 16px 16px",  # Rounded bottom corners only
+                                                "borderTop": "none",  # No top border to connect with first card
+                                                "color": "#fff",
+                                                "maxHeight": "240px",  # Limit height for scrolling
+                                                "overflowY": "auto",  # Make this card scrollable
+                                                "marginTop": "0"  # No margin between cards
+                                            }
+                                        )
+                                    ],
+                                    id="search-dropdown-popup",
+                                    **{"data-click-outside-initialized": "false"},
+                                    style={
+                                        "position": "absolute",
+                                        "top": "100%",
+                                        "left": "0",
+                                        "right": "0",
+                                        "zIndex": "1000",
+                                        "display": "none",  # Initially hidden
+                                        "marginTop": "2px"
+                                    }
+                                )
+                            ],
+                            style={
+                                "position": "relative",
+                                "width": "100%"
+                            }
                         ),
                         # Add search status indicator
                         html.Div(id="search-status", className="search-status-indicator", style={"display": "none"}),
@@ -194,6 +383,7 @@ search_bar = html.Div(
                             fade=True,
                             is_open=False,
                             color="info",
+                            style={"zIndex": "1100"},  # Higher than search dropdown (1000)
                         ),
                         dbc.Alert(
                             children="List of repos",
@@ -203,56 +393,11 @@ search_bar = html.Div(
                             is_open=False,
                             color="light",
                             # if number of repos is large, render as a scrolling window
-                            style={"overflow-y": "scroll", "max-height": "440px"},
+                            style={"overflow-y": "scroll", "max-height": "440px", "zIndex": "1100"},  # Higher than search dropdown (1000)
                         ),
                     ],
                     style={
                         "width": "100%",
-                        "marginBottom": "16px",
-                    },
-                ),
-                html.Div(
-                    [
-                        dbc.Button(
-                            "Search",
-                            id="search",
-                            n_clicks=0,
-                            size="md",
-                            className="me-2 mb-2",
-                        ),
-                        dbc.Button(
-                            "Help",
-                            id="search-help",
-                            n_clicks=0,
-                            size="md",
-                            className="me-2 mb-2",
-                        ),
-                        dbc.Button(
-                            "Repo List",
-                            id="repo-list-button",
-                            n_clicks=0,
-                            size="md",
-                            className="mb-2",
-                        ),
-                    ],
-                    style={
-                        "display": "flex",
-                        "flexWrap": "wrap",
-                        "marginBottom": "16px",
-                    },
-                ),
-                html.Div(
-                    [
-                        dbc.Switch(
-                            id="bot-switch",
-                            label="GitHub Bot Filter",
-                            value=True,
-                            input_class_name="botlist-filter-switch",
-                            style={"fontSize": 16},
-                        ),
-                    ],
-                    style={
-                        "marginTop": "8px",
                         "marginBottom": "16px",
                     },
                 ),
@@ -281,6 +426,52 @@ layout = html.Div(
         dcc.Location(id="url"),
         html.Script(
             """
+            // CSS for search result hover effects and inline tags
+            const style = document.createElement('style');
+            style.textContent = `
+                .search-result-item:hover {
+                    background-color: #3A3A3A !important;
+                }
+                .selected-tag {
+                    background-color: #119DFF;
+                    color: white;
+                    padding: 2px 6px;
+                    border-radius: 12px;
+                    font-size: 13px;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 4px;
+                    white-space: nowrap;
+                    max-width: 200px;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .tag-remove-btn {
+                    background: none;
+                    border: none;
+                    color: white;
+                    cursor: pointer;
+                    font-size: 14px;
+                    line-height: 1;
+                    padding: 0;
+                    width: 14px;
+                    height: 14px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 50%;
+                    flex-shrink: 0;
+                }
+                .tag-remove-btn:hover {
+                    background-color: rgba(255, 255, 255, 0.2);
+                }
+                #search-input-container:focus-within {
+                    border-color: #119DFF;
+                    box-shadow: 0 0 0 2px rgba(17, 157, 255, 0.2);
+                }
+            `;
+            document.head.appendChild(style);
+
             window.addEventListener('error', function(event) {
                 if (event.message && event.message.toLowerCase().includes('quota') &&
                     event.message.toLowerCase().includes('exceeded')) {

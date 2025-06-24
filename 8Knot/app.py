@@ -90,6 +90,53 @@ app = dash.Dash(
 server = app.server
 server = _login.configure_server_login(server)
 
+"""REGISTER CLIENTSIDE CALLBACKS"""
+# Clientside callback to handle clicking outside the search dropdown
+app.clientside_callback(
+    """
+    function(trigger) {
+        // Setup click outside behavior for search dropdown
+        setTimeout(function() {
+            const searchContainer = document.getElementById('search-input-container');
+            const dropdown = document.getElementById('search-dropdown-popup');
+            const input = document.getElementById('my-input');
+            
+            if (!searchContainer || !dropdown || !input) {
+                return;
+            }
+            
+            // Function to handle clicks outside
+            function handleClickOutside(event) {
+                // Check if click is outside both the search container and dropdown
+                if (!searchContainer.contains(event.target) && !dropdown.contains(event.target)) {
+                    // Hide dropdown when clicking outside
+                    dropdown.style.display = 'none';
+                }
+            }
+            
+            // Function to show dropdown when input gets focus
+            function handleInputFocus() {
+                dropdown.style.display = 'block';
+            }
+            
+            // Remove existing listeners to avoid duplicates
+            document.removeEventListener('click', handleClickOutside);
+            input.removeEventListener('focus', handleInputFocus);
+            
+            // Add the event listeners
+            document.addEventListener('click', handleClickOutside);
+            input.addEventListener('focus', handleInputFocus);
+            
+        }, 100);
+        
+        return window.dash_clientside.no_update;
+    }
+    """,
+    dash.dependencies.Output('search-dropdown-popup', 'data-click-outside-initialized', allow_duplicate=True),
+    dash.dependencies.Input('cache-init-trigger', 'children'),
+    prevent_initial_call='initial_duplicate'
+)
+
 """HEALTH CHECK ENDPOINT"""
 #HELLO????
 
