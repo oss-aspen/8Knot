@@ -224,7 +224,7 @@ search_bar = html.Div(
                                         'flexWrap': 'wrap',
                                         'backgroundColor': '#232323',
                                         'border': '1px solid #555',
-                                        'borderRadius': '8px',
+                                        'borderRadius': '16px',
                                         'padding': '8px 12px',
                                         'minHeight': '44px',
                                         'gap': '4px'
@@ -317,7 +317,7 @@ search_bar = html.Div(
                                             style={
                                                 "backgroundColor": "#2D2D2D",
                                                 "border": "1px solid #555",
-                                                "borderRadius": "8px 8px 0 0",  # Rounded top corners only
+                                                "borderRadius": "16px 16px 0 0",  # Rounded top corners only
                                                 "borderBottom": "none",  # No bottom border to connect with second card
                                                 "color": "#fff",
                                                 "marginBottom": "0"  # No margin between cards
@@ -344,7 +344,7 @@ search_bar = html.Div(
                                             style={
                                                 "backgroundColor": "#2D2D2D",
                                                 "border": "1px solid #555",
-                                                "borderRadius": "0 0 8px 8px",  # Rounded bottom corners only
+                                                "borderRadius": "0 0 16px 16px",  # Rounded bottom corners only
                                                 "borderTop": "none",  # No top border to connect with first card
                                                 "color": "#fff",
                                                 "maxHeight": "240px",  # Limit height for scrolling
