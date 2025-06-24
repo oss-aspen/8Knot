@@ -897,17 +897,42 @@ def display_selected_tags(selected_tags, cached_options):
     return tag_elements
 
 
+# Callback to trigger initial search when default tag is set
+@callback(
+    Output("search", "n_clicks", allow_duplicate=True),
+    [Input("selected-tags", "data")],
+    [State("search", "n_clicks")],
+    prevent_initial_call=True
+)
+def trigger_initial_search(selected_tags, current_clicks):
+    """
+    Trigger search automatically when default tag is first set on page load
+    """
+    ctx = dash.callback_context
+    if not ctx.triggered:
+        return dash.no_update
+    
+    # Only auto-trigger if this is the first time tags are set (likely the default tag)
+    # and user hasn't clicked search yet
+    if selected_tags and (current_clicks is None or current_clicks == 0):
+        logging.info("Auto-triggering search for default tag")
+        return 1  # Simulate one search button click
+    
+    return dash.no_update
+
+
 # Updated callback for repo selections to work with the new tag system
 @callback(
     [Output("results-output-container", "children"), Output("repo-choices", "data")],
     [
         Input("search", "n_clicks"),
-        Input("selected-tags", "data"),  # Auto-trigger when tags change
+        Input("my-input", "n_submit"),  # Trigger when user hits Enter in search input
     ],
+    [State("selected-tags", "data")],  # Get current tags as state, don't trigger on change
     prevent_initial_call=False  # Allow initial call to fire with default tags
 )
-def multiselect_values_to_repo_ids(n_clicks, selected_tags):
-    # Allow triggering from either search button or tag changes
+def multiselect_values_to_repo_ids(n_clicks, n_submit, selected_tags):
+    # Allow triggering from either search button click or Enter key press
     if not selected_tags:
         logging.warning("NOTHING SELECTED IN SEARCH BAR")
         # Don't prevent update - let it run with empty list to show empty state
