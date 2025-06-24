@@ -341,6 +341,7 @@ search_bar = html.Div(
                                         )
                                     ],
                                     id="search-dropdown-popup",
+                                    **{"data-click-outside-initialized": "false"},
                                     style={
                                         "position": "absolute",
                                         "top": "100%",

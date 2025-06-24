@@ -639,7 +639,8 @@ def toggle_contributors_dropdown(dropdown_clicks, repo_clicks, contrib_clicks, a
 )
 def toggle_search_popup(input_value, current_style):
     """
-    Show/hide the search dropdown popup based on input focus and content
+    Show/hide the search dropdown popup based on input content.
+    The dropdown should be hidden by default and show when user focuses/types.
     """
     # Start with the current style or default
     new_style = current_style.copy() if current_style else {
@@ -650,10 +651,12 @@ def toggle_search_popup(input_value, current_style):
         "zIndex": "1000",
         "maxHeight": "300px",
         "overflowY": "auto",
-        "marginTop": "2px"
+        "marginTop": "2px",
+        "display": "none"  # Hidden by default
     }
     
-    # Show popup when user starts typing, hide when empty
+    # Show dropdown when user starts typing, keep hidden when empty
+    # The clientside callback will handle showing it on focus and hiding on click outside
     if input_value:
         new_style["display"] = "block"
     else:
@@ -1026,3 +1029,5 @@ def update_placeholder(selected_tags):
         return "Add more repos/organizations..."
     else:
         return "Search for repos/organizations..."
+
+
