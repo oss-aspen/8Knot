@@ -143,6 +143,8 @@ search_bar = html.Div(
     [
         # Add client-side caching component
         dcc.Store(id="cached-options", storage_type="session"),
+        # Store for selected tags
+        dcc.Store(id="selected-tags", storage_type="session", data=[]),
         # Hidden div to trigger cache initialization on page load
         html.Div(id="cache-init-trigger", style={"display": "none"}),
         # Storage quota warning
@@ -166,21 +168,145 @@ search_bar = html.Div(
             [
                 html.Div(
                     [
-                        dmc.MultiSelect(
-                            id="projects",
-                            searchable=True,
-                            clearable=True,
-                            nothingFound="No matching repos/orgs.",
-                            variant="filled",
-                            debounce=100,  # debounce time for the search input, since we're implementing client-side caching, we can use a faster debounce
-                            data=[augur.initial_multiselect_option()],
-                            value=[augur.initial_multiselect_option()["value"]],
-                            style={"fontSize": 16},
-                            maxDropdownHeight=300,  # limits the dropdown menu's height to 300px
-                            zIndex=9999,  # ensures the dropdown menu is on top of other elements
-                            dropdownPosition="bottom",  # forces the dropdown to open downwards
-                            transitionDuration=150,  # transition duration for the dropdown menu
-                            className="searchbar-dropdown",
+                        # dmc.MultiSelect(
+                        #     id="projects",
+                        #     searchable=True,
+                        #     clearable=True,
+                        #     nothingFound="No matching repos/orgs.",
+                        #     variant="filled",
+                        #     debounce=100,  # debounce time for the search input, since we're implementing client-side caching, we can use a faster debounce
+                        #     data=[augur.initial_multiselect_option()],
+                        #     value=[augur.initial_multiselect_option()["value"]],
+                        #     style={"fontSize": 16},
+                        #     maxDropdownHeight=300,  # limits the dropdown menu's height to 300px
+                        #     zIndex=9999,  # ensures the dropdown menu is on top of other elements
+                        #     dropdownPosition="bottom",  # forces the dropdown to open downwards
+                        #     transitionDuration=150,  # transition duration for the dropdown menu
+                        #     className="searchbar-dropdown",
+                        # ),
+                        html.Div(
+                            [
+                                # Tags display area
+                                html.Div(
+                                    id="selected-tags-container",
+                                    children=[],
+                                    style={
+                                        "display": "flex",
+                                        "flexWrap": "wrap",
+                                        "gap": "6px",
+                                        "marginBottom": "8px",
+                                        "minHeight": "0px"
+                                    }
+                                ),
+                                # Search input
+                                dcc.Input(
+                                    id='my-input',
+                                    type='text',
+                                    placeholder='Search for repos/organizations...',
+                                    style={
+                                        'width': '100%',
+                                        'backgroundColor': '#232323',
+                                        'color': '#fff',
+                                        'border': '1px solid #555',
+                                        'borderRadius': '8px',
+                                        'padding': '10px',
+                                        'fontSize': '16px'
+                                    }
+                                ),
+                                # Search results popup
+                                html.Div(
+                                    [
+                                        dbc.Card(
+                                            [
+                                                dbc.CardBody(
+                                                    [
+                                                        html.Div(
+                                                            id="search-results-list",
+                                                            children=[
+                                                                # Sample search results
+                                                                html.Div(
+                                                                    [
+                                                                        html.Span("🏢 ", style={"marginRight": "8px"}),
+                                                                        html.Span("facebook/react", style={"fontWeight": "500"}),
+                                                                        html.Span(" - A declarative, efficient JavaScript library", 
+                                                                                style={"color": "#B0B0B0", "fontSize": "14px", "marginLeft": "8px"})
+                                                                    ],
+                                                                    id={"type": "search-result-item", "index": "facebook/react"},
+                                                                    style={
+                                                                        "padding": "8px 12px",
+                                                                        "cursor": "pointer",
+                                                                        "borderRadius": "4px",
+                                                                        "marginBottom": "2px",
+                                                                        "transition": "background-color 0.2s ease"
+                                                                    },
+                                                                    className="search-result-item"
+                                                                ),
+                                                                html.Div(
+                                                                    [
+                                                                        html.Span("🏢 ", style={"marginRight": "8px"}),
+                                                                        html.Span("microsoft/vscode", style={"fontWeight": "500"}),
+                                                                        html.Span(" - Visual Studio Code", 
+                                                                                style={"color": "#B0B0B0", "fontSize": "14px", "marginLeft": "8px"})
+                                                                    ],
+                                                                    id={"type": "search-result-item", "index": "microsoft/vscode"},
+                                                                    style={
+                                                                        "padding": "8px 12px",
+                                                                        "cursor": "pointer",
+                                                                        "borderRadius": "4px",
+                                                                        "marginBottom": "2px",
+                                                                        "transition": "background-color 0.2s ease"
+                                                                    },
+                                                                    className="search-result-item"
+                                                                ),
+                                                                html.Div(
+                                                                    [
+                                                                        html.Span("🏢 ", style={"marginRight": "8px"}),
+                                                                        html.Span("google/tensorflow", style={"fontWeight": "500"}),
+                                                                        html.Span(" - Machine Learning library", 
+                                                                                style={"color": "#B0B0B0", "fontSize": "14px", "marginLeft": "8px"})
+                                                                    ],
+                                                                    id={"type": "search-result-item", "index": "google/tensorflow"},
+                                                                    style={
+                                                                        "padding": "8px 12px",
+                                                                        "cursor": "pointer",
+                                                                        "borderRadius": "4px",
+                                                                        "marginBottom": "2px",
+                                                                        "transition": "background-color 0.2s ease"
+                                                                    },
+                                                                    className="search-result-item"
+                                                                )
+                                                            ]
+                                                        )
+                                                    ],
+                                                    style={"padding": "8px"}
+                                                )
+                                            ],
+                                            style={
+                                                "backgroundColor": "#2D2D2D",
+                                                "border": "1px solid #555",
+                                                "borderRadius": "8px",
+                                                "color": "#fff"
+                                            }
+                                        )
+                                    ],
+                                    id="search-dropdown-popup",
+                                    style={
+                                        "position": "absolute",
+                                        "top": "100%",
+                                        "left": "0",
+                                        "right": "0",
+                                        "zIndex": "1000",
+                                        "maxHeight": "300px",
+                                        "overflowY": "auto",
+                                        "display": "none",  # Initially hidden
+                                        "marginTop": "2px"
+                                    }
+                                )
+                            ],
+                            style={
+                                "position": "relative",
+                                "width": "100%"
+                            }
                         ),
                         # Add search status indicator
                         html.Div(id="search-status", className="search-status-indicator", style={"display": "none"}),
@@ -281,6 +407,43 @@ layout = html.Div(
         dcc.Location(id="url"),
         html.Script(
             """
+            // CSS for search result hover effects
+            const style = document.createElement('style');
+            style.textContent = `
+                .search-result-item:hover {
+                    background-color: #3A3A3A !important;
+                }
+                .selected-tag {
+                    background-color: #119DFF;
+                    color: white;
+                    padding: 4px 8px;
+                    border-radius: 12px;
+                    font-size: 14px;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+                .tag-remove-btn {
+                    background: none;
+                    border: none;
+                    color: white;
+                    cursor: pointer;
+                    font-size: 16px;
+                    line-height: 1;
+                    padding: 0;
+                    width: 16px;
+                    height: 16px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 50%;
+                }
+                .tag-remove-btn:hover {
+                    background-color: rgba(255, 255, 255, 0.2);
+                }
+            `;
+            document.head.appendChild(style);
+
             window.addEventListener('error', function(event) {
                 if (event.message && event.message.toLowerCase().includes('quota') &&
                     event.message.toLowerCase().includes('exceeded')) {

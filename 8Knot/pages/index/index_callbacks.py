@@ -7,7 +7,7 @@ import json
 from celery.result import AsyncResult
 import dash_bootstrap_components as dbc
 import dash
-from dash import callback
+from dash import callback, html
 from dash.dependencies import Input, Output, State
 from app import augur
 from flask_login import current_user
@@ -846,3 +846,156 @@ def toggle_contributors_dropdown(dropdown_clicks, repo_clicks, contrib_clicks, a
         return dropdown_style, icon_class, dropdown_open, collapsed, wrapper_class, sidebar_style, full_content_style, text_style, text_style, text_style, text_style, text_style, text_style, main_style, toggle_icon
     
     raise dash.exceptions.PreventUpdate
+
+# Callback to control search dropdown popup visibility
+@callback(
+    Output("search-dropdown-popup", "style"),
+    [Input("my-input", "value"), Input("my-input", "n_blur"), Input("my-input", "n_clicks")],
+    [State("search-dropdown-popup", "style")]
+)
+def toggle_search_popup(input_value, n_blur, n_clicks, current_style):
+    """
+    Show/hide the search dropdown popup based on input focus and content
+    """
+    ctx = dash.callback_context
+    if not ctx.triggered:
+        return dash.no_update
+    
+    triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    
+    # Start with the current style or default
+    new_style = current_style.copy() if current_style else {
+        "position": "absolute",
+        "top": "100%",
+        "left": "0",
+        "right": "0",
+        "zIndex": "1000",
+        "maxHeight": "300px",
+        "overflowY": "auto",
+        "marginTop": "2px"
+    }
+    
+    # Show popup when user clicks on input or starts typing
+    if triggered_id == "my-input" and (n_clicks or input_value):
+        new_style["display"] = "block"
+    # Hide popup when input loses focus (blur)
+    elif triggered_id == "my-input" and n_blur:
+        new_style["display"] = "none"
+    
+    return new_style
+
+
+# Callback to handle clicking on search results and add tags
+@callback(
+    [Output("selected-tags", "data"), Output("my-input", "value")],
+    [Input({"type": "search-result-item", "index": dash.dependencies.ALL}, "n_clicks")],
+    [State("selected-tags", "data"), State("my-input", "value")],
+    prevent_initial_call=True
+)
+def add_selected_tag(n_clicks_list, selected_tags, input_value):
+    """
+    Add clicked search result to selected tags
+    """
+    ctx = dash.callback_context
+    if not ctx.triggered or not any(n_clicks_list):
+        return dash.no_update, dash.no_update
+    
+    # Find which item was clicked
+    triggered_id = ctx.triggered[0]["prop_id"]
+    import json
+    clicked_item = json.loads(triggered_id.split('.')[0])
+    repo_name = clicked_item["index"]
+    
+    # Add to selected tags if not already present
+    if selected_tags is None:
+        selected_tags = []
+    
+    if repo_name not in selected_tags:
+        selected_tags.append(repo_name)
+    
+    # Clear the input and return updated tags
+    return selected_tags, ""
+
+
+# Callback to display selected tags
+@callback(
+    Output("selected-tags-container", "children"),
+    [Input("selected-tags", "data")],
+    prevent_initial_call=True
+)
+def display_selected_tags(selected_tags):
+    """
+    Display selected tags as removable chips
+    """
+    if not selected_tags:
+        return []
+    
+    tag_elements = []
+    for tag in selected_tags:
+        tag_element = html.Div(
+            [
+                html.Span(tag, style={"marginRight": "6px"}),
+                html.Button(
+                    "×",
+                    id={"type": "remove-tag", "index": tag},
+                    className="tag-remove-btn",
+                    style={
+                        "background": "none",
+                        "border": "none",
+                        "color": "white",
+                        "cursor": "pointer",
+                        "fontSize": "16px",
+                        "lineHeight": "1",
+                        "padding": "0",
+                        "width": "16px",
+                        "height": "16px",
+                        "display": "flex",
+                        "alignItems": "center",
+                        "justifyContent": "center",
+                        "borderRadius": "50%"
+                    }
+                )
+            ],
+            className="selected-tag",
+            style={
+                "backgroundColor": "#119DFF",
+                "color": "white",
+                "padding": "4px 8px",
+                "borderRadius": "12px",
+                "fontSize": "14px",
+                "display": "inline-flex",
+                "alignItems": "center",
+                "gap": "6px"
+            }
+        )
+        tag_elements.append(tag_element)
+    
+    return tag_elements
+
+
+# Callback to handle removing tags
+@callback(
+    Output("selected-tags", "data", allow_duplicate=True),
+    [Input({"type": "remove-tag", "index": dash.dependencies.ALL}, "n_clicks")],
+    [State("selected-tags", "data")],
+    prevent_initial_call=True
+)
+def remove_selected_tag(n_clicks_list, selected_tags):
+    """
+    Remove clicked tag from selected tags
+    """
+    ctx = dash.callback_context
+    if not ctx.triggered or not any(n_clicks_list):
+        return dash.no_update
+    
+    # Find which tag was clicked for removal
+    triggered_id = ctx.triggered[0]["prop_id"]
+    import json
+    clicked_item = json.loads(triggered_id.split('.')[0])
+    tag_to_remove = clicked_item["index"]
+    
+    # Remove from selected tags
+    if selected_tags and tag_to_remove in selected_tags:
+        selected_tags.remove(tag_to_remove)
+    
+    return selected_tags
