@@ -804,41 +804,41 @@ layout = html.Div(
                                                 "transition": "background-color 0.2s ease",
                                             }
                                         ),
-                                        dbc.NavLink(
-                                            [
-                                                html.Img(
-                                                    src=dash.get_asset_url("codebase.svg"),
-                                                    style={"width": "30px", "height": "30px", "marginRight": "12px", "verticalAlign": "middle"},
-                                                ),
-                                                html.Span(
-                                                    "Codebase",
-                                                    id="codebase-text",
-                                                    style={
-                                                        "color": "#B0B0B0",  # match icon color (light gray)
-                                                        "fontWeight": 300,   # thinner font
-                                                        "fontSize": "16px",
-                                                        "verticalAlign": "middle",
-                                                        "letterSpacing": "0.01em",
-                                                    },
-                                                )
-                                            ],
-                                            href="/codebase",
-                                            active="exact",
-                                            id="codebase-navlink",
-                                            className="sidebar-nav-link",
-                                            style={
-                                                "display": "flex",
-                                                "alignItems": "center",
-                                                "padding": "12px 16px",
-                                                "marginBottom": "8px",
-                                                "borderRadius": "12px",
-                                                "color": "#B0B0B0",  # match icon color
-                                                "textDecoration": "none",
-                                                "fontSize": "16px",
-                                                "fontWeight": 300,  # thinner font
-                                                "transition": "background-color 0.2s ease",
-                                            }
-                                        ),
+                                        # dbc.NavLink(
+                                        #     [
+                                        #         html.Img(
+                                        #             src=dash.get_asset_url("codebase.svg"),
+                                        #             style={"width": "30px", "height": "30px", "marginRight": "12px", "verticalAlign": "middle"},
+                                        #         ),
+                                        #         html.Span(
+                                        #             "Codebase",
+                                        #             id="codebase-text",
+                                        #             style={
+                                        #                 "color": "#B0B0B0",  # match icon color (light gray)
+                                        #                 "fontWeight": 300,   # thinner font
+                                        #                 "fontSize": "16px",
+                                        #                 "verticalAlign": "middle",
+                                        #                 "letterSpacing": "0.01em",
+                                        #             },
+                                        #         )
+                                        #     ],
+                                        #     href="/codebase",
+                                        #     active="exact",
+                                        #     id="codebase-navlink",
+                                        #     className="sidebar-nav-link",
+                                        #     style={
+                                        #         "display": "flex",
+                                        #         "alignItems": "center",
+                                        #         "padding": "12px 16px",
+                                        #         "marginBottom": "8px",
+                                        #         "borderRadius": "12px",
+                                        #         "color": "#B0B0B0",  # match icon color
+                                        #         "textDecoration": "none",
+                                        #         "fontSize": "16px",
+                                        #         "fontWeight": 300,  # thinner font
+                                        #         "transition": "background-color 0.2s ease",
+                                        #     }
+                                        # ),
                                     ],
                                     vertical=True,
                                     className="sidebar-nav",

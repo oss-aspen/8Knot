@@ -424,7 +424,7 @@ def initialize_cache(_):
         Output("contributors-text", "style"),
         Output("affiliation-text", "style"),
         Output("chaoss-text", "style"),
-        Output("codebase-text", "style"),
+        # Output("codebase-text", "style"),  # codebase page disabled
         Output("main-card", "style"),
         Output("sidebar-toggle-icon", "className"),
         Output("sidebar-collapsed", "data"),
@@ -500,7 +500,7 @@ def toggle_sidebar(n, collapsed):
     return (
         sidebar_style, 
         full_content_style, 
-        text_style, text_style, text_style, text_style, text_style, text_style,
+        text_style, text_style, text_style, text_style, text_style,  # removed one text_style for commented codebase-text
         main_style, 
         icon, 
         collapsed,
@@ -525,7 +525,7 @@ def toggle_sidebar(n, collapsed):
         Output("contributors-text", "style", allow_duplicate=True),
         Output("affiliation-text", "style", allow_duplicate=True),
         Output("chaoss-text", "style", allow_duplicate=True),
-        Output("codebase-text", "style", allow_duplicate=True),
+        # Output("codebase-text", "style", allow_duplicate=True),  # codebase page disabled
         Output("main-card", "style", allow_duplicate=True),
         Output("sidebar-toggle-icon", "className", allow_duplicate=True),
     ],
@@ -535,7 +535,7 @@ def toggle_sidebar(n, collapsed):
         Input("contributions-navlink", "n_clicks"), 
         Input("affiliation-navlink", "n_clicks"),
         Input("chaoss-navlink", "n_clicks"),
-        Input("codebase-navlink", "n_clicks"),
+        # Input("codebase-navlink", "n_clicks"),  # codebase page disabled
     ],
     [
         State("contributors-dropdown-open", "data"),
@@ -543,7 +543,7 @@ def toggle_sidebar(n, collapsed):
     ],
     prevent_initial_call=True,
 )
-def toggle_contributors_dropdown(dropdown_clicks, repo_clicks, contrib_clicks, aff_clicks, chaoss_clicks, code_clicks, dropdown_open, sidebar_collapsed):
+def toggle_contributors_dropdown(dropdown_clicks, repo_clicks, contrib_clicks, aff_clicks, chaoss_clicks, dropdown_open, sidebar_collapsed):
     ctx = dash.callback_context
     if not ctx.triggered:
         raise dash.exceptions.PreventUpdate
@@ -551,12 +551,12 @@ def toggle_contributors_dropdown(dropdown_clicks, repo_clicks, contrib_clicks, a
     trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
     
     # If any other navlink was clicked, close dropdown but don't change sidebar
-    if trigger_id in ["repo-overview-navlink", "contributions-navlink", "affiliation-navlink", "chaoss-navlink", "codebase-navlink"]:
+    if trigger_id in ["repo-overview-navlink", "contributions-navlink", "affiliation-navlink", "chaoss-navlink"]:  # removed codebase-navlink
         dropdown_style = {"display": "none", "height": 0, "overflow": "hidden", "padding": 0, "border": 0}
         icon_class = "bi bi-chevron-down"
         wrapper_class = ""
         # Return current sidebar state unchanged - use dash.no_update for all sidebar-related outputs
-        return dropdown_style, icon_class, False, sidebar_collapsed, wrapper_class, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
+        return dropdown_style, icon_class, False, sidebar_collapsed, wrapper_class, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update  # removed one no_update for commented codebase-text
     
     # If contributors dropdown toggle was clicked
     if trigger_id == "contributors-dropdown-toggle":
@@ -629,7 +629,7 @@ def toggle_contributors_dropdown(dropdown_clicks, repo_clicks, contrib_clicks, a
         # Toggle icon (expanded)
         toggle_icon = "fas fa-chevron-left"
         
-        return dropdown_style, icon_class, dropdown_open, collapsed, wrapper_class, sidebar_style, full_content_style, text_style, text_style, text_style, text_style, text_style, text_style, main_style, toggle_icon
+        return dropdown_style, icon_class, dropdown_open, collapsed, wrapper_class, sidebar_style, full_content_style, text_style, text_style, text_style, text_style, text_style, main_style, toggle_icon  # removed one text_style for commented codebase-text
     
     raise dash.exceptions.PreventUpdate
 
