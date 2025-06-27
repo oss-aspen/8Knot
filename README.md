@@ -155,14 +155,14 @@ We've tried to make it as easy as possible to run your own 8Knot instance.
 
 ### Credentials
 
-You will need credentials of the following form, named `env.list`, at the top-level of the 8Knot directory that you clone.
+You will need credentials of the following form, named `.env`, at the top-level of the 8Knot directory that you clone.
 
-A sample file illustrating the format is available in `env.list.sample` that can be copy-pasted and renamed to `env.list` to get you started with a basic set of valid credentials.
+A sample file illustrating the format is available in `.env.sample` that can be copy-pasted and renamed to `.env` to get you started with a basic set of valid credentials.
 
 These credentials are suitable for development, but please replace any secrets with different values in production.
 
 8Knot doesn't handle user accounts or data collection requests on its own. To support these features, you'll need to add the
-following additional configuration to your `env.list` file.
+following additional configuration to your `.env` file.
 
 Setting the `DEBUG_8KNOT` environmental variable to True will enable hot reloading of the Dash application, after any change to a file inside the 8Knot/ directory.
 
