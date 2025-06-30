@@ -4,4 +4,25 @@ version = "0.1.0"
 description = "Dash app built by Red Hat's Open Source Program Office to analyze community and contribution data for git repositories"
 readme = "README.md"
 requires-python = ">=3.9"
-dependencies = []
+dependencies = [
+    "celery==5.3.6",
+    "dash==2.15.0",
+    "dash-bootstrap-components==1.5.0",
+    "dash-bootstrap-templates==1.1.2",
+    "dash-mantine-components==0.12.1",
+    "datetime==5.4",
+    "flask==3.0.2",
+    "flask-login==0.6.3",
+    "fuzzywuzzy==0.18.0",
+    "gunicorn==21.2.0",
+    "numpy==1.26.4",
+    "pandas==2.2.0",
+    "plotly==5.18.0",
+    "psycopg2-binary==2.9.9",
+    "pyarrow==15.0.0",
+    "python-dateutil==2.8.2",
+    "python-levenshtein==0.24.0",
+    "redis==5.0.1",
+    "sqlalchemy==2.0.25",
+    "uuid==1.30",
+]
