@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: ./docker/Dockerfile
-    command: ["python3", "./cache_manager/db_init.py"]
+    command: ["uv", "run", "python3", "./cache_manager/db_init.py"]
     depends_on:
       postgres-cache:
         condition: service_healthy  # to ensure that postgres is indeed initialized before this starts
@@ -30,6 +30,8 @@ services:
       dockerfile: ./docker/Dockerfile
     command:
       [
+        "uv",
+        "run",
         "gunicorn",
         "--reload", # for Production, disable the "--reload" option.
         "--bind",
@@ -65,7 +67,7 @@ services:
     build:
       context: .
       dockerfile: ./docker/Dockerfile
-    command: ["celery", "-A", "app:celery_app", "worker", "--loglevel=INFO", "--concurrency=1", "--time-limit=300", "--soft-time-limit=240"]
+    command: ["uv", "run", "celery", "-A", "app:celery_app", "worker", "--loglevel=INFO", "--concurrency=1", "--time-limit=300", "--soft-time-limit=240"]
     depends_on:
       - redis-cache
       - redis-users
@@ -80,6 +82,8 @@ services:
       dockerfile: ./docker/Dockerfile
     command:
       [
+        "uv",
+        "run",
         "celery",
         "-A",
         "app:celery_app",
