@@ -147,7 +147,7 @@ Returns:
 1. Test locally with `docker compose up --build` or `podman compose up --build`
 2. Check all pages load without errors
 3. Review application logs for warnings
-4. Ensure new dependencies are in `requirements.txt`
+4. Ensure new dependencies are reflected in `pyproject.toml` (new dependencies can be added with `uv add`)
 
 ### When CI fails:
 1. Don't ignore failures - they catch real issues
@@ -156,7 +156,7 @@ Returns:
 4. Consider if new tests are needed for your changes
 
 ### For dependency changes:
-1. Pin specific versions in `requirements.txt`
+1. Pin specific versions in `pyproject.toml` (if needed because a later version causes issues )
 2. Monitor nightly test results for compatibility
 3. Update documentation if new env vars are needed
 4. Test security implications
