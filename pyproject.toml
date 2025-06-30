@@ -1,0 +1,7 @@
+[project]
+name = "8Knot"
+version = "0.1.0"
+description = "Dash app built by Red Hat's Open Source Program Office to analyze community and contribution data for git repositories"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []
