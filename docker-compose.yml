@@ -28,21 +28,9 @@ services:
     build:
       context: .
       dockerfile: ./docker/Dockerfile
-    command:
-      [
-        "gunicorn",
-        "--bind",
-        ":8080",
-        "app:server",
-        "--workers",
-        "1",
-        "--threads",
-        "2",
-        "--timeout",
-        "300",
-        "--keep-alive",
-        "5"
-      ]
+    entrypoint: ["sh", "./entrypoint.sh"]
+    volumes:
+      - ./8Knot:/opt/app-root/src/
     # ports:
     #   - 8080:8080
     depends_on:

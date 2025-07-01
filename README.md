@@ -164,6 +164,8 @@ These credentials are suitable for development, but please replace any secrets w
 8Knot doesn't handle user accounts or data collection requests on its own. To support these features, you'll need to add the
 following additional configuration to your `env.list` file.
 
+Setting the `DEBUG_8KNOT` environmental variable to True will enable hot reloading of the Dash application, after any change to a file inside the 8Knot/ directory.
+
 You'll need to register your 8Knot instance with an Augur front-end application to get an `AUGUR_APP_ID` and an `AUGUR_CLIENT_SECRET`.
 All parameters wrapped in `< >` will need to be replaced below. `<endpoint>` variables refer to the host of the Augur front-end that
 you're using.
