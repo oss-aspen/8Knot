@@ -156,23 +156,10 @@ We've tried to make it as easy as possible to run your own 8Knot instance.
 ### Credentials
 
 You will need credentials of the following form, named `env.list`, at the top-level of the 8Knot directory that you clone.
-The credentials below are valid, so you can copy and use them to access a testing instance of an Augur database.
+
+A sample file illustrating the format is available in `env.list.sample` that can be copy-pasted and renamed to `env.list` to get you started with a basic set of valid credentials.
 
 These credentials are suitable for development, but please replace any secrets with different values in production.
-
-```
-    AUGUR_DATABASE=graphish
-    AUGUR_HOST=chaoss.tv
-    AUGUR_PASSWORD=cableTV99!
-    AUGUR_PORT=5432
-    AUGUR_SCHEMA=augur_data
-    AUGUR_USERNAME=coup
-    DEBUG_8KNOT=True
-    REDIS_PASSWORD=1234
-    DEFAULT_SEARCHBAR_LABEL=chaoss
-    POSTGRES_PASSWORD=somepassword
-    SECRET_KEY=somethingsecret
-```
 
 8Knot doesn't handle user accounts or data collection requests on its own. To support these features, you'll need to add the
 following additional configuration to your `env.list` file.
