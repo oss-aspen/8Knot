@@ -91,6 +91,8 @@ server = app.server
 server = _login.configure_server_login(server)
 
 """HEALTH CHECK ENDPOINT"""
+
+
 @server.route("/health")
 def health_check():
     """Simple health check endpoint for CI/CD testing"""
@@ -113,7 +115,7 @@ app.layout = layout
 
 """DASH STARTUP PARAMETERS"""
 
-if os.getenv("8KNOT_DEBUG", "False") == "True":
+if os.getenv("DEBUG_8KNOT", "False") == "True":
     app.enable_dev_tools(dev_tools_ui=True, dev_tools_hot_reload=True)
 
 """GITHUB BOTS LIST"""
