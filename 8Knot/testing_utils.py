@@ -14,7 +14,7 @@ from functools import wraps
 # Configure logging for testing
 def setup_testing_logging():
     """Configure logging to be more descriptive during testing."""
-    if os.getenv("8KNOT_DEBUG", "False") == "True":
+    if os.getenv("DEBUG_8KNOT", "False") == "True":
         logging.basicConfig(
             level=logging.DEBUG,
             format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -38,7 +38,7 @@ def fail_fast_on_error(func):
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            if os.getenv("8KNOT_DEBUG", "False") == "True":
+            if os.getenv("DEBUG_8KNOT", "False") == "True":
                 logging.error(f"CRITICAL ERROR in {func.__name__}: {str(e)}")
                 logging.error(f"Traceback: {traceback.format_exc()}")
 
@@ -135,6 +135,6 @@ def validate_visualization_data(data, visualization_name):
 
 
 # Initialize testing utilities if in debug mode
-if os.getenv("8KNOT_DEBUG", "False") == "True":
+if os.getenv("DEBUG_8KNOT", "False") == "True":
     setup_testing_logging()
     logging.info("Testing utilities initialized")
