@@ -44,7 +44,10 @@ except SQLAlchemyError:
     sys.exit(1)
 
 # grab list of projects and orgs from Augur database.
-augur.multiselect_startup()
+
+# NOTE: Options are now loaded asynchronously via initialize_cache() callback
+# to prevent blocking startup and worker timeouts
+# augur.multiselect_startup()  # REMOVED: This was causing slow startup
 
 
 """IMPORT AFTER GLOBAL VARIABLES SET"""

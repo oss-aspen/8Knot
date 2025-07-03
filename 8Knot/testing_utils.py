@@ -76,11 +76,12 @@ def check_required_services():
     # Check database connectivity (if augur manager is available)
     try:
         from db_manager.augur_manager import AugurManager
+        import sqlalchemy as salc
 
         augur = AugurManager()
         engine = augur.get_engine()
         with engine.connect() as conn:
-            conn.execute("SELECT 1")
+            conn.execute(salc.sql.text("SELECT 1"))  # expects it to be text, reason for modifying it
         checks.append("Database connection: OK")
     except Exception as e:
         checks.append(f"Database connection failed: {str(e)}")
