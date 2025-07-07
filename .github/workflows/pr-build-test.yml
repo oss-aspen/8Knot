@@ -14,7 +14,7 @@ env:
   AUGUR_PORT: 5432
   AUGUR_SCHEMA: augur_data
   AUGUR_USERNAME: coup
-  8KNOT_DEBUG: "True"
+  DEBUG_8KNOT: "True"
   AUGUR_LOGIN_ENABLED: "False"
   REDIS_PASSWORD: 1234
   DEFAULT_SEARCHBAR_LABEL: chaoss
@@ -42,7 +42,7 @@ jobs:
           AUGUR_PORT=5432
           AUGUR_SCHEMA=augur_data
           AUGUR_USERNAME=coup
-          8KNOT_DEBUG=True
+          DEBUG_8KNOT=True
           AUGUR_LOGIN_ENABLED=False
           REDIS_PASSWORD=1234
           DEFAULT_SEARCHBAR_LABEL=chaoss

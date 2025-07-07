@@ -17,6 +17,7 @@ import logging
 import dash
 import pandas as pd
 from sqlalchemy.exc import SQLAlchemyError
+import sqlalchemy as salc
 import plotly.io as plt_io
 import dash_bootstrap_components as dbc
 import dash_bootstrap_templates as dbt
@@ -91,13 +92,15 @@ server = app.server
 server = _login.configure_server_login(server)
 
 """HEALTH CHECK ENDPOINT"""
+
+
 @server.route("/health")
 def health_check():
     """Simple health check endpoint for CI/CD testing"""
     try:
         # Test database connection
         with engine.connect() as conn:
-            conn.execute("SELECT 1")
+            conn.execute(salc.text("SELECT 1"))
 
         return {"status": "healthy", "database": "connected", "timestamp": str(pd.Timestamp.now())}, 200
     except Exception as e:
@@ -113,7 +116,7 @@ app.layout = layout
 
 """DASH STARTUP PARAMETERS"""
 
-if os.getenv("8KNOT_DEBUG", "False") == "True":
+if os.getenv("DEBUG_8KNOT", "False") == "True":
     app.enable_dev_tools(dev_tools_ui=True, dev_tools_hot_reload=True)
 
 """GITHUB BOTS LIST"""

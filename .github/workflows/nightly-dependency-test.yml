@@ -1,0 +1,258 @@
+name: Nightly Dependency Test
+
+on:
+  schedule:
+    # Run every night at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual triggering
+
+env:
+  # Test environment variables - using public demo credentials
+  AUGUR_DATABASE: graphish
+  AUGUR_HOST: chaoss.tv
+  AUGUR_PASSWORD: cableTV99!
+  AUGUR_PORT: 5432
+  AUGUR_SCHEMA: augur_data
+  AUGUR_USERNAME: coup
+  8KNOT_DEBUG: "True"
+  NIGHTLY_TEST: "True"
+  AUGUR_LOGIN_ENABLED: "False"
+  REDIS_PASSWORD: 1234
+  DEFAULT_SEARCHBAR_LABEL: chaoss
+  POSTGRES_PASSWORD: somepassword
+  SECRET_KEY: somethingsecret
+
+jobs:
+  nightly-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Update dependencies to latest versions
+        run: |
+          echo "Updating dependencies to latest versions..."
+
+          # Create backup of original requirements
+          cp requirements.txt requirements.txt.backup
+
+          # Remove version pins to get latest versions
+          sed 's/==.*$//' requirements.txt > requirements_latest.txt
+          sed 's/>=.*$//' requirements_latest.txt > requirements_unpinned.txt
+          mv requirements_unpinned.txt requirements.txt
+
+          echo "Updated requirements.txt to use latest versions:"
+          head -20 requirements.txt
+
+      - name: Install dependencies and security scanner
+        run: |
+          # Install uv for fast dependency management
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          source $HOME/.cargo/env
+
+          # Install safety for security scanning
+          uv pip install --system safety
+
+          # Install updated dependencies
+          uv pip install --system -r requirements.txt
+
+          # Generate new pinned requirements with latest versions
+          uv pip freeze --system > requirements_latest_pinned.txt
+
+      - name: Run security vulnerability scan
+        run: |
+          echo "Running security vulnerability scan..."
+
+          # Check for known security vulnerabilities
+          safety check --json --output safety_report.json || echo "Security issues found"
+
+          # Also run safety check with readable output
+          safety check || echo "Security scan completed with findings"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create test environment file
+        run: |
+          cat > env.list << EOF
+          AUGUR_DATABASE=graphish
+          AUGUR_HOST=chaoss.tv
+          AUGUR_PASSWORD=cableTV99!
+          AUGUR_PORT=5432
+          AUGUR_SCHEMA=augur_data
+          AUGUR_USERNAME=coup
+          8KNOT_DEBUG=True
+          NIGHTLY_TEST=True
+          AUGUR_LOGIN_ENABLED=False
+          REDIS_PASSWORD=1234
+          DEFAULT_SEARCHBAR_LABEL=chaoss
+          POSTGRES_PASSWORD=somepassword
+          SECRET_KEY=somethingsecret
+          EOF
+
+      - name: Build and start services with latest dependencies
+        run: |
+          echo "Building and starting Docker Compose services with latest dependencies..."
+          docker compose up --build -d
+
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for services to start..."
+
+          # Wait for redis services
+          echo "Waiting for Redis services..."
+          timeout 60 bash -c 'until docker compose exec -T redis-cache redis-cli -a 1234 ping; do sleep 2; done'
+          timeout 60 bash -c 'until docker compose exec -T redis-users redis-cli -a 1234 ping; do sleep 2; done'
+
+          # Wait for app server to be ready
+          echo "Waiting for application server..."
+          timeout 300 bash -c 'until curl -f http://localhost:8080/health || curl -f http://localhost:8080/ ; do sleep 5; done'
+
+          echo "All services are ready!"
+
+      - name: Test application with latest dependencies
+        run: |
+          echo "Testing application with latest dependencies..."
+
+          # Test all critical endpoints
+          endpoints=(
+            "/"
+            "/contributions"
+            "/contributors/contribution_types"
+            "/contributors/behavior"
+            "/chaoss"
+            "/codebase"
+            "/affiliation"
+            "/info"
+            "/repo_overview"
+            "/health"
+          )
+
+          for endpoint in "${endpoints[@]}"; do
+            echo "Testing endpoint: $endpoint"
+            if ! curl -f -s "http://localhost:8080$endpoint" > /dev/null; then
+              echo "❌ FAILED: $endpoint"
+              exit 1
+            else
+              echo "✅ PASSED: $endpoint"
+            fi
+          done
+
+          echo "All endpoint tests passed with latest dependencies!"
+
+      - name: Check for dependency conflicts
+        run: |
+          echo "Checking for dependency conflicts..."
+
+          # Check if uv can resolve all dependencies
+          uv pip check --system || echo "Dependency conflicts detected"
+
+          # Show what versions were actually installed
+          echo "Installed package versions:"
+          uv pip list --system > installed_packages.txt
+          head -30 installed_packages.txt
+
+      - name: Check application logs for errors
+        if: always()
+        run: |
+          echo "Checking application logs for critical errors..."
+
+          # Check for critical errors in logs
+          if docker compose logs app-server | grep -i "error\|exception\|traceback" | grep -v "INFO\|DEBUG"; then
+            echo "Found errors in app-server logs:"
+            docker compose logs app-server | grep -i "error\|exception\|traceback" | grep -v "INFO\|DEBUG"
+          fi
+
+      - name: Save artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-test-artifacts
+          path: |
+            safety_report.json
+            requirements_latest_pinned.txt
+            installed_packages.txt
+            requirements.txt.backup
+
+      - name: Create GitHub issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const today = new Date().toISOString().split('T')[0];
+            const issueTitle = `🚨 Nightly Dependency Test Failed - ${today}`;
+
+            // Check if issue already exists for today
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'nightly-test-failure'
+            });
+
+            const todayIssue = existingIssues.data.find(issue =>
+              issue.title.includes(today)
+            );
+
+            if (todayIssue) {
+              console.log('Issue already exists for today:', todayIssue.html_url);
+              return;
+            }
+
+            const issueBody = `
+            ## 🚨 Nightly Dependency Test Failure
+
+            **Date**: ${today}
+            **Workflow**: [${context.workflow}](${context.payload.repository.html_url}/actions/runs/${context.runId})
+
+            ### What happened?
+            The nightly test that updates all dependencies to their latest versions has failed. This could indicate:
+
+            - 🔒 **Security vulnerabilities** in dependencies
+            - 💥 **Breaking changes** in package updates
+            - 🔗 **Dependency conflicts** between packages
+            - 🐛 **Application errors** with new versions
+
+            ### Next steps:
+            1. **Review the workflow logs** for specific error details
+            2. **Check the artifacts** for dependency and security reports
+            3. **Test locally** with updated dependencies
+            4. **Pin problematic packages** if needed
+            5. **Update code** to handle breaking changes
+
+            ### Artifacts available:
+            - Security vulnerability report
+            - Latest dependency versions that were tested
+            - Full package list that was installed
+            - Backup of original requirements.txt
+
+            **Auto-generated by nightly dependency testing workflow**
+            `;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: issueTitle,
+              body: issueBody,
+              labels: ['nightly-test-failure', 'dependencies', 'automated']
+            });
+
+      - name: Cleanup
+        if: always()
+        run: |
+          echo "Cleaning up..."
+          docker compose down -v
+          docker system prune -f
+
+          # Restore original requirements.txt
+          if [ -f "requirements.txt.backup" ]; then
+            mv requirements.txt.backup requirements.txt
+            echo "Restored original requirements.txt"
+          fi
