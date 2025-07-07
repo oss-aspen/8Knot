@@ -80,7 +80,8 @@ def check_required_services():
         augur = AugurManager()
         engine = augur.get_engine()
         with engine.connect() as conn:
-            conn.execute("SELECT 1")
+            # opening the connection tests if database is reachable
+            pass
         checks.append("Database connection: OK")
     except Exception as e:
         checks.append(f"Database connection failed: {str(e)}")
