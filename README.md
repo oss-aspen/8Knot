@@ -1,8 +1,8 @@
 # 8Knot
 
-![Pre-Commit](https://github.com/JamesKunstle/explorer/actions/workflows/pre-commit.yml/badge.svg)
-![Build-Push](https://github.com/JamesKunstle/explorer/actions/workflows/build-push-quay.yml/badge.svg)
-![Docker Compose](https://github.com/JamesKunstle/explorer/actions/workflows/docker-compose-build.yml/badge.svg)
+![Pre-Commit](https://github.com/oss-aspen/8Knot/actions/workflows/pre-commit.yml/badge.svg)
+![Build-Push](https://github.com/oss-aspen/8Knot/actions/workflows/build-push-quay.yml/badge.svg)
+![Docker Compose](https://github.com/oss-aspen/8Knot/actions/workflows/docker-compose-build.yml/badge.svg)
 
 Welcome to 8Knot!
 
