@@ -254,11 +254,9 @@ search_bar = html.Div(
                             debounce=100,  # debounce time for the search input, since we're implementing client-side caching, we can use a faster debounce
                             data=[augur.initial_multiselect_option()],
                             value=[augur.initial_multiselect_option()["value"]],
-                            style={"fontSize": 16},
+                            style={"fontSize": 16, "zIndex": 9999},  # Updated: moved zIndex to style
                             maxDropdownHeight=300,  # limits the dropdown menu's height to 300px
-                            zIndex=9999,  # ensures the dropdown menu is on top of other elements
-                            dropdownPosition="bottom",  # forces the dropdown to open downwards
-                            transitionDuration=150,  # transition duration for the dropdown menu
+                            # Removed: dropdownPosition and transitionDuration no longer supported in v2.1.0
                             className="searchbar-dropdown",
                         ),
                         # Add search status indicator

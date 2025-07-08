@@ -43,9 +43,13 @@ jobs:
           # Create backup of original requirements
           cp requirements.txt requirements.txt.backup
 
-          # Remove version pins to get latest versions
+          # Remove version pins to get latest versions (except for packages with breaking changes)
           sed 's/==.*$//' requirements.txt > requirements_latest.txt
           sed 's/>=.*$//' requirements_latest.txt > requirements_unpinned.txt
+
+          # Keep dash-mantine-components pinned due to breaking API changes between versions
+          grep 'dash-mantine-components==' requirements.txt.backup >> requirements_unpinned.txt || true
+
           mv requirements_unpinned.txt requirements.txt
 
           echo "Updated requirements.txt to use latest versions:"
