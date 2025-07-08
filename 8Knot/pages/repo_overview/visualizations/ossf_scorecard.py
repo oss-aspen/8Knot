@@ -36,7 +36,7 @@ gc_ossf_scorecard = dbc.Card(
                                 className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
                                 style={
                                     "backgroundColor": "#292929",
-                                    "borderColor": "#404040", 
+                                    "borderColor": "#404040",
                                     "color": "white",
                                     "borderRadius": "20px",
                                     "padding": "6px 16px",
@@ -47,8 +47,8 @@ gc_ossf_scorecard = dbc.Card(
                                     "transition": "all 0.2s ease",
                                     "backgroundImage": "none",
                                     "boxShadow": "none",
-                                    "minWidth": "130px"
-                                }
+                                    "minWidth": "130px",
+                                },
                             ),
                             width=4,
                             className="d-flex justify-content-end align-items-start",
@@ -67,8 +67,8 @@ gc_ossf_scorecard = dbc.Card(
                                 "borderBottom": "1px solid #606060",
                                 "fontSize": "16px",
                                 "fontWeight": "600",
-                                "padding": "12px 16px"
-                            }
+                                "padding": "12px 16px",
+                            },
                         ),
                         dbc.PopoverBody(
                             "Link to details about checks: https://github.com/ossf/scorecard?tab=readme-ov-file#what-is-scorecard",
@@ -78,8 +78,8 @@ gc_ossf_scorecard = dbc.Card(
                                 "border": "none",
                                 "fontSize": "14px",
                                 "lineHeight": "1.5",
-                                "padding": "16px"
-                            }
+                                "padding": "16px",
+                            },
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
@@ -91,21 +91,20 @@ gc_ossf_scorecard = dbc.Card(
                         "border": "1px solid #606060",
                         "borderRadius": "8px",
                         "boxShadow": "0 4px 12px rgba(0, 0, 0, 0.3)",
-                        "maxWidth": "400px"
-                    }
+                        "maxWidth": "400px",
+                    },
                 ),
                 dcc.Loading(
-                    html.Div(
-                        id=f"{PAGE}-{VIZ_ID}",
-                        style={"marginTop": "20px"}
-                    ),
+                    html.Div(id=f"{PAGE}-{VIZ_ID}", style={"marginTop": "20px"}),
                 ),
-                html.Hr(style={
-                    "borderColor": "#e0e0e0", 
-                    "margin": "1.5rem -2rem", 
-                    "width": "calc(100% + 4rem)",
-                    "marginLeft": "-2rem"
-                }),
+                html.Hr(
+                    style={
+                        "borderColor": "#e0e0e0",
+                        "margin": "1.5rem -2rem",
+                        "width": "calc(100% + 4rem)",
+                        "marginLeft": "-2rem",
+                    }
+                ),
                 dbc.Form(
                     [
                         dbc.Row(
@@ -113,7 +112,7 @@ gc_ossf_scorecard = dbc.Card(
                                 dbc.Col(
                                     dbc.Label(
                                         ["Last Updated: ", html.Span(id=f"{PAGE}-{VIZ_ID}-updated")],
-                                        style={"fontSize": "14px"}
+                                        style={"fontSize": "14px"},
                                     ),
                                     width="auto",
                                 ),
@@ -123,7 +122,7 @@ gc_ossf_scorecard = dbc.Card(
                     ]
                 ),
             ],
-            style={"padding": "2rem"}
+            style={"padding": "2rem"},
         )
     ],
     style={"backgroundColor": "#292929", "borderRadius": "15px", "border": "1px solid #404040"},
@@ -171,28 +170,36 @@ def ossf_scorecard(repo):
         empty_table = dbc.Table(
             [
                 html.Thead(
-                    html.Tr([
-                        html.Th("Check Type", style={
-                            "backgroundColor": "#404040", 
-                            "color": "white", 
-                            "border": "1px solid #606060", 
-                            "padding": "12px",
-                            "borderTopLeftRadius": "12px",
-                            "borderBottomLeftRadius": "12px",
-                            "borderRight": "1px solid #606060"
-                        }),
-                        html.Th("Score", style={
-                            "backgroundColor": "#404040", 
-                            "color": "white", 
-                            "border": "1px solid #606060", 
-                            "padding": "12px",
-                            "borderTopRightRadius": "12px",
-                            "borderBottomRightRadius": "12px",
-                            "borderLeft": "none"
-                        })
-                    ])
+                    html.Tr(
+                        [
+                            html.Th(
+                                "Check Type",
+                                style={
+                                    "backgroundColor": "#404040",
+                                    "color": "white",
+                                    "border": "1px solid #606060",
+                                    "padding": "12px",
+                                    "borderTopLeftRadius": "12px",
+                                    "borderBottomLeftRadius": "12px",
+                                    "borderRight": "1px solid #606060",
+                                },
+                            ),
+                            html.Th(
+                                "Score",
+                                style={
+                                    "backgroundColor": "#404040",
+                                    "color": "white",
+                                    "border": "1px solid #606060",
+                                    "padding": "12px",
+                                    "borderTopRightRadius": "12px",
+                                    "borderBottomRightRadius": "12px",
+                                    "borderLeft": "none",
+                                },
+                            ),
+                        ]
+                    )
                 ),
-                html.Tbody([])
+                html.Tbody([]),
             ],
             bordered=False,
             style={
@@ -200,8 +207,8 @@ def ossf_scorecard(repo):
                 "width": "95%",
                 "borderRadius": "12px",
                 "overflow": "hidden",
-                "boxShadow": "0 2px 8px rgba(0, 0, 0, 0.2)"
-            }
+                "boxShadow": "0 2px 8px rgba(0, 0, 0, 0.2)",
+            },
         )
         return empty_table, dbc.Label("No data")
 
@@ -220,53 +227,60 @@ def ossf_scorecard(repo):
 
     # Create custom table with alternating row colors and rounded corners
     table_header = html.Thead(
-        html.Tr([
-            html.Th("Check Type", style={
-                "backgroundColor": "#404040", 
-                "color": "white", 
-                "border": "1px solid #606060", 
-                "padding": "12px",
-                "borderTopLeftRadius": "12px",
-                "borderRight": "1px solid #606060"
-            }),
-            html.Th("Score", style={
-                "backgroundColor": "#404040", 
-                "color": "white", 
-                "border": "1px solid #606060", 
-                "padding": "12px",
-                "borderTopRightRadius": "12px",
-                "borderLeft": "none"
-            })
-        ])
+        html.Tr(
+            [
+                html.Th(
+                    "Check Type",
+                    style={
+                        "backgroundColor": "#404040",
+                        "color": "white",
+                        "border": "1px solid #606060",
+                        "padding": "12px",
+                        "borderTopLeftRadius": "12px",
+                        "borderRight": "1px solid #606060",
+                    },
+                ),
+                html.Th(
+                    "Score",
+                    style={
+                        "backgroundColor": "#404040",
+                        "color": "white",
+                        "border": "1px solid #606060",
+                        "padding": "12px",
+                        "borderTopRightRadius": "12px",
+                        "borderLeft": "none",
+                    },
+                ),
+            ]
+        )
     )
-    
+
     table_rows = []
     for i, row in df.iterrows():
         row_style = {
             "backgroundColor": "#242424" if i % 2 == 0 else "#292929",
             "color": "white",
             "border": "1px solid #404040",
-            "padding": "12px"
+            "padding": "12px",
         }
-        
+
         # Add rounded corners to the last row
         is_last_row = i == len(df) - 1
         first_cell_style = {**row_style}
         second_cell_style = {**row_style, "borderLeft": "none"}
-        
+
         if is_last_row:
             first_cell_style["borderBottomLeftRadius"] = "12px"
             second_cell_style["borderBottomRightRadius"] = "12px"
-        
+
         table_rows.append(
-            html.Tr([
-                html.Td(row["Check Type"], style=first_cell_style),
-                html.Td(row["Score"], style=second_cell_style)
-            ])
+            html.Tr(
+                [html.Td(row["Check Type"], style=first_cell_style), html.Td(row["Score"], style=second_cell_style)]
+            )
         )
-    
+
     table_body = html.Tbody(table_rows)
-    
+
     table = dbc.Table(
         [table_header, table_body],
         bordered=False,
@@ -276,8 +290,8 @@ def ossf_scorecard(repo):
             "width": "95%",
             "borderRadius": "12px",
             "overflow": "hidden",
-            "boxShadow": "0 2px 8px rgba(0, 0, 0, 0.2)"
-        }
+            "boxShadow": "0 2px 8px rgba(0, 0, 0, 0.2)",
+        },
     )
 
     unique_updated_times = updated_times.drop_duplicates().to_numpy().flatten()

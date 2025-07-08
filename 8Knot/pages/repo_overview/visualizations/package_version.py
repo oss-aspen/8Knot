@@ -38,7 +38,7 @@ gc_package_version = dbc.Card(
                                 className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
                                 style={
                                     "backgroundColor": "#292929",
-                                    "borderColor": "#404040", 
+                                    "borderColor": "#404040",
                                     "color": "white",
                                     "borderRadius": "20px",
                                     "padding": "6px 12px",
@@ -48,8 +48,8 @@ gc_package_version = dbc.Card(
                                     "cursor": "pointer",
                                     "transition": "all 0.2s ease",
                                     "backgroundImage": "none",
-                                    "boxShadow": "none"
-                                }
+                                    "boxShadow": "none",
+                                },
                             ),
                             width=2,
                             className="d-flex justify-content-end",
@@ -68,44 +68,41 @@ gc_package_version = dbc.Card(
                                 "borderBottom": "1px solid #606060",
                                 "fontSize": "16px",
                                 "fontWeight": "600",
-                                "padding": "12px 16px"
-                            }
+                                "padding": "12px 16px",
+                            },
                         ),
                         dbc.PopoverBody(
                             """
                             Visualizes for each packaged dependancy, if it is up to date and if not if it is
                             less than 6 months out, between 6 months and a year, or greater than a year.
-                            """
-                        ,
+                            """,
                             style={
                                 "backgroundColor": "#292929",
                                 "color": "#E0E0E0",
                                 "border": "none",
                                 "fontSize": "14px",
                                 "lineHeight": "1.5",
-                                "padding": "16px"
-                            }
+                                "padding": "16px",
+                            },
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
                     target=f"popover-target-{PAGE}-{VIZ_ID}",
                     placement="top",
                     is_open=False,
-
                     style={
                         "backgroundColor": "#292929",
                         "border": "1px solid #606060",
                         "borderRadius": "8px",
                         "boxShadow": "0 4px 12px rgba(0, 0, 0, 0.3)",
-                        "maxWidth": "400px"
-                    }
-
-                    ),
+                        "maxWidth": "400px",
+                    },
+                ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
             ],
-            style={"padding": "2rem"}
+            style={"padding": "2rem"},
         )
     ],
     style={"backgroundColor": "#292929", "borderRadius": "15px", "border": "1px solid #404040"},
@@ -169,20 +166,12 @@ def package_version_graph(repolist):
         plot_bgcolor="#292929",
         paper_bgcolor="#292929",
         legend=dict(
-            orientation="v",
-            x=0.42,  # Legend starts right after the pie chart
-            y=0.5,
-            xanchor="left",
-            yanchor="middle"
+            orientation="v", x=0.42, y=0.5, xanchor="left", yanchor="middle"  # Legend starts right after the pie chart
         ),
-        font=dict(
-            family="Inter, sans-serif",  # Font family
-            size=14,                     # Font size
-            color="white"                # Font color
-        ),
-        margin=dict(r=50, l=50, t=50, b=50)
+        font=dict(family="Inter, sans-serif", size=14, color="white"),  # Font family  # Font size  # Font color
+        margin=dict(r=50, l=50, t=50, b=50),
     )
-    
+
     fig["layout"]["legend_title"] = "Date Range"
 
     logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")

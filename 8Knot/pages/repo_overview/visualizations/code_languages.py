@@ -38,7 +38,7 @@ gc_code_language = dbc.Card(
                                 className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
                                 style={
                                     "backgroundColor": "#292929",
-                                    "borderColor": "#404040", 
+                                    "borderColor": "#404040",
                                     "color": "white",
                                     "borderRadius": "20px",
                                     "padding": "6px 12px",
@@ -48,8 +48,8 @@ gc_code_language = dbc.Card(
                                     "cursor": "pointer",
                                     "transition": "all 0.2s ease",
                                     "backgroundImage": "none",
-                                    "boxShadow": "none"
-                                }
+                                    "boxShadow": "none",
+                                },
                             ),
                             width=2,
                             className="d-flex justify-content-end",
@@ -68,8 +68,8 @@ gc_code_language = dbc.Card(
                                 "borderBottom": "1px solid #606060",
                                 "fontSize": "16px",
                                 "fontWeight": "600",
-                                "padding": "12px 16px"
-                            }
+                                "padding": "12px 16px",
+                            },
                         ),
                         dbc.PopoverBody(
                             """
@@ -81,8 +81,8 @@ gc_code_language = dbc.Card(
                                 "border": "none",
                                 "fontSize": "14px",
                                 "lineHeight": "1.5",
-                                "padding": "16px"
-                            }
+                                "padding": "16px",
+                            },
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
@@ -93,12 +93,14 @@ gc_code_language = dbc.Card(
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
-                html.Hr(style={
-                    "borderColor": "#e0e0e0", 
-                    "margin": "1.5rem -2rem", 
-                    "width": "calc(100% + 4rem)",
-                    "marginLeft": "-2rem"
-                }),
+                html.Hr(
+                    style={
+                        "borderColor": "#e0e0e0",
+                        "margin": "1.5rem -2rem",
+                        "width": "calc(100% + 4rem)",
+                        "marginLeft": "-2rem",
+                    }
+                ),
                 dbc.Form(
                     [
                         dbc.Row(
@@ -108,7 +110,7 @@ gc_code_language = dbc.Card(
                                         dbc.Label(
                                             "Graph View:",
                                             html_for=f"graph-view-{PAGE}-{VIZ_ID}",
-                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                            style={"marginBottom": "8px", "fontSize": "14px"},
                                         ),
                                         dbc.RadioItems(
                                             id=f"graph-view-{PAGE}-{VIZ_ID}",
@@ -127,7 +129,7 @@ gc_code_language = dbc.Card(
                                             inline=True,
                                         ),
                                     ],
-                                    width="auto"
+                                    width="auto",
                                 ),
                             ],
                             justify="start",
@@ -135,10 +137,10 @@ gc_code_language = dbc.Card(
                     ]
                 ),
             ],
-            style={"padding": "2rem"}
+            style={"padding": "2rem"},
         )
     ],
-    style={"backgroundColor": "#292929", "borderRadius": "15px", "border": "1px solid #404040"}
+    style={"backgroundColor": "#292929", "borderRadius": "15px", "border": "1px solid #404040"},
 )
 
 
@@ -253,7 +255,7 @@ def create_figure(df: pd.DataFrame, view):
         "#0F5880",  # Dark blue (from package graph)
         "#0A4460",  # Very dark blue
         "#053040",  # Very dark blue
-        "#02141C"   # Very dark blue
+        "#02141C",  # Very dark blue
     ]
 
     # graph generation
@@ -271,18 +273,10 @@ def create_figure(df: pd.DataFrame, view):
         plot_bgcolor="#292929",
         paper_bgcolor="#292929",
         legend=dict(
-            orientation="v",
-            x=0.42,  # Legend starts right after the pie chart
-            y=0.5,
-            xanchor="left",
-            yanchor="middle"
+            orientation="v", x=0.42, y=0.5, xanchor="left", yanchor="middle"  # Legend starts right after the pie chart
         ),
-        font=dict(
-            family="Inter, sans-serif",  # Font family
-            size=14,                     # Font size
-            color="white"                # Font color
-        ),
-        margin=dict(r=50, l=50, t=50, b=50)
+        font=dict(family="Inter, sans-serif", size=14, color="white"),  # Font family  # Font size  # Font color
+        margin=dict(r=50, l=50, t=50, b=50),
     )
 
     return fig

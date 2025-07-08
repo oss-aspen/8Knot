@@ -42,7 +42,7 @@ gc_contrib_importance_pie = dbc.Card(
                                 className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
                                 style={
                                     "backgroundColor": "#292929",
-                                    "borderColor": "#404040", 
+                                    "borderColor": "#404040",
                                     "color": "white",
                                     "borderRadius": "20px",
                                     "padding": "6px 12px",
@@ -52,8 +52,8 @@ gc_contrib_importance_pie = dbc.Card(
                                     "cursor": "pointer",
                                     "transition": "all 0.2s ease",
                                     "backgroundImage": "none",
-                                    "boxShadow": "none"
-                                }
+                                    "boxShadow": "none",
+                                },
                             ),
                             width=2,
                             className="d-flex justify-content-end",
@@ -72,8 +72,8 @@ gc_contrib_importance_pie = dbc.Card(
                                 "borderBottom": "1px solid #606060",
                                 "fontSize": "16px",
                                 "fontWeight": "600",
-                                "padding": "12px 16px"
-                            }
+                                "padding": "12px 16px",
+                            },
                         ),
                         dbc.PopoverBody(
                             """
@@ -91,8 +91,8 @@ gc_contrib_importance_pie = dbc.Card(
                                 "border": "none",
                                 "fontSize": "14px",
                                 "lineHeight": "1.5",
-                                "padding": "16px"
-                            }
+                                "padding": "16px",
+                            },
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
@@ -104,18 +104,20 @@ gc_contrib_importance_pie = dbc.Card(
                         "border": "1px solid #606060",
                         "borderRadius": "8px",
                         "boxShadow": "0 4px 12px rgba(0, 0, 0, 0.3)",
-                        "maxWidth": "400px"
-                    }
+                        "maxWidth": "400px",
+                    },
                 ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
-                html.Hr(style={
-                    "borderColor": "#e0e0e0", 
-                    "margin": "1.5rem -2rem", 
-                    "width": "calc(100% + 4rem)",
-                    "marginLeft": "-2rem"
-                }),
+                html.Hr(
+                    style={
+                        "borderColor": "#e0e0e0",
+                        "margin": "1.5rem -2rem",
+                        "width": "calc(100% + 4rem)",
+                        "marginLeft": "-2rem",
+                    }
+                ),
                 dbc.Form(
                     [
                         dbc.Row(
@@ -125,7 +127,7 @@ gc_contrib_importance_pie = dbc.Card(
                                         dbc.Label(
                                             "Action Type:",
                                             html_for=f"action-type-{PAGE}-{VIZ_ID}",
-                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                            style={"marginBottom": "8px", "fontSize": "14px"},
                                         ),
                                         dbc.Select(
                                             id=f"action-type-{PAGE}-{VIZ_ID}",
@@ -164,8 +166,8 @@ gc_contrib_importance_pie = dbc.Card(
                                                 "borderColor": "#404040",
                                                 "color": "white",
                                                 "height": "32px",
-                                                "padding": "4px 8px"
-                                            }
+                                                "padding": "4px 8px",
+                                            },
                                         ),
                                     ],
                                     width=4,
@@ -175,7 +177,7 @@ gc_contrib_importance_pie = dbc.Card(
                                         dbc.Label(
                                             "Top K Contributors:",
                                             html_for=f"top-k-contributors-{PAGE}-{VIZ_ID}",
-                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                            style={"marginBottom": "8px", "fontSize": "14px"},
                                         ),
                                         dbc.Input(
                                             id=f"top-k-contributors-{PAGE}-{VIZ_ID}",
@@ -185,7 +187,7 @@ gc_contrib_importance_pie = dbc.Card(
                                             step=1,
                                             value=10,
                                             size="sm",
-                                            className="dark-input"
+                                            className="dark-input",
                                         ),
                                     ],
                                     width=3,
@@ -205,7 +207,7 @@ gc_contrib_importance_pie = dbc.Card(
                                             className="dark-date-picker",
                                             style={
                                                 "marginTop": "31px",
-                                            }
+                                            },
                                         ),
                                     ],
                                     width=5,
@@ -234,7 +236,7 @@ gc_contrib_importance_pie = dbc.Card(
                     ]
                 ),
             ],
-            style={"padding": "2rem"}
+            style={"padding": "2rem"},
         )
     ],
     style={"backgroundColor": "#292929", "borderRadius": "15px", "border": "1px solid #404040"},
@@ -387,21 +389,13 @@ def create_figure(df: pd.DataFrame, action_type):
     # add legend title and proper positioning
     fig.update_layout(
         legend_title_text="Contributor ID",
-        plot_bgcolor='#292929',
-        paper_bgcolor='#292929',
+        plot_bgcolor="#292929",
+        paper_bgcolor="#292929",
         legend=dict(
-            orientation="v",
-            x=0.42,  # Legend starts right after the pie chart
-            y=0.5,
-            xanchor="left",
-            yanchor="middle"
+            orientation="v", x=0.42, y=0.5, xanchor="left", yanchor="middle"  # Legend starts right after the pie chart
         ),
-        font=dict(
-            family="Inter, sans-serif",
-            size=14,
-            color="white"
-        ),
-        margin=dict(r=50, l=50, t=50, b=50)
+        font=dict(family="Inter, sans-serif", size=14, color="white"),
+        margin=dict(r=50, l=50, t=50, b=50),
     )
 
     return fig

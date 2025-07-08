@@ -1,10 +1,10 @@
 /**
  * 8Knot Theme Colors & Typography
  * ================================
- * 
+ *
  * This file contains the core color palette and typography styles for the 8Knot application.
  * The color scheme uses earthy tones with a dark theme approach.
- * 
+ *
  * Color Palette:
  * - Primary Green: #6b8976 (main brand color)
  * - Secondary Green: #b5b683 (lighter accent)
@@ -116,4 +116,4 @@ blockquote p {
  */
 .card-title {
   color: white !important;
-} 
+}

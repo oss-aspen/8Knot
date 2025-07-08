@@ -29,17 +29,17 @@ graph_loading = html.Div(
         dbc.Popover(
             [
                 dbc.PopoverHeader(
-                            "Graph Info:",
-                            style={
-                                "backgroundColor": "#404040",
-                                "color": "white",
-                                "border": "none",
-                                "borderBottom": "1px solid #606060",
-                                "fontSize": "16px",
-                                "fontWeight": "600",
-                                "padding": "12px 16px"
-                            }
-                        ),
+                    "Graph Info:",
+                    style={
+                        "backgroundColor": "#404040",
+                        "color": "white",
+                        "border": "none",
+                        "borderBottom": "1px solid #606060",
+                        "fontSize": "16px",
+                        "fontWeight": "600",
+                        "padding": "12px 16px",
+                    },
+                ),
                 dbc.PopoverBody(
                     """
                     This visualization analyzes the activity of the reviewers to sub-sections (files or folders)
@@ -49,32 +49,29 @@ graph_loading = html.Div(
                     interpreted as monitoring technical knowledge retention of codebase components: if a sub-section's
                     past reviewers are no longer active in the repository, maintainership of that sub-section could
                     be insufficient and require attention.
-                    """
-                ,
-                            style={
-                                "backgroundColor": "#292929",
-                                "color": "#E0E0E0",
-                                "border": "none",
-                                "fontSize": "14px",
-                                "lineHeight": "1.5",
-                                "padding": "16px"
-                            }
-                        ),
+                    """,
+                    style={
+                        "backgroundColor": "#292929",
+                        "color": "#E0E0E0",
+                        "border": "none",
+                        "fontSize": "14px",
+                        "lineHeight": "1.5",
+                        "padding": "16px",
+                    },
+                ),
             ],
             id=f"popover-{PAGE}-{VIZ_ID}",
             target=f"popover-target-{PAGE}-{VIZ_ID}",
             placement="top",
             is_open=False,
-
             style={
-                        "backgroundColor": "#292929",
-                        "border": "1px solid #606060",
-                        "borderRadius": "8px",
-                        "boxShadow": "0 4px 12px rgba(0, 0, 0, 0.3)",
-                        "maxWidth": "400px"
-                    }
-
-            ),
+                "backgroundColor": "#292929",
+                "border": "1px solid #606060",
+                "borderRadius": "8px",
+                "boxShadow": "0 4px 12px rgba(0, 0, 0, 0.3)",
+                "maxWidth": "400px",
+            },
+        ),
         dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
         dbc.Form(
             [
@@ -121,7 +118,7 @@ graph_loading = html.Div(
                                 className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
                                 style={
                                     "backgroundColor": "#292929",
-                                    "borderColor": "#404040", 
+                                    "borderColor": "#404040",
                                     "color": "white",
                                     "borderRadius": "20px",
                                     "padding": "6px 12px",
@@ -131,8 +128,8 @@ graph_loading = html.Div(
                                     "cursor": "pointer",
                                     "transition": "all 0.2s ease",
                                     "backgroundImage": "none",
-                                    "boxShadow": "none"
-                                }
+                                    "boxShadow": "none",
+                                },
                             ),
                             width="auto",
                             style={"paddingTop": ".5em"},

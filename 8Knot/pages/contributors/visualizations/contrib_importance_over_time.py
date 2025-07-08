@@ -43,7 +43,7 @@ gc_lottery_factor_over_time = dbc.Card(
                                 className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
                                 style={
                                     "backgroundColor": "#292929",
-                                    "borderColor": "#404040", 
+                                    "borderColor": "#404040",
                                     "color": "white",
                                     "borderRadius": "20px",
                                     "padding": "6px 12px",
@@ -53,8 +53,8 @@ gc_lottery_factor_over_time = dbc.Card(
                                     "cursor": "pointer",
                                     "transition": "all 0.2s ease",
                                     "backgroundImage": "none",
-                                    "boxShadow": "none"
-                                }
+                                    "boxShadow": "none",
+                                },
                             ),
                             width=2,
                             className="d-flex justify-content-end",
@@ -73,8 +73,8 @@ gc_lottery_factor_over_time = dbc.Card(
                                 "borderBottom": "1px solid #606060",
                                 "fontSize": "16px",
                                 "fontWeight": "600",
-                                "padding": "12px 16px"
-                            }
+                                "padding": "12px 16px",
+                            },
                         ),
                         dbc.PopoverBody(
                             """
@@ -91,16 +91,15 @@ gc_lottery_factor_over_time = dbc.Card(
                                         any custom keyword(s) in their logins can be filtered out. Please note that gaps
                                         in the graph indicate that no contributions of a specific action type(s) were made
                                         during that time period.
-                                        """
-                        ,
+                                        """,
                             style={
                                 "backgroundColor": "#292929",
                                 "color": "#E0E0E0",
                                 "border": "none",
                                 "fontSize": "14px",
                                 "lineHeight": "1.5",
-                                "padding": "16px"
-                            }
+                                "padding": "16px",
+                            },
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
@@ -111,12 +110,14 @@ gc_lottery_factor_over_time = dbc.Card(
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
-                html.Hr(style={
-                    "borderColor": "#e0e0e0", 
-                    "margin": "1.5rem -2rem", 
-                    "width": "calc(100% + 4rem)",
-                    "marginLeft": "-2rem"
-                }),
+                html.Hr(
+                    style={
+                        "borderColor": "#e0e0e0",
+                        "margin": "1.5rem -2rem",
+                        "width": "calc(100% + 4rem)",
+                        "marginLeft": "-2rem",
+                    }
+                ),
                 dbc.Form(
                     [
                         dbc.Row(
@@ -126,7 +127,7 @@ gc_lottery_factor_over_time = dbc.Card(
                                         dbc.Label(
                                             "Window Width (Months):",
                                             html_for=f"window-width-{PAGE}-{VIZ_ID}",
-                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                            style={"marginBottom": "8px", "fontSize": "14px"},
                                         ),
                                         dbc.Input(
                                             id=f"window-width-{PAGE}-{VIZ_ID}",
@@ -136,7 +137,7 @@ gc_lottery_factor_over_time = dbc.Card(
                                             step=1,
                                             value=6,
                                             size="sm",
-                                            className="dark-input"
+                                            className="dark-input",
                                         ),
                                     ],
                                     width=3,
@@ -146,7 +147,7 @@ gc_lottery_factor_over_time = dbc.Card(
                                         dbc.Label(
                                             "Step Size (Months):",
                                             html_for=f"step-size-{PAGE}-{VIZ_ID}",
-                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                            style={"marginBottom": "8px", "fontSize": "14px"},
                                         ),
                                         dbc.Input(
                                             id=f"step-size-{PAGE}-{VIZ_ID}",
@@ -156,7 +157,7 @@ gc_lottery_factor_over_time = dbc.Card(
                                             step=1,
                                             value=6,
                                             size="sm",
-                                            className="dark-input"
+                                            className="dark-input",
                                         ),
                                     ],
                                     width=3,
@@ -166,7 +167,7 @@ gc_lottery_factor_over_time = dbc.Card(
                                         dbc.Label(
                                             "Threshold:",
                                             html_for=f"threshold-{PAGE}-{VIZ_ID}",
-                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                            style={"marginBottom": "8px", "fontSize": "14px"},
                                         ),
                                         dcc.Slider(
                                             id=f"threshold-{PAGE}-{VIZ_ID}",
@@ -174,7 +175,7 @@ gc_lottery_factor_over_time = dbc.Card(
                                             max=95,
                                             value=50,
                                             marks={i: f"{i}%" for i in range(10, 100, 5)},
-                                            className="dark-slider"
+                                            className="dark-slider",
                                         ),
                                     ],
                                     width=6,
@@ -446,9 +447,9 @@ def create_figure(df_final, threshold, step_size):
         font=dict(size=14),
         margin_b=40,
         legend_title="Action Type",
-        plot_bgcolor='#292929',
-        paper_bgcolor='#292929',
-        font_color='white'
+        plot_bgcolor="#292929",
+        paper_bgcolor="#292929",
+        font_color="white",
     )
 
     return fig

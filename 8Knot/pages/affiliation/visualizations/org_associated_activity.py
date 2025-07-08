@@ -39,7 +39,7 @@ gc_org_associated_activity = dbc.Card(
                                 className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
                                 style={
                                     "backgroundColor": "#292929",
-                                    "borderColor": "#404040", 
+                                    "borderColor": "#404040",
                                     "color": "white",
                                     "borderRadius": "20px",
                                     "padding": "6px 12px",
@@ -49,8 +49,8 @@ gc_org_associated_activity = dbc.Card(
                                     "cursor": "pointer",
                                     "transition": "all 0.2s ease",
                                     "backgroundImage": "none",
-                                    "boxShadow": "none"
-                                }
+                                    "boxShadow": "none",
+                                },
                             ),
                             width=2,
                             className="d-flex justify-content-end",
@@ -69,8 +69,8 @@ gc_org_associated_activity = dbc.Card(
                                 "borderBottom": "1px solid #606060",
                                 "fontSize": "16px",
                                 "fontWeight": "600",
-                                "padding": "12px 16px"
-                            }
+                                "padding": "12px 16px",
+                            },
                         ),
                         dbc.PopoverBody(
                             """
@@ -87,16 +87,15 @@ gc_org_associated_activity = dbc.Card(
                             e.g. If there are 100 contributions and 20 contributors, and each contributor has an '@redhat.com'\n
                             email associated with their account and one other random email, '@redhat.com' will be counted 100 times\n
                             and the other contributor emails will also total a count of 100.\n
-                            """
-                        ,
+                            """,
                             style={
                                 "backgroundColor": "#292929",
                                 "color": "#E0E0E0",
                                 "border": "none",
                                 "fontSize": "14px",
                                 "lineHeight": "1.5",
-                                "padding": "16px"
-                            }
+                                "padding": "16px",
+                            },
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
@@ -107,12 +106,14 @@ gc_org_associated_activity = dbc.Card(
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
-                html.Hr(style={
-                    "borderColor": "#e0e0e0", 
-                    "margin": "1.5rem -2rem", 
-                    "width": "calc(100% + 4rem)",
-                    "marginLeft": "-2rem"
-                }),
+                html.Hr(
+                    style={
+                        "borderColor": "#e0e0e0",
+                        "margin": "1.5rem -2rem",
+                        "width": "calc(100% + 4rem)",
+                        "marginLeft": "-2rem",
+                    }
+                ),
                 dbc.Form(
                     [
                         dbc.Row(
@@ -122,7 +123,7 @@ gc_org_associated_activity = dbc.Card(
                                         dbc.Label(
                                             "Contributions Required:",
                                             html_for=f"contributions-required-{PAGE}-{VIZ_ID}",
-                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                            style={"marginBottom": "8px", "fontSize": "14px"},
                                         ),
                                         dbc.Input(
                                             id=f"contributions-required-{PAGE}-{VIZ_ID}",
@@ -137,14 +138,11 @@ gc_org_associated_activity = dbc.Card(
                                         ),
                                     ],
                                     width="auto",
-                                    className="me-4"
+                                    className="me-4",
                                 ),
                                 dbc.Col(
                                     [
-                                        dbc.Label(
-                                            "Email Filters:",
-                                            style={"marginBottom": "8px", "fontSize": "14px"}
-                                        ),
+                                        dbc.Label("Email Filters:", style={"marginBottom": "8px", "fontSize": "14px"}),
                                         dbc.Checklist(
                                             id=f"email-filter-{PAGE}-{VIZ_ID}",
                                             options=[
@@ -163,7 +161,7 @@ gc_org_associated_activity = dbc.Card(
                                         ),
                                     ],
                                     width="auto",
-                                    className="me-4"
+                                    className="me-4",
                                 ),
                                 dbc.Col(
                                     [
@@ -178,11 +176,11 @@ gc_org_associated_activity = dbc.Card(
                                             initial_visible_month=dt.date(dt.date.today().year, 1, 1),
                                             clearable=True,
                                             style={
-                                                "marginTop" : "29px",
-                                            }
+                                                "marginTop": "29px",
+                                            },
                                         ),
                                     ],
-                                    width="auto"
+                                    width="auto",
                                 ),
                             ],
                             justify="start",
@@ -190,7 +188,7 @@ gc_org_associated_activity = dbc.Card(
                     ]
                 ),
             ],
-            style={"padding": "2rem"}
+            style={"padding": "2rem"},
         )
     ],
     style={"backgroundColor": "#292929", "borderRadius": "15px", "border": "1px solid #404040"},
@@ -329,11 +327,7 @@ def create_figure(df: pd.DataFrame):
         yaxis_title="Contributions",
         bargroupgap=0.1,
         margin_b=40,
-        font=dict(
-            family="Inter, sans-serif",
-            size=14,
-            color="white"
-        ),
+        font=dict(family="Inter, sans-serif", size=14, color="white"),
         plot_bgcolor="#292929",
         paper_bgcolor="#292929",
     )

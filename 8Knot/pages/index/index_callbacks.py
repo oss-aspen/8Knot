@@ -284,7 +284,7 @@ def run_queries(repos):
     Args:
         repos ([int]): repositories we collect data for.
     """
-    
+
     # If no repos are selected, don't run any queries
     if not repos or len(repos) == 0:
         logging.info("RUN_QUERIES: No repositories selected, skipping query execution")
@@ -319,7 +319,7 @@ def run_queries(repos):
 @callback(
     Output("selected-tags", "data", allow_duplicate=True),
     [Input("cached-options", "data")],
-    prevent_initial_call="initial_duplicate"
+    prevent_initial_call="initial_duplicate",
 )
 def set_default_tag_on_load(cached_options):
     """
@@ -329,7 +329,7 @@ def set_default_tag_on_load(cached_options):
         # If cache isn't ready yet, don't update - let it trigger again when cache is ready
         logging.info("Default tag callback: cached_options not ready yet")
         return dash.no_update
-    
+
     try:
         # Use the same logic as augur.initial_multiselect_option()
         initial_option = augur.initial_multiselect_option()
@@ -343,7 +343,7 @@ def set_default_tag_on_load(cached_options):
                 return [cached_options[0]["value"]]
     except Exception as e:
         logging.error(f"Error setting default tag: {str(e)}")
-    
+
     logging.info("No default tag set")
     return []
 
@@ -415,14 +415,9 @@ def initialize_cache(_):
         return []
 
 
-
-
-
 # Callback to control search dropdown popup visibility
 @callback(
-    Output("search-dropdown-popup", "style"),
-    [Input("my-input", "value")],
-    [State("search-dropdown-popup", "style")]
+    Output("search-dropdown-popup", "style"), [Input("my-input", "value")], [State("search-dropdown-popup", "style")]
 )
 def toggle_search_popup(input_value, current_style):
     """
@@ -430,25 +425,29 @@ def toggle_search_popup(input_value, current_style):
     The dropdown should be hidden by default and show when user focuses/types.
     """
     # Start with the current style or default
-    new_style = current_style.copy() if current_style else {
-        "position": "absolute",
-        "top": "100%",
-        "left": "0",
-        "right": "0",
-        "zIndex": "1000",
-        "maxHeight": "300px",
-        "overflowY": "auto",
-        "marginTop": "2px",
-        "display": "none"  # Hidden by default
-    }
-    
+    new_style = (
+        current_style.copy()
+        if current_style
+        else {
+            "position": "absolute",
+            "top": "100%",
+            "left": "0",
+            "right": "0",
+            "zIndex": "1000",
+            "maxHeight": "300px",
+            "overflowY": "auto",
+            "marginTop": "2px",
+            "display": "none",  # Hidden by default
+        }
+    )
+
     # Show dropdown when user starts typing, keep hidden when empty
     # The clientside callback will handle showing it on focus and hiding on click outside
     if input_value:
         new_style["display"] = "block"
     else:
         new_style["display"] = "none"
-    
+
     return new_style
 
 
@@ -457,7 +456,7 @@ def toggle_search_popup(input_value, current_style):
     Output("search-results-list", "children"),
     [Input("my-input", "value")],
     [State("cached-options", "data")],
-    prevent_initial_call=True
+    prevent_initial_call=True,
 )
 def update_search_results(search_value, cached_options):
     """
@@ -467,14 +466,14 @@ def update_search_results(search_value, cached_options):
         return [
             html.Div(
                 "Start typing to search for repositories and organizations...",
-                style={"padding": "12px", "color": "#B0B0B0", "textAlign": "center"}
+                style={"padding": "12px", "color": "#B0B0B0", "textAlign": "center"},
             )
         ]
-    
+
     try:
         # Use the same search logic as the original multiselect
         from .search_utils import fuzzy_search
-        
+
         # Remove prefixes from the search query if present
         search_query = search_value
         prefix_type = None
@@ -488,31 +487,31 @@ def update_search_results(search_value, cached_options):
 
         # Perform fuzzy search
         matched_options = fuzzy_search(search_query, cached_options, threshold=0.2)
-        
+
         # Filter by prefix type if specified
         if prefix_type == "repo":
             matched_options = [opt for opt in matched_options if isinstance(opt["value"], int)]
         elif prefix_type == "org":
             matched_options = [opt for opt in matched_options if isinstance(opt["value"], str)]
-        
+
         # Limit results for performance
         matched_options = matched_options[:20]
-        
+
         if not matched_options:
             return [
                 html.Div(
                     "No matches found. Try adjusting your search terms.",
-                    style={"padding": "12px", "color": "#B0B0B0", "textAlign": "center"}
+                    style={"padding": "12px", "color": "#B0B0B0", "textAlign": "center"},
                 )
             ]
-        
+
         # Create clickable result items
         result_items = []
         for opt in matched_options:
             is_org = isinstance(opt["value"], str)
             icon = "🏢" if is_org else "📁"
             prefix = "org:" if is_org else "repo:"
-            
+
             result_item = html.Div(
                 [
                     html.Span(f"{icon} ", style={"marginRight": "8px"}),
@@ -524,20 +523,20 @@ def update_search_results(search_value, cached_options):
                     "cursor": "pointer",
                     "borderRadius": "4px",
                     "marginBottom": "2px",
-                    "transition": "background-color 0.2s ease"
+                    "transition": "background-color 0.2s ease",
                 },
-                className="search-result-item"
+                className="search-result-item",
             )
             result_items.append(result_item)
-        
+
         return result_items
-        
+
     except Exception as e:
         logging.error(f"Error in update_search_results: {str(e)}")
         return [
             html.Div(
                 "Error loading search results. Please try again.",
-                style={"padding": "12px", "color": "#ff6b6b", "textAlign": "center"}
+                style={"padding": "12px", "color": "#ff6b6b", "textAlign": "center"},
             )
         ]
 
@@ -547,7 +546,7 @@ def update_search_results(search_value, cached_options):
     [Output("selected-tags", "data"), Output("my-input", "value")],
     [Input({"type": "search-result-item", "index": dash.dependencies.ALL}, "n_clicks")],
     [State("selected-tags", "data"), State("my-input", "value"), State("cached-options", "data")],
-    prevent_initial_call=True
+    prevent_initial_call=True,
 )
 def add_selected_tag(n_clicks_list, selected_tags, input_value, cached_options):
     """
@@ -556,20 +555,21 @@ def add_selected_tag(n_clicks_list, selected_tags, input_value, cached_options):
     ctx = dash.callback_context
     if not ctx.triggered or not any(n_clicks_list):
         return dash.no_update, dash.no_update
-    
+
     # Find which item was clicked
     triggered_id = ctx.triggered[0]["prop_id"]
     import json
-    clicked_item = json.loads(triggered_id.split('.')[0])
+
+    clicked_item = json.loads(triggered_id.split(".")[0])
     selected_value = clicked_item["index"]
-    
+
     # Add to selected tags if not already present
     if selected_tags is None:
         selected_tags = []
-    
+
     if selected_value not in selected_tags:
         selected_tags.append(selected_value)
-    
+
     # Clear the input and return updated tags
     return selected_tags, ""
 
@@ -579,7 +579,7 @@ def add_selected_tag(n_clicks_list, selected_tags, input_value, cached_options):
     Output("selected-tags-container", "children"),
     [Input("selected-tags", "data")],
     [State("cached-options", "data")],
-    prevent_initial_call=False  # Allow initial call to display default tags
+    prevent_initial_call=False,  # Allow initial call to display default tags
 )
 def display_selected_tags(selected_tags, cached_options):
     """
@@ -587,7 +587,7 @@ def display_selected_tags(selected_tags, cached_options):
     """
     if not selected_tags:
         return []
-    
+
     # If cached_options not ready yet, return placeholder tags with just the values
     if not cached_options:
         tag_elements = []
@@ -613,9 +613,9 @@ def display_selected_tags(selected_tags, cached_options):
                             "display": "flex",
                             "alignItems": "center",
                             "justifyContent": "center",
-                            "borderRadius": "50%"
-                        }
-                    )
+                            "borderRadius": "50%",
+                        },
+                    ),
                 ],
                 className="selected-tag",
                 style={
@@ -626,12 +626,12 @@ def display_selected_tags(selected_tags, cached_options):
                     "fontSize": "14px",
                     "display": "inline-flex",
                     "alignItems": "center",
-                    "gap": "6px"
-                }
+                    "gap": "6px",
+                },
             )
             tag_elements.append(tag_element)
         return tag_elements
-    
+
     tag_elements = []
     for tag_value in selected_tags:
         # Find the label for this value
@@ -642,10 +642,10 @@ def display_selected_tags(selected_tags, cached_options):
                 prefix = "org:" if is_org else "repo:"
                 tag_label = f"{prefix} {opt['label']}"
                 break
-        
+
         # Truncate long labels for inline display
         display_label = tag_label if len(tag_label) <= 25 else tag_label[:22] + "..."
-        
+
         tag_element = html.Div(
             [
                 html.Span(display_label, style={"marginRight": "4px"}),
@@ -666,9 +666,9 @@ def display_selected_tags(selected_tags, cached_options):
                         "display": "flex",
                         "alignItems": "center",
                         "justifyContent": "center",
-                        "borderRadius": "50%"
-                    }
-                )
+                        "borderRadius": "50%",
+                    },
+                ),
             ],
             className="selected-tag",
             style={
@@ -679,11 +679,11 @@ def display_selected_tags(selected_tags, cached_options):
                 "fontSize": "14px",
                 "display": "inline-flex",
                 "alignItems": "center",
-                "gap": "6px"
-            }
+                "gap": "6px",
+            },
         )
         tag_elements.append(tag_element)
-    
+
     return tag_elements
 
 
@@ -692,7 +692,7 @@ def display_selected_tags(selected_tags, cached_options):
     Output("search", "n_clicks", allow_duplicate=True),
     [Input("selected-tags", "data")],
     [State("search", "n_clicks")],
-    prevent_initial_call=True
+    prevent_initial_call=True,
 )
 def trigger_initial_search(selected_tags, current_clicks):
     """
@@ -701,25 +701,29 @@ def trigger_initial_search(selected_tags, current_clicks):
     ctx = dash.callback_context
     if not ctx.triggered:
         return dash.no_update
-    
+
     # Only auto-trigger if this is the first time tags are set (likely the default tag)
     # and user hasn't clicked search yet
     if selected_tags and (current_clicks is None or current_clicks == 0):
         logging.info("Auto-triggering search for default tag")
         return 1  # Simulate one search button click
-    
+
     return dash.no_update
 
 
 # Updated callback for repo selections to work with the new tag system
 @callback(
-    [Output("results-output-container", "children"), Output("repo-choices", "data"), Output("page-container-wrapper", "style")],
+    [
+        Output("results-output-container", "children"),
+        Output("repo-choices", "data"),
+        Output("page-container-wrapper", "style"),
+    ],
     [
         Input("search", "n_clicks"),
         Input("my-input", "n_submit"),  # Trigger when user hits Enter in search input
     ],
     [State("selected-tags", "data")],  # Get current tags as state, don't trigger on change
-    prevent_initial_call=False  # Allow initial call to fire with default tags
+    prevent_initial_call=False,  # Allow initial call to fire with default tags
 )
 def multiselect_values_to_repo_ids(n_clicks, n_submit, selected_tags):
     # Allow triggering from either search button click or Enter key press
@@ -732,17 +736,17 @@ def multiselect_values_to_repo_ids(n_clicks, n_submit, selected_tags):
                     html.P(
                         "Please enter a search",
                         className="text-center text-muted",
-                        style={"margin": "0", "fontSize": "24px", "fontWeight": "300"}
+                        style={"margin": "0", "fontSize": "24px", "fontWeight": "300"},
                     ),
                     style={
                         "display": "flex",
-                        "alignItems": "center", 
+                        "alignItems": "center",
                         "justifyContent": "center",
                         "height": "100%",
-                        "width": "100%"
-                    }
+                        "width": "100%",
+                    },
                 ),
-                style={"height": "100%", "padding": "0"}
+                style={"height": "100%", "padding": "0"},
             ),
             style={
                 "width": "100%",
@@ -752,8 +756,8 @@ def multiselect_values_to_repo_ids(n_clicks, n_submit, selected_tags):
                 "border": "none",
                 "borderRadius": "8px",
                 "flex": "1",  # Fill available space in main card
-                "minHeight": "400px"  # Minimum height for visual balance
-            }
+                "minHeight": "400px",  # Minimum height for visual balance
+            },
         )
         return empty_card, [], {"display": "none"}  # Hide page container when no search
 
@@ -809,7 +813,7 @@ def multiselect_values_to_repo_ids(n_clicks, n_submit, selected_tags):
     Output("selected-tags", "data", allow_duplicate=True),
     [Input({"type": "remove-tag", "index": dash.dependencies.ALL}, "n_clicks")],
     [State("selected-tags", "data")],
-    prevent_initial_call=True
+    prevent_initial_call=True,
 )
 def remove_selected_tag(n_clicks_list, selected_tags):
     """
@@ -818,24 +822,26 @@ def remove_selected_tag(n_clicks_list, selected_tags):
     ctx = dash.callback_context
     if not ctx.triggered or not any(n_clicks_list):
         return dash.no_update
-    
+
     # Find which tag was clicked for removal
     triggered_id = ctx.triggered[0]["prop_id"]
     import json
-    clicked_item = json.loads(triggered_id.split('.')[0])
+
+    clicked_item = json.loads(triggered_id.split(".")[0])
     tag_to_remove = clicked_item["index"]
-    
+
     # Remove from selected tags
     if selected_tags and tag_to_remove in selected_tags:
         selected_tags.remove(tag_to_remove)
-    
+
     return selected_tags
+
 
 # Callback to update placeholder text based on whether tags are present
 @callback(
     Output("my-input", "placeholder"),
     [Input("selected-tags", "data")],
-    prevent_initial_call=False  # Allow initial call to set proper placeholder
+    prevent_initial_call=False,  # Allow initial call to set proper placeholder
 )
 def update_placeholder(selected_tags):
     """
@@ -845,5 +851,3 @@ def update_placeholder(selected_tags):
         return "Add more repos/organizations..."
     else:
         return "Search for repos/organizations..."
-
-

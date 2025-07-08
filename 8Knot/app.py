@@ -101,11 +101,11 @@ app.clientside_callback(
             const searchContainer = document.getElementById('search-input-container');
             const dropdown = document.getElementById('search-dropdown-popup');
             const input = document.getElementById('my-input');
-            
+
             if (!searchContainer || !dropdown || !input) {
                 return;
             }
-            
+
             // Function to handle clicks outside
             function handleClickOutside(event) {
                 // Check if click is outside both the search container and dropdown
@@ -114,32 +114,33 @@ app.clientside_callback(
                     dropdown.style.display = 'none';
                 }
             }
-            
+
             // Function to show dropdown when input gets focus
             function handleInputFocus() {
                 dropdown.style.display = 'block';
             }
-            
+
             // Remove existing listeners to avoid duplicates
             document.removeEventListener('click', handleClickOutside);
             input.removeEventListener('focus', handleInputFocus);
-            
+
             // Add the event listeners
             document.addEventListener('click', handleClickOutside);
             input.addEventListener('focus', handleInputFocus);
-            
+
         }, 100);
-        
+
         return window.dash_clientside.no_update;
     }
     """,
-    dash.dependencies.Output('search-dropdown-popup', 'data-click-outside-initialized', allow_duplicate=True),
-    dash.dependencies.Input('cache-init-trigger', 'children'),
-    prevent_initial_call='initial_duplicate'
+    dash.dependencies.Output("search-dropdown-popup", "data-click-outside-initialized", allow_duplicate=True),
+    dash.dependencies.Input("cache-init-trigger", "children"),
+    prevent_initial_call="initial_duplicate",
 )
 
 """HEALTH CHECK ENDPOINT"""
-#HELLO????
+# HELLO????
+
 
 @server.route("/health")
 def health_check():

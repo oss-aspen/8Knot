@@ -37,8 +37,8 @@ graph_loading = html.Div(
                         "borderBottom": "1px solid #606060",
                         "fontSize": "16px",
                         "fontWeight": "600",
-                        "padding": "12px 16px"
-                    }
+                        "padding": "12px 16px",
+                    },
                 ),
                 dbc.PopoverBody(
                     """
@@ -56,8 +56,8 @@ graph_loading = html.Div(
                         "border": "none",
                         "fontSize": "14px",
                         "lineHeight": "1.5",
-                        "padding": "16px"
-                    }
+                        "padding": "16px",
+                    },
                 ),
             ],
             id=f"popover-{PAGE}-{VIZ_ID}",
@@ -69,8 +69,8 @@ graph_loading = html.Div(
                 "border": "1px solid #606060",
                 "borderRadius": "8px",
                 "boxShadow": "0 4px 12px rgba(0, 0, 0, 0.3)",
-                "maxWidth": "400px"
-            }
+                "maxWidth": "400px",
+            },
         ),
         dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
         dbc.Form(
@@ -118,7 +118,7 @@ graph_loading = html.Div(
                                 className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
                                 style={
                                     "backgroundColor": "#292929",
-                                    "borderColor": "#404040", 
+                                    "borderColor": "#404040",
                                     "color": "white",
                                     "borderRadius": "20px",
                                     "padding": "6px 12px",
@@ -128,8 +128,8 @@ graph_loading = html.Div(
                                     "cursor": "pointer",
                                     "transition": "all 0.2s ease",
                                     "backgroundImage": "none",
-                                    "boxShadow": "none"
-                                }
+                                    "boxShadow": "none",
+                                },
                             ),
                             width="auto",
                             style={"paddingTop": ".5em"},

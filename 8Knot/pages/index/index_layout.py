@@ -128,13 +128,18 @@ navbar = dbc.Navbar(
                         id="chaoss-logo-img",
                     ),
                 ],
-                style={"display": "flex", "alignItems": "center"}
+                style={"display": "flex", "alignItems": "center"},
             ),
         ],
         fluid=True,
     ),
     color="dark",  # Ensures dark Bootstrap background
-    style={"backgroundColor": "#131313", "border": "none", "height": "60px", "minHeight": "60px"},  # Increase navbar height
+    style={
+        "backgroundColor": "#131313",
+        "border": "none",
+        "height": "60px",
+        "minHeight": "60px",
+    },  # Increase navbar height
     dark=True,
     sticky="top",
 )
@@ -182,38 +187,38 @@ search_bar = html.Div(
                                                 "flexWrap": "wrap",
                                                 "gap": "4px",
                                                 "alignItems": "center",
-                                                "paddingRight": "8px"
-                                            }
+                                                "paddingRight": "8px",
+                                            },
                                         ),
                                         # Search input (flex-grow to fill remaining space)
                                         dcc.Input(
-                                            id='my-input',
-                                            type='text',
-                                            placeholder='Search for repos/organizations...',
+                                            id="my-input",
+                                            type="text",
+                                            placeholder="Search for repos/organizations...",
                                             style={
-                                                'flex': '1',
-                                                'backgroundColor': 'transparent',
-                                                'color': '#fff',
-                                                'border': 'none',
-                                                'outline': 'none',
-                                                'padding': '0',
-                                                'fontSize': '16px',
-                                                'minWidth': '200px'
-                                            }
+                                                "flex": "1",
+                                                "backgroundColor": "transparent",
+                                                "color": "#fff",
+                                                "border": "none",
+                                                "outline": "none",
+                                                "padding": "0",
+                                                "fontSize": "16px",
+                                                "minWidth": "200px",
+                                            },
                                         ),
                                     ],
                                     style={
-                                        'display': 'flex',
-                                        'alignItems': 'center',
-                                        'flexWrap': 'wrap',
-                                        'backgroundColor': '#232323',
-                                        'border': '1px solid #555',
-                                        'borderRadius': '16px',
-                                        'padding': '8px 12px',
-                                        'minHeight': '44px',
-                                        'gap': '4px'
+                                        "display": "flex",
+                                        "alignItems": "center",
+                                        "flexWrap": "wrap",
+                                        "backgroundColor": "#232323",
+                                        "border": "1px solid #555",
+                                        "borderRadius": "16px",
+                                        "padding": "8px 12px",
+                                        "minHeight": "44px",
+                                        "gap": "4px",
                                     },
-                                    id="search-input-container"
+                                    id="search-input-container",
                                 ),
                                 # Search results popup
                                 html.Div(
@@ -228,12 +233,16 @@ search_bar = html.Div(
                                                             children=[
                                                                 html.Div(
                                                                     "Start typing to search for repositories and organizations...",
-                                                                    style={"padding": "12px", "color": "#B0B0B0", "textAlign": "center"}
+                                                                    style={
+                                                                        "padding": "12px",
+                                                                        "color": "#B0B0B0",
+                                                                        "textAlign": "center",
+                                                                    },
                                                                 )
-                                                            ]
+                                                            ],
                                                         )
                                                     ],
-                                                    style={"padding": "8px"}
+                                                    style={"padding": "8px"},
                                                 )
                                             ],
                                             style={
@@ -244,8 +253,8 @@ search_bar = html.Div(
                                                 "color": "#fff",
                                                 "maxHeight": "240px",  # Limit height for scrolling
                                                 "overflowY": "auto",  # Make this card scrollable
-                                                "marginBottom": "0"  # No margin between cards
-                                            }
+                                                "marginBottom": "0",  # No margin between cards
+                                            },
                                         ),
                                         # Second card: Options and controls - moved to bottom
                                         dbc.Card(
@@ -266,8 +275,8 @@ search_bar = html.Div(
                                                                         "padding": "4px 12px",
                                                                         "backgroundColor": "#119DFF",
                                                                         "borderColor": "#119DFF",
-                                                                        "color": "#fff"
-                                                                    }
+                                                                        "color": "#fff",
+                                                                    },
                                                                 ),
                                                                 dbc.Button(
                                                                     "Help",
@@ -280,8 +289,8 @@ search_bar = html.Div(
                                                                         "fontSize": "12px",
                                                                         "padding": "4px 8px",
                                                                         "borderColor": "#555",
-                                                                        "color": "#B0B0B0"
-                                                                    }
+                                                                        "color": "#B0B0B0",
+                                                                    },
                                                                 ),
                                                                 dbc.Button(
                                                                     "Repo List",
@@ -294,18 +303,18 @@ search_bar = html.Div(
                                                                         "fontSize": "12px",
                                                                         "padding": "4px 8px",
                                                                         "borderColor": "#555",
-                                                                        "color": "#B0B0B0"
-                                                                    }
+                                                                        "color": "#B0B0B0",
+                                                                    },
                                                                 ),
                                                             ],
                                                             style={
-                                                                "borderBottom": "1px solid #555", 
-                                                                "paddingBottom": "8px", 
+                                                                "borderBottom": "1px solid #555",
+                                                                "paddingBottom": "8px",
                                                                 "marginBottom": "8px",
                                                                 "display": "flex",
                                                                 "justifyContent": "center",
-                                                                "gap": "8px"
-                                                            }
+                                                                "gap": "8px",
+                                                            },
                                                         ),
                                                         # Bot filter switch below the buttons
                                                         html.Div(
@@ -318,13 +327,10 @@ search_bar = html.Div(
                                                                     style={"fontSize": 14},
                                                                 ),
                                                             ],
-                                                            style={
-                                                                "display": "flex",
-                                                                "justifyContent": "center"
-                                                            }
-                                                        )
+                                                            style={"display": "flex", "justifyContent": "center"},
+                                                        ),
                                                     ],
-                                                    style={"padding": "8px"}
+                                                    style={"padding": "8px"},
                                                 )
                                             ],
                                             style={
@@ -333,9 +339,9 @@ search_bar = html.Div(
                                                 "borderRadius": "0 0 16px 16px",  # Rounded bottom corners only
                                                 "borderTop": "none",  # No top border to connect with first card
                                                 "color": "#fff",
-                                                "marginTop": "0"  # No margin between cards
-                                            }
-                                        )
+                                                "marginTop": "0",  # No margin between cards
+                                            },
+                                        ),
                                     ],
                                     id="search-dropdown-popup",
                                     **{"data-click-outside-initialized": "false"},
@@ -346,14 +352,11 @@ search_bar = html.Div(
                                         "right": "0",
                                         "zIndex": "1000",
                                         "display": "none",  # Initially hidden
-                                        "marginTop": "2px"
-                                    }
-                                )
+                                        "marginTop": "2px",
+                                    },
+                                ),
                             ],
-                            style={
-                                "position": "relative",
-                                "width": "100%"
-                            }
+                            style={"position": "relative", "width": "100%"},
                         ),
                         # Add search status indicator
                         html.Div(id="search-status", className="search-status-indicator", style={"display": "none"}),
@@ -377,7 +380,11 @@ search_bar = html.Div(
                             is_open=False,
                             color="light",
                             # if number of repos is large, render as a scrolling window
-                            style={"overflow-y": "scroll", "max-height": "440px", "zIndex": "1100"},  # Higher than search dropdown (1000)
+                            style={
+                                "overflow-y": "scroll",
+                                "max-height": "440px",
+                                "zIndex": "1100",
+                            },  # Higher than search dropdown (1000)
                         ),
                     ],
                     style={
@@ -408,7 +415,6 @@ layout = html.Div(
         sidebar_state_store,
         contributors_dropdown_state,
         dcc.Location(id="url"),
-
         navbar,
         html.Div(
             [
@@ -437,12 +443,9 @@ layout = html.Div(
                                 "border": "2px solid #fff",
                             },
                             children=html.I(
-                                id="sidebar-toggle-icon", 
+                                id="sidebar-toggle-icon",
                                 className="fas fa-chevron-left",
-                                style={
-                                    "fontSize": "10px",
-                                    "lineHeight": "1"
-                                }
+                                style={"fontSize": "10px", "lineHeight": "1"},
                             ),
                         ),
                         dbc.Card(
@@ -452,7 +455,7 @@ layout = html.Div(
                                         search_bar,
                                     ],
                                     id="sidebar-full-content",
-                                    style={"display": "block"}
+                                    style={"display": "block"},
                                 ),
                                 dbc.Nav(
                                     [
@@ -467,7 +470,7 @@ layout = html.Div(
                                                                 "fontSize": "16px",
                                                                 "color": "#B0B0B0",
                                                                 "lineHeight": "1",
-                                                            }
+                                                            },
                                                         )
                                                     ],
                                                     style={
@@ -480,7 +483,7 @@ layout = html.Div(
                                                         "justifyContent": "center",
                                                         "marginRight": "12px",
                                                         "flexShrink": "0",
-                                                    }
+                                                    },
                                                 ),
                                                 html.Span(
                                                     "Search",
@@ -493,7 +496,7 @@ layout = html.Div(
                                                         "letterSpacing": "0.01em",
                                                         "display": "none",  # Hidden by default
                                                     },
-                                                )
+                                                ),
                                             ],
                                             href="#",  # dummy link
                                             id="dummy-search-navlink",
@@ -511,25 +514,30 @@ layout = html.Div(
                                                 "fontSize": "16px",
                                                 "fontWeight": 400,
                                                 "transition": "background-color 0.2s ease",
-                                            }
+                                            },
                                         ),
                                         dbc.NavLink(
                                             [
                                                 html.Img(
                                                     src=dash.get_asset_url("sidebar/repo_overview.svg"),
-                                                    style={"width": "30px", "height": "30px", "marginRight": "12px", "verticalAlign": "middle"},
+                                                    style={
+                                                        "width": "30px",
+                                                        "height": "30px",
+                                                        "marginRight": "12px",
+                                                        "verticalAlign": "middle",
+                                                    },
                                                 ),
                                                 html.Span(
                                                     "Repo Overview",
                                                     id="repo-overview-text",
                                                     style={
                                                         "color": "#B0B0B0",  # match icon color (light gray)
-                                                        "fontWeight": 400,   # thinner font
+                                                        "fontWeight": 400,  # thinner font
                                                         "fontSize": "16px",
                                                         "verticalAlign": "middle",
                                                         "letterSpacing": "0.01em",
                                                     },
-                                                )
+                                                ),
                                             ],
                                             href="/repo_overview",
                                             active="exact",
@@ -546,25 +554,30 @@ layout = html.Div(
                                                 "fontSize": "16px",
                                                 "fontWeight": 400,  # thinner font
                                                 "transition": "background-color 0.2s ease",
-                                            }
+                                            },
                                         ),
                                         dbc.NavLink(
                                             [
                                                 html.Img(
                                                     src=dash.get_asset_url("sidebar/contributions.svg"),
-                                                    style={"width": "30px", "height": "30px", "marginRight": "12px", "verticalAlign": "middle"},
+                                                    style={
+                                                        "width": "30px",
+                                                        "height": "30px",
+                                                        "marginRight": "12px",
+                                                        "verticalAlign": "middle",
+                                                    },
                                                 ),
                                                 html.Span(
                                                     "Contributions",
                                                     id="contributions-text",
                                                     style={
                                                         "color": "#B0B0B0",  # match icon color (light gray)
-                                                        "fontWeight": 400,   # thinner font
+                                                        "fontWeight": 400,  # thinner font
                                                         "fontSize": "16px",
                                                         "verticalAlign": "middle",
                                                         "letterSpacing": "0.01em",
                                                     },
-                                                )
+                                                ),
                                             ],
                                             href="/contributions",
                                             active="exact",
@@ -581,7 +594,7 @@ layout = html.Div(
                                                 "fontSize": "16px",
                                                 "fontWeight": 400,  # thinner font
                                                 "transition": "background-color 0.2s ease",
-                                            }
+                                            },
                                         ),
                                         # Contributors Dropdown
                                         html.Div(
@@ -590,14 +603,19 @@ layout = html.Div(
                                                     [
                                                         html.Img(
                                                             src=dash.get_asset_url("sidebar/contributors.svg"),
-                                                            style={"width": "30px", "height": "30px", "marginRight": "12px", "verticalAlign": "middle"},
+                                                            style={
+                                                                "width": "30px",
+                                                                "height": "30px",
+                                                                "marginRight": "12px",
+                                                                "verticalAlign": "middle",
+                                                            },
                                                         ),
                                                         html.Span(
                                                             "Contributors",
                                                             id="contributors-text",
                                                             style={
                                                                 "color": "#B0B0B0",  # match icon color (light gray)
-                                                                "fontWeight": 400,   # thinner font
+                                                                "fontWeight": 400,  # thinner font
                                                                 "fontSize": "16px",
                                                                 "verticalAlign": "middle",
                                                                 "letterSpacing": "0.01em",
@@ -611,8 +629,8 @@ layout = html.Div(
                                                                 "fontSize": "12px",
                                                                 "color": "#B0B0B0",
                                                                 "transition": "transform 0.2s ease",
-                                                            }
-                                                        )
+                                                            },
+                                                        ),
                                                     ],
                                                     id="contributors-dropdown-toggle",
                                                     style={
@@ -626,7 +644,7 @@ layout = html.Div(
                                                         "fontWeight": 400,  # thinner font
                                                         "cursor": "pointer",
                                                         "transition": "background-color 0.2s ease",
-                                                    }
+                                                    },
                                                 ),
                                                 html.Div(
                                                     [
@@ -643,7 +661,7 @@ layout = html.Div(
                                                                 "borderRadius": "6px",
                                                                 "textDecoration": "none",
                                                                 "transition": "background-color 0.2s ease",
-                                                            }
+                                                            },
                                                         ),
                                                         dbc.NavLink(
                                                             "Contribution Types",
@@ -658,7 +676,7 @@ layout = html.Div(
                                                                 "borderRadius": "6px",
                                                                 "textDecoration": "none",
                                                                 "transition": "background-color 0.2s ease",
-                                                            }
+                                                            },
                                                         ),
                                                     ],
                                                     id="contributors-dropdown-content",
@@ -666,33 +684,38 @@ layout = html.Div(
                                                         "display": "none",
                                                         "paddingTop": "4px",
                                                         "borderRadius": "0 0 8px 8px",
-                                                    }
-                                                )
+                                                    },
+                                                ),
                                             ],
                                             style={
                                                 "marginBottom": "8px",
                                                 "borderRadius": "12px",
                                                 "transition": "background-color 0.2s ease",
                                             },
-                                            id="contributors-dropdown-wrapper"
+                                            id="contributors-dropdown-wrapper",
                                         ),
                                         dbc.NavLink(
                                             [
                                                 html.Img(
                                                     src=dash.get_asset_url("sidebar/affiliation.svg"),
-                                                    style={"width": "30px", "height": "30px", "marginRight": "12px", "verticalAlign": "middle"},
+                                                    style={
+                                                        "width": "30px",
+                                                        "height": "30px",
+                                                        "marginRight": "12px",
+                                                        "verticalAlign": "middle",
+                                                    },
                                                 ),
                                                 html.Span(
                                                     "Affiliation",
                                                     id="affiliation-text",
                                                     style={
                                                         "color": "#B0B0B0",  # match icon color (light gray)
-                                                        "fontWeight": 400,   # thinner font
+                                                        "fontWeight": 400,  # thinner font
                                                         "fontSize": "16px",
                                                         "verticalAlign": "middle",
                                                         "letterSpacing": "0.01em",
                                                     },
-                                                )
+                                                ),
                                             ],
                                             href="/affiliation",
                                             active="exact",
@@ -709,25 +732,30 @@ layout = html.Div(
                                                 "fontSize": "16px",
                                                 "fontWeight": 400,  # thinner font
                                                 "transition": "background-color 0.2s ease",
-                                            }
+                                            },
                                         ),
                                         dbc.NavLink(
                                             [
                                                 html.Img(
                                                     src=dash.get_asset_url("sidebar/chaoss.svg"),
-                                                    style={"width": "30px", "height": "30px", "marginRight": "12px", "verticalAlign": "middle"},
+                                                    style={
+                                                        "width": "30px",
+                                                        "height": "30px",
+                                                        "marginRight": "12px",
+                                                        "verticalAlign": "middle",
+                                                    },
                                                 ),
                                                 html.Span(
                                                     "CHAOSS",
                                                     id="chaoss-text",
                                                     style={
                                                         "color": "#B0B0B0",  # match icon color (light gray)
-                                                        "fontWeight": 400,   # thinner font
+                                                        "fontWeight": 400,  # thinner font
                                                         "fontSize": "16px",
                                                         "verticalAlign": "middle",
                                                         "letterSpacing": "0.01em",
                                                     },
-                                                )
+                                                ),
                                             ],
                                             href="/chaoss",
                                             active="exact",
@@ -744,7 +772,7 @@ layout = html.Div(
                                                 "fontSize": "16px",
                                                 "fontWeight": 400,  # thinner font
                                                 "transition": "background-color 0.2s ease",
-                                            }
+                                            },
                                         ),
                                         # dbc.NavLink(
                                         #     [
@@ -784,7 +812,7 @@ layout = html.Div(
                                     ],
                                     vertical=True,
                                     className="sidebar-nav",
-                                    style={"marginTop": "24px"}
+                                    style={"marginTop": "24px"},
                                 ),
                             ],
                             id="sidebar-card",
@@ -888,7 +916,5 @@ layout = html.Div(
     ],
     style={
         "background": "#242424 !important",  # Match the main container background
-    }
+    },
 )
-
-

@@ -1,13 +1,13 @@
 /**
  * 8Knot Search Functionality
  * ===========================
- * 
+ *
  * This file contains styling for the search functionality including:
  * - Search result hover effects
  * - Selected tag styling (for chosen repositories/organizations)
  * - Tag removal button styling
  * - Search input container focus effects
- * 
+ *
  * The search interface follows the dark theme with blue accent colors
  * for selected items and interactive elements.
  */
@@ -103,7 +103,7 @@
  * - Blue border to match selected tags
  * - Subtle box-shadow for depth
  * - Smooth transition effects
- * 
+ *
  * This applies to the container that holds both tags and input field,
  * providing a unified focus experience.
  */
@@ -151,4 +151,4 @@
 #search-dropdown-popup {
     scrollbar-width: thin;
     scrollbar-color: rgba(120,120,120,0.35) rgba(60,60,60,0.10);
-} 
+}

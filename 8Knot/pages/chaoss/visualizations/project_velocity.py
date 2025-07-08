@@ -43,7 +43,7 @@ gc_project_velocity = dbc.Card(
                                 className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
                                 style={
                                     "backgroundColor": "#292929",
-                                    "borderColor": "#404040", 
+                                    "borderColor": "#404040",
                                     "color": "white",
                                     "borderRadius": "20px",
                                     "padding": "6px 12px",
@@ -53,8 +53,8 @@ gc_project_velocity = dbc.Card(
                                     "cursor": "pointer",
                                     "transition": "all 0.2s ease",
                                     "backgroundImage": "none",
-                                    "boxShadow": "none"
-                                }
+                                    "boxShadow": "none",
+                                },
                             ),
                             width=2,
                             className="d-flex justify-content-end",
@@ -73,48 +73,47 @@ gc_project_velocity = dbc.Card(
                                 "borderBottom": "1px solid #606060",
                                 "fontSize": "16px",
                                 "fontWeight": "600",
-                                "padding": "12px 16px"
-                            }
+                                "padding": "12px 16px",
+                            },
                         ),
                         dbc.PopoverBody(
                             """This visualization gives a view into the development speed of a repository in\n
                             relation to the other selected repositories. For more context of this visualization see\n
                             https://chaoss.community/kb/metric-project-velocity/ \n
-                            https://www.cncf.io/blog/2017/06/05/30-highest-velocity-open-source-projects/ """
-                        ,
+                            https://www.cncf.io/blog/2017/06/05/30-highest-velocity-open-source-projects/ """,
                             style={
                                 "backgroundColor": "#292929",
                                 "color": "#E0E0E0",
                                 "border": "none",
                                 "fontSize": "14px",
                                 "lineHeight": "1.5",
-                                "padding": "16px"
-                            }
+                                "padding": "16px",
+                            },
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
                     target=f"popover-target-{PAGE}-{VIZ_ID}",
                     placement="top",
                     is_open=False,
-
                     style={
                         "backgroundColor": "#292929",
                         "border": "1px solid #606060",
                         "borderRadius": "8px",
                         "boxShadow": "0 4px 12px rgba(0, 0, 0, 0.3)",
-                        "maxWidth": "400px"
-                    }
-
-                    ),
+                        "maxWidth": "400px",
+                    },
+                ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
-                html.Hr(style={
-                    "borderColor": "#e0e0e0", 
-                    "margin": "1.5rem -2rem", 
-                    "width": "calc(100% + 4rem)",
-                    "marginLeft": "-2rem"
-                }),
+                html.Hr(
+                    style={
+                        "borderColor": "#e0e0e0",
+                        "margin": "1.5rem -2rem",
+                        "width": "calc(100% + 4rem)",
+                        "marginLeft": "-2rem",
+                    }
+                ),
                 dbc.Form(
                     [
                         dbc.Row(
@@ -124,7 +123,7 @@ gc_project_velocity = dbc.Card(
                                         dbc.Label(
                                             "Issue Opened Weight:",
                                             html_for=f"issue-opened-weight-{PAGE}-{VIZ_ID}",
-                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                            style={"marginBottom": "8px", "fontSize": "14px"},
                                         ),
                                         dbc.Input(
                                             id=f"issue-opened-weight-{PAGE}-{VIZ_ID}",
@@ -139,14 +138,14 @@ gc_project_velocity = dbc.Card(
                                         ),
                                     ],
                                     width="auto",
-                                    className="me-4"
+                                    className="me-4",
                                 ),
                                 dbc.Col(
                                     [
                                         dbc.Label(
                                             "Issue Closed Weight:",
                                             html_for=f"issue-closed-weight-{PAGE}-{VIZ_ID}",
-                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                            style={"marginBottom": "8px", "fontSize": "14px"},
                                         ),
                                         dbc.Input(
                                             id=f"issue-closed-weight-{PAGE}-{VIZ_ID}",
@@ -161,14 +160,14 @@ gc_project_velocity = dbc.Card(
                                         ),
                                     ],
                                     width="auto",
-                                    className="me-4"
+                                    className="me-4",
                                 ),
                                 dbc.Col(
                                     [
                                         dbc.Label(
                                             "PR Open Weight:",
                                             html_for=f"pr-open-weight-{PAGE}-{VIZ_ID}",
-                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                            style={"marginBottom": "8px", "fontSize": "14px"},
                                         ),
                                         dbc.Input(
                                             id=f"pr-open-weight-{PAGE}-{VIZ_ID}",
@@ -183,14 +182,14 @@ gc_project_velocity = dbc.Card(
                                         ),
                                     ],
                                     width="auto",
-                                    className="me-4"
+                                    className="me-4",
                                 ),
                                 dbc.Col(
                                     [
                                         dbc.Label(
                                             "PR Merged Weight:",
                                             html_for=f"pr-merged-weight-{PAGE}-{VIZ_ID}",
-                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                            style={"marginBottom": "8px", "fontSize": "14px"},
                                         ),
                                         dbc.Input(
                                             id=f"pr-merged-weight-{PAGE}-{VIZ_ID}",
@@ -205,14 +204,14 @@ gc_project_velocity = dbc.Card(
                                         ),
                                     ],
                                     width="auto",
-                                    className="me-4"
+                                    className="me-4",
                                 ),
                                 dbc.Col(
                                     [
                                         dbc.Label(
                                             "PR Closed Weight:",
                                             html_for=f"pr-closed-weight-{PAGE}-{VIZ_ID}",
-                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                            style={"marginBottom": "8px", "fontSize": "14px"},
                                         ),
                                         dbc.Input(
                                             id=f"pr-closed-weight-{PAGE}-{VIZ_ID}",
@@ -227,14 +226,14 @@ gc_project_velocity = dbc.Card(
                                         ),
                                     ],
                                     width="auto",
-                                    className="me-4"
+                                    className="me-4",
                                 ),
                                 dbc.Col(
                                     [
                                         dbc.Label(
                                             "Y-axis:",
                                             html_for=f"graph-view-{PAGE}-{VIZ_ID}",
-                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                            style={"marginBottom": "8px", "fontSize": "14px"},
                                         ),
                                         dbc.RadioItems(
                                             id=f"graph-view-{PAGE}-{VIZ_ID}",
@@ -248,7 +247,7 @@ gc_project_velocity = dbc.Card(
                                         ),
                                     ],
                                     width="auto",
-                                    className="me-4"
+                                    className="me-4",
                                 ),
                                 dbc.Col(
                                     [
@@ -262,12 +261,10 @@ gc_project_velocity = dbc.Card(
                                             max_date_allowed=dt.date.today(),
                                             initial_visible_month=dt.date(dt.date.today().year, 1, 1),
                                             clearable=True,
-                                            style={
-                                                "marginTop" : "30px"
-                                            }
+                                            style={"marginTop": "30px"},
                                         ),
                                     ],
-                                    width="auto"
+                                    width="auto",
                                 ),
                             ],
                             justify="start",
@@ -277,12 +274,7 @@ gc_project_velocity = dbc.Card(
             ]
         )
     ],
-    style={
-        "padding": "20px",
-        "borderRadius": "10px",
-        "backgroundColor": "#292929",
-        "border": "1px solid #404040"
-    },
+    style={"padding": "20px", "borderRadius": "10px", "backgroundColor": "#292929", "border": "1px solid #404040"},
 )
 
 

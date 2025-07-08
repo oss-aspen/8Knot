@@ -36,7 +36,7 @@ gc_pr_over_time = dbc.Card(
                                 className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
                                 style={
                                     "backgroundColor": "#292929",
-                                    "borderColor": "#404040", 
+                                    "borderColor": "#404040",
                                     "color": "white",
                                     "borderRadius": "20px",
                                     "padding": "6px 12px",
@@ -46,8 +46,8 @@ gc_pr_over_time = dbc.Card(
                                     "cursor": "pointer",
                                     "transition": "all 0.2s ease",
                                     "backgroundImage": "none",
-                                    "boxShadow": "none"
-                                }
+                                    "boxShadow": "none",
+                                },
                             ),
                             width=2,
                             className="d-flex justify-content-end",
@@ -66,48 +66,47 @@ gc_pr_over_time = dbc.Card(
                                 "borderBottom": "1px solid #606060",
                                 "fontSize": "16px",
                                 "fontWeight": "600",
-                                "padding": "12px 16px"
-                            }
+                                "padding": "12px 16px",
+                            },
                         ),
                         dbc.PopoverBody(
                             """
                             Visualizes PR behavior by tracking Created, Merged, and Closed-Not-Merged PRs over time.\n
                             Also shows Created PR count as a trend over lifespan.
-                            """
-                        ,
+                            """,
                             style={
                                 "backgroundColor": "#292929",
                                 "color": "#E0E0E0",
                                 "border": "none",
                                 "fontSize": "14px",
                                 "lineHeight": "1.5",
-                                "padding": "16px"
-                            }
+                                "padding": "16px",
+                            },
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
                     target=f"popover-target-{PAGE}-{VIZ_ID}",
                     placement="top",
                     is_open=False,
-
                     style={
                         "backgroundColor": "#292929",
                         "border": "1px solid #606060",
                         "borderRadius": "8px",
                         "boxShadow": "0 4px 12px rgba(0, 0, 0, 0.3)",
-                        "maxWidth": "400px"
-                    }
-
-                    ),
+                        "maxWidth": "400px",
+                    },
+                ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
-                html.Hr(style={
-                    "borderColor": "#e0e0e0", 
-                    "margin": "1.5rem -2rem", 
-                    "width": "calc(100% + 4rem)",
-                    "marginLeft": "-2rem"
-                }),
+                html.Hr(
+                    style={
+                        "borderColor": "#e0e0e0",
+                        "margin": "1.5rem -2rem",
+                        "width": "calc(100% + 4rem)",
+                        "marginLeft": "-2rem",
+                    }
+                ),
                 dbc.Form(
                     [
                         dbc.Row(
@@ -117,7 +116,7 @@ gc_pr_over_time = dbc.Card(
                                         dbc.Label(
                                             "Date Interval:",
                                             html_for=f"date-interval-{PAGE}-{VIZ_ID}",
-                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                            style={"marginBottom": "8px", "fontSize": "14px"},
                                         ),
                                         dbc.RadioItems(
                                             id=f"date-interval-{PAGE}-{VIZ_ID}",
@@ -138,7 +137,7 @@ gc_pr_over_time = dbc.Card(
                                             inline=True,
                                         ),
                                     ],
-                                    width="auto"
+                                    width="auto",
                                 ),
                             ],
                             justify="start",
@@ -146,10 +145,10 @@ gc_pr_over_time = dbc.Card(
                     ]
                 ),
             ],
-            style={"padding": "2rem"}
+            style={"padding": "2rem"},
         )
     ],
-    style={"borderRadius": "15px", "backgroundColor": "#292929"}
+    style={"borderRadius": "15px", "backgroundColor": "#292929"},
 )
 
 

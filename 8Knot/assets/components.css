@@ -1,14 +1,14 @@
 /**
  * 8Knot UI Components
  * ===================
- * 
+ *
  * This file contains styles for reusable UI components including:
  * - Alerts and notifications
- * - Buttons and interactive elements  
+ * - Buttons and interactive elements
  * - Loading spinners
  * - Specialized containers
  * - Popover elements
- * 
+ *
  * All components follow the dark theme design system.
  */
 
@@ -101,4 +101,4 @@
  */
 .popover {
   max-width: 500px;
-} 
+}

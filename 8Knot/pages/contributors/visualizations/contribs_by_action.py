@@ -40,7 +40,7 @@ gc_contribs_by_action = dbc.Card(
                                 className="text-white font-medium rounded-lg px-3 py-1.5 transition-all duration-200 cursor-pointer text-sm custom-hover-button",
                                 style={
                                     "backgroundColor": "#292929",
-                                    "borderColor": "#404040", 
+                                    "borderColor": "#404040",
                                     "color": "white",
                                     "borderRadius": "20px",
                                     "padding": "6px 12px",
@@ -50,8 +50,8 @@ gc_contribs_by_action = dbc.Card(
                                     "cursor": "pointer",
                                     "transition": "all 0.2s ease",
                                     "backgroundImage": "none",
-                                    "boxShadow": "none"
-                                }
+                                    "boxShadow": "none",
+                                },
                             ),
                             width=2,
                             className="d-flex justify-content-end",
@@ -77,12 +77,14 @@ gc_contribs_by_action = dbc.Card(
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
-                html.Hr(style={
-                    "borderColor": "#404040", 
-                    "borderWidth": "1px",
-                    "opacity": "0.3",
-                    "margin": "1.5rem 0", 
-                }),
+                html.Hr(
+                    style={
+                        "borderColor": "#404040",
+                        "borderWidth": "1px",
+                        "opacity": "0.3",
+                        "margin": "1.5rem 0",
+                    }
+                ),
                 dbc.Form(
                     [
                         dbc.Row(
@@ -92,7 +94,7 @@ gc_contribs_by_action = dbc.Card(
                                         dbc.Label(
                                             "Action Type:",
                                             html_for=f"action-dropdown-{PAGE}-{VIZ_ID}",
-                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                            style={"marginBottom": "8px", "fontSize": "14px"},
                                         ),
                                         dbc.Select(
                                             id=f"action-dropdown-{PAGE}-{VIZ_ID}",
@@ -112,19 +114,19 @@ gc_contribs_by_action = dbc.Card(
                                                 "borderColor": "#404040",
                                                 "color": "white",
                                                 "height": "32px",
-                                                "padding": "4px 8px"
-                                            }
+                                                "padding": "4px 8px",
+                                            },
                                         ),
                                     ],
                                     width="auto",
-                                    className="me-4"
+                                    className="me-4",
                                 ),
                                 dbc.Col(
                                     [
                                         dbc.Label(
                                             "Date Interval:",
                                             html_for=f"date-interval-{PAGE}-{VIZ_ID}",
-                                            style={"marginBottom": "8px", "fontSize": "14px"}
+                                            style={"marginBottom": "8px", "fontSize": "14px"},
                                         ),
                                         dbc.RadioItems(
                                             id=f"date-interval-{PAGE}-{VIZ_ID}",
@@ -139,7 +141,7 @@ gc_contribs_by_action = dbc.Card(
                                             inline=True,
                                         ),
                                     ],
-                                    width="auto"
+                                    width="auto",
                                 ),
                             ],
                             justify="start",
@@ -152,19 +154,14 @@ gc_contribs_by_action = dbc.Card(
                             fade=False,
                             is_open=False,
                             color="warning",
-                            style={"marginTop": "1rem"}
+                            style={"marginTop": "1rem"},
                         ),
                     ]
                 ),
             ]
         )
     ],
-    style={
-        "padding": "20px",
-        "borderRadius": "10px",
-        "backgroundColor": "#292929",
-        "border": "1px solid #404040"
-    },
+    style={"padding": "20px", "borderRadius": "10px", "backgroundColor": "#292929", "border": "1px solid #404040"},
 )
 
 

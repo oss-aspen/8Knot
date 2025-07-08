@@ -1,14 +1,14 @@
 /**
  * 8Knot Navigation & Sidebar
  * ===========================
- * 
+ *
  * This file contains all navigation-related styling including:
  * - Sidebar navigation links and hover effects
  * - Contributors dropdown functionality
  * - Icon and text styling for navigation items
  * - Active and inactive state management
  * - Responsive navigation behaviors
- * 
+ *
  * The navigation follows a dark theme with subtle hover effects
  * and clear visual hierarchy for better user experience.
  */
@@ -281,4 +281,4 @@
 #contributors-dropdown-toggle,
 #contributors-dropdown-content .nav-link {
     font-size: 16px !important;
-} 
+}

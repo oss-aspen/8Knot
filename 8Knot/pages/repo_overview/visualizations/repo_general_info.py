@@ -32,12 +32,14 @@ gc_repo_general_info = dbc.Card(
                 dcc.Loading(
                     html.Div(id=f"{PAGE}-{VIZ_ID}"),
                 ),
-                html.Hr(style={
-                    "borderColor": "#e0e0e0", 
-                    "margin": "1.5rem -2rem", 
-                    "width": "calc(100% + 4rem)",
-                    "marginLeft": "-2rem"
-                }),
+                html.Hr(
+                    style={
+                        "borderColor": "#e0e0e0",
+                        "margin": "1.5rem -2rem",
+                        "width": "calc(100% + 4rem)",
+                        "marginLeft": "-2rem",
+                    }
+                ),
                 dbc.Form(
                     [
                         dbc.Row(
@@ -45,7 +47,7 @@ gc_repo_general_info = dbc.Card(
                                 dbc.Col(
                                     dbc.Label(
                                         ["Last Updated: ", html.Span(id=f"{PAGE}-{VIZ_ID}-updated")],
-                                        style={"fontSize": "14px"}
+                                        style={"fontSize": "14px"},
                                     ),
                                     width="auto",
                                 ),
@@ -57,12 +59,7 @@ gc_repo_general_info = dbc.Card(
             ]
         )
     ],
-    style={
-        "padding": "20px",
-        "borderRadius": "10px",
-        "backgroundColor": "#292929",
-        "border": "1px solid #404040"
-    },
+    style={"padding": "20px", "borderRadius": "10px", "backgroundColor": "#292929", "border": "1px solid #404040"},
 )
 
 

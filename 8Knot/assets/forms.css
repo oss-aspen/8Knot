@@ -1,7 +1,7 @@
 /**
  * 8Knot Form Controls
  * ===================
- * 
+ *
  * This file contains all form-related styling including:
  * - Text inputs and form controls
  * - Radio buttons (modern and small variants)
@@ -9,7 +9,7 @@
  * - Sliders and range controls
  * - Date picker components
  * - Mantine UI components
- * 
+ *
  * All form controls are designed for dark theme consistency.
  */
 
@@ -438,4 +438,4 @@ body input.form-control.dark-input:focus {
 .mantine-zmh4e {
     color: #ffffff;
     font-size: 16px;
-} 
+}

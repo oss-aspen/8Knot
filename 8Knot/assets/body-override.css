@@ -1,12 +1,12 @@
 /**
  * Body Background Override
  * ========================
- * 
+ *
  * This file overrides the Bootstrap SLATE theme's body background color
  * to eliminate the bottom region overflow issue. The SLATE theme sets
  * its own body background which creates a visual separation at the bottom
  * of the page when content doesn't fill the full viewport.
- * 
+ *
  * Using !important to ensure these styles override Bootstrap's theme.
  */
 
@@ -30,4 +30,4 @@ html {
 #react-entry-point {
     background-color: #242424;
     min-height: 100vh;
-} 
+}
