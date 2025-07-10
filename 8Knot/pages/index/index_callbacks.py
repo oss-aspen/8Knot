@@ -240,7 +240,7 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
             prefix_type = "org"
             logging.info(f"Org prefix detected, searching for: '{search_query}'")
 
-        # COMPREHENSIVE SEARCH STRATEGY: Always search both cache and server for best results
+        # SEARCH STRATEGY: searching both cache and server for best results. The client-side cache is still prioritized if available.
         cache_matches = []
         server_matches = []
 
@@ -253,7 +253,7 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
         # Adjust threshold based on query length - more specific queries can use lower threshold
         search_threshold = 0.15 if len(search_query) >= 4 else 0.2
 
-        # First, search in cache if available
+        # First, the search goes through the client-side cache if available
         if cached_options:
             cache_matches = fuzzy_search(search_query, cached_options, threshold=search_threshold)
             logging.info(f"Cache search found {len(cache_matches)} matches (threshold={search_threshold})")
@@ -284,7 +284,7 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
                 logging.error(f"Server search failed: {str(e)}")
                 server_matches = []
 
-        # If no cache available, use server matches, otherwise combine intelligently
+        # If no cache available, fetch from server
         if not cached_options:
             matched_options = server_matches
             use_server_fallback = True
@@ -306,9 +306,6 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
             logging.info(
                 f"Combined results: {len(cache_matches)} from cache + {len(additional_from_server)} from server = {len(matched_options)} total"
             )
-
-        # The improved search algorithm now handles exact matches properly,
-        # so we don't need the additional exact org matching logic
 
         # Filter by prefix type if specified
         if prefix_type == "repo":
@@ -383,8 +380,8 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
                         selected_options.append(formatted_v)
                         break
 
-        # NO ARTIFICIAL LIMITS: Return all matches with orgs prioritized
-        # Separate orgs and repos from our combined results for proper ordering
+        # NO LIMITS for now: Return all matches with orgs prioritized
+        # Separate orgs and repos from combined results for proper ordering
         orgs_in_results = [opt for opt in formatted_opts if isinstance(opt["value"], str)]
         repos_in_results = [opt for opt in formatted_opts if isinstance(opt["value"], int)]
 
@@ -392,7 +389,7 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
             f"Final results breakdown: {len(orgs_in_results)} orgs, {len(repos_in_results)} repos, {len(formatted_opts)} total"
         )
 
-        # Always prioritize orgs first, then repos, but don't limit the total count
+        # Orgs are prioritized first, then repos
         result = orgs_in_results + repos_in_results
 
         # Add selected options that aren't already in the results
