@@ -35,7 +35,7 @@ jobs:
 
       - name: Create test environment file
         run: |
-          cat > env.list << EOF
+          cat > .env << EOF
           AUGUR_DATABASE=graphish
           AUGUR_HOST=chaoss.tv
           AUGUR_PASSWORD=cableTV99!

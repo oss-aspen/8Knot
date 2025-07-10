@@ -55,7 +55,7 @@ Finally, the job of the application user (User) is to:
 
 3. Prepare client environment (Dep)
    - App will communicate w/ Augur front-end via HTTP and w/ its database Augur instance via direct connection.
-     - The following environment variables will need to be available to the application at startup in an 'env.list' file at the same directory-level at 'app.py':
+     - The following environment variables will need to be available to the application at startup in an '.env' file at the same directory-level at 'app.py':
        - AUGUR_DATABASE=
        - AUGUR_HOST=
        - AUGUR_PASSWORD=
@@ -87,7 +87,7 @@ Finally, the job of the application user (User) is to:
 
 - Log into Augur with 'Login' button in the top right of the page.
 
-- You should be directed to the Augur front-end that you specified in the 'env.list' file, be able to create or log into your profile, and be redirected back to the index (home) page of 8Knot.
+- You should be directed to the Augur front-end that you specified in the '.env' file, be able to create or log into your profile, and be redirected back to the index (home) page of 8Knot.
 
 - When you've been redirected, your Augur username should be filled-in where the 'Login' button was originally.
 
