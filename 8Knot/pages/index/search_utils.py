@@ -45,6 +45,7 @@ def search_short_query(query: str, options: List[Dict[str, Any]]) -> List[Dict[s
 def search_with_fuzzy_matching(query: str, options: List[Dict[str, Any]], threshold: float) -> List[Dict[str, Any]]:
     """
     Perform fuzzy search using the rapidfuzz library for longer queries.
+    Enhanced to prioritize exact substring matches.
 
     Args:
         query: Search query string
@@ -54,31 +55,49 @@ def search_with_fuzzy_matching(query: str, options: List[Dict[str, Any]], thresh
     Returns:
         List of matching options sorted by relevance
     """
+    if not options:
+        return []
+
     # Convert threshold to the 0-100 scale used by rapidfuzz
     threshold_100 = int(threshold * 100)
+    query_lower = query.lower()
 
-    # Extract matches with scores above threshold
-    matches = process.extract(
-        query,
-        [opt["label"] for opt in options],
-        scorer=fuzz.token_sort_ratio,
-        processor=str.lower,  # Case-insensitive matching
-        limit=100,
-        score_cutoff=threshold_100,
-    )
+    exact_matches = []
+    fuzzy_matches = []
 
-    # Map back to original option objects
-    options_dict = {opt["label"]: opt for opt in options}
-    result = []
+    # First pass: find exact substring matches (highest priority)
+    for opt in options:
+        label_lower = opt["label"].lower()
+        if query_lower in label_lower:
+            exact_matches.append(opt)
 
-    # Handle the return format from rapidfuzz which returns (match, score, index)
-    for match_data in matches:
-        # Extract just the label (first element)
-        label = match_data[0]
-        if label in options_dict:
-            result.append(options_dict[label])
+    # Second pass: find fuzzy matches for items not already matched exactly
+    exact_labels = set(opt["label"] for opt in exact_matches)
+    remaining_options = [opt for opt in options if opt["label"] not in exact_labels]
 
-    return result
+    if remaining_options:
+        # Use fuzzy matching for remaining options
+        matches = process.extract(
+            query,
+            [opt["label"] for opt in remaining_options],
+            scorer=fuzz.token_sort_ratio,
+            processor=str.lower,  # Case-insensitive matching
+            limit=None,  # Remove the 100 limit to get all matches
+            score_cutoff=threshold_100,
+        )
+
+        # Map back to original option objects
+        remaining_options_dict = {opt["label"]: opt for opt in remaining_options}
+
+        # Handle the return format from rapidfuzz which returns (match, score, index)
+        for match_data in matches:
+            # Extract just the label (first element)
+            label = match_data[0]
+            if label in remaining_options_dict:
+                fuzzy_matches.append(remaining_options_dict[label])
+
+    # Combine results: exact matches first, then fuzzy matches
+    return exact_matches + fuzzy_matches
 
 
 def calculate_token_score(token: str, label: str, label_tokens: List[str]) -> float:

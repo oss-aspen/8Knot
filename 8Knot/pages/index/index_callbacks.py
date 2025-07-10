@@ -240,61 +240,26 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
             prefix_type = "org"
             logging.info(f"Org prefix detected, searching for: '{search_query}'")
 
-        # Perform fuzzy search with the refined query
+        # COMPREHENSIVE SEARCH STRATEGY: Always search both cache and server for best results
+        cache_matches = []
+        server_matches = []
+
+        # Import the fuzzy search function
         from .search_utils import fuzzy_search
 
-        matched_options = fuzzy_search(search_query, options, threshold=0.2)
-        logging.info(f"Fuzzy search found {len(matched_options)} matches in cache")
-
-        # ENSURE EXACT ORG MATCHES: If searching for an org name, make sure it's included
-        # This handles cases where fuzzy search limits might exclude exact org matches
-        if len(search_query) >= 3:  # Only for meaningful queries
-            exact_org_matches = []
-
-            # Check for org matches in the FULL server dataset, not just cache
-            # because orgs might not be in the limited cache
-            try:
-                server_options = augur.get_multiselect_options().copy()
-                if current_user.is_authenticated:
-                    try:
-                        users_cache = redis.StrictRedis(
-                            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
-                            port=6379,
-                            password=os.getenv("REDIS_PASSWORD", ""),
-                            decode_responses=True,
-                        )
-                        users_cache.ping()
-                        if users_cache.exists(f"{current_user.get_id()}_group_options"):
-                            user_options = json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
-                            server_options = server_options + user_options
-                    except redis.exceptions.ConnectionError as e:
-                        logging.error(f"ORG CHECK: Could not connect to users-cache. Error: {str(e)}")
-
-                for opt in server_options:
-                    if isinstance(opt.get("value"), str):  # It's an org
-                        org_label = opt["label"].lower()
-                        if (
-                            search_query.lower() == org_label
-                            or search_query.lower() in org_label
-                            or org_label.startswith(search_query.lower())
-                        ):
-                            # Check if this org is already in matched_options
-                            if not any(existing["value"] == opt["value"] for existing in matched_options):
-                                exact_org_matches.append(opt)
-
-            except Exception as e:
-                logging.error(f"ORG CHECK: Failed to fetch server options: {str(e)}")
-
-            # Add exact org matches to the beginning
-            if exact_org_matches:
-                matched_options = exact_org_matches + matched_options
-                logging.info(f"Added {len(exact_org_matches)} exact org matches from server")
-
-        # FALLBACK MECHANISM: If we have very few matches and we were using cache,
-        # search the full server dataset
+        # Initialize fallback flag
         use_server_fallback = False
-        if cached_options and len(matched_options) < 5 and len(search_query) >= 3:
-            logging.info("Few matches found in cache, falling back to server search")
+
+        # Adjust threshold based on query length - more specific queries can use lower threshold
+        search_threshold = 0.15 if len(search_query) >= 4 else 0.2
+
+        # First, search in cache if available
+        if cached_options:
+            cache_matches = fuzzy_search(search_query, cached_options, threshold=search_threshold)
+            logging.info(f"Cache search found {len(cache_matches)} matches (threshold={search_threshold})")
+
+        # Always also search server for comprehensive results (especially for longer queries)
+        if len(search_query) >= 3:
             try:
                 server_options = augur.get_multiselect_options().copy()
                 if current_user.is_authenticated:
@@ -310,23 +275,40 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
                             user_options = json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
                             server_options = server_options + user_options
                     except redis.exceptions.ConnectionError as e:
-                        logging.error(f"FALLBACK: Could not connect to users-cache. Error: {str(e)}")
+                        logging.error(f"SERVER SEARCH: Could not connect to users-cache. Error: {str(e)}")
 
-                server_matches = fuzzy_search(search_query, server_options, threshold=0.2)
-                logging.info(f"Server fallback found {len(server_matches)} matches")
-
-                # Combine cache and server results, prioritizing cache matches
-                seen_values = set(opt["value"] for opt in matched_options)
-                for server_match in server_matches:
-                    if server_match["value"] not in seen_values:
-                        matched_options.append(server_match)
-                        seen_values.add(server_match["value"])
-
-                use_server_fallback = True
-                logging.info(f"Combined results: {len(matched_options)} total matches")
+                server_matches = fuzzy_search(search_query, server_options, threshold=search_threshold)
+                logging.info(f"Server search found {len(server_matches)} matches (threshold={search_threshold})")
 
             except Exception as e:
-                logging.error(f"Server fallback failed: {str(e)}")
+                logging.error(f"Server search failed: {str(e)}")
+                server_matches = []
+
+        # If no cache available, use server matches, otherwise combine intelligently
+        if not cached_options:
+            matched_options = server_matches
+            use_server_fallback = True
+            logging.info(f"No cache available, using {len(server_matches)} server matches")
+        else:
+            # Combine cache and server results, prioritizing cache but adding server matches
+            matched_options = cache_matches.copy()
+            seen_values = set(opt["value"] for opt in cache_matches)
+            additional_from_server = []
+
+            for server_match in server_matches:
+                if server_match["value"] not in seen_values:
+                    additional_from_server.append(server_match)
+                    seen_values.add(server_match["value"])
+
+            matched_options.extend(additional_from_server)
+            use_server_fallback = len(additional_from_server) > 0
+
+            logging.info(
+                f"Combined results: {len(cache_matches)} from cache + {len(additional_from_server)} from server = {len(matched_options)} total"
+            )
+
+        # The improved search algorithm now handles exact matches properly,
+        # so we don't need the additional exact org matching logic
 
         # Filter by prefix type if specified
         if prefix_type == "repo":
@@ -401,22 +383,17 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
                         selected_options.append(formatted_v)
                         break
 
-        # Combine results, limiting to 100 items but always including selections
-        # ENSURE ORGS ARE ALWAYS INCLUDED: Separate orgs and repos, then combine smartly
+        # NO ARTIFICIAL LIMITS: Return all matches with orgs prioritized
+        # Separate orgs and repos from our combined results for proper ordering
         orgs_in_results = [opt for opt in formatted_opts if isinstance(opt["value"], str)]
         repos_in_results = [opt for opt in formatted_opts if isinstance(opt["value"], int)]
 
-        if len(formatted_opts) < 100:
-            result = formatted_opts
-        else:
-            # Always include all orgs (there are usually very few)
-            # Then fill remaining slots with repos
-            remaining_slots = 100 - len(orgs_in_results)
-            if remaining_slots > 0:
-                result = orgs_in_results + repos_in_results[:remaining_slots]
-            else:
-                # Edge case: more than 100 orgs (very unlikely)
-                result = orgs_in_results[:100]
+        logging.info(
+            f"Final results breakdown: {len(orgs_in_results)} orgs, {len(repos_in_results)} repos, {len(formatted_opts)} total"
+        )
+
+        # Always prioritize orgs first, then repos, but don't limit the total count
+        result = orgs_in_results + repos_in_results
 
         # Add selected options that aren't already in the results
         selected_values = [opt["value"] for opt in result]
