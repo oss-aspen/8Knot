@@ -7,7 +7,7 @@ import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
-from pages.utils.graph_utils import color_seq
+from pages.utils.graph_utils import baby_blue
 from queries.repo_languages_query import repo_languages_query as rlq
 from pages.utils.job_utils import nodata_graph
 import time
@@ -21,10 +21,28 @@ gc_code_language = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    id=f"graph-title-{PAGE}-{VIZ_ID}",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                id=f"graph-title-{PAGE}-{VIZ_ID}",
+                                className="card-title"
+                            )
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                color="outline-secondary",
+                                size="sm",
+                                className="about-graph-button",
+                            ),
+                            width="auto",
+                        ),
+                    ],
+                    align="center",
+                    justify="between",
+                    className="mb-3",
                 ),
                 dbc.Popover(
                     [
@@ -42,52 +60,61 @@ gc_code_language = dbc.Card(
                 ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
+                    style={"marginBottom": "1rem"},
+                ),
+                html.Hr( # Divider between graph and controls
+                    style={
+                        "borderColor": "#909090",
+                        "margin": "1.5rem -1.5rem",
+                        "width": "calc(100% + 3rem)",
+                    }
                 ),
                 dbc.Form(
                     [
                         dbc.Row(
                             [
-                                dbc.Label(
-                                    "Graph View:",
-                                    html_for=f"graph-view-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
                                 dbc.Col(
-                                    dbc.RadioItems(
-                                        id=f"graph-view-{PAGE}-{VIZ_ID}",
-                                        options=[
-                                            {
-                                                "label": "Files",
-                                                "value": "file",
+                                    [
+                                        dbc.Label(
+                                            "Graph View:",
+                                            html_for=f"graph-view-{PAGE}-{VIZ_ID}",
+                                            style={
+                                                "fontSize": "12px",
+                                                "fontWeight": "bold", 
+                                                "marginBottom": "0.5rem"
                                             },
-                                            {
-                                                "label": "Lines of Code",
-                                                "value": "line",
-                                            },
-                                        ],
-                                        value="file",
-                                        inline=True,
-                                    ),
-                                    className="me-2",
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
+                                        ),
+                                        dbc.RadioItems(
+                                            id=f"graph-view-{PAGE}-{VIZ_ID}",
+                                            options=[
+                                                {
+                                                    "label": "Files",
+                                                    "value": "file",
+                                                },
+                                                {
+                                                    "label": "Lines of Code",
+                                                    "value": "line",
+                                                },
+                                            ],
+                                            value="file",
+                                            inline=True,
+                                            className="custom-radio-buttons",
+                                        ),
+                                    ],
                                     width="auto",
-                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
                             align="center",
+                            justify="between",
+                            className="mb-0",
                         ),
                     ]
                 ),
-            ]
+            ],
+            style={"padding": "1.5rem"}, # Padding between main content and the card border
         )
     ],
+    className="dark-card",
 )
 
 
@@ -188,7 +215,7 @@ def create_figure(df: pd.DataFrame, view):
         value = "code_lines"
 
     # graph generation
-    fig = px.pie(df, names="programming_language", values=value, color_discrete_sequence=color_seq)
+    fig = px.pie(df, names="programming_language", values=value, color_discrete_sequence=baby_blue)
     fig.update_traces(
         textposition="inside",
         textinfo="percent+label",
@@ -196,6 +223,14 @@ def create_figure(df: pd.DataFrame, view):
     )
 
     # add legend title
-    fig.update_layout(legend_title_text="Languages")
+    fig.update_layout(
+        legend_title_text="Languages",
+        paper_bgcolor="#292929",
+        plot_bgcolor="#292929",
+        font=dict(color="white"),  # Makes all text white
+        legend=dict(
+            font=dict(color="white")  # Specifically makes legend text white
+        )
+    )
 
     return fig
