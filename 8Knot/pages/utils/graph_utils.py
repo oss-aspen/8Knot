@@ -22,6 +22,7 @@ baby_blue = [
     "#0369A1",  # Baby Blue 800 - very dark
 ]
 
+
 def get_graph_time_values(interval):
     """
     Utility needed in page visualizations-

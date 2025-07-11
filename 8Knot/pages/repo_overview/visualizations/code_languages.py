@@ -23,12 +23,7 @@ gc_code_language = dbc.Card(
             [
                 dbc.Row(
                     [
-                        dbc.Col(
-                            html.H3(
-                                id=f"graph-title-{PAGE}-{VIZ_ID}",
-                                className="card-title"
-                            )
-                        ),
+                        dbc.Col(html.H3(id=f"graph-title-{PAGE}-{VIZ_ID}", className="card-title")),
                         dbc.Col(
                             dbc.Button(
                                 "About Graph",
@@ -62,7 +57,7 @@ gc_code_language = dbc.Card(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                     style={"marginBottom": "1rem"},
                 ),
-                html.Hr( # Divider between graph and controls
+                html.Hr(  # Divider between graph and controls
                     style={
                         "borderColor": "#909090",
                         "margin": "1.5rem -1.5rem",
@@ -78,11 +73,7 @@ gc_code_language = dbc.Card(
                                         dbc.Label(
                                             "Graph View:",
                                             html_for=f"graph-view-{PAGE}-{VIZ_ID}",
-                                            style={
-                                                "fontSize": "12px",
-                                                "fontWeight": "bold", 
-                                                "marginBottom": "0.5rem"
-                                            },
+                                            style={"fontSize": "12px", "fontWeight": "bold", "marginBottom": "0.5rem"},
                                         ),
                                         dbc.RadioItems(
                                             id=f"graph-view-{PAGE}-{VIZ_ID}",
@@ -111,7 +102,7 @@ gc_code_language = dbc.Card(
                     ]
                 ),
             ],
-            style={"padding": "1.5rem"}, # Padding between main content and the card border
+            style={"padding": "1.5rem"},  # Padding between main content and the card border
         )
     ],
     className="dark-card",
@@ -228,9 +219,7 @@ def create_figure(df: pd.DataFrame, view):
         paper_bgcolor="#292929",
         plot_bgcolor="#292929",
         font=dict(color="white"),  # Makes all text white
-        legend=dict(
-            font=dict(color="white")  # Specifically makes legend text white
-        )
+        legend=dict(font=dict(color="white")),  # Specifically makes legend text white
     )
 
     return fig
