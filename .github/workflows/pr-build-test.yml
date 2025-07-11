@@ -14,7 +14,7 @@ env:
   AUGUR_PORT: 5432
   AUGUR_SCHEMA: augur_data
   AUGUR_USERNAME: coup
-  8KNOT_DEBUG: "True"
+  DEBUG_8KNOT: "True"
   AUGUR_LOGIN_ENABLED: "False"
   REDIS_PASSWORD: 1234
   DEFAULT_SEARCHBAR_LABEL: chaoss
@@ -35,14 +35,14 @@ jobs:
 
       - name: Create test environment file
         run: |
-          cat > env.list << EOF
+          cat > .env << EOF
           AUGUR_DATABASE=graphish
           AUGUR_HOST=chaoss.tv
           AUGUR_PASSWORD=cableTV99!
           AUGUR_PORT=5432
           AUGUR_SCHEMA=augur_data
           AUGUR_USERNAME=coup
-          8KNOT_DEBUG=True
+          DEBUG_8KNOT=True
           AUGUR_LOGIN_ENABLED=False
           REDIS_PASSWORD=1234
           DEFAULT_SEARCHBAR_LABEL=chaoss

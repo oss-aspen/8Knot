@@ -17,6 +17,7 @@ import logging
 import dash
 import pandas as pd
 from sqlalchemy.exc import SQLAlchemyError
+import sqlalchemy as salc
 import plotly.io as plt_io
 import dash_bootstrap_components as dbc
 import dash_bootstrap_templates as dbt
@@ -51,7 +52,7 @@ augur.multiselect_startup()
 import pages.index.index_callbacks as index_callbacks
 
 # Import testing utilities for enhanced error detection in CI
-if os.getenv("8KNOT_DEBUG", "False") == "True":
+if os.getenv("DEBUG_8KNOT", "False") == "True":
     import testing_utils
 
     testing_utils.log_service_status()
@@ -99,7 +100,7 @@ def health_check():
     try:
         # Test database connection
         with engine.connect() as conn:
-            conn.execute("SELECT 1")
+            conn.execute(salc.text("SELECT 1"))
 
         return {"status": "healthy", "database": "connected", "timestamp": str(pd.Timestamp.now())}, 200
     except Exception as e:
@@ -115,8 +116,8 @@ app.layout = layout
 
 """DASH STARTUP PARAMETERS"""
 
-if os.getenv("8KNOT_DEBUG", "False") == "True":
-    app.enable_dev_tools(dev_tools_ui=True, dev_tools_hot_reload=False)
+if os.getenv("DEBUG_8KNOT", "False") == "True":
+    app.enable_dev_tools(dev_tools_ui=True, dev_tools_hot_reload=True)
 
 """GITHUB BOTS LIST"""
 bots_list = bots.get_bots_list()

@@ -1,8 +1,8 @@
 # 8Knot
 
-![Pre-Commit](https://github.com/JamesKunstle/explorer/actions/workflows/pre-commit.yml/badge.svg)
-![Build-Push](https://github.com/JamesKunstle/explorer/actions/workflows/build-push-quay.yml/badge.svg)
-![Docker Compose](https://github.com/JamesKunstle/explorer/actions/workflows/docker-compose-build.yml/badge.svg)
+![Pre-Commit](https://github.com/oss-aspen/8Knot/actions/workflows/pre-commit.yml/badge.svg)
+![Build-Push](https://github.com/oss-aspen/8Knot/actions/workflows/build-push-quay.yml/badge.svg)
+![Docker Compose](https://github.com/oss-aspen/8Knot/actions/workflows/docker-compose-build.yml/badge.svg)
 
 Welcome to 8Knot!
 
@@ -155,27 +155,16 @@ We've tried to make it as easy as possible to run your own 8Knot instance.
 
 ### Credentials
 
-You will need credentials of the following form, named `env.list`, at the top-level of the 8Knot directory that you clone.
-The credentials below are valid, so you can copy and use them to access a testing instance of an Augur database.
+You will need credentials of the following form, named `.env`, at the top-level of the 8Knot directory that you clone.
+
+A sample file illustrating the format is available in `.env.sample` that can be copy-pasted and renamed to `.env` to get you started with a basic set of valid credentials.
 
 These credentials are suitable for development, but please replace any secrets with different values in production.
 
-```
-    AUGUR_DATABASE=graphish
-    AUGUR_HOST=chaoss.tv
-    AUGUR_PASSWORD=cableTV99!
-    AUGUR_PORT=5432
-    AUGUR_SCHEMA=augur_data
-    AUGUR_USERNAME=coup
-    8KNOT_DEBUG=True
-    REDIS_PASSWORD=1234
-    DEFAULT_SEARCHBAR_LABEL=chaoss
-    POSTGRES_PASSWORD=somepassword
-    SECRET_KEY=somethingsecret
-```
-
 8Knot doesn't handle user accounts or data collection requests on its own. To support these features, you'll need to add the
-following additional configuration to your `env.list` file.
+following additional configuration to your `.env` file.
+
+Setting the `DEBUG_8KNOT` environmental variable to True will enable hot reloading of the Dash application, after any change to a file inside the 8Knot/ directory.
 
 You'll need to register your 8Knot instance with an Augur front-end application to get an `AUGUR_APP_ID` and an `AUGUR_CLIENT_SECRET`.
 All parameters wrapped in `< >` will need to be replaced below. `<endpoint>` variables refer to the host of the Augur front-end that

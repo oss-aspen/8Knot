@@ -22,9 +22,10 @@ from queries.pr_assignee_query import pr_assignee_query as praq
 from queries.issue_assignee_query import issue_assignee_query as iaq
 from queries.user_groups_query import user_groups_query as ugq
 from queries.pr_response_query import pr_response_query as prr
-from queries.cntrb_per_file_query import cntrb_per_file_query as cpfq
-from queries.repo_files_query import repo_files_query as rfq
-from queries.pr_files_query import pr_file_query as prfq
+
+# from queries.cntrb_per_file_query import cntrb_per_file_query as cpfq - codebase page disabled
+# from queries.repo_files_query import repo_files_query as rfq - codebase page disabled
+# from queries.pr_files_query import pr_file_query as prfq - codebase page disabled
 from queries.repo_languages_query import repo_languages_query as rlq
 from queries.package_version_query import package_version_query as pvq
 from queries.repo_releases_query import repo_releases_query as rrq
@@ -35,18 +36,19 @@ import flask
 
 
 # list of queries to be run
-QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq]
+# QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq] - codebase page disabled
+QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, rlq, pvq, rrq, osq, riq]
 
 
 # check if login has been enabled in config
 login_enabled = os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True"
 
+# Note: Login-related callbacks are conditionally registered based on login_enabled
+# because when login is disabled, the UI elements (refresh-button, logout-button, etc.)
+# don't exist in the layout, which would cause "nonexistent object" callback errors.
 
-@callback(
-    [Output("user-group-loading-signal", "data")],
-    [Input("url", "href"), Input("refresh-button", "n_clicks")],
-)
-def kick_off_group_collection(url, n_clicks):
+
+def _start_group_collection_login_enabled(url, n_clicks):
     """Schedules a Celery task to collect user groups.
     Sends a message via localStorage that will kick off a background callback
     which waits for the Celery task to finish.
@@ -87,17 +89,12 @@ def kick_off_group_collection(url, n_clicks):
         return dash.no_update
 
 
-@callback(
-    [
-        Output("nav-login-container", "children"),
-        Output("login-popover", "is_open"),
-        Output("refresh-button", "disabled"),
-        Output("logout-button", "disabled"),
-        Output("manage-group-button", "disabled"),
-    ],
-    Input("url", "href"),
-)
-def login_username_button(url):
+def _start_group_collection_login_disabled(url):
+    """Simplified version when login is disabled - no group collection needed."""
+    return dash.no_update
+
+
+def _login_username_button_enabled(url):
     """Sets logged-in-status component in top left of page.
 
     If a non-null username is known then we're logged in so we provide
@@ -165,6 +162,21 @@ def login_username_button(url):
         buttons_disabled,
         buttons_disabled,
     )
+
+
+def _login_username_button_disabled(url):
+    """Simplified version when login is disabled - just shows the login link."""
+    navlink = [
+        dbc.NavLink(
+            "Augur log in/sign up",
+            href="/login/",
+            id="login-navlink",
+            active=True,
+            # communicating with the underlying Flask server
+            external_link=True,
+        ),
+    ]
+    return [navlink]
 
 
 @callback(
@@ -462,6 +474,10 @@ def wait_queries(job_ids):
 
     jobs = [AsyncResult(j_id) for j_id in job_ids]
 
+    # Add timeout protection to prevent infinite waiting
+    start_time = time.time()
+    max_wait_time = 600  # 10 minutes timeout
+
     # default 'result_expires' for celery config is 86400 seconds.
     # so we don't have to check if the jobs exist. if this tasks
     # is enqueued 24 hours after the query-worker tasks finish
@@ -469,6 +485,12 @@ def wait_queries(job_ids):
     # results before we exit.
 
     while True:
+        # Check for timeout to prevent SoftTimeLimitExceeded
+        if time.time() - start_time > max_wait_time:
+            logging.warning(f"wait_queries: Timeout after {max_wait_time}s - returning timeout status")
+            jobs = [j.forget() for j in jobs]
+            return "Timeout - Retry", "warning"
+
         logging.warning([(j.name, j.status) for j in jobs])
 
         # jobs are either all ready
@@ -626,3 +648,45 @@ def update_search_status(search_value):
 def hide_search_status_when_loaded(_):
     """Hide the search status indicator when results are loaded."""
     return [{"display": "none"}]
+
+
+# =============================================================================
+# CONDITIONAL CALLBACK REGISTRATION
+# =============================================================================
+# When login is disabled, the UI elements referenced by these callbacks
+# (refresh-button, logout-button, # manage-group-button, login-popover)
+# do not exist in the layout, which would
+# cause "nonexistent object was used in an Input" callback errors.
+#
+# This conditional registration prevents those errors by only registering
+# callbacks for UI elements that actually exist in the current configuration.
+# =============================================================================
+
+if login_enabled:
+    # Register callbacks with full login functionality
+    callback(
+        [Output("user-group-loading-signal", "data")],
+        [Input("url", "href"), Input("refresh-button", "n_clicks")],
+    )(_start_group_collection_login_enabled)
+
+    callback(
+        [
+            Output("nav-login-container", "children"),
+            Output("login-popover", "is_open"),
+            Output("refresh-button", "disabled"),
+            Output("logout-button", "disabled"),
+            Output("manage-group-button", "disabled"),
+        ],
+        Input("url", "href"),
+    )(_login_username_button_enabled)
+else:
+    # Register simplified callbacks when login is disabled
+    callback(
+        [Output("user-group-loading-signal", "data")],
+        [Input("url", "href")],
+    )(_start_group_collection_login_disabled)
+
+    callback(
+        [Output("nav-login-container", "children")],
+        Input("url", "href"),
+    )(_login_username_button_disabled)
