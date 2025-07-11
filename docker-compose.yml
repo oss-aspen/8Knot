@@ -8,7 +8,7 @@ services:
       postgres-cache:
         condition: service_healthy  # to ensure that postgres is indeed initialized before this starts
     env_file:
-      - ./env.list
+      - .env
     # sometimes, postgres-cache isn't spun up before this starts.
     # so it'll fail. We want this to restart when it fails, because
     # postgres will be ready eventually. we don't want it to restart
@@ -54,7 +54,7 @@ services:
       - postgres-cache
       - db-init
     env_file:
-      - ./env.list
+      - .env
     environment:
       - EIGHTKNOT_SEARCHBAR_OPTS_SORT=shortest  # Try different options: shortest, longest, alphabetical
       - EIGHTKNOT_SEARCHBAR_OPTS_MAX_RESULTS=5500  # Maximum number of results to return (org and repo)
@@ -71,7 +71,7 @@ services:
       - redis-users
       - postgres-cache
     env_file:
-      - ./env.list
+      - .env
     restart: always
 
   worker-query:
@@ -95,7 +95,7 @@ services:
       - redis-cache
       - postgres-cache
     env_file:
-      - ./env.list
+      - .env
     restart: always
 
   # for data blob caching
@@ -110,7 +110,7 @@ services:
       #   code and print a message, when the variable is not set or empty
       - redis-server --requirepass "$${REDIS_PASSWORD:?REDIS_PASSWORD variable is not set}"
     env_file:
-      - ./env.list
+      - .env
     restart: always
 
   # for user session storage
@@ -125,7 +125,7 @@ services:
       #   code and print a message, when the variable is not set or empty
       - redis-server --requirepass "$${REDIS_PASSWORD:?REDIS_PASSWORD variable is not set}"
     env_file:
-      - ./env.list
+      - .env
     restart: always
 
   postgres-cache:
@@ -139,7 +139,7 @@ services:
     #   # internal network.
     #   - POSTGRES_PASSWORD=password123
     env_file:
-      - ./env.list
+      - .env
     restart: always
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
@@ -162,7 +162,7 @@ volumes:
   #     - redis-cache
   #     - app-server
   #   env_file:
-  #     - ./env.list
+  #     - .env
   #   ports:
   #     - 5555:5555
   #   profiles:
