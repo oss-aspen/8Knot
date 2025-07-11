@@ -60,6 +60,12 @@ services:
       - EIGHTKNOT_SEARCHBAR_OPTS_MAX_RESULTS=5500  # Maximum number of results to return (org and repo)
       - EIGHTKNOT_SEARCHBAR_OPTS_MAX_REPOS=5000  # Max number of repos
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
 
   worker-callback:
     build:
@@ -73,6 +79,12 @@ services:
     env_file:
       - .env
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
 
   worker-query:
     build:
@@ -97,6 +109,13 @@ services:
     env_file:
       - .env
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
 
   # for data blob caching
   redis-cache:

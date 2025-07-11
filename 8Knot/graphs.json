@@ -1,0 +1,157 @@
+[
+    {
+        "name" : "File Language By File",
+        "about" : "Visualizes the percent of files or lines of code by language.",
+        "id" : "gc_code_language"
+    },
+    {
+        "name" : "Package Version Updates",
+        "about" : "Visualizes for each packaged dependancy, if it is up to date and if not if it is less than 6 months out, between 6 months and a year, or greater than a year.",
+        "id" : "gc_package_version"
+    },
+    {
+        "name" : "Contributor Growth By Engagement",
+        "about" : "Visualizes growth of contributor population, including sub-populations in consideration of how recently a contributor has contributed. Please see definitions of 'Contributor Recency' on Info page.",
+        "id" : "gc_active_drifting_contributors"
+    },
+    {
+        "name" : "Contributor Activity Cycle",
+        "about" : "Visualizes the distribution of Commit timestamps by Weekday or Hour. Helps to describe operating-hours of community code contributions.",
+        "id" : "gc_contrib_activity_cycle"
+    },
+    {
+        "name" : "Drive-Thru or Repeat Contributions Per Quarter",
+        "about" : "Visualizes the per-quarter consistency of contributors. A contributor is counted in an 'Action' category if they have made at least 'Contributions Required' contributions within the quarter. For example, if 'Contributions Required' is 2, then a contributor will be counted once in 'Open PR' and in 'PR Comment' if they made 2 or more PR's AND commented 2 or more times on PRs. Please read definition of 'Contributor Consistency' on Info page.",
+        "id" : "gc_contrib_drive_repeat"
+    },
+    {
+        "name" : "Lottery Factor: X Month Windows",
+        "about" : "This analysis is also referred to as Bus Factor. For each action type, visualizes the smallest group of contributors who account for a user-inputted percentage of the total number of contributions. By default, the threshold is set to 50%. Thus, the visualization will show the number of contributors who account for 50% of all contributions made, per action type. Suppose two individuals authored 50% of the commits, then the contributor prolificacy is 2. Analysis is done over a time range, and snapshots of the time range are set according to window width and step size. By default, window width and step size are set to 6 months. Thus, contributor prolificacy is calculated for each non-overlapping 6-month snapshot of the time range provided. Optionally, contributors who have 'bot' or any custom keyword(s) in their logins can be filtered out. Please note that gaps in the graph indicate that no contributions of a specific action type(s) were made during that time period.",
+        "id" : "gc_lottery_factor_over_time"
+    },
+    {
+        "name" : "Lottery Factor: Top 10 Contributors by X,Y,Z Factor",
+        "about" : "AKA Bus factor. For a given action type, this visualizes the proportional share of the top k anonymous contributors, aggregating the remaining contributors as \"Other\". Suppose Contributor A opens the most PRs of all contributors, accounting for 1/5 of all PRs. If k = 1, then the chart will have one slice for Contributor A accounting for 1/5 of the area, with the remaining 4/5 representing all other contributors. Note: Some commits may have a Contributor ID of 'None' if there is no Github account is associated with the email that the contributor committed as.",
+        "id" : "gc_contrib_importance_pie"
+    },
+    {
+        "name" : "Contributors by Action Type",
+        "about" : "Visualizes the number of contributors who have performed a specific action (have opened a PR, for example) within a specified time-window. This is different from counting the number of contributions (the number of PRs having been opened)- the focus is on the activity of distinct contributors.",
+        "id" : "gc_contribs_by_action"
+    },
+    {
+        "name" : "Contributor Types Over Time",
+        "about" : "Visualizes the per-quarter consistency of contributors. Partitions quarterly population of contributors based on whether they make 'Required Contributions' or more contributions. Please read definition of 'Contributor Consistency' on Info page.",
+        "id" : "gc_contributors_over_time"
+    },
+    {
+        "name" : "First Time Contributions Per Quarter",
+        "about" : "Visualizes the arrival of net-new contributors to a project and differentiates them by their first in-project action.",
+        "id" : "gc_first_time_contributions"
+    },
+    {
+        "name" : "New Contributors by Month",
+        "about" : "Visualizes the growth of contributor base by tracking the arrival of novel contributors over time. Trend: This view is the total growth of contributors over time Month/Year: This view looks specifically at the new contributors by selected time bucket.",
+        "id" : "gc_new_contributor"
+    },
+    {
+        "name" : "Contributor Pull Request Review Assignment",
+        "about" : "Visualizes number of pull request reviews assigned to each each contributor in the specifed time bucket. The visualization only includes contributors that meet the user inputed the assignment criteria.",
+        "id" : "gc_cntrib_pr_assignment"
+    },
+    {
+        "name" : "Contributor Issue Assignment",
+        "about" : "Visualizes number of issue assigned to each each contributor in the specifed time bucket. The visualization only includes contributors that meet the user inputed the assignment criteria.",
+        "id" : "gc_cntrib_issue_assignment"
+    },
+    {
+        "name" : "Commits Over Time",
+        "about" : "Visualizes the number of commits added to the project. Commits are counted relative to a user-selected time window.",
+        "id" : "gc_commits_over_time"
+    },
+    {
+        "name" : "Issue Assignment Status Counts",
+        "about" : "Visualizes the number of assigned and unassigned issues in each time bucket.",
+        "id" : "gc_issue_assignment"
+    },
+    {
+        "name" : "Issue Activity - Staleness",
+        "about" : "Visualizes growth of Issue backlog. Differentiates sub-populations of issues by their 'Staleness.' Please see the definition of 'Staleness' on the Info page.",
+        "id" : "gc_issue_staleness"
+    },
+    {
+        "name" : "Issues Over Time",
+        "about" : "Visualizes the activity of issues being Opened and Closed paritioned by time-window. Also shows the total volume of Open issues over time.",
+        "id" : "gc_issues_over_time"
+    },
+    {
+        "name" : "Pull Request Review Status Counts",
+        "about" : "Visualizes the number of assigned and unassigned pull requests in each time bucket.",
+        "id" : "gc_pr_assignment"
+    },
+    {
+        "name" : "Pull Request Time to First Response",
+        "about" : "Compares the volume of PRs being opened against the number of those PRs that receive at least one response within the parameterized timeframe after being opened.",
+        "id" : "gc_pr_first_response"
+    },
+    {
+        "name" : "Pull Requests Over Time",
+        "about" : "Visualizes PR behavior by tracking Created, Merged, and Closed-Not-Merged PRs over time. Also shows Created PR count as a trend over lifespan.",
+        "id" : "gc_pr_over_time"
+    },
+    {
+        "name" : "Pull Request Conversation Engagement",
+        "about" : "Tracks the number of PRs that are open on a given day vs. those that have received a comment or a review within a time interval, or that are waiting on a response from the opener.",
+        "id" : "gc_pr_review_response"
+    },
+    {
+        "name" : "Pull Request Activity- Staleness",
+        "about" : "Visualizes growth of Open Pull Request backlog. Differentiates sub-populations of PRs by their 'Staleness.' Please see the definition of 'Staleness' on the Info page.",
+        "id" : "gc_pr_staleness"
+    },
+    {
+        "name" : "Commit Activity by Domain",
+        "about" : "Visualizes the proportion of commit activity done by specific email domains. e.g. if there are 100 commits and 75 commits were authored by a contributor with a '@gmail.com' email address, 75 percent of the chart will be represented '@gmail.com.' This can help to capture the relative magnitude of commit contribution by various corporate or institutional entities.",
+        "id" : "gc_commit_domains"
+    },
+    {
+        "name" : "Organization Affiliation by GitHub Account Info",
+        "about" : "Visualizes GitHub account institution affiliation. Many individuals don't report an affiliated institution, but this count may be considered an absolute lower-bound on affiliation.",
+        "id" : "gc_gh_org_affiliation"
+    },
+    {
+        "name" : "Organization Associated Activity",
+        "about" : "For non-commit contributions (see definition of Contribution on Info page) we only know which contributor account contributed. We don't know which email, and therefore which possible institution the contribution represented. e.g. if we know that a PR comment was made by JaneDoe, and they have a '@redhat.com' and an '@gmail.com' email, we don't know whether they contributed individually or as a representative of an instituion. Therefore, we lower-bound the contribution of representation by counting each contribution as being made by ALL of the contributors linked email domains. This graph can therefore be interpreted as 'The minimum number of individuals who have been associated with each domain.' e.g. If there are 100 contributions and 20 contributors, and each contributor has an '@redhat.com' email associated with their account and one other random email, '@redhat.com' will be counted 100 times and the other contributor emails will also total a count of 100.",
+        "id" : "gc_org_associated_activity"
+    },
+    {
+        "name" : "Organization Core Contributors",
+        "about" : "This graph counts the number of core contributions that COULD be linked to each organization. The methodology behind this is to take each associated email to someones GitHub account and link the contributions to each as it is unknown which initity the actvity was done for. Then the graph groups contributions by contributors and filters by contributors that are core. Contributions required is the amount of contributions necessary to be consider a core contributor Core Contributors required is the amount of core contributors needed to have the domain listed.",
+        "id" : "gc_org_core_contributors"
+    },
+    {
+        "name" : "Unique Contributor Email Domains",
+        "about" : "Visualizes the population of unique commit email addresses per represented domain. e.g. if there are 100 distinct commit contributors and 50 use an '@gmail.com' email address, and another 50 use an '@redhat.com' email address, 50 percent of of emails wll be '@gmail.com' and 50% will be '@redhat.com'.",
+        "id" : "gc_unique_domains "
+    },
+    {
+        "name" : "Project Velocity",
+        "about" : "This visualization gives a view into the development speed of a repository in relation to the other selected repositories. For more context of this visualization see https://chaoss.community/kb/metric-project-velocity/ https://www.cncf.io/blog/2017/06/05/30-highest-velocity-open-source-projects/",
+        "id" : "gc_project_velocity"
+    },
+    {
+        "name" : "Contributor File Heatmap",
+        "about" : "This visualization analyzes the activity of the contributors to sub-sections (files or folders) of a repository. Specifically, this heatmap identifies the last time a sub-section's contributors (those people who have opened at least one pull request to a sub-section) last contributed to therepository. See the definition of \"contribution\" on the Info page for more information. This could be interpreted as monitoring technical knowledge retention of codebase components: if a sub-section's past contributors are no longer active in the repository, maintainership of that sub-section could be insufficient and require attention.",
+        "id" : "gc_cntrb_file_heatmap"
+    },
+    {
+        "name" : "Contribution File Heatmap",
+        "about" : "This visualization analyzes the activity of the open or merged pull requests to sub-sections (files or folders) of a repository.",
+        "id" : "gc_contribution_file_heatmap"
+    },
+    {
+        "name" : "Reviewer File Heatmap",
+        "about" : "This visualization analyzes the activity of the reviewers to sub-sections (files or folders) of a repository. Specifically, this heatmap identifies the last time a sub-section's reviewer (those people who have reviewed at least one pull request to a sub-section) last contributed to the repository. See the definition of \"contribution\" on the Info page for more information. This could be interpreted as monitoring technical knowledge retention of codebase components: if a sub-section's past reviewers are no longer active in the repository, maintainership of that sub-section could be insufficient and require attention.",
+        "id" : "gc_reviewer_file"
+    }
+]   
