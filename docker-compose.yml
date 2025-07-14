@@ -44,8 +44,8 @@ services:
         "--keep-alive",
         "5"
       ]
-    # ports:
-    #   - 8080:8080
+    volumes:
+      - ./8Knot:/opt/app-root/src/
     depends_on:
       - worker-callback
       - worker-query

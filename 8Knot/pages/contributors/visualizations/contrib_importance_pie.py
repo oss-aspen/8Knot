@@ -1,15 +1,13 @@
 from dash import html, dcc, callback
 import dash
-from dash import dcc
 import dash_bootstrap_components as dbc
-import dash_mantine_components as dmc
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
-from pages.utils.graph_utils import get_graph_time_values, color_seq
+from pages.utils.graph_utils import baby_blue, get_graph_time_values, color_seq
 from queries.contributors_query import contributors_query as ctq
 from pages.utils.job_utils import nodata_graph
 import time
@@ -21,152 +19,179 @@ import cache_manager.cache_facade as cf
 PAGE = "contributors"
 VIZ_ID = "contrib-importance-pie"
 
-gc_contrib_importance_pie = dbc.Card(
-    [
-        dbc.CardBody(
-            [
-                html.H3(
-                    id=f"graph-title-{PAGE}-{VIZ_ID}",
-                    className="card-title",
-                    style={"textAlign": "center"},
-                ),
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody(
-                            """
-                                        AKA Bus factor. For a given action type, this visualizes the proportional share of the top k anonymous
-                                        contributors, aggregating the remaining contributors as "Other". Suppose Contributor A
-                                        opens the most PRs of all contributors, accounting for 1/5 of all PRs. If k = 1,
-                                        then the chart will have one slice for Contributor A accounting for 1/5 of the area,
-                                        with the remaining 4/5 representing all other contributors. Note: Some commits may have a
-                                        Contributor ID of 'None' if there is no Github account is associated with the email that
-                                        the contributor committed as.
-                                        """
-                        ),
-                    ],
-                    id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",
-                    placement="top",
-                    is_open=False,
-                ),
-                dcc.Loading(
-                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-                ),
-                dbc.Form(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Action Type:",
-                                    html_for=f"action-type-{PAGE}-{VIZ_ID}",
-                                    width="auto",
+gc_contrib_importance_pie = html.Div([
+    # Upper card with graph title, about button, and graph
+    dbc.Card(
+        [
+            dbc.CardBody(
+                [
+                    dbc.Row(
+                        [
+                            dbc.Col(
+                                html.H3(
+                                    id=f"graph-title-{PAGE}-{VIZ_ID}",
+                                    className="card-title",
+                                    style={"textAlign": "center", "margin": "0"},
                                 ),
-                                dbc.Col(
-                                    [
-                                        dcc.Dropdown(
-                                            id=f"action-type-{PAGE}-{VIZ_ID}",
-                                            options=[
-                                                {"label": "Commit", "value": "Commit"},
-                                                {
-                                                    "label": "Issue Opened",
-                                                    "value": "Issue Opened",
-                                                },
-                                                {
-                                                    "label": "Issue Comment",
-                                                    "value": "Issue Comment",
-                                                },
-                                                {
-                                                    "label": "Issue Closed",
-                                                    "value": "Issue Closed",
-                                                },
-                                                {
-                                                    "label": "PR Open",
-                                                    "value": "PR Open",
-                                                },
-                                                {
-                                                    "label": "PR Review",
-                                                    "value": "PR Review",
-                                                },
-                                                {
-                                                    "label": "PR Comment",
-                                                    "value": "PR Comment",
-                                                },
-                                            ],
-                                            value="Commit",
-                                            clearable=False,
-                                        ),
-                                        dbc.Alert(
-                                            children="""No contributions of this type have been made.\n
-                                            Please select a different contribution type.""",
-                                            id=f"check-alert-{PAGE}-{VIZ_ID}",
-                                            dismissable=True,
-                                            fade=False,
-                                            is_open=False,
-                                            color="warning",
-                                        ),
-                                    ],
-                                    className="me-2",
-                                    width=3,
+                            ),
+                            dbc.Col(
+                                dbc.Button(
+                                    "About Graph",
+                                    id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                    color="outline-secondary",
+                                    size="sm",
+                                    className="about-graph-button",
                                 ),
-                                dbc.Label(
-                                    "Top K Contributors:",
-                                    html_for=f"top-k-contributors-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
-                                dbc.Col(
-                                    [
-                                        dbc.Input(
-                                            id=f"top-k-contributors-{PAGE}-{VIZ_ID}",
-                                            type="number",
-                                            min=2,
-                                            max=100,
-                                            step=1,
-                                            value=10,
-                                            size="sm",
-                                        ),
-                                    ],
-                                    className="me-2",
-                                    width=2,
-                                ),
-                            ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
-                                dbc.Col(
-                                    [
+                                width="auto",
+                            ),
+                        ],
+                        align="center",
+                        justify="between",
+                        className="mb-3",
+                    ),
+                    dbc.Popover(
+                        [
+                            dbc.PopoverHeader("Graph Info:"),
+                            dbc.PopoverBody(
+                                """
+                                AKA Bus factor. For a given action type, this visualizes the proportional share of the top k anonymous
+                                contributors, aggregating the remaining contributors as "Other". Suppose Contributor A
+                                opens the most PRs of all contributors, accounting for 1/5 of all PRs. If k = 1,
+                                then the chart will have one slice for Contributor A accounting for 1/5 of the area,
+                                with the remaining 4/5 representing all other contributors. Note: Some commits may have a
+                                Contributor ID of 'None' if there is no Github account is associated with the email that
+                                the contributor committed as.
+                                """
+                            ),
+                        ],
+                        id=f"popover-{PAGE}-{VIZ_ID}",
+                        target=f"popover-target-{PAGE}-{VIZ_ID}",
+                        placement="top",
+                        is_open=False,
+                    ),
+                    dcc.Loading(
+                        dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
+                    ),
+                ]
+            )
+        ],
+        className="dark-card",
+        style={"borderBottomLeftRadius": "0", "borderBottomRightRadius": "0"},
+    ),
+    # Divider between cards
+    html.Div(
+        style={
+            "height": "0.5px",
+            "backgroundColor": "#494949",
+        }
+    ),
+    # Lower card with controls
+    dbc.Card(
+        [
+            dbc.CardBody(
+                [
+                    dbc.Form(
+                        [
+                            dbc.Row(
+                                [
+                                    dbc.Col(
+                                        [
+                                            dbc.Label(
+                                                "Action Type:",
+                                                html_for=f"action-type-{PAGE}-{VIZ_ID}",
+                                                style={"fontSize": "12px", "fontWeight": "bold", "marginBottom": "0.5rem"},
+                                            ),
+                                            dcc.Dropdown(
+                                                id=f"action-type-{PAGE}-{VIZ_ID}",
+                                                options=[
+                                                    {"label": "Commit", "value": "Commit"},
+                                                    {
+                                                        "label": "Issue Opened",
+                                                        "value": "Issue Opened",
+                                                    },
+                                                    {
+                                                        "label": "Issue Comment",
+                                                        "value": "Issue Comment",
+                                                    },
+                                                    {
+                                                        "label": "Issue Closed",
+                                                        "value": "Issue Closed",
+                                                    },
+                                                    {
+                                                        "label": "PR Open",
+                                                        "value": "PR Open",
+                                                    },
+                                                    {
+                                                        "label": "PR Review",
+                                                        "value": "PR Review",
+                                                    },
+                                                    {
+                                                        "label": "PR Comment",
+                                                        "value": "PR Comment",
+                                                    },
+                                                ],
+                                                value="Commit",
+                                                clearable=False,
+                                                className="dark-dropdown",
+                                            ),
+                                            dbc.Alert(
+                                                children="""No contributions of this type have been made.\n
+                                                Please select a different contribution type.""",
+                                                id=f"check-alert-{PAGE}-{VIZ_ID}",
+                                                dismissable=True,
+                                                fade=False,
+                                                is_open=False,
+                                                color="warning",
+                                            ),
+                                        ],
+                                        width="auto",
+                                    ),
+                                    dbc.Col(
+                                        [
+                                            dbc.Label(
+                                                "Top K Contributors:",
+                                                html_for=f"top-k-contributors-{PAGE}-{VIZ_ID}",
+                                                style={"fontSize": "12px", "fontWeight": "bold", "marginBottom": "0.5rem"},
+                                            ),
+                                            dbc.Input(
+                                                id=f"top-k-contributors-{PAGE}-{VIZ_ID}",
+                                                type="number",
+                                                min=2,
+                                                max=100,
+                                                step=1,
+                                                value=10,
+                                                size="sm",
+                                                style={"width": "80px"},
+                                                className="dark-input",
+                                            ),
+                                        ],
+                                        width="auto",
+                                    ),
+                                    dbc.Col(
                                         dcc.DatePickerRange(
                                             id=f"date-picker-range-{PAGE}-{VIZ_ID}",
                                             min_date_allowed=dt.date(2005, 1, 1),
                                             max_date_allowed=dt.date.today(),
                                             initial_visible_month=dt.date(dt.date.today().year, 1, 1),
                                             clearable=True,
+                                            className="dark-date-picker",
                                         ),
-                                    ],
-                                ),
-                                dbc.Col(
-                                    [
-                                        dbc.Button(
-                                            "About Graph",
-                                            id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                            color="secondary",
-                                            size="sm",
-                                        ),
-                                    ],
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
-                                ),
-                            ],
-                            align="center",
-                            justify="between",
-                        ),
-                    ]
-                ),
-            ]
-        )
-    ],
-)
+                                        width="auto",
+                                        style={"marginTop": "1.7rem"},
+                                    ),
+                                ],
+                                align="center",
+                                justify="start",
+                            ),
+                        ]
+                    ),
+                ]
+            )
+        ],
+        className="dark-card",
+        style={"borderTopLeftRadius": "0", "borderTopRightRadius": "0"},
+    ),
+])
 
 
 # callback for graph info popover
@@ -300,7 +325,7 @@ def create_figure(df: pd.DataFrame, action_type):
         df,
         names="cntrb_id",  # can be replaced with login to unanonymize
         values=action_type,
-        color_discrete_sequence=color_seq,
+        color_discrete_sequence=baby_blue,
     )
 
     # display percent contributions and cntrb_id in each wedge
@@ -312,6 +337,12 @@ def create_figure(df: pd.DataFrame, action_type):
     )
 
     # add legend title
-    fig.update_layout(legend_title_text="Contributor ID")
+    fig.update_layout(
+        legend_title_text="Contributor ID",
+        paper_bgcolor="#292929",
+        plot_bgcolor="#292929",
+        font=dict(color="white"),
+        legend=dict(font=dict(color="white")),
+    )
 
     return fig

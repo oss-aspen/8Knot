@@ -7,7 +7,7 @@ import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
-from pages.utils.graph_utils import color_seq
+from pages.utils.graph_utils import baby_blue, color_seq
 from queries.affiliation_query import affiliation_query as aq
 from pages.utils.job_utils import nodata_graph
 import time
@@ -19,91 +19,123 @@ import cache_manager.cache_facade as cf
 PAGE = "affiliation"
 VIZ_ID = "gh-org-affiliation"
 
-gc_gh_org_affiliation = dbc.Card(
-    [
-        dbc.CardBody(
-            [
-                html.H3(
-                    "Organization Affiliation by GitHub Account Info",
-                    className="card-title",
-                    style={"textAlign": "center"},
-                ),
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody(
-                            """
-                            Visualizes GitHub account institution affiliation.\n
-                            Many individuals don't report an affiliated institution, but\n
-                            this count may be considered an absolute lower-bound on affiliation.
-                            """
-                        ),
-                    ],
-                    id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",  # needs to be the same as dbc.Button id
-                    placement="top",
-                    is_open=False,
-                ),
-                dcc.Loading(
-                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-                ),
-                dbc.Form(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Contributions Required:",
-                                    html_for=f"contributions-required-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
+gc_gh_org_affiliation = html.Div([
+    # Upper card with graph title, about button, and graph
+    dbc.Card(
+        [
+            dbc.CardBody(
+                [
+                    dbc.Row(
+                        [
+                            dbc.Col(
+                                html.H3(
+                                    "Organization Affiliation by GitHub Account Info",
+                                    className="card-title",
+                                    style={"textAlign": "center", "margin": "0"},
                                 ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id=f"contributions-required-{PAGE}-{VIZ_ID}",
-                                        type="number",
-                                        min=1,
-                                        max=50,
-                                        step=1,
-                                        value=5,
-                                        size="sm",
+                            ),
+                            dbc.Col(
+                                dbc.Button(
+                                    "About Graph",
+                                    id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                    color="outline-secondary",
+                                    size="sm",
+                                    className="about-graph-button",
+                                ),
+                                width="auto",
+                            ),
+                        ],
+                        align="center",
+                        justify="between",
+                        className="mb-3",
+                    ),
+                    dbc.Popover(
+                        [
+                            dbc.PopoverHeader("Graph Info:"),
+                            dbc.PopoverBody(
+                                """
+                                Visualizes GitHub account institution affiliation.\n
+                                Many individuals don't report an affiliated institution, but\n
+                                this count may be considered an absolute lower-bound on affiliation.
+                                """
+                            ),
+                        ],
+                        id=f"popover-{PAGE}-{VIZ_ID}",
+                        target=f"popover-target-{PAGE}-{VIZ_ID}",
+                        placement="top",
+                        is_open=False,
+                    ),
+                    dcc.Loading(
+                        dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
+                    ),
+                ]
+            )
+        ],
+        className="dark-card",
+        style={"borderBottomLeftRadius": "0", "borderBottomRightRadius": "0"},
+    ),
+    # Divider between cards
+    html.Div(
+        style={
+            "height": "0.5px",
+            "backgroundColor": "#494949",
+        }
+    ),
+    # Lower card with controls
+    dbc.Card(
+        [
+            dbc.CardBody(
+                [
+                    dbc.Form(
+                        [
+                            dbc.Row(
+                                [
+                                    dbc.Col(
+                                        [
+                                            dbc.Label(
+                                                "Contributions Required:",
+                                                html_for=f"contributions-required-{PAGE}-{VIZ_ID}",
+                                                style={"fontSize": "12px", "fontWeight": "bold", "marginBottom": "0.5rem"},
+                                            ),
+                                            dbc.Input(
+                                                id=f"contributions-required-{PAGE}-{VIZ_ID}",
+                                                type="number",
+                                                min=1,
+                                                max=50,
+                                                step=1,
+                                                value=5,
+                                                size="sm",
+                                                style={"width": "80px"},
+                                                className="dark-input",
+                                            ),
+                                        ],
+                                        width="auto",
                                     ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                            ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
-                                dbc.Col(
-                                    dcc.DatePickerRange(
-                                        id=f"date-picker-range-{PAGE}-{VIZ_ID}",
-                                        min_date_allowed=dt.date(2005, 1, 1),
-                                        max_date_allowed=dt.date.today(),
-                                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
-                                        clearable=True,
+                                    dbc.Col(
+                                        dcc.DatePickerRange(
+                                            id=f"date-picker-range-{PAGE}-{VIZ_ID}",
+                                            min_date_allowed=dt.date(2005, 1, 1),
+                                            max_date_allowed=dt.date.today(),
+                                            initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                                            clearable=True,
+                                            className="dark-date-picker",
+                                        ),
+                                        width="auto",
+                                        style={"marginTop": "1.7rem"},
                                     ),
-                                    width="auto",
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
-                                ),
-                            ],
-                            align="center",
-                            justify="between",
-                        ),
-                    ]
-                ),
-            ]
-        )
-    ],
-)
+                                ],
+                                align="center",
+                                justify="start",
+                            ),
+                        ]
+                    ),
+                ]
+            )
+        ],
+        className="dark-card",
+        style={"borderTopLeftRadius": "0", "borderTopRightRadius": "0"},
+    ),
+])
 
 
 # callback for graph info popover
@@ -243,12 +275,19 @@ def create_figure(df: pd.DataFrame):
         df,
         names="company_name",
         values="contribution_count",
-        color_discrete_sequence=color_seq,
+        color_discrete_sequence=baby_blue,
     )
     fig.update_traces(
         textposition="inside",
         textinfo="percent+label",
         hovertemplate="%{label} <br>Contributions: %{value}<br><extra></extra>",
+    )
+
+    fig.update_layout(
+        paper_bgcolor="#292929",
+        plot_bgcolor="#292929",
+        font=dict(color="white"),
+        legend=dict(font=dict(color="white")),
     )
 
     return fig

@@ -168,3 +168,257 @@ h3.card-title {
   border: 1px solid #292929 !important;
   background-color: #292929 !important;
 }
+
+/* =============================================================================
+   DATE PICKER COMPONENTS
+============================================================================= */
+
+/**
+ * Date Picker Dark Theme
+ * Styling for React-Dates and similar date picker components
+ */
+ .dark-date-picker .DateInput_input {
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+  color: white !important;
+}
+
+.dark-date-picker .DateInput_input:focus {
+  background-color: #404040 !important;
+  border-color: #555555 !important;
+  color: white !important;
+}
+
+.dark-date-picker .DateRangePickerInput {
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+}
+
+/**
+ * Date Range Picker Specific Styling
+ * The Date picker within plotly involves a lot of internal classes that need to be styled.
+ */
+.dark-date-picker
+.DateRangePickerInput .DateInput_input,
+.DateInput_input__focused {
+  height: 16px;
+  outline: 0;
+  background: #404040 !important;
+  border: 0 !important;
+  border-top: 0 !important;
+  border-right: 0;
+  border-bottom: 2px solid #008489;
+  border-left: 0;
+}
+
+.dark-date-picker
+.DateInput_input {
+  font-weight: 400;
+  font-size: 19px;
+  color: #ffffff
+}
+
+.dark-date-picker
+.DateInput {
+  background: #404040 !important;
+}
+
+.dark-date-picker
+.DateRangePickerInput {
+     background-color: #404040;
+     display: inline-block;
+ }
+
+.dark-date-picker
+.DateRangePickerInput__withBorder {
+    border-radius: 7px;
+    border: 1px solid #404040;
+}
+
+/**
+ * Date Picker Arrow Customization
+ * Hides default SVG arrow and replaces with text-based arrow
+ */
+
+/* Hides the default SVG arrow */
+.dark-date-picker
+.DateRangePickerInput_arrow_svg {
+    display: none !important;
+}
+
+/* Replaces the default SVG arrow with a text-based arrow */
+.dark-date-picker
+.DateRangePickerInput_arrow::before {
+  content: "→" !important;
+  font-size: 1.2em !important;
+  color: #fff9f9 !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  background-color: #404040 !important;
+}
+
+/* Placeholder text (the Start Date and End Date labels) */
+.dark-date-picker input::placeholder {
+  background-color: #404040 !important;
+}
+
+/* These are internal classes for the date picker that also need to be styled */
+.dark-date-picker 
+.DateRangePickerInput .DateInput .DateInput_input {
+  background-color: #404040 !important;
+  color: white !important;
+}
+
+/* =============================================================================
+   TEXT INPUT CONTROLS
+============================================================================= */
+ .dark-input,
+ input.dark-input,
+ .form-control.dark-input,
+ input[type="number"].dark-input,
+ input[type="text"].dark-input,
+ .form-control.form-control-sm.dark-input,
+ .form-control.form-control-sm.dark-input[type="number"],
+ div .form-control.dark-input,
+ div input.dark-input.form-control {
+   background-color: #404040 !important;
+   border-color: #404040 !important;
+   color: white !important;
+   background-image: none !important;
+ }
+ 
+ /**
+  * Focus states for dark inputs
+  * Provides visual feedback with subtle color and shadow changes
+  */
+ .dark-input:focus,
+ input.dark-input:focus,
+ .form-control.dark-input:focus,
+ input[type="number"].dark-input:focus,
+ input[type="text"].dark-input:focus,
+ .form-control.form-control-sm.dark-input:focus,
+ .form-control.form-control-sm.dark-input[type="number"]:focus,
+ div .form-control.dark-input:focus,
+ div input.dark-input.form-control:focus {
+   background-color: #404040 !important;
+   border-color: #555555 !important;
+   color: white !important;
+   box-shadow: 0 0 0 0.2rem rgba(64, 64, 64, 0.25) !important;
+   background-image: none !important;
+ }
+ 
+ /**
+  * Placeholder text styling for dark inputs
+  * Ensures placeholders are visible but subtle in dark theme
+  */
+ .dark-input::placeholder,
+ input.dark-input::placeholder,
+ .form-control.dark-input::placeholder {
+   color: #cccccc !important;
+   opacity: 1 !important;
+ }
+ 
+ /**
+  * Text selection styling for dark inputs
+  * Ensures selected text has proper contrast in dark theme
+  */
+ .dark-input::selection,
+ input.dark-input::selection,
+ .form-control.dark-input::selection {
+   background-color: #6b8976 !important;
+   color: white !important;
+ }
+ 
+ .dark-input::-moz-selection,
+ input.dark-input::-moz-selection,
+ .form-control.dark-input::-moz-selection {
+   background-color: #6b8976 !important;
+   color: white !important;
+ }
+ 
+/* =============================================================================
+   DROPDOWN COMPONENTS
+============================================================================= */
+
+/**
+ * Dark Dropdown Styling
+ * Styles for Dash dropdown components to match the dark theme
+ */
+.dark-dropdown .Select-control,
+.dark-dropdown .Select-control:hover {
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+  color: white !important;
+  min-width: 150px !important;
+}
+
+.dark-dropdown .Select-input > input {
+  color: white !important;
+}
+
+.dark-dropdown .Select-placeholder,
+.dark-dropdown .Select-value-label {
+  color: white !important;
+}
+
+.dark-dropdown .Select-arrow-zone .Select-arrow {
+  border-color: #cccccc transparent transparent !important;
+}
+
+.dark-dropdown .Select-menu-outer {
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+}
+
+.dark-dropdown .Select-menu .Select-option {
+  background-color: #404040 !important;
+  color: white !important;
+}
+
+.dark-dropdown .Select-menu .Select-option:hover,
+.dark-dropdown .Select-menu .Select-option.Select-option--focused {
+  background-color: #555555 !important;
+  color: white !important;
+}
+
+/**
+ * Modern Dash Dropdown (newer versions)
+ * For React-Select based dropdowns in newer Dash versions
+ */
+.dark-dropdown .dash-dropdown .Select-control,
+.dark-dropdown .dash-dropdown .Select-control--is-focused {
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+  box-shadow: none !important;
+  min-width: 150px !important;
+}
+
+.dark-dropdown .dash-dropdown .Select-single-value,
+.dark-dropdown .dash-dropdown .Select-placeholder {
+  color: white !important;
+}
+
+.dark-dropdown .dash-dropdown .Select-input input {
+  color: white !important;
+}
+
+.dark-dropdown .dash-dropdown .Select-menu {
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+}
+
+.dark-dropdown .dash-dropdown .Select-option {
+  background-color: #404040 !important;
+  color: white !important;
+}
+
+.dark-dropdown .dash-dropdown .Select-option--is-focused,
+.dark-dropdown .dash-dropdown .Select-option:hover {
+  background-color: #555555 !important;
+  color: white !important;
+}
+
+.dbc input:not([type=radio]):not([type=checkbox]) {
+  color: var(--bs-body-color) !important;
+  background-color: #404040 !important;
+}
