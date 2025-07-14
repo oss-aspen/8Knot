@@ -1,0 +1,197 @@
+name: Build Docker images
+on:
+  push:
+    branches:
+      - main
+      - release
+  pull_request:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  # test-macos:
+  #   name: Test on macOS
+  #   runs-on: macos-latest
+  #   env:
+  #     UV_LOCKED: true  # Assert that uv.lock is up-to-date
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+
+  #     - name: Install uv
+  #       uses: astral-sh/setup-uv@v6
+
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version-file: ".python-version"
+
+  #     - name: Install Go
+  #       uses: actions/setup-go@v5
+  #       with:
+  #         go-version: "stable"
+
+  #     # We don't use `make install` because it requires user input
+  #     # Instead, we manually sync and run a subset of commands
+  #     - name: Install dependencies
+  #       run: uv sync --all-groups
+
+  #     - name: Install workers
+  #       run: uv run scripts/install/workers.sh dev
+
+  #     - name: Install nltk
+  #       run: |
+  #         uv run python -m nltk.downloader stopwords
+  #         uv run python -m nltk.downloader punkt
+  #         uv run python -m nltk.downloader popular
+  #         uv run python -m nltk.downloader universal_tagset
+
+  test-e2e-podman:
+    name: End-to-end test (Podman)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove unnecessary files from the base image
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
+      - name: Start Podman socket
+        run: systemctl --user start podman.socket
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build 8knot container
+        uses: redhat-actions/buildah-build@v2
+        with:
+          context: .
+          containerfiles: |
+            ./docker/Dockerfile
+          platforms: linux/amd64
+          tags: ghcr.io/${{ github.repository_owner }}/8Knot-app:test
+          layers: true
+
+      - name: Prepare compose file
+        run: |
+          yq eval -i '.services.db-init.image = "ghcr.io/${{ github.repository_owner }}/augur_backend:test"' docker-compose.yml
+          yq eval -i '.services.db-init.pull_policy = "never"' docker-compose.yml
+          yq eval -i '.services.db-init.restart = "no"' docker-compose.yml
+
+          yq eval -i '.services.app-server.image = "ghcr.io/${{ github.repository_owner }}/augur_database:test"' docker-compose.yml
+          yq eval -i '.services.app-server.pull_policy = "never"' docker-compose.yml
+          yq eval -i '.services.app-server.restart = "no"' docker-compose.yml
+
+          yq eval -i '.services.worker-callback.image = "ghcr.io/${{ github.repository_owner }}/augur_keyman:test"' docker-compose.yml
+          yq eval -i '.services.worker-callback.pull_policy = "never"' docker-compose.yml
+          yq eval -i '.services.worker-callback.restart = "no"' docker-compose.yml
+
+          yq eval -i '.services.worker-query.image = "ghcr.io/${{ github.repository_owner }}/augur_rabbitmq:test"' docker-compose.yml
+          yq eval -i '.services.worker-query.pull_policy = "never"' docker-compose.yml
+          yq eval -i '.services.worker-query.restart = "no"' docker-compose.yml
+
+      - name: Setup Podman Compose
+        uses: webgtx/setup-podman-compose@v1
+
+      - name: Set up list of log lines to match
+        run: |
+          cat <<EOF > /tmp/regex_matches.txt
+          Gunicorn webserver started
+          Ready to accept connections
+          database system is ready to accept connections
+          Database connection established successfully!
+          ALL TABLES COMMITTED SUCCESSFULLY
+          POSTGRES CACHE SUCCESSFULLY INITIALIZED
+          EOF
+
+      - name: Start services & wait for output
+        # This starts the system and sends the output to "await_all.py" which
+        # scans for the regex matches from above. Once all matches are seen at
+        # least once, the `compose down` will run to shut down the system. If
+        # this all doesn't happen before the timeout, the job will fail.
+        run: |
+          podman compose -f docker-compose.yml up --no-build 2>&1 \
+            | (./scripts/ci/await_all.py /tmp/regex_matches.txt \
+                && podman compose -f docker-compose.yml down)
+        timeout-minutes: 3
+        # env:
+        #   AUGUR_GITHUB_API_KEY: ${{ secrets.GITHUB_TOKEN }}
+        #   AUGUR_GITHUB_USERNAME: ${{ github.repository_owner }}
+        #   AUGUR_GITLAB_API_KEY: dummy
+        #   AUGUR_GITLAB_USERNAME: dummy
+
+      - name: Dump logs
+        # Always run this step to get logs, even if the previous step fails
+        if: always()
+        # We use tail so that we can see the name of each file as it's printed
+        run: "podman run -t --rm -v augur_logs:/logs bash -c 'find /logs -type f | xargs tail -n +0'"
+
+
+
+  # push-image:
+  #   name: Push image
+  #   needs: test-e2e
+  #   # We don't push images on pull requests
+  #   if: github.event_name != 'pull_request'
+  #   permissions:
+  #     contents: read #  to fetch code (actions/checkout)
+  #     packages: write #  to push docker image
+  #   strategy:
+  #     matrix:
+  #       image:
+  #         - backend
+  #         - database
+  #         - keyman
+  #         - rabbitmq
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v3
+  #       id: setup-buildx
+
+  #     - name: Login to GitHub Container Registry
+  #       uses: docker/login-action@v3
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.repository_owner }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+
+  #     - name: Set container metadata
+  #       uses: docker/metadata-action@v5
+  #       id: meta
+  #       env:
+  #         DOCKER_METADATA_ANNOTATIONS_LEVELS: index,manifest
+  #       with:
+  #         annotations: |
+  #           org.opencontainers.image.title=augur_${{ matrix.image}}
+  #         labels: |
+  #           org.opencontainers.image.title=augur_${{ matrix.image}}
+  #         images: ghcr.io/${{ github.repository_owner }}/augur_${{ matrix.image }}
+  #         # Pushes to the main branch update the *:devel-latest tag
+  #         # Releases update the *:latest tag and the *:<version> tag
+  #         tags: |
+  #           type=raw,value=devel-latest,enable=${{ github.ref == 'refs/heads/main' }}
+  #           type=raw,value=latest,enable=${{ github.event_name == 'release' }}
+  #           type=raw,value=${{ github.event.release.tag_name }},enable=${{ github.event_name == 'release' }}
+
+  #     - name: Build and push
+  #       id: push
+  #       uses: docker/build-push-action@v6
+  #       with:
+  #         annotations: ${{ steps.meta.outputs.annotations }}
+  #         context: .
+  #         file: ./docker/${{ matrix.image }}/Dockerfile
+  #         labels: ${{ steps.meta.outputs.labels }}
+  #         platforms: linux/amd64
+  #         # Only push if we've tagged the image in the metadata step
+  #         push: ${{ steps.meta.outputs.tags != '' }}
+  #         tags: ${{ steps.meta.outputs.tags }}
+  #         # Use the same cache as the build step
+  #         cache-from: type=gha,scope=container-${{ matrix.image }}
+  #         cache-to: type=gha,scope=container-${{ matrix.image }},mode=min
