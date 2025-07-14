@@ -78,10 +78,10 @@ def search_with_fuzzy_matching(query: str, options: List[Dict[str, Any]], thresh
     if remaining_options:
         # Use fuzzy matching for remaining options
         matches = process.extract(
-            query,
+            query_lower,  # Use lowercased query
             [opt["label"] for opt in remaining_options],
             scorer=fuzz.token_sort_ratio,
-            processor=str.lower,  # Case-insensitive matching
+            processor=str.lower,
             limit=None,  # Remove the 100 limit to get all matches
             score_cutoff=threshold_100,
         )

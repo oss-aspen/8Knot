@@ -33,7 +33,7 @@ from queries.ossf_score_query import ossf_score_query as osq
 from queries.repo_info_query import repo_info_query as riq
 import redis
 import flask
-
+from .search_utils import fuzzy_search
 
 # list of queries to be run
 # QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq] - codebase page disabled
@@ -244,9 +244,6 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
         cache_matches = []
         server_matches = []
 
-        # Import the fuzzy search function
-        from .search_utils import fuzzy_search
-
         # Initialize fallback flag
         use_server_fallback = False
 
@@ -381,16 +378,14 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
                         break
 
         # NO LIMITS for now: Return all matches with orgs prioritized
-        # Separate orgs and repos from combined results for proper ordering
-        orgs_in_results = [opt for opt in formatted_opts if isinstance(opt["value"], str)]
-        repos_in_results = [opt for opt in formatted_opts if isinstance(opt["value"], int)]
+        # Use the org/repo separation already done
 
         logging.info(
-            f"Final results breakdown: {len(orgs_in_results)} orgs, {len(repos_in_results)} repos, {len(formatted_opts)} total"
+            f"Final results breakdown: {len(orgs_first)} orgs, {len(repos_after)} repos, {len(formatted_opts)} total"
         )
 
-        # Orgs are prioritized first, then repos
-        result = orgs_in_results + repos_in_results
+        # Always prioritize orgs first, then repos, but don't limit the total count
+        result = orgs_first + repos_after
 
         # Add selected options that aren't already in the results
         selected_values = [opt["value"] for opt in result]
