@@ -259,8 +259,6 @@ search_bar = html.Div(
                             # Removed: dropdownPosition and transitionDuration no longer supported in v2.1.0
                             className="searchbar-dropdown",
                         ),
-                        # Add search status indicator
-                        html.Div(id="search-status", className="search-status-indicator", style={"display": "none"}),
                         dbc.Alert(
                             children='Please ensure that your spelling is correct. \
                                 If your selection definitely isn\'t present, please request that \
