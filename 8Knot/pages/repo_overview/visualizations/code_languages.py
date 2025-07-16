@@ -17,114 +17,120 @@ import cache_manager.cache_facade as cf
 PAGE = "repo_info"
 VIZ_ID = "code-languages"
 
-gc_code_language = html.Div([
-    # Upper card with graph title, about button, and graph
-    dbc.Card(
-        [
-            dbc.CardBody(
-                [
-                    dbc.Row(
-                        [
-                            dbc.Col(
-                                html.H3(
-                                    id=f"graph-title-{PAGE}-{VIZ_ID}",
-                                    className="card-title",
-                                    style={"textAlign": "center", "margin": "0"},
+gc_code_language = html.Div(
+    [
+        # Upper card with graph title, about button, and graph
+        dbc.Card(
+            [
+                dbc.CardBody(
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    html.H3(
+                                        id=f"graph-title-{PAGE}-{VIZ_ID}",
+                                        className="card-title",
+                                        style={"textAlign": "center", "margin": "0"},
+                                    ),
                                 ),
-                            ),
-                            dbc.Col(
-                                dbc.Button(
-                                    "About Graph",
-                                    id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                    color="outline-secondary",
-                                    size="sm",
-                                    className="about-graph-button",
+                                dbc.Col(
+                                    dbc.Button(
+                                        "About Graph",
+                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                        color="outline-secondary",
+                                        size="sm",
+                                        className="about-graph-button",
+                                    ),
+                                    width="auto",
                                 ),
-                                width="auto",
-                            ),
-                        ],
-                        align="center",
-                        justify="between",
-                        className="mb-3",
-                    ),
-                    dbc.Popover(
-                        [
-                            dbc.PopoverHeader("Graph Info:"),
-                            dbc.PopoverBody(
-                                """
+                            ],
+                            align="center",
+                            justify="between",
+                            className="mb-3",
+                        ),
+                        dbc.Popover(
+                            [
+                                dbc.PopoverHeader("Graph Info:"),
+                                dbc.PopoverBody(
+                                    """
                                 Visualizes the percent of files or lines of code by language.
                                 """
-                            ),
-                        ],
-                        id=f"popover-{PAGE}-{VIZ_ID}",
-                        target=f"popover-target-{PAGE}-{VIZ_ID}",
-                        placement="top",
-                        is_open=False,
-                    ),
-                    dcc.Loading(
-                        dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-                    ),
-                ]
-            )
-        ],
-        className="dark-card",
-        style={"borderBottomLeftRadius": "0", "borderBottomRightRadius": "0"},
-    ),
-    # Divider between cards
-    html.Div(
-        style={
-            "height": "0.5px",
-            "backgroundColor": "#494949",
-        }
-    ),
-    # Lower card with controls
-    dbc.Card(
-        [
-            dbc.CardBody(
-                [
-                    dbc.Form(
-                        [
-                            dbc.Row(
-                                [
-                                    dbc.Col(
-                                        [
-                                            dbc.Label(
-                                                "Graph View:",
-                                                html_for=f"graph-view-{PAGE}-{VIZ_ID}",
-                                                style={"fontSize": "12px", "fontWeight": "bold", "marginBottom": "0.5rem"},
-                                            ),
-                                            dbc.RadioItems(
-                                                id=f"graph-view-{PAGE}-{VIZ_ID}",
-                                                options=[
-                                                    {
-                                                        "label": "Files",
-                                                        "value": "file",
+                                ),
+                            ],
+                            id=f"popover-{PAGE}-{VIZ_ID}",
+                            target=f"popover-target-{PAGE}-{VIZ_ID}",
+                            placement="top",
+                            is_open=False,
+                        ),
+                        dcc.Loading(
+                            dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
+                        ),
+                    ]
+                )
+            ],
+            className="dark-card",
+            style={"borderBottomLeftRadius": "0", "borderBottomRightRadius": "0"},
+        ),
+        # Divider between cards
+        html.Div(
+            style={
+                "height": "0.5px",
+                "backgroundColor": "#494949",
+            }
+        ),
+        # Lower card with controls
+        dbc.Card(
+            [
+                dbc.CardBody(
+                    [
+                        dbc.Form(
+                            [
+                                dbc.Row(
+                                    [
+                                        dbc.Col(
+                                            [
+                                                dbc.Label(
+                                                    "Graph View:",
+                                                    html_for=f"graph-view-{PAGE}-{VIZ_ID}",
+                                                    style={
+                                                        "fontSize": "12px",
+                                                        "fontWeight": "bold",
+                                                        "marginBottom": "0.5rem",
                                                     },
-                                                    {
-                                                        "label": "Lines of Code",
-                                                        "value": "line",
-                                                    },
-                                                ],
-                                                value="file",
-                                                inline=True,
-                                                className="custom-radio-buttons",
-                                            ),
-                                        ],
-                                        width="auto",
-                                    ),
-                                ],
-                                align="center",
-                                justify="start",
-                            ),
-                        ]
-                    ),
-                ]
-            )
-        ],
-        className="dark-card",
-        style={"borderTopLeftRadius": "0", "borderTopRightRadius": "0"},
-    ),
-])
+                                                ),
+                                                dbc.RadioItems(
+                                                    id=f"graph-view-{PAGE}-{VIZ_ID}",
+                                                    options=[
+                                                        {
+                                                            "label": "Files",
+                                                            "value": "file",
+                                                        },
+                                                        {
+                                                            "label": "Lines of Code",
+                                                            "value": "line",
+                                                        },
+                                                    ],
+                                                    value="file",
+                                                    inline=True,
+                                                    className="custom-radio-buttons",
+                                                ),
+                                            ],
+                                            width="auto",
+                                        ),
+                                    ],
+                                    align="center",
+                                    justify="start",
+                                ),
+                            ]
+                        ),
+                    ]
+                )
+            ],
+            className="dark-card",
+            style={"borderTopLeftRadius": "0", "borderTopRightRadius": "0"},
+        ),
+    ]
+)
 
 
 # callback for graph info popover

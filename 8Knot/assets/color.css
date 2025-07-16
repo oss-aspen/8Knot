@@ -263,7 +263,7 @@ h3.card-title {
 }
 
 /* These are internal classes for the date picker that also need to be styled */
-.dark-date-picker 
+.dark-date-picker
 .DateRangePickerInput .DateInput .DateInput_input {
   background-color: #404040 !important;
   color: white !important;
@@ -286,7 +286,7 @@ h3.card-title {
    color: white !important;
    background-image: none !important;
  }
- 
+
  /**
   * Focus states for dark inputs
   * Provides visual feedback with subtle color and shadow changes
@@ -306,7 +306,7 @@ h3.card-title {
    box-shadow: 0 0 0 0.2rem rgba(64, 64, 64, 0.25) !important;
    background-image: none !important;
  }
- 
+
  /**
   * Placeholder text styling for dark inputs
   * Ensures placeholders are visible but subtle in dark theme
@@ -317,7 +317,7 @@ h3.card-title {
    color: #cccccc !important;
    opacity: 1 !important;
  }
- 
+
  /**
   * Text selection styling for dark inputs
   * Ensures selected text has proper contrast in dark theme
@@ -328,14 +328,14 @@ h3.card-title {
    background-color: #6b8976 !important;
    color: white !important;
  }
- 
+
  .dark-input::-moz-selection,
  input.dark-input::-moz-selection,
  .form-control.dark-input::-moz-selection {
    background-color: #6b8976 !important;
    color: white !important;
  }
- 
+
 /* =============================================================================
    DROPDOWN COMPONENTS
 ============================================================================= */

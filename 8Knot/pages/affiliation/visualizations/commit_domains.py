@@ -17,125 +17,131 @@ import cache_manager.cache_facade as cf
 PAGE = "affiliation"
 VIZ_ID = "commit-domains"
 
-gc_commit_domains = html.Div([
-    # Upper card with graph title, about button, and graph
-    dbc.Card(
-        [
-            dbc.CardBody(
-                [
-                    dbc.Row(
-                        [
-                            dbc.Col(
-                                html.H3(
-                                    "Commit Activity by Domain",
-                                    className="card-title",
-                                    style={"textAlign": "center", "margin": "0"},
+gc_commit_domains = html.Div(
+    [
+        # Upper card with graph title, about button, and graph
+        dbc.Card(
+            [
+                dbc.CardBody(
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    html.H3(
+                                        "Commit Activity by Domain",
+                                        className="card-title",
+                                        style={"textAlign": "center", "margin": "0"},
+                                    ),
                                 ),
-                            ),
-                            dbc.Col(
-                                dbc.Button(
-                                    "About Graph",
-                                    id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                    color="outline-secondary",
-                                    size="sm",
-                                    className="about-graph-button",
+                                dbc.Col(
+                                    dbc.Button(
+                                        "About Graph",
+                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                        color="outline-secondary",
+                                        size="sm",
+                                        className="about-graph-button",
+                                    ),
+                                    width="auto",
                                 ),
-                                width="auto",
-                            ),
-                        ],
-                        align="center",
-                        justify="between",
-                        className="mb-3",
-                    ),
-                    dbc.Popover(
-                        [
-                            dbc.PopoverHeader("Graph Info:"),
-                            dbc.PopoverBody(
-                                """
+                            ],
+                            align="center",
+                            justify="between",
+                            className="mb-3",
+                        ),
+                        dbc.Popover(
+                            [
+                                dbc.PopoverHeader("Graph Info:"),
+                                dbc.PopoverBody(
+                                    """
                                 Visualizes the proportion of commit activity done by specific email domains.\n
                                 e.g. if there are 100 commits and 75 commits were authored by a contributor with a\n
                                 '@gmail.com' email address, 75 percent of the chart will be represented '@gmail.com.'\n
                                 This can help to capture the relative magnitude of commit contribution by various corporate\n
                                 or institutional entities.
                                 """
-                            ),
-                        ],
-                        id=f"popover-{PAGE}-{VIZ_ID}",
-                        target=f"popover-target-{PAGE}-{VIZ_ID}",
-                        placement="top",
-                        is_open=False,
-                    ),
-                    dcc.Loading(
-                        dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-                    ),
-                ]
-            )
-        ],
-        className="dark-card",
-        style={"borderBottomLeftRadius": "0", "borderBottomRightRadius": "0"},
-    ),
-    # Divider between cards
-    html.Div(
-        style={
-            "height": "0.5px",
-            "backgroundColor": "#494949",
-        }
-    ),
-    # Lower card with controls
-    dbc.Card(
-        [
-            dbc.CardBody(
-                [
-                    dbc.Form(
-                        [
-                            dbc.Row(
-                                [
-                                    dbc.Col(
-                                        [
-                                            dbc.Label(
-                                                "Contributions Required:",
-                                                html_for=f"company-contributions-required-{PAGE}-{VIZ_ID}",
-                                                style={"fontSize": "12px", "fontWeight": "bold", "marginBottom": "0.5rem"},
-                                            ),
-                                            dbc.Input(
-                                                id=f"company-contributions-required-{PAGE}-{VIZ_ID}",
-                                                type="number",
-                                                min=1,
-                                                max=100,
-                                                step=1,
-                                                value=10,
-                                                size="sm",
-                                                style={"width": "80px"},
-                                                className="dark-input",
-                                            ),
-                                        ],
-                                        width="auto",
-                                    ),
-                                    dbc.Col(
-                                        dcc.DatePickerRange(
-                                            id=f"date-picker-range-{PAGE}-{VIZ_ID}",
-                                            min_date_allowed=dt.date(2005, 1, 1),
-                                            max_date_allowed=dt.date.today(),
-                                            initial_visible_month=dt.date(dt.date.today().year, 1, 1),
-                                            clearable=True,
-                                            className="dark-date-picker",
+                                ),
+                            ],
+                            id=f"popover-{PAGE}-{VIZ_ID}",
+                            target=f"popover-target-{PAGE}-{VIZ_ID}",
+                            placement="top",
+                            is_open=False,
+                        ),
+                        dcc.Loading(
+                            dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
+                        ),
+                    ]
+                )
+            ],
+            className="dark-card",
+            style={"borderBottomLeftRadius": "0", "borderBottomRightRadius": "0"},
+        ),
+        # Divider between cards
+        html.Div(
+            style={
+                "height": "0.5px",
+                "backgroundColor": "#494949",
+            }
+        ),
+        # Lower card with controls
+        dbc.Card(
+            [
+                dbc.CardBody(
+                    [
+                        dbc.Form(
+                            [
+                                dbc.Row(
+                                    [
+                                        dbc.Col(
+                                            [
+                                                dbc.Label(
+                                                    "Contributions Required:",
+                                                    html_for=f"company-contributions-required-{PAGE}-{VIZ_ID}",
+                                                    style={
+                                                        "fontSize": "12px",
+                                                        "fontWeight": "bold",
+                                                        "marginBottom": "0.5rem",
+                                                    },
+                                                ),
+                                                dbc.Input(
+                                                    id=f"company-contributions-required-{PAGE}-{VIZ_ID}",
+                                                    type="number",
+                                                    min=1,
+                                                    max=100,
+                                                    step=1,
+                                                    value=10,
+                                                    size="sm",
+                                                    style={"width": "80px"},
+                                                    className="dark-input",
+                                                ),
+                                            ],
+                                            width="auto",
                                         ),
-                                        width="auto",
-                                        style={"marginTop": "1.7rem"},
-                                    ),
-                                ],
-                                align="center",
-                                justify="start",
-                            ),
-                        ]
-                    ),
-                ]
-            )
-        ],
-        className="dark-card",
-        style={"borderTopLeftRadius": "0", "borderTopRightRadius": "0"},
-    ),
-])
+                                        dbc.Col(
+                                            dcc.DatePickerRange(
+                                                id=f"date-picker-range-{PAGE}-{VIZ_ID}",
+                                                min_date_allowed=dt.date(2005, 1, 1),
+                                                max_date_allowed=dt.date.today(),
+                                                initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                                                clearable=True,
+                                                className="dark-date-picker",
+                                            ),
+                                            width="auto",
+                                            style={"marginTop": "1.7rem"},
+                                        ),
+                                    ],
+                                    align="center",
+                                    justify="start",
+                                ),
+                            ]
+                        ),
+                    ]
+                )
+            ],
+            className="dark-card",
+            style={"borderTopLeftRadius": "0", "borderTopRightRadius": "0"},
+        ),
+    ]
+)
 
 
 # callback for graph info popover

@@ -19,41 +19,42 @@ import cache_manager.cache_facade as cf
 PAGE = "contributors"
 VIZ_ID = "contrib-importance-pie"
 
-gc_contrib_importance_pie = html.Div([
-    # Upper card with graph title, about button, and graph
-    dbc.Card(
-        [
-            dbc.CardBody(
-                [
-                    dbc.Row(
-                        [
-                            dbc.Col(
-                                html.H3(
-                                    id=f"graph-title-{PAGE}-{VIZ_ID}",
-                                    className="card-title",
-                                    style={"textAlign": "center", "margin": "0"},
+gc_contrib_importance_pie = html.Div(
+    [
+        # Upper card with graph title, about button, and graph
+        dbc.Card(
+            [
+                dbc.CardBody(
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    html.H3(
+                                        id=f"graph-title-{PAGE}-{VIZ_ID}",
+                                        className="card-title",
+                                        style={"textAlign": "center", "margin": "0"},
+                                    ),
                                 ),
-                            ),
-                            dbc.Col(
-                                dbc.Button(
-                                    "About Graph",
-                                    id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                    color="outline-secondary",
-                                    size="sm",
-                                    className="about-graph-button",
+                                dbc.Col(
+                                    dbc.Button(
+                                        "About Graph",
+                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                        color="outline-secondary",
+                                        size="sm",
+                                        className="about-graph-button",
+                                    ),
+                                    width="auto",
                                 ),
-                                width="auto",
-                            ),
-                        ],
-                        align="center",
-                        justify="between",
-                        className="mb-3",
-                    ),
-                    dbc.Popover(
-                        [
-                            dbc.PopoverHeader("Graph Info:"),
-                            dbc.PopoverBody(
-                                """
+                            ],
+                            align="center",
+                            justify="between",
+                            className="mb-3",
+                        ),
+                        dbc.Popover(
+                            [
+                                dbc.PopoverHeader("Graph Info:"),
+                                dbc.PopoverBody(
+                                    """
                                 AKA Bus factor. For a given action type, this visualizes the proportional share of the top k anonymous
                                 contributors, aggregating the remaining contributors as "Other". Suppose Contributor A
                                 opens the most PRs of all contributors, accounting for 1/5 of all PRs. If k = 1,
@@ -62,136 +63,145 @@ gc_contrib_importance_pie = html.Div([
                                 Contributor ID of 'None' if there is no Github account is associated with the email that
                                 the contributor committed as.
                                 """
-                            ),
-                        ],
-                        id=f"popover-{PAGE}-{VIZ_ID}",
-                        target=f"popover-target-{PAGE}-{VIZ_ID}",
-                        placement="top",
-                        is_open=False,
-                    ),
-                    dcc.Loading(
-                        dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-                    ),
-                ]
-            )
-        ],
-        className="dark-card",
-        style={"borderBottomLeftRadius": "0", "borderBottomRightRadius": "0"},
-    ),
-    # Divider between cards
-    html.Div(
-        style={
-            "height": "0.5px",
-            "backgroundColor": "#494949",
-        }
-    ),
-    # Lower card with controls
-    dbc.Card(
-        [
-            dbc.CardBody(
-                [
-                    dbc.Form(
-                        [
-                            dbc.Row(
-                                [
-                                    dbc.Col(
-                                        [
-                                            dbc.Label(
-                                                "Action Type:",
-                                                html_for=f"action-type-{PAGE}-{VIZ_ID}",
-                                                style={"fontSize": "12px", "fontWeight": "bold", "marginBottom": "0.5rem"},
-                                            ),
-                                            dcc.Dropdown(
-                                                id=f"action-type-{PAGE}-{VIZ_ID}",
-                                                options=[
-                                                    {"label": "Commit", "value": "Commit"},
-                                                    {
-                                                        "label": "Issue Opened",
-                                                        "value": "Issue Opened",
+                                ),
+                            ],
+                            id=f"popover-{PAGE}-{VIZ_ID}",
+                            target=f"popover-target-{PAGE}-{VIZ_ID}",
+                            placement="top",
+                            is_open=False,
+                        ),
+                        dcc.Loading(
+                            dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
+                        ),
+                    ]
+                )
+            ],
+            className="dark-card",
+            style={"borderBottomLeftRadius": "0", "borderBottomRightRadius": "0"},
+        ),
+        # Divider between cards
+        html.Div(
+            style={
+                "height": "0.5px",
+                "backgroundColor": "#494949",
+            }
+        ),
+        # Lower card with controls
+        dbc.Card(
+            [
+                dbc.CardBody(
+                    [
+                        dbc.Form(
+                            [
+                                dbc.Row(
+                                    [
+                                        dbc.Col(
+                                            [
+                                                dbc.Label(
+                                                    "Action Type:",
+                                                    html_for=f"action-type-{PAGE}-{VIZ_ID}",
+                                                    style={
+                                                        "fontSize": "12px",
+                                                        "fontWeight": "bold",
+                                                        "marginBottom": "0.5rem",
                                                     },
-                                                    {
-                                                        "label": "Issue Comment",
-                                                        "value": "Issue Comment",
-                                                    },
-                                                    {
-                                                        "label": "Issue Closed",
-                                                        "value": "Issue Closed",
-                                                    },
-                                                    {
-                                                        "label": "PR Open",
-                                                        "value": "PR Open",
-                                                    },
-                                                    {
-                                                        "label": "PR Review",
-                                                        "value": "PR Review",
-                                                    },
-                                                    {
-                                                        "label": "PR Comment",
-                                                        "value": "PR Comment",
-                                                    },
-                                                ],
-                                                value="Commit",
-                                                clearable=False,
-                                                className="dark-dropdown",
-                                            ),
-                                            dbc.Alert(
-                                                children="""No contributions of this type have been made.\n
+                                                ),
+                                                dcc.Dropdown(
+                                                    id=f"action-type-{PAGE}-{VIZ_ID}",
+                                                    options=[
+                                                        {"label": "Commit", "value": "Commit"},
+                                                        {
+                                                            "label": "Issue Opened",
+                                                            "value": "Issue Opened",
+                                                        },
+                                                        {
+                                                            "label": "Issue Comment",
+                                                            "value": "Issue Comment",
+                                                        },
+                                                        {
+                                                            "label": "Issue Closed",
+                                                            "value": "Issue Closed",
+                                                        },
+                                                        {
+                                                            "label": "PR Open",
+                                                            "value": "PR Open",
+                                                        },
+                                                        {
+                                                            "label": "PR Review",
+                                                            "value": "PR Review",
+                                                        },
+                                                        {
+                                                            "label": "PR Comment",
+                                                            "value": "PR Comment",
+                                                        },
+                                                    ],
+                                                    value="Commit",
+                                                    clearable=False,
+                                                    className="dark-dropdown",
+                                                ),
+                                                dbc.Alert(
+                                                    children="""No contributions of this type have been made.\n
                                                 Please select a different contribution type.""",
-                                                id=f"check-alert-{PAGE}-{VIZ_ID}",
-                                                dismissable=True,
-                                                fade=False,
-                                                is_open=False,
-                                                color="warning",
-                                            ),
-                                        ],
-                                        width="auto",
-                                    ),
-                                    dbc.Col(
-                                        [
-                                            dbc.Label(
-                                                "Top K Contributors:",
-                                                html_for=f"top-k-contributors-{PAGE}-{VIZ_ID}",
-                                                style={"fontSize": "12px", "fontWeight": "bold", "marginBottom": "0.5rem"},
-                                            ),
-                                            dbc.Input(
-                                                id=f"top-k-contributors-{PAGE}-{VIZ_ID}",
-                                                type="number",
-                                                min=2,
-                                                max=100,
-                                                step=1,
-                                                value=10,
-                                                size="sm",
-                                                style={"width": "80px"},
-                                                className="dark-input",
-                                            ),
-                                        ],
-                                        width="auto",
-                                    ),
-                                    dbc.Col(
-                                        dcc.DatePickerRange(
-                                            id=f"date-picker-range-{PAGE}-{VIZ_ID}",
-                                            min_date_allowed=dt.date(2005, 1, 1),
-                                            max_date_allowed=dt.date.today(),
-                                            initial_visible_month=dt.date(dt.date.today().year, 1, 1),
-                                            clearable=True,
-                                            className="dark-date-picker",
+                                                    id=f"check-alert-{PAGE}-{VIZ_ID}",
+                                                    dismissable=True,
+                                                    fade=False,
+                                                    is_open=False,
+                                                    color="warning",
+                                                ),
+                                            ],
+                                            width="auto",
                                         ),
-                                        width="auto",
-                                        style={"marginTop": "1.7rem"},
-                                    ),
-                                ],
-                                align="center",
-                                justify="start",
-                            ),
-                        ]
-                    ),
-                ]
-            )
-        ],
-        className="dark-card",
-        style={"borderTopLeftRadius": "0", "borderTopRightRadius": "0"},
-    ),
-])
+                                        dbc.Col(
+                                            [
+                                                dbc.Label(
+                                                    "Top K Contributors:",
+                                                    html_for=f"top-k-contributors-{PAGE}-{VIZ_ID}",
+                                                    style={
+                                                        "fontSize": "12px",
+                                                        "fontWeight": "bold",
+                                                        "marginBottom": "0.5rem",
+                                                    },
+                                                ),
+                                                dbc.Input(
+                                                    id=f"top-k-contributors-{PAGE}-{VIZ_ID}",
+                                                    type="number",
+                                                    min=2,
+                                                    max=100,
+                                                    step=1,
+                                                    value=10,
+                                                    size="sm",
+                                                    style={"width": "80px"},
+                                                    className="dark-input",
+                                                ),
+                                            ],
+                                            width="auto",
+                                        ),
+                                        dbc.Col(
+                                            dcc.DatePickerRange(
+                                                id=f"date-picker-range-{PAGE}-{VIZ_ID}",
+                                                min_date_allowed=dt.date(2005, 1, 1),
+                                                max_date_allowed=dt.date.today(),
+                                                initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                                                clearable=True,
+                                                className="dark-date-picker",
+                                            ),
+                                            width="auto",
+                                            style={"marginTop": "1.7rem"},
+                                        ),
+                                    ],
+                                    align="center",
+                                    justify="start",
+                                ),
+                            ]
+                        ),
+                    ]
+                )
+            ],
+            className="dark-card",
+            style={"borderTopLeftRadius": "0", "borderTopRightRadius": "0"},
+        ),
+    ]
+)
 
 
 # callback for graph info popover
