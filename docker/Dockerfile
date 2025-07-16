@@ -16,6 +16,10 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 FROM base
 COPY --from=builder /opt/app-root/src /opt/app-root/src
 ENV PATH="/opt/app-root/src/.venv/bin:$PATH"
+
+# Explicitly tell Python where to find packages
+ENV PYTHONPATH="/opt/app-root/src/.venv/lib/python3.9/site-packages:/opt/app-root/src"
+
 EXPOSE 8080
 
 # Description of how to choose the number of workers and threads.
