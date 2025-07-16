@@ -7,8 +7,10 @@ RUN pip3 install --no-cache-dir -U pip setuptools && \
     pip3 install --no-cache-dir uv
 
 # install required packages with UV
-COPY ./requirements.txt /opt/app-root/src/
-RUN uv pip install --no-cache-dir -r requirements.txt
+COPY ./pyproject.toml /opt/app-root/src/
+COPY ./uv.lock /opt/app-root/src/
+ENV VIRTUAL_ENV=/opt/app-root/src/.venv
+RUN uv sync --locked
 
 # copy the contents of current file into the
 # working directory.
@@ -18,4 +20,4 @@ COPY ./8Knot/ /opt/app-root/src/
 # common wisdom is (2*CPU)+1 workers:
 # https://medium.com/building-the-system/gunicorn-3-means-of-concurrency-efbb547674b7
 # this is a microservice - above may not apply
-CMD [ "gunicorn", "--bind", ":8080", "app:server", "--workers", "1", "--threads", "2" ]
+CMD [ "uv", "run", "gunicorn", "--bind", ":8080", "app:server", "--workers", "1", "--threads", "2" ]
