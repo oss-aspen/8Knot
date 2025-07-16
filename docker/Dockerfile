@@ -1,23 +1,22 @@
-FROM registry.access.redhat.com/ubi9/python-39:latest
+FROM registry.access.redhat.com/ubi9/python-39:latest AS base
 
+
+FROM base AS builder
+COPY --from=ghcr.io/astral-sh/uv:0.4.9 /uv /bin/uv
+ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 WORKDIR /opt/app-root/src
-
-# Install UV package installer
-RUN pip3 install --no-cache-dir -U pip setuptools && \
-    pip3 install --no-cache-dir uv
-
-# install required packages with UV
-COPY ./pyproject.toml /opt/app-root/src/
-COPY ./uv.lock /opt/app-root/src/
-ENV VIRTUAL_ENV=/opt/app-root/src/.venv
-RUN uv sync --locked
-
-# Add virtual environment to PATH so we can use it directly
-ENV PATH="/opt/app-root/src/.venv/bin:$PATH"
-
-# copy the contents of current file into the
-# working directory.
+COPY uv.lock pyproject.toml /opt/app-root/src/
+RUN --mount=type=cache,target=/root/.cache/uv \
+  uv sync --frozen --no-install-project --no-dev
 COPY ./8Knot/ /opt/app-root/src/
+RUN --mount=type=cache,target=/root/.cache/uv \
+  uv sync --frozen --no-dev
+
+
+FROM base
+COPY --from=builder /opt/app-root/src /opt/app-root/src
+ENV PATH="/opt/app-root/src/.venv/bin:$PATH"
+EXPOSE 8080
 
 # Description of how to choose the number of workers and threads.
 # common wisdom is (2*CPU)+1 workers:
