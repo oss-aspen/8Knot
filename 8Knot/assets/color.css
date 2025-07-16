@@ -223,12 +223,7 @@ h3.card-title {
   background: #404040 !important;
 }
 
-.dark-date-picker
-.DateRangePickerInput {
-     background-color: #404040;
-     display: inline-block;
- }
-
+ /* Dark Date Picker Border Styling */
 .dark-date-picker
 .DateRangePickerInput__withBorder {
     border-radius: 7px;
@@ -239,14 +234,11 @@ h3.card-title {
  * Date Picker Arrow Customization
  * Hides default SVG arrow and replaces with text-based arrow
  */
-
-/* Hides the default SVG arrow */
 .dark-date-picker
 .DateRangePickerInput_arrow_svg {
     display: none !important;
 }
 
-/* Replaces the default SVG arrow with a text-based arrow */
 .dark-date-picker
 .DateRangePickerInput_arrow::before {
   content: "→" !important;
@@ -260,13 +252,6 @@ h3.card-title {
 /* Placeholder text (the Start Date and End Date labels) */
 .dark-date-picker input::placeholder {
   background-color: #404040 !important;
-}
-
-/* These are internal classes for the date picker that also need to be styled */
-.dark-date-picker
-.DateRangePickerInput .DateInput .DateInput_input {
-  background-color: #404040 !important;
-  color: white !important;
 }
 
 /* =============================================================================
