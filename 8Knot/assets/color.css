@@ -340,10 +340,7 @@ h3.card-title {
    DROPDOWN COMPONENTS
 ============================================================================= */
 
-/**
- * Dark Dropdown Styling
- * Styles for Dash dropdown components to match the dark theme
- */
+/* Dark Dropdown Box Styling */
 .dark-dropdown .Select-control,
 .dark-dropdown .Select-control:hover {
   background-color: #404040 !important;
@@ -352,72 +349,13 @@ h3.card-title {
   min-width: 150px !important;
 }
 
-.dark-dropdown .Select-input > input {
-  color: white !important;
-}
-
+/* Dark Dropdown Placeholder Styling */
 .dark-dropdown .Select-placeholder,
 .dark-dropdown .Select-value-label {
   color: white !important;
 }
 
-.dark-dropdown .Select-arrow-zone .Select-arrow {
-  border-color: #cccccc transparent transparent !important;
-}
-
-.dark-dropdown .Select-menu-outer {
-  background-color: #404040 !important;
-  border-color: #404040 !important;
-}
-
-.dark-dropdown .Select-menu .Select-option {
-  background-color: #404040 !important;
-  color: white !important;
-}
-
-.dark-dropdown .Select-menu .Select-option:hover,
-.dark-dropdown .Select-menu .Select-option.Select-option--focused {
-  background-color: #555555 !important;
-  color: white !important;
-}
-
-/**
- * Modern Dash Dropdown (newer versions)
- * For React-Select based dropdowns in newer Dash versions
- */
-.dark-dropdown .dash-dropdown .Select-control,
-.dark-dropdown .dash-dropdown .Select-control--is-focused {
-  background-color: #404040 !important;
-  border-color: #404040 !important;
-  box-shadow: none !important;
-  min-width: 150px !important;
-}
-
-.dark-dropdown .dash-dropdown .Select-single-value,
-.dark-dropdown .dash-dropdown .Select-placeholder {
-  color: white !important;
-}
-
-.dark-dropdown .dash-dropdown .Select-input input {
-  color: white !important;
-}
-
-.dark-dropdown .dash-dropdown .Select-menu {
-  background-color: #404040 !important;
-  border-color: #404040 !important;
-}
-
-.dark-dropdown .dash-dropdown .Select-option {
-  background-color: #404040 !important;
-  color: white !important;
-}
-
-.dark-dropdown .dash-dropdown .Select-option--is-focused,
-.dark-dropdown .dash-dropdown .Select-option:hover {
-  background-color: #555555 !important;
-  color: white !important;
-}
-
+/* Fix for the vertical bar issue */
 .dbc input:not([type=radio]):not([type=checkbox]) {
   color: var(--bs-body-color) !important;
   background-color: #404040 !important;
