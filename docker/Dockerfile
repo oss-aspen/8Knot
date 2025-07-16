@@ -20,4 +20,4 @@ COPY ./8Knot/ /opt/app-root/src/
 # common wisdom is (2*CPU)+1 workers:
 # https://medium.com/building-the-system/gunicorn-3-means-of-concurrency-efbb547674b7
 # this is a microservice - above may not apply
-CMD [ "uv", "run", "gunicorn", "--bind", ":8080", "app:server", "--workers", "1", "--threads", "2" ]
+CMD [ "gunicorn", "--bind", ":8080", "app:server", "--workers", "1", "--threads", "2" ]
