@@ -272,68 +272,29 @@ h3.card-title {
 /* =============================================================================
    TEXT INPUT CONTROLS
 ============================================================================= */
+
+/* Dark Input Box Styling */
  .dark-input,
- input.dark-input,
- .form-control.dark-input,
- input[type="number"].dark-input,
- input[type="text"].dark-input,
  .form-control.form-control-sm.dark-input,
- .form-control.form-control-sm.dark-input[type="number"],
- div .form-control.dark-input,
- div input.dark-input.form-control {
+ .form-control.form-control-sm.dark-input[type="number"]{
    background-color: #404040 !important;
    border-color: #404040 !important;
    color: white !important;
    background-image: none !important;
  }
 
- /**
-  * Focus states for dark inputs
-  * Provides visual feedback with subtle color and shadow changes
-  */
+
+ /* Dark Input Focus Styling */
  .dark-input:focus,
  input.dark-input:focus,
  .form-control.dark-input:focus,
- input[type="number"].dark-input:focus,
- input[type="text"].dark-input:focus,
  .form-control.form-control-sm.dark-input:focus,
- .form-control.form-control-sm.dark-input[type="number"]:focus,
- div .form-control.dark-input:focus,
- div input.dark-input.form-control:focus {
+ .form-control.form-control-sm.dark-input[type="number"]:focus{
    background-color: #404040 !important;
    border-color: #555555 !important;
    color: white !important;
    box-shadow: 0 0 0 0.2rem rgba(64, 64, 64, 0.25) !important;
    background-image: none !important;
- }
-
- /**
-  * Placeholder text styling for dark inputs
-  * Ensures placeholders are visible but subtle in dark theme
-  */
- .dark-input::placeholder,
- input.dark-input::placeholder,
- .form-control.dark-input::placeholder {
-   color: #cccccc !important;
-   opacity: 1 !important;
- }
-
- /**
-  * Text selection styling for dark inputs
-  * Ensures selected text has proper contrast in dark theme
-  */
- .dark-input::selection,
- input.dark-input::selection,
- .form-control.dark-input::selection {
-   background-color: #6b8976 !important;
-   color: white !important;
- }
-
- .dark-input::-moz-selection,
- input.dark-input::-moz-selection,
- .form-control.dark-input::-moz-selection {
-   background-color: #6b8976 !important;
-   color: white !important;
  }
 
 /* =============================================================================
