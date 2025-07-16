@@ -12,6 +12,9 @@ COPY ./uv.lock /opt/app-root/src/
 ENV VIRTUAL_ENV=/opt/app-root/src/.venv
 RUN uv sync --locked
 
+# Add virtual environment to PATH so we can use it directly
+ENV PATH="/opt/app-root/src/.venv/bin:$PATH"
+
 # copy the contents of current file into the
 # working directory.
 COPY ./8Knot/ /opt/app-root/src/
