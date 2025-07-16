@@ -27,7 +27,7 @@ env_password = os.getenv("POSTGRES_PASSWORD", "password")
 env_port = os.getenv("CACHE_PORT", "5432")
 env_schema = os.getenv("CACHE_SCHEMA", "augur_data")
 
-logging.critical(env_password)
+# logging.critical(env_password) removing password logging across all containers
 
 # purely initial startup string
 # psycopg2 connection string for cache pg instance, initialization only
