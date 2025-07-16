@@ -20,8 +20,6 @@ ENV PATH="/opt/app-root/src/.venv/bin:$PATH"
 # Explicitly tell Python where to find packages
 ENV PYTHONPATH="/opt/app-root/src/.venv/lib/python3.9/site-packages:/opt/app-root/src"
 
-EXPOSE 8080
-
 # Description of how to choose the number of workers and threads.
 # common wisdom is (2*CPU)+1 workers:
 # https://medium.com/building-the-system/gunicorn-3-means-of-concurrency-efbb547674b7
