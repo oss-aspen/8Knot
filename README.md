@@ -1,7 +1,8 @@
 # 8Knot
 
-![Pre-Commit](https://github.com/JamesKunstle/explorer/actions/workflows/pre-commit.yml/badge.svg)
-![Build-Push](https://github.com/JamesKunstle/explorer/actions/workflows/build-push-quay.yml/badge.svg)
+![Pre-Commit](https://github.com/oss-aspen/8Knot/actions/workflows/pre-commit.yml/badge.svg)
+![Build-Push](https://github.com/oss-aspen/8Knot/actions/workflows/build-push-quay.yml/badge.svg)
+![Docker Compose](https://github.com/oss-aspen/8Knot/actions/workflows/docker-compose-build.yml/badge.svg)
 
 Welcome to 8Knot!
 
@@ -120,7 +121,7 @@ from a local instance, be scrutinized heavily until we make a proper, stable, >1
 
 ## Communication
 
-Please feel free to join our [Matrix](https://matrix.to/#/#oss-aspen:matrix.org) channel!
+Please feel free to join our CHAOSS Slack Channel (#wg-augur-8knot) for more information on 8Knot and Augur!
 
 We would prefer any initial communication be through Matrix but if you would prefer to talk to one of our maintainers, please feel free to peruse our [AUTHORS.md](docs/AUTHORS.md) file where you can find contact details.
 
@@ -154,27 +155,16 @@ We've tried to make it as easy as possible to run your own 8Knot instance.
 
 ### Credentials
 
-You will need credentials of the following form, named `env.list`, at the top-level of the 8Knot directory that you clone.
-The credentials below are valid, so you can copy and use them to access a testing instance of an Augur database.
+You will need credentials of the following form, named `.env`, at the top-level of the 8Knot directory that you clone.
+
+A sample file illustrating the format is available in `.env.sample` that can be copy-pasted and renamed to `.env` to get you started with a basic set of valid credentials.
 
 These credentials are suitable for development, but please replace any secrets with different values in production.
 
-```
-    AUGUR_DATABASE=graphish
-    AUGUR_HOST=chaoss.tv
-    AUGUR_PASSWORD=cableTV99!
-    AUGUR_PORT=5432
-    AUGUR_SCHEMA=augur_data
-    AUGUR_USERNAME=coup
-    8KNOT_DEBUG=True
-    REDIS_PASSWORD=1234
-    DEFAULT_SEARCHBAR_LABEL=chaoss
-    POSTGRES_PASSWORD=somepassword
-    SECRET_KEY=somethingsecret
-```
-
 8Knot doesn't handle user accounts or data collection requests on its own. To support these features, you'll need to add the
-following additional configuration to your `env.list` file.
+following additional configuration to your `.env` file.
+
+Setting the `DEBUG_8KNOT` environmental variable to True will enable hot reloading of the Dash application, after any change to a file inside the 8Knot/ directory.
 
 You'll need to register your 8Knot instance with an Augur front-end application to get an `AUGUR_APP_ID` and an `AUGUR_CLIENT_SECRET`.
 All parameters wrapped in `< >` will need to be replaced below. `<endpoint>` variables refer to the host of the Augur front-end that
@@ -213,13 +203,79 @@ We use containers to minimize the installation requirements for development and 
 
 We use Docker's Compose feature to spin up all application resources together. Please make sure you have Docker Compose installed on your system. You can find documentation on doing so here: [Docker Compose](https://docs.docker.com/compose/install)
 
-If the following commands return sensible results then Docker and Docker Compose are installed:
 
+#### Option 1: Using Podman (Recommended)
+
+1. **If transitioning from Docker Desktop**
+   - Uninstall Docker Desktop (requires GUI uninstall and checking for remnants)
+   - Remove any remaining Docker files/configurations. Further information on this below.
+
+2. **Install Podman:**
+   - On macOS: `brew install podman podman-desktop`
+   - On Linux: Follow the [official installation guide](https://podman.io/getting-started/installation)
+
+3. **Initial Setup:**
+   - On macOS: Initialize and start a Podman machine:
+     ```bash
+     podman machine init
+     podman machine start
+     ```
+   - Install docker-compose (used by Podman Compose):
+     ```bash
+     brew install docker-compose  # on macOS
+     # or use your system's package manager
+     ```
+
+4. **Verify Installation:**
+   ```bash
+   podman --version
+   podman compose --version
+   ```
+
+5. **Install Podman Desktop. This is optional but recommended.**
+
+#### Using Podman
+
+If you're using Podman, you can use either `podman compose` or `docker compose` (thanks to the compatibility layer). Here are both options:
+
+Using podman-compose directly:
 ```bash
-docker && docker compose || docker-compose
+# Start the application
+podman compose up --build
+
+# Scale worker pools (recommended)
+podman compose up --build --scale worker-query=2 --scale worker-callback=2
+
+# Stop the application
+ctrl-c
+
+# Clean up containers and volumes
+podman compose down --volumes
 ```
 
-(above just runs docker and docker-compose and checks if both work)
+Using docker compose with Podman:
+```bash
+# The same Docker Compose commands work with Podman if you've set up the compatibility layer
+docker compose up --build
+docker compose up --build --scale worker-query=2 --scale worker-callback=2
+```
+
+Additional Podman-specific commands that might be helpful:
+```bash
+# List all containers
+podman ps -a
+
+# View container logs
+podman logs <container_name>
+
+# Remove all containers and pods
+podman pod rm -f -a
+
+# Clean up unused images and volumes
+podman system prune --volumes
+```
+
+##### Further Information on transitioning from Docker to Podman:
 
 NOTE: As of 3/29/24 we recommend using `Podman` and `Podman Desktop` instead of `Docker` and `Docker Desktop`. It will be our default development environment going forward.
 There are many guides to transitioning from `Docker` (Desktop) to `Podman` (Desktop), but here's a rough outline of our "golden path."
@@ -234,11 +290,20 @@ At this point, the `Podman` docs claim that one should have moved over to `Podma
 1. In `$HOME/.docker/config.json` replace "credsStore" with "credStore" (minus an 's') to solve registry credentialing problems.
 2. Set `export DOCKER_HOST=<your_podman_machine_socket_path>` to the `Podman machine`'s socket on your system, which you can find in the `Resources` tab of `Podman Desktop`. The path starts with `unix://`.
 
-### Build and Run
 
-8Knot is a multi-container application.
+#### Option 2: Using Docker
 
-The app-server, worker-pools, redis-cache, and postgres-cache containers communicate with one another via docker networking.
+If you choose to use Docker, you'll need:
+1. Docker installed on your system: [Install Docker](https://docs.docker.com/engine/install)
+2. Docker Compose installed: [Docker Compose](https://docs.docker.com/compose/install)
+
+If the following commands return sensible results then Docker and Docker Compose are installed:
+Verify your installation with:
+```bash
+docker && docker compose || docker-compose
+```
+
+**Optional, but recommended to Install Docker Desktop**
 
 All of the build/tear-down is done with `docker compose`.
 
@@ -269,6 +334,43 @@ To clean up the stopped containers, run:
 
 ```bash
 docker compose down --volumes
+```
+
+### Build and Run
+
+8Knot is a multi-container application.
+
+The app-server, worker-pools, redis-cache, and postgres-cache containers communicate with one another via docker networking.
+
+All of the build/tear-down is done with `docker compose`.
+
+To start the application, run at the top-level of the 8Knot directory:
+
+```bash
+podman compose up --build
+```
+
+Due to a known deadlock, we recommend scaling-up the number of worker-pool pods deployed.
+There need to be (#visualizations + 1) celery threads available for the callback_worker pool.
+
+A concrete example: I have 6 CPU's allocated to my Docker runtime, so Celery workers will default to a concurrency of 6 processes.
+However, there are 7 visualizations on the Overview page. Therefore, I will scale the 'callback_worker' pod to 2 instances,
+guaranteeing that there are (2 \* #CPUs = 12) available processing celery threads, ensuring that the known deadlock will be avoided.
+
+```bash
+podman compose up --build --scale worker-query=2 --scale worker-callback=2
+```
+
+To stop the application:
+
+```bash
+ctrl-c
+```
+
+To clean up the stopped containers, run:
+
+```bash
+podman compose down --volumes
 ```
 
 The application should be available locally at 'http://localhost:8080'

@@ -1,0 +1,160 @@
+name: PR Build and Test
+
+on:
+  pull_request:
+    branches: [ main, dev ] # Tests PRs to main/dev
+  push:
+    branches: [ main ] # Tests direct pushes to main
+
+env:
+  # Test environment variables - using public demo credentials
+  AUGUR_DATABASE: graphish
+  AUGUR_HOST: chaoss.tv
+  AUGUR_PASSWORD: cableTV99!
+  AUGUR_PORT: 5432
+  AUGUR_SCHEMA: augur_data
+  AUGUR_USERNAME: coup
+  DEBUG_8KNOT: "True"
+  AUGUR_LOGIN_ENABLED: "False"
+  REDIS_PASSWORD: 1234
+  DEFAULT_SEARCHBAR_LABEL: chaoss
+  POSTGRES_PASSWORD: somepassword
+  SECRET_KEY: somethingsecret
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create test environment file
+        run: |
+          cat > .env << EOF
+          AUGUR_DATABASE=graphish
+          AUGUR_HOST=chaoss.tv
+          AUGUR_PASSWORD=cableTV99!
+          AUGUR_PORT=5432
+          AUGUR_SCHEMA=augur_data
+          AUGUR_USERNAME=coup
+          DEBUG_8KNOT=True
+          AUGUR_LOGIN_ENABLED=False
+          REDIS_PASSWORD=1234
+          DEFAULT_SEARCHBAR_LABEL=chaoss
+          POSTGRES_PASSWORD=somepassword
+          SECRET_KEY=somethingsecret
+          EOF
+
+      - name: Build and start services
+        run: |
+          echo "Building and starting Docker Compose services..."
+          docker compose up --build -d
+
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for services to start..."
+
+                    # Wait for redis services (PostgreSQL is external at chaoss.tv)
+          echo "Waiting for Redis services..."
+          timeout 60 bash -c 'until docker compose exec -T redis-cache redis-cli -a 1234 ping; do sleep 2; done'
+          timeout 60 bash -c 'until docker compose exec -T redis-users redis-cli -a 1234 ping; do sleep 2; done'
+
+          # Wait for app server to be ready
+          echo "Waiting for application server..."
+          timeout 180 bash -c 'until curl -f http://localhost:8080/health || curl -f http://localhost:8080/ ; do sleep 5; done'
+
+          echo "All services are ready!"
+
+      - name: Test application endpoints
+        run: |
+          echo "Testing application endpoints..."
+
+          # Test main page
+          echo "Testing main page..."
+          curl -f -s http://localhost:8080/ > /dev/null
+
+          # Test visualization pages
+          echo "Testing visualization pages..."
+
+          # Test contributions page
+          curl -f -s http://localhost:8080/contributions > /dev/null
+
+          # Test contributors pages
+          curl -f -s http://localhost:8080/contributors/contribution_types > /dev/null
+          curl -f -s http://localhost:8080/contributors/behavior > /dev/null
+
+          # Test chaoss page
+          curl -f -s http://localhost:8080/chaoss > /dev/null
+
+          # Test codebase page
+          curl -f -s http://localhost:8080/codebase > /dev/null
+
+          # Test affiliation page
+          curl -f -s http://localhost:8080/affiliation > /dev/null
+
+          # Test info page
+          curl -f -s http://localhost:8080/info > /dev/null
+
+          # Test repo overview page
+          curl -f -s http://localhost:8080/repo_overview > /dev/null
+
+          echo "All endpoint tests passed!"
+
+      - name: Test API health and functionality
+        run: |
+          echo "Testing application functionality..."
+
+          # Check if the application returns proper HTTP status codes
+          status_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/)
+          if [ $status_code -ne 200 ]; then
+            echo "Main page returned status code: $status_code"
+            exit 1
+          fi
+
+          # Test that the application serves static assets
+          curl -f -s http://localhost:8080/assets/logo-color.png > /dev/null || echo "Logo asset test failed (may be expected)"
+
+          echo "Functionality tests completed!"
+
+      - name: Check application logs for errors
+        if: always()
+        run: |
+          echo "Checking application logs for critical errors..."
+
+          # Check app-server logs for critical errors
+          if docker compose logs app-server | grep -i "error\|exception\|traceback" | grep -v "INFO\|DEBUG"; then
+            echo "Found errors in app-server logs:"
+            docker compose logs app-server | grep -i "error\|exception\|traceback" | grep -v "INFO\|DEBUG"
+          fi
+
+          # Check worker logs for critical errors
+          if docker compose logs worker-callback | grep -i "error\|exception\|traceback" | grep -v "INFO\|DEBUG"; then
+            echo "Found errors in worker-callback logs:"
+            docker compose logs worker-callback | grep -i "error\|exception\|traceback" | grep -v "INFO\|DEBUG"
+          fi
+
+          if docker compose logs worker-query | grep -i "error\|exception\|traceback" | grep -v "INFO\|DEBUG"; then
+            echo "Found errors in worker-query logs:"
+            docker compose logs worker-query | grep -i "error\|exception\|traceback" | grep -v "INFO\|DEBUG"
+          fi
+
+      - name: Show service status
+        if: always()
+        run: |
+          echo "Service status:"
+          docker compose ps
+
+          echo "Recent logs from app-server:"
+          docker compose logs --tail=50 app-server
+
+      - name: Cleanup
+        if: always()
+        run: |
+          echo "Cleaning up..."
+          docker compose down -v
+          docker system prune -f

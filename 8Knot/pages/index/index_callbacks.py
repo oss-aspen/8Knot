@@ -33,7 +33,7 @@ from queries.ossf_score_query import ossf_score_query as osq
 from queries.repo_info_query import repo_info_query as riq
 import redis
 import flask
-
+from .search_utils import fuzzy_search
 
 # list of queries to be run
 # QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq] - codebase page disabled
@@ -43,12 +43,12 @@ QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, rlq, pvq, rrq, osq, riq]
 # check if login has been enabled in config
 login_enabled = os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True"
 
+# Note: Login-related callbacks are conditionally registered based on login_enabled
+# because when login is disabled, the UI elements (refresh-button, logout-button, etc.)
+# don't exist in the layout, which would cause "nonexistent object" callback errors.
 
-@callback(
-    [Output("user-group-loading-signal", "data")],
-    [Input("url", "href"), Input("refresh-button", "n_clicks")],
-)
-def kick_off_group_collection(url, n_clicks):
+
+def _start_group_collection_login_enabled(url, n_clicks):
     """Schedules a Celery task to collect user groups.
     Sends a message via localStorage that will kick off a background callback
     which waits for the Celery task to finish.
@@ -89,17 +89,12 @@ def kick_off_group_collection(url, n_clicks):
         return dash.no_update
 
 
-@callback(
-    [
-        Output("nav-login-container", "children"),
-        Output("login-popover", "is_open"),
-        Output("refresh-button", "disabled"),
-        Output("logout-button", "disabled"),
-        Output("manage-group-button", "disabled"),
-    ],
-    Input("url", "href"),
-)
-def login_username_button(url):
+def _start_group_collection_login_disabled(url):
+    """Simplified version when login is disabled - no group collection needed."""
+    return dash.no_update
+
+
+def _login_username_button_enabled(url):
     """Sets logged-in-status component in top left of page.
 
     If a non-null username is known then we're logged in so we provide
@@ -169,69 +164,264 @@ def login_username_button(url):
     )
 
 
+def _login_username_button_disabled(url):
+    """Simplified version when login is disabled - just shows the login link."""
+    navlink = [
+        dbc.NavLink(
+            "Augur log in/sign up",
+            href="/login/",
+            id="login-navlink",
+            active=True,
+            # communicating with the underlying Flask server
+            external_link=True,
+        ),
+    ]
+    return [navlink]
+
+
 @callback(
     [Output("projects", "data")],
     [Input("projects", "searchValue")],
-    [
-        State("projects", "value"),
-    ],
+    [State("projects", "value"), State("cached-options", "data")],
 )
-def dynamic_multiselect_options(user_in: str, selections):
+def dynamic_multiselect_options(user_in: str, selections, cached_options):
     """
-    Ref: https://dash.plotly.com/dash-core-components/dropdown#dynamic-options
+    Enhanced search using fuzzy matching and client-side cache with server fallback.
 
-    For all of the possible repo's / orgs, check if the substring currently
-    being searched is in the repo's name or if the repo / org name is
-    in the current list of states selected. Add it to the list if it matches
-    either of the options.
+    Args:
+        user_in: User's search input
+        selections: Currently selected values
+        cached_options: All available options from client-side cache
     """
-
     if not user_in:
         return dash.no_update
 
-    options = augur.get_multiselect_options().copy()
+    try:
+        start_time = time.time()
+        logging.info(f"Search query: '{user_in}'")
 
-    if current_user.is_authenticated:
-        logging.warning(f"LOGINBUTTON: USER LOGGED IN {current_user}")
-        # TODO: implement more permanent interface
-        users_cache = redis.StrictRedis(
-            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
-            port=6379,
-            password=os.getenv("REDIS_PASSWORD", ""),
-            decode_responses=True,
+        # Start with cached options if available
+        if cached_options:
+            logging.info(f"Using client-side cache with {len(cached_options)} options")
+            options = cached_options
+        else:
+            logging.info("Client-side cache empty, fetching from server")
+            options = augur.get_multiselect_options().copy()
+            logging.info(f"Fetched {len(options)} options from server")
+            if current_user.is_authenticated:
+                try:
+                    users_cache = redis.StrictRedis(
+                        host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
+                        port=6379,
+                        password=os.getenv("REDIS_PASSWORD", ""),
+                        decode_responses=True,
+                    )
+                    users_cache.ping()
+                    if users_cache.exists(f"{current_user.get_id()}_group_options"):
+                        user_options = json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
+                        options = options + user_options
+                        logging.info(f"Added {len(user_options)} user options from Redis")
+                except redis.exceptions.ConnectionError as e:
+                    logging.error(f"MULTISELECT: Could not connect to users-cache. Error: {str(e)}")
+
+        if selections is None:
+            selections = []
+
+        # Remove prefixes from the search query if present
+        search_query = user_in
+        prefix_type = None
+
+        if search_query.lower().startswith("repo:"):
+            search_query = search_query[5:].strip()
+            prefix_type = "repo"
+            logging.info(f"Repo prefix detected, searching for: '{search_query}'")
+        elif search_query.lower().startswith("org:"):
+            search_query = search_query[4:].strip()
+            prefix_type = "org"
+            logging.info(f"Org prefix detected, searching for: '{search_query}'")
+
+        # SEARCH STRATEGY: searching both cache and server for best results. The client-side cache is still prioritized if available.
+        cache_matches = []
+        server_matches = []
+
+        # Initialize fallback flag
+        use_server_fallback = False
+
+        # Adjust threshold based on query length - more specific queries can use lower threshold
+        search_threshold = 0.15 if len(search_query) >= 4 else 0.2
+
+        # First, the search goes through the client-side cache if available
+        if cached_options:
+            cache_matches = fuzzy_search(search_query, cached_options, threshold=search_threshold)
+            logging.info(f"Cache search found {len(cache_matches)} matches (threshold={search_threshold})")
+
+        # Always also search server for comprehensive results (especially for longer queries)
+        if len(search_query) >= 3:
+            try:
+                server_options = augur.get_multiselect_options().copy()
+                if current_user.is_authenticated:
+                    try:
+                        users_cache = redis.StrictRedis(
+                            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
+                            port=6379,
+                            password=os.getenv("REDIS_PASSWORD", ""),
+                            decode_responses=True,
+                        )
+                        users_cache.ping()
+                        if users_cache.exists(f"{current_user.get_id()}_group_options"):
+                            user_options = json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
+                            server_options = server_options + user_options
+                    except redis.exceptions.ConnectionError as e:
+                        logging.error(f"SERVER SEARCH: Could not connect to users-cache. Error: {str(e)}")
+
+                server_matches = fuzzy_search(search_query, server_options, threshold=search_threshold)
+                logging.info(f"Server search found {len(server_matches)} matches (threshold={search_threshold})")
+
+            except Exception as e:
+                logging.error(f"Server search failed: {str(e)}")
+                server_matches = []
+
+        # If no cache available, fetch from server
+        if not cached_options:
+            matched_options = server_matches
+            use_server_fallback = True
+            logging.info(f"No cache available, using {len(server_matches)} server matches")
+        else:
+            # Combine cache and server results, prioritizing cache but adding server matches
+            matched_options = cache_matches.copy()
+            seen_values = set(opt["value"] for opt in cache_matches)
+            additional_from_server = []
+
+            for server_match in server_matches:
+                if server_match["value"] not in seen_values:
+                    additional_from_server.append(server_match)
+                    seen_values.add(server_match["value"])
+
+            matched_options.extend(additional_from_server)
+            use_server_fallback = len(additional_from_server) > 0
+
+            logging.info(
+                f"Combined results: {len(cache_matches)} from cache + {len(additional_from_server)} from server = {len(matched_options)} total"
+            )
+
+        # Filter by prefix type if specified
+        if prefix_type == "repo":
+            matched_options = [opt for opt in matched_options if isinstance(opt["value"], int)]
+            logging.info(f"Filtered to {len(matched_options)} repos")
+        elif prefix_type == "org":
+            matched_options = [opt for opt in matched_options if isinstance(opt["value"], str)]
+            logging.info(f"Filtered to {len(matched_options)} orgs")
+
+        # Format options with prefixes based on their type
+        formatted_opts = []
+        seen_values = set()  # Track seen values to prevent duplicates
+
+        for opt in matched_options:
+            # Skip duplicates (based on value)
+            if opt["value"] in seen_values:
+                continue
+
+            seen_values.add(opt["value"])
+            formatted_opt = opt.copy()
+            if isinstance(opt["value"], str):
+                # It's an org
+                formatted_opt["label"] = f"org: {opt['label']}"
+            else:
+                # It's a repo
+                formatted_opt["label"] = f"repo: {opt['label']}"
+            formatted_opts.append(formatted_opt)
+
+        # Simple reordering: put organizations first, then repositories
+        orgs_first = [opt for opt in formatted_opts if isinstance(opt["value"], str)]
+        repos_after = [opt for opt in formatted_opts if isinstance(opt["value"], int)]
+        formatted_opts = orgs_first + repos_after
+
+        # Always include the previous selections
+        # Format selected options with prefixes
+        selected_options = []
+
+        # First check if selections are in our current options (cache + any server fallback)
+        current_selection_values = set(
+            opt["value"] for opt in (cached_options or []) + (matched_options if use_server_fallback else [])
         )
-        try:
-            users_cache.ping()
-        except redis.exceptions.ConnectionError:
-            logging.error("MULTISELECT: Could not connect to users-cache.")
-            return dash.no_update
+        missing_selections = [v for v in selections if v not in current_selection_values]
 
-        try:
-            if users_cache.exists(f"{current_user.get_id()}_group_options"):
-                options = options + json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
-        except redis.exceptions.ConnectionError:
-            logging.error("Searchbar: couldn't connect to Redis for user group options.")
+        # If any selections aren't in our current options, fetch them from the server
+        if missing_selections:
+            logging.info(f"Fetching {len(missing_selections)} missing selections from server")
+            all_options = augur.get_multiselect_options().copy()
+            for v in selections:
+                matched_opts = [opt for opt in all_options if opt["value"] == v]
+                if matched_opts:
+                    formatted_v = matched_opts[0].copy()
+                    if isinstance(v, str):
+                        # It's an org
+                        formatted_v["label"] = f"org: {formatted_v['label']}"
+                    else:
+                        # It's a repo
+                        formatted_v["label"] = f"repo: {formatted_v['label']}"
+                    selected_options.append(formatted_v)
+        else:
+            # All selections are in our current options
+            all_current_options = (cached_options or []) + matched_options
+            for v in selections:
+                for opt in all_current_options:
+                    if opt["value"] == v:
+                        formatted_v = opt.copy()
+                        if isinstance(v, str):
+                            # It's an org
+                            formatted_v["label"] = f"org: {opt['label']}"
+                        else:
+                            # It's a repo
+                            formatted_v["label"] = f"repo: {opt['label']}"
+                        selected_options.append(formatted_v)
+                        break
 
-    # if the number of options changes then we're
-    # adding AUGUR_ entries somewhere.
+        # NO LIMITS for now: Return all matches with orgs prioritized
+        # Use the org/repo separation already done
 
-    if selections is None:
-        selections = []
+        logging.info(
+            f"Final results breakdown: {len(orgs_first)} orgs, {len(repos_after)} repos, {len(formatted_opts)} total"
+        )
 
-    # match lowercase inputs with lowercase possible values
-    opts = [i for i in options if user_in.lower() in i["label"]]
+        # Always prioritize orgs first, then repos, but don't limit the total count
+        result = orgs_first + repos_after
 
-    # sort matches by length
-    opts = sorted(opts, key=lambda v: len(v["label"]))
+        # Add selected options that aren't already in the results
+        selected_values = [opt["value"] for opt in result]
+        for opt in selected_options:
+            if opt["value"] not in selected_values:
+                result.append(opt)
 
-    # always include the previous selections from the searchbar to avoid
-    # those values being clobbered when we truncate the total length.
-    # arbitrarily 'small' number of matches returned..
-    if len(opts) < 100:
-        return [opts + [v for v in options if v["value"] in selections]]
+        end_time = time.time()
+        logging.info(f"Search completed in {end_time - start_time:.2f} seconds")
+        logging.info(f"Returning {len(result)} options to dropdown (fallback used: {use_server_fallback})")
 
-    else:
-        return [opts[:100] + [v for v in options if v["value"] in selections]]
+        return [result]
+
+    except Exception as e:
+        logging.error(f"Error in dynamic_multiselect_options: {str(e)}")
+        # Return at least the current selections as a fallback
+        if selections:
+            default_options = []
+            try:
+                # Try to get the labels for the current selections
+                options = augur.get_multiselect_options()
+                for v in options:
+                    if v["value"] in selections:
+                        formatted_v = v.copy()
+                        if isinstance(v["value"], str):
+                            formatted_v["label"] = f"org: {v['label']}"
+                        else:
+                            formatted_v["label"] = f"repo: {v['label']}"
+                        default_options.append(formatted_v)
+            except:
+                # If that fails, just return the raw selection values
+                default_options = [{"value": v, "label": f"ID: {v}"} for v in selections]
+
+            return [default_options]
+
+        return dash.no_update
 
 
 # callback for repo selections to feed into visualization call backs
@@ -355,6 +545,10 @@ def wait_queries(job_ids):
 
     jobs = [AsyncResult(j_id) for j_id in job_ids]
 
+    # Add timeout protection to prevent infinite waiting
+    start_time = time.time()
+    max_wait_time = 600  # 10 minutes timeout
+
     # default 'result_expires' for celery config is 86400 seconds.
     # so we don't have to check if the jobs exist. if this tasks
     # is enqueued 24 hours after the query-worker tasks finish
@@ -362,6 +556,12 @@ def wait_queries(job_ids):
     # results before we exit.
 
     while True:
+        # Check for timeout to prevent SoftTimeLimitExceeded
+        if time.time() - start_time > max_wait_time:
+            logging.warning(f"wait_queries: Timeout after {max_wait_time}s - returning timeout status")
+            jobs = [j.forget() for j in jobs]
+            return "Timeout - Retry", "warning"
+
         logging.warning([(j.name, j.status) for j in jobs])
 
         # jobs are either all ready
@@ -430,3 +630,133 @@ def run_queries(repos):
         jobs.append(j)
 
     return [j.id for j in jobs]
+
+
+# Add a cache initialization callback that runs on page load
+@callback(
+    Output("cached-options", "data"),
+    Input("cache-init-trigger", "children"),  # Dummy input to trigger on page load
+    prevent_initial_call=False,
+)
+def initialize_cache(_):
+    """
+    Initialize the client-side cache with all options.
+    This runs once when the page loads.
+    """
+    try:
+        logging.info("Initializing client-side options cache")
+        options = augur.get_multiselect_options().copy()
+        logging.info(f"Retrieved {len(options)} options from augur")
+
+        if current_user.is_authenticated:
+            try:
+                users_cache = redis.StrictRedis(
+                    host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
+                    port=6379,
+                    password=os.getenv("REDIS_PASSWORD", ""),
+                    decode_responses=True,
+                )
+                users_cache.ping()
+
+                if users_cache.exists(f"{current_user.get_id()}_group_options"):
+                    user_options = json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
+                    options = options + user_options
+                    logging.info(f"Added {len(user_options)} user-specific options from Redis")
+            except redis.exceptions.ConnectionError as e:
+                logging.error(f"CACHE INIT: Could not connect to users-cache. Error: {str(e)}")
+
+        # Get configuration from environment variables with defaults
+        sort_method = os.getenv("EIGHTKNOT_SEARCHBAR_OPTS_SORT", "shortest").lower()
+        max_total_results = int(os.getenv("EIGHTKNOT_SEARCHBAR_OPTS_MAX_RESULTS", "2000"))
+        max_repos = int(os.getenv("EIGHTKNOT_SEARCHBAR_OPTS_MAX_REPOS", "1500"))
+
+        # Sort options based on configuration
+        if sort_method == "shortest":
+            # Sort by label length to prioritize shorter names (default)
+            options.sort(key=lambda x: len(x.get("label", "")))
+        elif sort_method == "longest":
+            # Sort by label length in reverse to prioritize longer names
+            options.sort(key=lambda x: -len(x.get("label", "")))
+        elif sort_method == "alphabetical":
+            # Sort alphabetically
+            options.sort(key=lambda x: x.get("label", "").lower())
+
+        # For repos, keep the configured maximum number
+        repos = [opt for opt in options if isinstance(opt.get("value"), int)][:max_repos]
+
+        # For orgs, keep all (there are usually only a few hundred)
+        orgs = [opt for opt in options if isinstance(opt.get("value"), str)]
+
+        # Combine and prepare for storage, limiting to max_total_results
+        minimal_options = (repos + orgs)[:max_total_results]
+
+        logging.info(f"Cache initialized with {len(minimal_options)} total options (reduced from {len(options)})")
+        return minimal_options
+    except Exception as e:
+        logging.error(f"Cache initialization failed: {str(e)}")
+        # Return an empty list as a fallback to prevent complete failure
+        return []
+
+
+# Add search status indicator callbacks
+@callback(
+    [Output("search-status", "children"), Output("search-status", "className"), Output("search-status", "style")],
+    [Input("projects", "searchValue")],
+    prevent_initial_call=True,
+)
+def update_search_status(search_value):
+    """Update the search status indicator when a search is performed."""
+    if search_value and len(search_value) > 0:
+        return ["Searching...", "search-status-indicator searching", {"display": "block"}]
+    return ["", "search-status-indicator", {"display": "none"}]
+
+
+# Callback to hide the search status when results are loaded
+@callback(
+    [Output("search-status", "style", allow_duplicate=True)], [Input("projects", "data")], prevent_initial_call=True
+)
+def hide_search_status_when_loaded(_):
+    """Hide the search status indicator when results are loaded."""
+    return [{"display": "none"}]
+
+
+# =============================================================================
+# CONDITIONAL CALLBACK REGISTRATION
+# =============================================================================
+# When login is disabled, the UI elements referenced by these callbacks
+# (refresh-button, logout-button, # manage-group-button, login-popover)
+# do not exist in the layout, which would
+# cause "nonexistent object was used in an Input" callback errors.
+#
+# This conditional registration prevents those errors by only registering
+# callbacks for UI elements that actually exist in the current configuration.
+# =============================================================================
+
+if login_enabled:
+    # Register callbacks with full login functionality
+    callback(
+        [Output("user-group-loading-signal", "data")],
+        [Input("url", "href"), Input("refresh-button", "n_clicks")],
+    )(_start_group_collection_login_enabled)
+
+    callback(
+        [
+            Output("nav-login-container", "children"),
+            Output("login-popover", "is_open"),
+            Output("refresh-button", "disabled"),
+            Output("logout-button", "disabled"),
+            Output("manage-group-button", "disabled"),
+        ],
+        Input("url", "href"),
+    )(_login_username_button_enabled)
+else:
+    # Register simplified callbacks when login is disabled
+    callback(
+        [Output("user-group-loading-signal", "data")],
+        [Input("url", "href")],
+    )(_start_group_collection_login_disabled)
+
+    callback(
+        [Output("nav-login-container", "children")],
+        Input("url", "href"),
+    )(_login_username_button_disabled)
