@@ -87,3 +87,84 @@ blockquote p {
 .popover {
   max-width: 500px;
 }
+
+/* card-title Style Class*/
+h3.card-title {
+  color: #ffffff !important;
+  text-align: left !important;
+  font-size: 22px !important;
+  font-weight: bold !important;
+  margin-bottom: 0 !important;
+}
+
+/* Modern radio button styling */
+.custom-radio-buttons {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.custom-radio-buttons .form-check {
+  margin-right: 0.5rem;
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+}
+
+.custom-radio-buttons .form-check-input {
+  width: 0.8em;
+  height: 0.8em;
+  border: 1px solid #C7C7C7;
+  background-color: transparent;
+  margin-right: 0.4rem;
+  margin-top: 0;
+  flex-shrink: 0;
+}
+
+.custom-radio-buttons .form-check-input:checked {
+  background-color: #292929;
+  border-color: #C7C7C7;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='2.5' fill='%23C7C7C7'/%3e%3c/svg%3e");
+}
+
+.custom-radio-buttons .form-check-input:focus {
+  border-color: #C7C7C7;
+  box-shadow: 0 0 0 0.2rem rgba(199, 199, 199, 0.25);
+}
+
+.custom-radio-buttons .form-check-label {
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: 0.1rem;
+  margin-bottom: 0;
+  line-height: 1;
+}
+
+/* about-graph-button Style Class*/
+.about-graph-button {
+  border-radius: 1rem !important;
+  font-weight: 400 !important;
+  min-width: 120px !important;
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+  padding-top: 0.33rem !important;
+  padding-bottom: 0.33rem !important;
+  color: white !important;
+  border: 0.5px solid #404040 !important;
+  border-color: #404040 !important;
+}
+
+.about-graph-button:hover {
+  border-color: #606060 !important;
+  color: #f0f0f0 !important;
+}
+
+/* dark-card Style Class*/
+.dark-card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 12px !important;
+  border: 1px solid #292929 !important;
+  background-color: #292929 !important;
+}
