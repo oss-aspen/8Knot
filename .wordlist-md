@@ -21,6 +21,7 @@ cdolfi
 cmq
 aq
 config
+ctrl
 deployer
 dev
 eightknot
@@ -37,6 +38,7 @@ jm
 kustomize
 letsencrypt
 localhost
+macOS
 md
 multipage
 namespace
@@ -46,7 +48,10 @@ orgs
 osci
 OpenShift
 oss
+overcommit
+podman
 pre
+ps
 py
 redhat
 redis
@@ -63,6 +68,7 @@ sublicense
 tnozicka
 url
 utils
+wg
 yaml
 yml
 ansible
@@ -104,3 +110,6 @@ macOS
 podman
 ctrl
 ps
+sudo
+sysctl
+vm
