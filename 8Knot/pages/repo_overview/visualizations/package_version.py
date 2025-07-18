@@ -7,7 +7,7 @@ import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
-from pages.utils.graph_utils import color_seq
+from pages.utils.graph_utils import baby_blue, color_seq
 from queries.package_version_query import package_version_query as pvq
 from pages.utils.job_utils import nodata_graph
 import time
@@ -16,15 +16,34 @@ import cache_manager.cache_facade as cf
 
 PAGE = "repo_info"
 VIZ_ID = "package-version"
-
+#
 gc_package_version = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "Package Version Updates",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "Package Version Updates",
+                                className="card-title",
+                                style={"textAlign": "center", "margin": "0"},
+                            ),
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                color="outline-secondary",
+                                size="sm",
+                                className="about-graph-button",
+                            ),
+                            width="auto",
+                        ),
+                    ],
+                    align="center",
+                    justify="between",
+                    className="mb-3",
                 ),
                 dbc.Popover(
                     [
@@ -44,29 +63,10 @@ gc_package_version = dbc.Card(
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
-                dbc.Form(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
-                                ),
-                            ],
-                            align="center",
-                            justify="end",
-                        ),
-                    ]
-                ),
             ]
         )
     ],
+    className="dark-card",
 )
 
 
@@ -114,7 +114,7 @@ def package_version_graph(repolist):
     df = pd.DataFrame(df["dep_age"].value_counts().reset_index())
 
     # graph generation
-    fig = px.pie(df, names="dep_age", values="count", color_discrete_sequence=color_seq)
+    fig = px.pie(df, names="dep_age", values="count", color_discrete_sequence=baby_blue)
     fig.update_traces(
         textposition="inside",
         textinfo="percent+label",
@@ -122,7 +122,13 @@ def package_version_graph(repolist):
     )
 
     # add legend title
-    fig["layout"]["legend_title"] = "Date Range"
+    fig.update_layout(
+        legend_title_text="Date Range",
+        paper_bgcolor="#292929",
+        plot_bgcolor="#292929",
+        font=dict(color="white"),  # Makes all text white
+        legend=dict(font=dict(color="white")),  # Specifically makes legend text white
+    )
 
     logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
