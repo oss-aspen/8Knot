@@ -613,8 +613,10 @@ def run_queries(repos, n_clicks):
     if not repos:
         return []
 
-    # Don't run queries until user actually clicks the search button
-    # This prevents expensive startup queries for the default selection
+    # STARTUP OPTIMIZATION: Prevent queries until user explicitly searches
+    # Even though chaoss org is pre-selected, we don't want to trigger
+    # expensive data collection queries until user actually clicks search button.
+    # This maintains fast startup while preserving the expected user experience.
     if not n_clicks or n_clicks == 0:
         logging.warning("RUN_QUERIES: Skipping queries until search button is clicked")
         return []

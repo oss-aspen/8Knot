@@ -233,7 +233,9 @@ class AugurManager:
         Returns:
             git (str): URL of repo
         """
-        # If repo mappings haven't been loaded yet (startup was disabled), load them on-demand
+        # STARTUP OPTIMIZATION: Lazy loading pattern for repo ID to Git URL mappings
+        # Since multiselect_startup() is disabled for faster startup, we load the mapping
+        # data on-demand only when this method is actually called by user interactions
         if not hasattr(self, "repo_id_to_repo_git") or not self.repo_id_to_repo_git:
             logging.warning("REPO_ID_TO_GIT: Loading on-demand (startup was disabled)")
             self.multiselect_startup()
@@ -249,7 +251,9 @@ class AugurManager:
         Returns:
             [int] | None: repo_ids or None
         """
-        # If org mappings haven't been loaded yet (startup was disabled), load them on-demand
+        # STARTUP OPTIMIZATION: Lazy loading pattern for organization to repositories mapping
+        # Avoids expensive DB queries at startup by loading org->repo mappings only when
+        # a user actually selects an organization from the search dropdown
         if not hasattr(self, "org_name_to_repos_dict") or not self.org_name_to_repos_dict:
             logging.warning("ORG_TO_REPOS: Loading on-demand (startup was disabled)")
             self.multiselect_startup()
@@ -265,7 +269,8 @@ class AugurManager:
         Returns:
             bool: whether org name is in orgs
         """
-        # If org names haven't been loaded yet (startup was disabled), load them on-demand
+        # STARTUP OPTIMIZATION: Lazy loading pattern for organization names validation
+        # Instead of pre-loading all organization names at startup, we load them on-demand
         if not hasattr(self, "org_names") or not self.org_names:
             logging.warning("IS_ORG: Loading on-demand (startup was disabled)")
             self.multiselect_startup()

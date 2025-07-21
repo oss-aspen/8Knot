@@ -123,7 +123,9 @@ def get_uncached(func_name: str, repolist: list[int]) -> list[int]:  # or None
 
     Returns a list of repos that AREN'T resident in cache.
     """
-    # Handle None or empty repolist
+    # STARTUP OPTIMIZATION: Handle None or empty repolist
+    # This prevents crashes when visualization callbacks trigger with no selected repos
+    # (which happens at startup when repo-choices is None/empty)
     if not repolist:
         return []
 
@@ -170,11 +172,13 @@ def caching_wrapper(func_name: str, query: str, repolist: list[int], n_repolist_
     Raises:
         Exception: If a step fails, will print exception and re-raise.
 
-    Returns:
+        Returns:
         _type_: None
     """
 
-    # Handle None or empty repolist
+    # STARTUP OPTIMIZATION: Prevent unnecessary database queries with empty repo lists
+    # This avoids expensive query operations when no repositories are selected,
+    # which commonly occurs during app startup before users make selections
     if not repolist:
         logging.warning(f"{func_name} COLLECTION - NO REPOS TO CACHE")
         return 0
@@ -217,11 +221,13 @@ def retrieve_from_cache(
     For a given table in cache, get all results
     that having a matching repo_id.
 
-    Results are retrieved by a DataFrame, so column names
+        Results are retrieved by a DataFrame, so column names
     may need to be overridden by calling function.
     """
 
-    # Handle None or empty repolist
+    # STARTUP OPTIMIZATION: Return empty DataFrame for None/empty repo lists
+    # This allows visualization callbacks to handle "no data" states
+    # instead of crashing when triggered during startup with no selected repos
     if not repolist:
         return pd.DataFrame()
 
