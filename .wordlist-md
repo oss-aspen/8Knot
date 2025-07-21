@@ -113,3 +113,13 @@ ps
 sudo
 sysctl
 vm
+cd
+df
+Dockerfile
+dockerignore
+gunicorn
+init
+pycache
+pyproject
+toml
+vscode

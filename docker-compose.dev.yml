@@ -1,0 +1,86 @@
+services:
+  # Build the base 8knot image once for development
+  app-base:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    image: 8knot:latest
+    profiles:
+      - build-only  # This service is only used for building, not running
+
+  db-init:
+    image: 8knot:latest  # Use pre-built image for faster development
+    command: ["python3", "./cache_manager/db_init.py"]
+    depends_on:
+      postgres-cache:
+        condition: service_healthy
+    env_file:
+      - .env
+    restart: on-failure:1000
+
+  app-server:
+    image: 8knot:latest  # Use pre-built image for faster development
+    command:
+      [
+        "gunicorn",
+        "--reload",
+        "--bind",
+        ":8080",
+        "app:server",
+        "--workers",
+        "1",
+        "--threads",
+        "2",
+        "--timeout",
+        "300",
+        "--keep-alive",
+        "5"
+      ]
+    depends_on:
+      - worker-callback
+      - worker-query
+      - redis-cache
+      - redis-users
+      - postgres-cache
+      - db-init
+    env_file:
+      - .env
+    environment:
+      - DEFAULT_SEARCHBAR_LABEL=chaoss
+      - EIGHTKNOT_SEARCHBAR_OPTS_SORT=shortest
+      - EIGHTKNOT_SEARCHBAR_OPTS_MAX_RESULTS=5500
+      - EIGHTKNOT_SEARCHBAR_OPTS_MAX_REPOS=5000
+    restart: always
+
+  worker-callback:
+    image: 8knot:latest  # Use pre-built image for faster development
+    command: ["celery", "-A", "app:celery_app", "worker", "--loglevel=INFO", "--concurrency=1", "--time-limit=300", "--soft-time-limit=240"]
+    depends_on:
+      - redis-cache
+      - redis-users
+      - postgres-cache
+    env_file:
+      - .env
+    restart: always
+
+  worker-query:
+    image: 8knot:latest  # Use pre-built image for faster development
+    command:
+      [
+        "celery",
+        "-A",
+        "app:celery_app",
+        "worker",
+        "--loglevel=INFO",
+        "-Q",
+        "data",
+        "--concurrency=1",
+        "--time-limit=600",
+        "--soft-time-limit=540"
+      ]
+    depends_on:
+      - redis-cache
+      - postgres-cache
+    env_file:
+      - .env
+    restart: always
