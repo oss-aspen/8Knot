@@ -9,7 +9,8 @@ from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, color_seq
 from queries.repo_info_query import repo_info_query as riq
-from queries.repo_files_query import repo_files_query as rfq
+
+# from queries.repo_files_query import repo_files_query as rfq #TODO: run back on when the query hang is fixed
 from queries.repo_releases_query import repo_releases_query as rrq
 import io
 import cache_manager.cache_facade as cf
@@ -185,25 +186,26 @@ def multi_query_helper(repos):
     """
 
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=repos):
-        logging.warning(f"CONTRIBUTION FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
+    """while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=repos):
+        logging.warning(f"REPO GENERAL INFO - WAITING ON DATA TO BECOME AVAILABLE")
+        time.sleep(0.5)"""  # comment out until query is fixed
 
     # wait for data to asynchronously download and become available.
     while not_cached := cf.get_uncached(func_name=riq.__name__, repolist=repos):
-        logging.warning(f"CONTRIBUTION FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
+        logging.warning(f"REPO GENERAL INFO - WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 
     # wait for data to asynchronously download and become available.
     while not_cached := cf.get_uncached(func_name=rrq.__name__, repolist=repos):
-        logging.warning(f"CONTRIBUTION FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
+        logging.warning(f"REPO GENERAL INFO - WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 
     # GET ALL DATA FROM POSTGRES CACHE
-    df_file = cf.retrieve_from_cache(
+    """df_file = cf.retrieve_from_cache(
         tablename=rfq.__name__,
         repolist=repos,
-    )
+    )"""
+    df_file = pd.DataFrame(columns=["file_path", "file_name", "id"])  # comment out until query is fixed
     df_repo_info = cf.retrieve_from_cache(
         tablename=riq.__name__,
         repolist=repos,
