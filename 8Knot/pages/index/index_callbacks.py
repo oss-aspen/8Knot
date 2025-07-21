@@ -424,17 +424,48 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
         return dash.no_update
 
 
+# callback for automatic loading of default pre-selected chaoss org
+@callback(
+    [Output("repo-choices", "data", allow_duplicate=True)],
+    [Input("projects", "value")],
+    prevent_initial_call=True,
+)
+def auto_load_default_selection(user_vals):
+    """
+    Automatically loads data for the pre-selected default chaoss org.
+    This ensures chaoss data is available immediately without requiring search button click.
+    """
+    if not user_vals or len(user_vals) != 1:
+        raise dash.exceptions.PreventUpdate
+
+    # Check if this is the default chaoss selection
+    if user_vals[0] != "chaoss":
+        raise dash.exceptions.PreventUpdate
+
+    # Get chaoss org repos
+    try:
+        chaoss_repos = augur.org_to_repos("chaoss") if augur.is_org("chaoss") else []
+    except:
+        chaoss_repos = []
+
+    if not chaoss_repos:
+        raise dash.exceptions.PreventUpdate
+
+    logging.warning("AUTO_LOAD: Loading default chaoss org data automatically")
+    return [chaoss_repos]
+
+
 # callback for repo selections to feed into visualization call backs
 @callback(
     [Output("results-output-container", "children"), Output("repo-choices", "data")],
     [
-        Input("projects", "value"),  # Changed from search n_clicks to projects value
+        Input("search", "n_clicks"),  # Changed back to search button trigger
     ],
     [
-        State("search", "n_clicks"),  # Search button moved to State for reference
+        State("projects", "value"),  # Projects value moved back to State
     ],
 )
-def multiselect_values_to_repo_ids(user_vals, n_clicks):
+def multiselect_values_to_repo_ids(n_clicks, user_vals):
     if not user_vals:
         logging.warning("NOTHING SELECTED IN SEARCH BAR")
         raise dash.exceptions.PreventUpdate
@@ -615,31 +646,12 @@ def run_queries(repos, n_clicks):
     if not repos:
         return []
 
-    # STARTUP OPTIMIZATION: Allow queries for pre-selected default OR explicit search
-    # The goal is to prevent massive startup queries while still allowing the default
-    # chaoss org to load automatically. This maintains fast startup while providing
-    # immediate data for the default selection without requiring user interaction.
+    # STARTUP OPTIMIZATION: With proper callback chain, we only get here when:
+    # 1. Auto-load callback triggered for default chaoss selection, OR
+    # 2. Search button was clicked for user selections
+    # This maintains fast startup while providing data when needed
 
-    # Get the default chaoss org repos to compare with current selection
-    try:
-        default_org_repos = augur.org_to_repos("chaoss") if augur.is_org("chaoss") else []
-    except:
-        default_org_repos = []
-
-    # Allow queries if:
-    # 1. User explicitly clicked search button, OR
-    # 2. Current selection matches the default pre-selected org (chaoss)
-    is_search_clicked = n_clicks and n_clicks > 0
-    is_default_selection = (
-        default_org_repos and len(repos) == len(default_org_repos) and set(repos) == set(default_org_repos)
-    )
-
-    if not is_search_clicked and not is_default_selection:
-        logging.warning("RUN_QUERIES: Skipping queries - not search click and not default selection")
-        return []
-
-    if is_default_selection and not is_search_clicked:
-        logging.warning("RUN_QUERIES: Auto-loading data for pre-selected default org (chaoss)")
+    logging.warning(f"RUN_QUERIES: Running queries for {len(repos)} repos (search clicks: {n_clicks or 0})")
 
     # cache manager object
     cache = cm()
