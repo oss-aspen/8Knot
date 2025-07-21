@@ -428,11 +428,13 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
 @callback(
     [Output("results-output-container", "children"), Output("repo-choices", "data")],
     [
-        Input("search", "n_clicks"),
-        State("projects", "value"),
+        Input("projects", "value"),  # Changed from search n_clicks to projects value
+    ],
+    [
+        State("search", "n_clicks"),  # Search button moved to State for reference
     ],
 )
-def multiselect_values_to_repo_ids(n_clicks, user_vals):
+def multiselect_values_to_repo_ids(user_vals, n_clicks):
     if not user_vals:
         logging.warning("NOTHING SELECTED IN SEARCH BAR")
         raise dash.exceptions.PreventUpdate
@@ -613,13 +615,31 @@ def run_queries(repos, n_clicks):
     if not repos:
         return []
 
-    # STARTUP OPTIMIZATION: Prevent queries until user explicitly searches
-    # Even though chaoss org is pre-selected, we don't want to trigger
-    # expensive data collection queries until user actually clicks search button.
-    # This maintains fast startup while preserving the expected user experience.
-    if not n_clicks or n_clicks == 0:
-        logging.warning("RUN_QUERIES: Skipping queries until search button is clicked")
+    # STARTUP OPTIMIZATION: Allow queries for pre-selected default OR explicit search
+    # The goal is to prevent massive startup queries while still allowing the default
+    # chaoss org to load automatically. This maintains fast startup while providing
+    # immediate data for the default selection without requiring user interaction.
+
+    # Get the default chaoss org repos to compare with current selection
+    try:
+        default_org_repos = augur.org_to_repos("chaoss") if augur.is_org("chaoss") else []
+    except:
+        default_org_repos = []
+
+    # Allow queries if:
+    # 1. User explicitly clicked search button, OR
+    # 2. Current selection matches the default pre-selected org (chaoss)
+    is_search_clicked = n_clicks and n_clicks > 0
+    is_default_selection = (
+        default_org_repos and len(repos) == len(default_org_repos) and set(repos) == set(default_org_repos)
+    )
+
+    if not is_search_clicked and not is_default_selection:
+        logging.warning("RUN_QUERIES: Skipping queries - not search click and not default selection")
         return []
+
+    if is_default_selection and not is_search_clicked:
+        logging.warning("RUN_QUERIES: Auto-loading data for pre-selected default org (chaoss)")
 
     # cache manager object
     cache = cm()
