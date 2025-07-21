@@ -424,37 +424,6 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
         return dash.no_update
 
 
-# callback for automatic loading of default pre-selected chaoss org
-@callback(
-    [Output("repo-choices", "data", allow_duplicate=True)],
-    [Input("projects", "value")],
-    prevent_initial_call=True,
-)
-def auto_load_default_selection(user_vals):
-    """
-    Automatically loads data for the pre-selected default chaoss org.
-    This ensures chaoss data is available immediately without requiring search button click.
-    """
-    if not user_vals or len(user_vals) != 1:
-        raise dash.exceptions.PreventUpdate
-
-    # Check if this is the default chaoss selection
-    if user_vals[0] != "chaoss":
-        raise dash.exceptions.PreventUpdate
-
-    # Get chaoss org repos
-    try:
-        chaoss_repos = augur.org_to_repos("chaoss") if augur.is_org("chaoss") else []
-    except:
-        chaoss_repos = []
-
-    if not chaoss_repos:
-        raise dash.exceptions.PreventUpdate
-
-    logging.warning("AUTO_LOAD: Loading default chaoss org data automatically")
-    return [chaoss_repos]
-
-
 # callback for repo selections to feed into visualization call backs
 @callback(
     [Output("results-output-container", "children"), Output("repo-choices", "data")],
