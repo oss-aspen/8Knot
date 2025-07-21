@@ -1,0 +1,71 @@
+ # Git and version control
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+README*
+CHANGELOG*
+docs/
+
+# Development files
+.env*
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python cache and virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+
+# Testing and CI
+.pytest_cache/
+.coverage
+.tox/
+.github/
+
+# Node modules (if any)
+node_modules/
+npm-debug.log*
+
+# Logs
+*.log
+logs/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+*.sublime-project
+*.sublime-workspace
+
+# Build artifacts (avoid recursive copying)
+docker/
+docker-compose*.yml
+Dockerfile*
+
+# Large data files that aren't needed in container
+*.sql
+*.dump
+*.tar.gz
+*.zip
+
+# Temporary files
+tmp/
+temp/
