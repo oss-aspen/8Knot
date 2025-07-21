@@ -253,7 +253,7 @@ search_bar = html.Div(
                             variant="filled",
                             debounce=100,  # debounce time for the search input, since we're implementing client-side caching, we can use a faster debounce
                             data=[augur.initial_multiselect_option()],
-                            value=[augur.initial_multiselect_option()["value"]],
+                            value=[augur.initial_multiselect_option()["value"]],  # Pre-select chaoss org at startup
                             style={"fontSize": 16, "zIndex": 9999},  # Updated: moved zIndex to style
                             maxDropdownHeight=300,  # limits the dropdown menu's height to 300px
                             # Removed: dropdownPosition and transitionDuration no longer supported in v2.1.0
@@ -323,7 +323,9 @@ search_bar = html.Div(
 layout = dbc.Container(
     [
         # componets to store data from queries
-        dcc.Store(id="repo-choices", storage_type="session", data=[]),
+        dcc.Store(
+            id="repo-choices", storage_type="session", data=None
+        ),  # Changed from [] to None to prevent startup callbacks
         # components to store job-ids for the worker queue
         dcc.Store(id="job-ids", storage_type="session", data=[]),
         dcc.Store(id="user-group-loading-signal", data="", storage_type="memory"),

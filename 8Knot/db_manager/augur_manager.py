@@ -233,6 +233,11 @@ class AugurManager:
         Returns:
             git (str): URL of repo
         """
+        # If repo mappings haven't been loaded yet (startup was disabled), load them on-demand
+        if not hasattr(self, "repo_id_to_repo_git") or not self.repo_id_to_repo_git:
+            logging.warning("REPO_ID_TO_GIT: Loading on-demand (startup was disabled)")
+            self.multiselect_startup()
+
         return self.repo_id_to_repo_git.get(id)
 
     def org_to_repos(self, org):
@@ -244,6 +249,11 @@ class AugurManager:
         Returns:
             [int] | None: repo_ids or None
         """
+        # If org mappings haven't been loaded yet (startup was disabled), load them on-demand
+        if not hasattr(self, "org_name_to_repos_dict") or not self.org_name_to_repos_dict:
+            logging.warning("ORG_TO_REPOS: Loading on-demand (startup was disabled)")
+            self.multiselect_startup()
+
         return self.org_name_to_repos_dict[org]
 
     def is_org(self, org):
@@ -255,47 +265,37 @@ class AugurManager:
         Returns:
             bool: whether org name is in orgs
         """
+        # If org names haven't been loaded yet (startup was disabled), load them on-demand
+        if not hasattr(self, "org_names") or not self.org_names:
+            logging.warning("IS_ORG: Loading on-demand (startup was disabled)")
+            self.multiselect_startup()
+
         return org in self.org_names
 
     def initial_multiselect_option(self):
         """Getter method for the initial multiselect option.
-            May be overwritten by the environment.
+            Provides a lightweight default without triggering database queries at startup.
 
         Returns:
             dict(value, label): first thing the multiselect will represent on startup
         """
         try:
-            if self.initial_search_option is None:
-                # default the initial multiselect option to the
-                # first item in the list of options.
+            if os.getenv("DEFAULT_SEARCHBAR_LABEL"):
+                default_label = os.getenv("DEFAULT_SEARCHBAR_LABEL")
+                logging.warning(
+                    f"INITIAL SEARCHBAR OPTION: Using environment default '{default_label}' without DB lookup"
+                )
+                # Return the environment-specified option directly (assumes it's an org name like "chaoss")
+                return {"label": f"org: {default_label}", "value": default_label.lower()}
 
-                self.initial_search_option = self.multiselect_options[0]
+            # If no environment default, return a generic first option without loading database
+            # This will be properly resolved when user actually searches or selects
+            return {"label": "org: chaoss", "value": "chaoss"}
 
-                if os.getenv("DEFAULT_SEARCHBAR_LABEL"):
-                    logging.warning("INITIAL SEARCHBAR OPTION: DEFAULT OVERWRITTEN")
-                    default_label = os.getenv("DEFAULT_SEARCHBAR_LABEL")
-
-                    # search through available options for the specified overwriting default.
-                    found_option = False
-                    for opt in self.multiselect_options:
-                        if default_label == opt["label"]:
-                            # Create a copy of the option with the "repo:" prefix
-                            self.initial_search_option = opt.copy()
-                            # Add "repo:" prefix if it's a repo (integer value)
-                            if isinstance(opt["value"], int):
-                                self.initial_search_option["label"] = f"repo: {opt['label']}"
-                            else:
-                                self.initial_search_option["label"] = f"org: {opt['label']}"
-
-                            logging.warning(f"INITIAL SEARCHBAR OPTION: NEW DEFAULT: {self.initial_search_option}")
-                            found_option = True
-                            break
-
-            return self.initial_search_option
         except Exception as e:
             logging.error(f"Error in initial_multiselect_option: {str(e)}")
             # Return a fallback option in case of any error
-            return {"label": "repo: Fallback Option", "value": -1}
+            return {"label": "org: chaoss", "value": "chaoss"}
 
     def get_multiselect_options(self):
         """Getter method on all entries in repo+orgs options
@@ -304,6 +304,11 @@ class AugurManager:
         Returns:
             [{label, value}]: multiselect options
         """
+        # If options haven't been loaded yet (startup disabled), load them on-demand
+        if not hasattr(self, "multiselect_options") or not self.multiselect_options:
+            logging.warning("MULTISELECT_OPTIONS: Loading on-demand (startup was disabled)")
+            self.multiselect_startup()
+
         return self.multiselect_options
 
     def make_user_request(self, access_token, headers={}, params={}):

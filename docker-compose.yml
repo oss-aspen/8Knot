@@ -56,6 +56,7 @@ services:
     env_file:
       - .env
     environment:
+      - DEFAULT_SEARCHBAR_LABEL=chaoss  # Default org to show in searchbar at startup
       - EIGHTKNOT_SEARCHBAR_OPTS_SORT=shortest  # Try different options: shortest, longest, alphabetical
       - EIGHTKNOT_SEARCHBAR_OPTS_MAX_RESULTS=5500  # Maximum number of results to return (org and repo)
       - EIGHTKNOT_SEARCHBAR_OPTS_MAX_REPOS=5000  # Max number of repos

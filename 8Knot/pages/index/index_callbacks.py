@@ -597,15 +597,27 @@ def wait_queries(job_ids):
 @callback(
     Output("job-ids", "data"),
     Input("repo-choices", "data"),
+    State("search", "n_clicks"),
 )
-def run_queries(repos):
+def run_queries(repos, n_clicks):
     """
     Executes queries defined in /queries against Augur
     instance for input Repos; caches results in Postgres.
 
     Args:
-        repos ([int]): repositories we collect data for.
+        repos ([int] | None): repositories we collect data for.
+        n_clicks (int | None): number of times search button was clicked
     """
+
+    # Don't run queries if no repos selected (None or empty list)
+    if not repos:
+        return []
+
+    # Don't run queries until user actually clicks the search button
+    # This prevents expensive startup queries for the default selection
+    if not n_clicks or n_clicks == 0:
+        logging.warning("RUN_QUERIES: Skipping queries until search button is clicked")
+        return []
 
     # cache manager object
     cache = cm()
@@ -636,7 +648,7 @@ def run_queries(repos):
 @callback(
     Output("cached-options", "data"),
     Input("cache-init-trigger", "children"),  # Dummy input to trigger on page load
-    prevent_initial_call=False,
+    prevent_initial_call=True,  # Changed to True to prevent automatic loading at startup
 )
 def initialize_cache(_):
     """

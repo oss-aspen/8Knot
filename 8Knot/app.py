@@ -44,8 +44,9 @@ except KeyError:
 except SQLAlchemyError:
     sys.exit(1)
 
+# NOTE: multiselect_startup() disabled for faster startup - options loaded on-demand
 # grab list of projects and orgs from Augur database.
-augur.multiselect_startup()
+# augur.multiselect_startup()
 
 
 """IMPORT AFTER GLOBAL VARIABLES SET"""

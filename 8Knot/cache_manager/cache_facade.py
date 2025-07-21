@@ -123,6 +123,10 @@ def get_uncached(func_name: str, repolist: list[int]) -> list[int]:  # or None
 
     Returns a list of repos that AREN'T resident in cache.
     """
+    # Handle None or empty repolist
+    if not repolist:
+        return []
+
     with pg.connect(cache_cx_string) as cache_conn:
         with cache_conn.cursor() as cache_cur:
             composed_query = pg_sql.SQL(
@@ -169,6 +173,12 @@ def caching_wrapper(func_name: str, query: str, repolist: list[int], n_repolist_
     Returns:
         _type_: None
     """
+
+    # Handle None or empty repolist
+    if not repolist:
+        logging.warning(f"{func_name} COLLECTION - NO REPOS TO CACHE")
+        return 0
+
     try:
         # STEP 1: Which repos need to be queried for?
         #           some might already be in cache.
@@ -210,6 +220,10 @@ def retrieve_from_cache(
     Results are retrieved by a DataFrame, so column names
     may need to be overridden by calling function.
     """
+
+    # Handle None or empty repolist
+    if not repolist:
+        return pd.DataFrame()
 
     # GET ALL DATA FROM POSTGRES CACHE
     df = None
