@@ -1,21 +1,45 @@
-h2,
-h4,
-h5,
-h6 {
-  color: #b5b683 !important;
+/* ==== CSS VARIABLES FOR CONSISTENT THEMING ==== */
+:root {
+  --color-primary: #6b8976;
+  --color-secondary: #b5b683;
+  --color-accent: #8d9d92;
+  --color-muted: #aaa;
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-dark-bg: #1D1D1D;
+  --color-card-bg: #272b30;
+  --color-border: #292929;
+  --color-text-light: #f0f0f0;
+  --spacing-sm: 0.25rem;
+  --spacing-md: 0.5rem;
+  --spacing-lg: 1rem;
+  --border-radius: 1rem;
 }
 
-h1,
-h3 {
-  color: #6b8976 !important;
+/* ==== TYPOGRAPHY WITH HIGHER SPECIFICITY ==== */
+body h2,
+body h4,
+body h5,
+body h6 {
+  color: var(--color-secondary);
 }
 
+body h1,
+body h3 {
+  color: var(--color-primary);
+}
+
+/* Blockquote styling with higher specificity */
+article blockquote h5,
+div blockquote h5,
 blockquote h5 {
-  color: #aaa !important;
+  color: var(--color-muted);
 }
 
+article blockquote,
+div blockquote,
 blockquote {
-  color: #8d9d92 !important;
+  color: var(--color-accent);
   font-style: normal;
   font-size: 18px;
   margin-left: 32px;
@@ -32,25 +56,32 @@ blockquote p {
   max-width: 950px;
 }
 
-/* this is to change the color for the spinner, cant be changed directly */
+/* ==== DASH SPECIFIC COMPONENTS ==== */
+/* Spinner needs !important because it's deeply nested in Dash internals */
 .dash-spinner.dash-default-spinner {
-  filter: contrast(1.2) hue-rotate(308deg) grayscale(0.76) !important;
+  filter: contrast(1.2) hue-rotate(308deg) grayscale(0.76);
 }
 
+/* Utility classes */
 .explanation-p {
   width: auto;
   min-width: 50px;
   max-width: 550px;
 }
 
-.navbar-brand {
-  color: #6b8976 !important;
+/* Navigation brand with higher specificity */
+.navbar .navbar-brand,
+nav .navbar-brand {
+  color: var(--color-primary);
 }
 
-.metric_data {
-  color: #000000 !important;
-  text-shadow: none !important;
-  padding-bottom: 15px !important;
+/* ==== DATA DISPLAY COMPONENTS ==== */
+/* Metric data with higher specificity */
+.metric-container .metric_data,
+div.metric_data {
+  color: var(--color-black);
+  text-shadow: none;
+  padding-bottom: 15px;
 }
 
 .box_emissions {
@@ -62,42 +93,50 @@ blockquote p {
   text-align: center;
 }
 
-.glace_headers {
-  color: #000000 !important;
-  text-shadow: none !important;
-  font-weight: "normal" !important;
+/* Headers with higher specificity */
+.glace-container .glace_headers,
+div.glace_headers {
+  color: var(--color-black);
+  text-shadow: none;
+  font-weight: normal;
 }
 
-/* changes the color of an alert */
-.alert-warning {
-    background-color: #B5B682 !important;
+/* ==== BOOTSTRAP COMPONENT OVERRIDES ==== */
+/* Alert warning with higher specificity */
+.alert.alert-warning {
+  background-color: var(--color-secondary);
 }
 
-/* updates background of the dmc-multiselect in visualizations */
+/* ==== DASH MANTINE COMPONENTS ==== */
+/* DMC multiselect custom styling */
 .dmc-multiselect-custom {
-  background-color: #272b30;
+  background-color: var(--color-card-bg);
 }
 
-/* updates background color of switch*/
-.botlist-filter-switch:checked {
-  background-color: #6b8976;
+/* ==== FORM COMPONENTS ==== */
+/* Switch styling with higher specificity */
+.filter-container .botlist-filter-switch:checked,
+input.botlist-filter-switch:checked {
+  background-color: var(--color-primary);
 }
 
-/* updates popover size to allow more text per line */
+/* Popover styling */
 .popover {
   max-width: 500px;
 }
 
-/* card-title Style Class*/
-h3.card-title {
-  color: #ffffff !important;
-  text-align: left !important;
-  font-size: 22px !important;
-  font-weight: bold !important;
-  margin-bottom: 0 !important;
+/* ==== CARD COMPONENTS ==== */
+/* Card title with higher specificity */
+.card h3.card-title,
+div.card h3.card-title {
+  color: var(--color-white);
+  text-align: left;
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 0;
 }
 
-/* Modern radio button styling */
+/* ==== CUSTOM RADIO BUTTONS ==== */
 .custom-radio-buttons {
   display: flex;
   flex-direction: row;
@@ -105,7 +144,7 @@ h3.card-title {
 }
 
 .custom-radio-buttons .form-check {
-  margin-right: 0.5rem;
+  margin-right: var(--spacing-md);
   margin-bottom: 0;
   display: flex;
   align-items: center;
@@ -122,7 +161,7 @@ h3.card-title {
 }
 
 .custom-radio-buttons .form-check-input:checked {
-  background-color: #292929;
+  background-color: var(--color-border);
   border-color: #C7C7C7;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='2.5' fill='%23C7C7C7'/%3e%3c/svg%3e");
 }
@@ -133,7 +172,7 @@ h3.card-title {
 }
 
 .custom-radio-buttons .form-check-label {
-  color: #ffffff;
+  color: var(--color-white);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
@@ -142,29 +181,33 @@ h3.card-title {
   line-height: 1;
 }
 
-/* about-graph-button Style Class*/
-.about-graph-button {
-  border-radius: 1rem !important;
-  font-weight: 400 !important;
-  min-width: 120px !important;
-  padding-left: 1rem !important;
-  padding-right: 1rem !important;
-  padding-top: 0.33rem !important;
-  padding-bottom: 0.33rem !important;
-  color: white !important;
-  border: 0.5px solid #404040 !important;
-  border-color: #404040 !important;
+/* ==== CUSTOM BUTTON STYLES ==== */
+/* About graph button with higher specificity */
+.graph-container .about-graph-button,
+button.about-graph-button {
+  border-radius: var(--border-radius);
+  font-weight: 400;
+  min-width: 120px;
+  padding: 0.33rem var(--spacing-lg);
+  color: var(--color-white);
+  border: 0.5px solid #404040;
+  background-color: transparent;
+  transition: all 0.2s ease;
 }
 
-.about-graph-button:hover {
-  border-color: #606060 !important;
-  color: #f0f0f0 !important;
+.graph-container .about-graph-button:hover,
+button.about-graph-button:hover {
+  border-color: #606060;
+  color: var(--color-text-light);
+  background-color: rgba(64, 64, 64, 0.1);
 }
 
-/* dark-card Style Class*/
-.dark-card {
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
-  border-radius: 12px !important;
-  border: 1px solid #292929 !important;
-  background-color: #292929 !important;
+/* ==== CARD STYLES ==== */
+/* Dark card with higher specificity */
+.card-container .dark-card,
+div.dark-card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-border);
 }
