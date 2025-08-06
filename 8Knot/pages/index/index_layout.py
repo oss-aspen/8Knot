@@ -22,7 +22,7 @@ if os.getenv("AUGUR_LOGIN_ENABLED", "False") != "True":
                         "If you need to collect data on new repositories, please ",
                         html.A(
                             "create a repository collection request",
-                            href="https://github.com/oss-aspen/8Knot/issues/new?template=augur_load.md",
+                            href="https://github.com/augurlabs/software-resilience-lab/issues/new?template=augur_load.md",
                             target="_blank",
                             style={"fontWeight": "500", "color": "#1565C0"},
                         ),
