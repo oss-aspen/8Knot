@@ -75,3 +75,10 @@ def issue_assignee_query(self, repos):
     """
 
     logging.warning(f"{issue_assignee_query.__name__} COLLECTION - END")
+
+    def contributors_funnel_query(repolist):
+    return """
+        SELECT *
+        FROM augur_data.d1_contributor_engagement
+        WHERE repo_id IN ({})
+    """.format(",".join([str(r) for r in repolist]))
