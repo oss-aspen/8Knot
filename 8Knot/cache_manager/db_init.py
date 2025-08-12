@@ -228,6 +228,20 @@ def _create_application_tables() -> None:
 
         cur.execute(
             """
+            CREATE UNLOGGED TABLE IF NOT EXISTS contributors_funnel_query(
+                repo_id int,
+                cntrb_id text,
+                username text,
+                created_issue int,
+                opened_pr int,
+                pr_commented int
+            )
+            """
+        )
+        logging.warning("CREATED contributors_funnel_query TABLE")
+
+        cur.execute(
+            """
             CREATE UNLOGGED TABLE IF NOT EXISTS issue_assignee_query(
                 issue_id text,
                 repo_id int,
