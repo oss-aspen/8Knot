@@ -92,30 +92,82 @@ def sidebar_dropdown(
     )
 
 
-# Top bar with logos
+# Top bar with logos and navigation links
 topbar = html.Div(
     [
-        html.Img(
-            src="/assets/8Knot.svg",
-            alt="8Knot Logo",
+        # Left section with logos
+        html.Div(
+            [
+                html.Img(
+                    src="/assets/8Knot.svg",
+                    alt="8Knot Logo",
+                    style={
+                        "width": "70px",
+                        "height": "22px",
+                        "margin": "20px 20px",
+                        "display": "inline-block",
+                        "verticalAlign": "middle",
+                    },
+                ),
+                html.Img(
+                    src="/assets/CHAOSS.svg",
+                    alt="CHAOSS Logo",
+                    style={
+                        "width": "70px",
+                        "height": "22px",
+                        "margin": "10px -20px",
+                        "display": "inline-block",
+                        "verticalAlign": "middle",
+                    },
+                ),
+            ],
+            style={"display": "flex", "alignItems": "center"},
+        ),
+        # Middle section with navigation links (moved from sidebar footer)
+        html.Div(
+            [
+                dbc.NavLink(
+                    "Welcome",
+                    href="/",
+                    external_link=True,
+                    target="_self",
+                    style={
+                        "color": "#9c9c9c",
+                        "fontSize": "16px",
+                        "padding": "6px 16px",
+                        "marginRight": "16px",
+                        "textDecoration": "none",
+                        "borderRadius": "8px",
+                        "lineHeight": "1.2",
+                    },
+                ),
+                dbc.NavLink(
+                    "Visualizations",
+                    href="/repo_overview",
+                    active="exact",
+                    style={
+                        "backgroundColor": "transparent",
+                        "border": "none",
+                        "color": "#9c9c9c",
+                        "fontSize": "16px",
+                        "textAlign": "left",
+                        "padding": "4px 16px",
+                        "borderRadius": "8px",
+                        "textDecoration": "none",
+                        "lineHeight": "1.2",
+                    },
+                ),
+            ],
             style={
-                "width": "70px",
-                "height": "22px",
-                "margin": "20px 20px",
-                "display": "inline-block",
-                "verticalAlign": "middle",
+                "display": "flex",
+                "alignItems": "center",
+                "justifyContent": "center",
+                "flex": "1",
             },
         ),
-        html.Img(
-            src="/assets/CHAOSS.svg",
-            alt="CHAOSS Logo",
-            style={
-                "width": "70px",
-                "height": "22px",
-                "margin": "10px -20px",
-                "display": "inline-block",
-                "verticalAlign": "middle",
-            },
+        # Right section (empty for now, can be used for future additions)
+        html.Div(
+            style={"minWidth": "150px"},  # Balances the left section
         ),
     ],
     id="rectangular-bar",
@@ -125,8 +177,9 @@ topbar = html.Div(
         "background-color": "#242424",
         "display": "flex",
         "alignItems": "center",
-        "justifyContent": "flex-start",
+        "justifyContent": "space-between",
         "paddingLeft": "10px",
+        "paddingRight": "10px",
     },
 )
 
@@ -342,58 +395,6 @@ search_bar = html.Div(
                 "padding": "0 6px",
             },
         ),
-        # (bot switch moved to footer)
-    ],
-    style={"paddingTop": "16px"},  # Top padding adjusted slightly
-)
-
-sidebar_footer = html.Div(
-    [
-        # Divider line
-        html.Div(style={"borderTop": "1px solid #292929", "marginTop": "8px"}),
-        # Welcome nav link placed below divider
-        dbc.NavLink(
-            "Welcome",
-            href="/",
-            external_link=True,
-            target="_self",
-            style={
-                "color": "#9c9c9c",
-                "fontSize": "16px",
-                "padding": "6px 16px",
-                "marginTop": "14px",
-                "marginBottom": "8px",
-                "textDecoration": "none",
-                "display": "block",
-                "borderRadius": "8px",
-                "lineHeight": "1.2",
-            },
-        ),
-        # Repository List action styled like a navlink (triggers repo list alert)
-        dbc.Button(
-            "Repository List",
-            id="repo-list-link",
-            n_clicks=0,
-            color="link",
-            className="sidebar-link-button",
-            style={
-                "backgroundColor": "transparent",
-                "border": "none",
-                "color": "#9c9c9c",
-                "fontSize": "16px",
-                "textAlign": "left",
-                "padding": "4px 16px",
-                "marginTop": "0px",
-                "marginBottom": "0px",
-                "display": "block",
-                "width": "100%",
-                "borderRadius": "8px",
-                "textDecoration": "none",
-                "lineHeight": "1.2",
-            },
-        ),
-        # Spacer between links and buttons
-        html.Div(style={"height": "60px"}),
         dbc.Stack(
             [
                 dbc.Button(
@@ -455,8 +456,7 @@ sidebar_footer = html.Div(
             },
         ),
     ],
-    id="sidebar-footer",
-    style={"paddingTop": "8px"},
+    style={"paddingTop": "16px"},  # Top padding adjusted slightly
 )
 
 navbar_bottom = dbc.NavbarSimple(
@@ -604,8 +604,6 @@ layout = html.Div(
                                                 ],
                                                 style={"flex": "1 1 auto", "overflowY": "auto"},
                                             ),
-                                            # Footer pinned to bottom (contains divider, Welcome link, and buttons)
-                                            sidebar_footer,
                                         ],
                                         id="left-sidebar",
                                         style={
