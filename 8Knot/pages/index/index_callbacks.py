@@ -8,7 +8,7 @@ from celery.result import AsyncResult
 import dash_bootstrap_components as dbc
 import dash
 from dash import callback
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output, State, MATCH
 from app import augur
 from flask_login import current_user
 from cache_manager.cache_manager import CacheManager as cm
@@ -511,10 +511,10 @@ def show_help_alert(n_clicks, openness):
 
 @callback(
     [Output("repo-list-alert", "is_open"), Output("repo-list-alert", "children")],
-    [Input("repo-list-button", "n_clicks")],
+    [Input("repo-list-button", "n_clicks"), Input("repo-list-link", "n_clicks")],
     [State("help-alert", "is_open"), State("repo-choices", "data")],
 )
-def show_help_alert(n_clicks, openness, repo_ids):
+def show_help_alert(n_clicks, link_clicks, openness, repo_ids):
     """Sets the 'open' state of a help message
     for the search bar to encourage users to check
     their spelling and to ask for data to be loaded
@@ -528,7 +528,8 @@ def show_help_alert(n_clicks, openness, repo_ids):
     print(repo_ids)
     url_list = [augur.repo_id_to_git(i) for i in repo_ids]
 
-    if n_clicks == 0:
+    total_clicks = (n_clicks or 0) + (link_clicks or 0)
+    if total_clicks == 0:
         return dash.no_update, str(url_list)
     # switch the openness parameter, allows button to also
     # dismiss the Alert.
@@ -718,6 +719,29 @@ def update_search_status(search_value):
 def hide_search_status_when_loaded(_):
     """Hide the search status indicator when results are loaded."""
     return [{"display": "none"}]
+
+
+@callback(
+    [
+        Output({"type": "sidebar-dropdown-content", "index": MATCH}, "style"),
+        Output({"type": "sidebar-dropdown-container", "index": MATCH}, "style"),
+    ],
+    Input({"type": "sidebar-dropdown-toggle", "index": MATCH}, "n_clicks"),
+    State({"type": "sidebar-dropdown-content", "index": MATCH}, "style"),
+    prevent_initial_call=True,
+)
+def toggle_sidebar_dropdown(n_clicks, current_dropdown_style):
+    """Pattern-matching callback to toggle any sidebar dropdown."""
+    if n_clicks:
+        is_visible = current_dropdown_style and current_dropdown_style.get("display") == "block"
+        if is_visible:
+            dropdown_style = {"display": "none", "padding": "8px 0", "borderRadius": "0 0 8px 8px"}
+            container_style = {"borderRadius": "8px", "marginBottom": "8px"}
+        else:
+            dropdown_style = {"display": "block", "padding": "8px 0", "borderRadius": "0 0 8px 8px"}
+            container_style = {"borderRadius": "8px", "marginBottom": "8px", "backgroundColor": "#292929"}
+        return dropdown_style, container_style
+    return dash.no_update
 
 
 # =============================================================================
