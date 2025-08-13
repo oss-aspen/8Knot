@@ -159,46 +159,45 @@ def process_data(df: pd.DataFrame):
     # First, calculate the total lines and files BEFORE any modifications
     total_lines_original = df["code_lines"].sum()
     total_files_original = df["files"].sum()
-    
+
     # SVG files give one line of code per file
     # Note: Be careful with this - it modifies the actual line counts
     df.loc[df["programming_language"] == "SVG", "code_lines"] = df["files"]
-    
+
     # group files by their programming language and sum code lines and files
     df_lang = df[["programming_language", "code_lines", "files"]].groupby("programming_language").sum().reset_index()
-    
+
     # Calculate percentages BEFORE grouping into "Other"
     # This preserves the true percentages
     df_lang["Code %"] = (df_lang["code_lines"] / df_lang["code_lines"].sum()) * 100
     df_lang["Files %"] = (df_lang["files"] / df_lang["files"].sum()) * 100
-    
+
     # Now group small languages into "Other"
     # require a language to have at least 0.1% of total files to be shown
     min_files = total_files_original / 1000  # Use original total
-    
+
     # Mark languages to be grouped as "Other"
     other_mask = df_lang["files"] <= min_files
-    
+
     # Create an "Other" entry with the sum of all small languages
     if other_mask.any():
         other_data = df_lang[other_mask].sum()
-        other_row = pd.DataFrame({
-            "programming_language": ["Other"],
-            "code_lines": [other_data["code_lines"]],
-            "files": [other_data["files"]],
-            "Code %": [other_data["Code %"]],
-            "Files %": [other_data["Files %"]]
-        })
-        
+        other_row = pd.DataFrame(
+            {
+                "programming_language": ["Other"],
+                "code_lines": [other_data["code_lines"]],
+                "files": [other_data["files"]],
+                "Code %": [other_data["Code %"]],
+                "Files %": [other_data["Files %"]],
+            }
+        )
+
         # Keep only the languages above threshold and add "Other"
-        df_lang = pd.concat([
-            df_lang[~other_mask],
-            other_row
-        ], ignore_index=True)
-    
+        df_lang = pd.concat([df_lang[~other_mask], other_row], ignore_index=True)
+
     # order by descending file number
     df_lang = df_lang.sort_values(by="files", axis=0, ascending=False).reset_index(drop=True)
-    
+
     return df_lang
 
 
