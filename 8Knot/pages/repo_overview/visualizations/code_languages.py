@@ -156,25 +156,56 @@ def code_languages_graph(repolist, view):
 
 
 def process_data(df: pd.DataFrame):
+    # Handle empty dataframe case
+    if df.empty:
+        return pd.DataFrame(columns=["programming_language", "code_lines", "files", "Code %", "Files %"])
+    
     # First, calculate the total lines and files BEFORE any modifications
     total_lines_original = df["code_lines"].sum()
     total_files_original = df["files"].sum()
+    
+    # Handle case where there are no files or lines
+    if total_files_original == 0 or total_lines_original == 0:
+        return pd.DataFrame(columns=["programming_language", "code_lines", "files", "Code %", "Files %"])
 
     # SVG files give one line of code per file
     # Note: Be careful with this - it modifies the actual line counts
-    df.loc[df["programming_language"] == "SVG", "code_lines"] = df["files"]
+    df.loc[df["programming_language"] == "SVG", "code_lines"] = df.loc[
+        df["programming_language"] == "SVG", "files"
+    ]
 
     # group files by their programming language and sum code lines and files
-    df_lang = df[["programming_language", "code_lines", "files"]].groupby("programming_language").sum().reset_index()
+    df_lang = (
+        df[["programming_language", "code_lines", "files"]]
+        .groupby("programming_language")
+        .sum()
+        .reset_index()
+    )
+
+    # Handle case where groupby results in empty dataframe
+    if df_lang.empty:
+        return pd.DataFrame(columns=["programming_language", "code_lines", "files", "Code %", "Files %"])
 
     # Calculate percentages BEFORE grouping into "Other"
     # This preserves the true percentages
-    df_lang["Code %"] = (df_lang["code_lines"] / df_lang["code_lines"].sum()) * 100
-    df_lang["Files %"] = (df_lang["files"] / df_lang["files"].sum()) * 100
+    total_lines_after_svg = df_lang["code_lines"].sum()
+    total_files_after_svg = df_lang["files"].sum()
+    
+    # Use the totals after SVG modification for percentage calculation
+    # but ensure we don't divide by zero
+    if total_lines_after_svg > 0:
+        df_lang["Code %"] = (df_lang["code_lines"] / total_lines_after_svg) * 100
+    else:
+        df_lang["Code %"] = 0
+        
+    if total_files_after_svg > 0:
+        df_lang["Files %"] = (df_lang["files"] / total_files_after_svg) * 100
+    else:
+        df_lang["Files %"] = 0
 
     # Now group small languages into "Other"
     # require a language to have at least 0.1% of total files to be shown
-    min_files = total_files_original / 1000  # Use original total
+    min_files = max(1, total_files_original / 1000)  # Ensure min_files is at least 1
 
     # Mark languages to be grouped as "Other"
     other_mask = df_lang["files"] <= min_files
@@ -194,6 +225,19 @@ def process_data(df: pd.DataFrame):
 
         # Keep only the languages above threshold and add "Other"
         df_lang = pd.concat([df_lang[~other_mask], other_row], ignore_index=True)
+
+    # Handle case where all languages got grouped into "Other" 
+    # (shouldn't happen, but let's be safe)
+    if df_lang.empty:
+        df_lang = pd.DataFrame(
+            {
+                "programming_language": ["Other"],
+                "code_lines": [total_lines_original],
+                "files": [total_files_original],
+                "Code %": [100.0],
+                "Files %": [100.0],
+            }
+        )
 
     # order by descending file number
     df_lang = df_lang.sort_values(by="files", axis=0, ascending=False).reset_index(drop=True)
