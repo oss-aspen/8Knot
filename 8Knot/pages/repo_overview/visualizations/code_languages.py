@@ -154,6 +154,7 @@ def code_languages_graph(repolist, view):
     logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
+
 def process_data(df: pd.DataFrame):
     # Handle empty dataframe case
     if df.empty:
@@ -235,6 +236,26 @@ def process_data(df: pd.DataFrame):
     df_lang = df_lang.sort_values(by="files", axis=0, ascending=False).reset_index(drop=True)
 
     return df_lang
+
+
+def create_figure(df: pd.DataFrame, view):
+
+    value = "files"
+    if view == "line":
+        value = "code_lines"
+
+    # graph generation
+    fig = px.pie(df, names="programming_language", values=value, color_discrete_sequence=color_seq)
+    fig.update_traces(
+        textposition="inside",
+        textinfo="percent+label",
+        hovertemplate="%{label} <br>Amount: %{value}<br><extra></extra>",
+    )
+
+    # add legend title
+    fig.update_layout(legend_title_text="Languages")
+
+    return fig
 
 def create_figure(df: pd.DataFrame, view):
 
