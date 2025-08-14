@@ -256,22 +256,3 @@ def create_figure(df: pd.DataFrame, view):
     fig.update_layout(legend_title_text="Languages")
 
     return fig
-
-def create_figure(df: pd.DataFrame, view):
-
-    value = "files"
-    if view == "line":
-        value = "code_lines"
-
-    # graph generation
-    fig = px.pie(df, names="programming_language", values=value, color_discrete_sequence=color_seq)
-    fig.update_traces(
-        textposition="inside",
-        textinfo="percent+label",
-        hovertemplate="%{label} <br>Amount: %{value}<br><extra></extra>",
-    )
-
-    # add legend title
-    fig.update_layout(legend_title_text="Languages")
-
-    return fig
