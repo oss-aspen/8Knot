@@ -19,10 +19,28 @@ gc_ossf_scorecard = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "OSSF Scorecard",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "OSSF Scorecard",
+                                className="card-title",
+                            ),
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                color="outline-secondary",
+                                size="sm",
+                                className="about-graph-button",
+                            ),
+                            width="auto",
+                        ),
+                    ],
+                    align="center",
+                    justify="between",
+                    className="mb-3",
                 ),
                 dbc.Popover(
                     [
@@ -35,41 +53,27 @@ gc_ossf_scorecard = dbc.Card(
                     is_open=False,
                 ),
                 dcc.Loading(
-                    html.Div(id=f"{PAGE}-{VIZ_ID}"),
+                    html.Div(id=f"{PAGE}-{VIZ_ID}", style={"marginTop": "20px"}),
                 ),
+                html.Hr(className="card-split"),  # Divider between graph and controls
                 dbc.Form(
                     [
                         dbc.Row(
                             [
-                                dbc.Col(
-                                    dbc.Row(
-                                        [
-                                            dbc.Label(
-                                                ["Last Updated: ", html.Span(id=f"{PAGE}-{VIZ_ID}-updated")],
-                                                className="mr-2",
-                                            )
-                                        ]
-                                    ),
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "Scorecard Info",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
+                                dbc.Label(
+                                    ["Last Updated: ", html.Span(id=f"{PAGE}-{VIZ_ID}-updated")],
+                                    width={"size": "auto"},
                                 ),
                             ],
-                            align="center",
-                            justify="end",
+                            justify="start",
                         ),
                     ]
                 ),
-            ]
-        )
+            ],
+            style={"padding": "1.5rem"},
+        ),
     ],
+    className="dark-card",
 )
 
 

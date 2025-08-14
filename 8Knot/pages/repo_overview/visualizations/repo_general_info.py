@@ -25,18 +25,36 @@ gc_repo_general_info = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "Repo General Info",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    dbc.Col(
+                        html.H3(
+                            "Repo General Info",
+                            className="card-title",
+                        ),
+                    ),
                 ),
                 dcc.Loading(
-                    html.Div(id=f"{PAGE}-{VIZ_ID}"),
+                    html.Div(id=f"{PAGE}-{VIZ_ID}", style={"marginTop": "20px"}),
                 ),
-                dbc.Row([dbc.Label(["Last Updated: ", html.Span(id=f"{PAGE}-{VIZ_ID}-updated")], className="mr-2")]),
-            ]
-        )
+                html.Hr(className="card-split"),  # Divider between graph and controls
+                dbc.Form(
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Label(
+                                    ["Last Updated: ", html.Span(id=f"{PAGE}-{VIZ_ID}-updated")],
+                                    width={"size": "auto"},
+                                ),
+                            ],
+                            justify="start",
+                        ),
+                    ]
+                ),
+            ],
+            style={"padding": "1.5rem"},
+        ),
     ],
+    className="dark-card",
 )
 
 
