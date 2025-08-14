@@ -156,52 +156,69 @@ def code_languages_graph(repolist, view):
 
 
 def process_data(df: pd.DataFrame):
+    import logging
+    
     # Handle empty dataframe case
     if df.empty:
         return pd.DataFrame(columns=["programming_language", "code_lines", "files", "Code %", "Files %"])
 
-    # First, calculate the total lines and files BEFORE any modifications
-    total_lines_original = df["code_lines"].sum()
-    total_files_original = df["files"].sum()
-
-    # Handle case where there are no files or lines
-    if total_files_original == 0 or total_lines_original == 0:
-        return pd.DataFrame(columns=["programming_language", "code_lines", "files", "Code %", "Files %"])
-
+    # DEBUG: Log initial data shape and sample
+    logging.warning(f"DEBUG - Initial df shape: {df.shape}")
+    logging.warning(f"DEBUG - Initial df columns: {df.columns.tolist()}")
+    logging.warning(f"DEBUG - Sample of initial df:\n{df.head()}")
+    logging.warning(f"DEBUG - Unique languages in initial df: {df['programming_language'].nunique()}")
+    
     # SVG files give one line of code per file
-    # Note: Be careful with this - it modifies the actual line counts
     df.loc[df["programming_language"] == "SVG", "code_lines"] = df.loc[df["programming_language"] == "SVG", "files"]
 
     # group files by their programming language and sum code lines and files
     df_lang = df[["programming_language", "code_lines", "files"]].groupby("programming_language").sum().reset_index()
+
+    # DEBUG: Log after grouping
+    logging.warning(f"DEBUG - After grouping df_lang shape: {df_lang.shape}")
+    logging.warning(f"DEBUG - Languages and their file counts:")
+    for _, row in df_lang.iterrows():
+        logging.warning(f"  {row['programming_language']}: {row['files']} files, {row['code_lines']} lines")
 
     # Handle case where groupby results in empty dataframe
     if df_lang.empty:
         return pd.DataFrame(columns=["programming_language", "code_lines", "files", "Code %", "Files %"])
 
     # Calculate percentages BEFORE grouping into "Other"
-    # This preserves the true percentages
-    total_lines_after_svg = df_lang["code_lines"].sum()
-    total_files_after_svg = df_lang["files"].sum()
+    total_lines = df_lang["code_lines"].sum()
+    total_files = df_lang["files"].sum()
+    
+    logging.warning(f"DEBUG - Total files after grouping: {total_files}")
+    logging.warning(f"DEBUG - Total lines after grouping: {total_lines}")
 
-    # Use the totals after SVG modification for percentage calculation
-    # but ensure we don't divide by zero
-    if total_lines_after_svg > 0:
-        df_lang["Code %"] = (df_lang["code_lines"] / total_lines_after_svg) * 100
+    # Use the totals for percentage calculation
+    if total_lines > 0:
+        df_lang["Code %"] = (df_lang["code_lines"] / total_lines) * 100
     else:
         df_lang["Code %"] = 0
 
-    if total_files_after_svg > 0:
-        df_lang["Files %"] = (df_lang["files"] / total_files_after_svg) * 100
+    if total_files > 0:
+        df_lang["Files %"] = (df_lang["files"] / total_files) * 100
     else:
         df_lang["Files %"] = 0
 
+    # DEBUG: Check C++ percentage
+    cpp_row = df_lang[df_lang["programming_language"] == "C++"]
+    if not cpp_row.empty:
+        logging.warning(f"DEBUG - C++ stats: {cpp_row['files'].values[0]} files, {cpp_row['Code %'].values[0]:.2f}% of lines")
+
     # Now group small languages into "Other"
     # require a language to have at least 0.1% of total files to be shown
-    min_files = max(1, total_files_original / 1000)  # Ensure min_files is at least 1
+    min_files = max(1, total_files / 1000)
+    
+    logging.warning(f"DEBUG - Min files threshold: {min_files}")
 
     # Mark languages to be grouped as "Other"
     other_mask = df_lang["files"] <= min_files
+    
+    logging.warning(f"DEBUG - Languages being grouped into Other:")
+    for _, row in df_lang[other_mask].iterrows():
+        logging.warning(f"  {row['programming_language']}: {row['files']} files")
 
     # Create an "Other" entry with the sum of all small languages
     if other_mask.any():
@@ -219,21 +236,12 @@ def process_data(df: pd.DataFrame):
         # Keep only the languages above threshold and add "Other"
         df_lang = pd.concat([df_lang[~other_mask], other_row], ignore_index=True)
 
-    # Handle case where all languages got grouped into "Other"
-    # (shouldn't happen, but let's be safe)
-    if df_lang.empty:
-        df_lang = pd.DataFrame(
-            {
-                "programming_language": ["Other"],
-                "code_lines": [total_lines_original],
-                "files": [total_files_original],
-                "Code %": [100.0],
-                "Files %": [100.0],
-            }
-        )
-
     # order by descending file number
     df_lang = df_lang.sort_values(by="files", axis=0, ascending=False).reset_index(drop=True)
+    
+    logging.warning(f"DEBUG - Final languages in chart:")
+    for _, row in df_lang.iterrows():
+        logging.warning(f"  {row['programming_language']}: {row['Code %']:.2f}%")
 
     return df_lang
 
