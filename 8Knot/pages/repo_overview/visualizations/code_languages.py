@@ -154,33 +154,25 @@ def code_languages_graph(repolist, view):
     logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
-
 def process_data(df: pd.DataFrame):
     # Handle empty dataframe case
     if df.empty:
         return pd.DataFrame(columns=["programming_language", "code_lines", "files", "Code %", "Files %"])
-    
+
     # First, calculate the total lines and files BEFORE any modifications
     total_lines_original = df["code_lines"].sum()
     total_files_original = df["files"].sum()
-    
+
     # Handle case where there are no files or lines
     if total_files_original == 0 or total_lines_original == 0:
         return pd.DataFrame(columns=["programming_language", "code_lines", "files", "Code %", "Files %"])
 
     # SVG files give one line of code per file
     # Note: Be careful with this - it modifies the actual line counts
-    df.loc[df["programming_language"] == "SVG", "code_lines"] = df.loc[
-        df["programming_language"] == "SVG", "files"
-    ]
+    df.loc[df["programming_language"] == "SVG", "code_lines"] = df.loc[df["programming_language"] == "SVG", "files"]
 
     # group files by their programming language and sum code lines and files
-    df_lang = (
-        df[["programming_language", "code_lines", "files"]]
-        .groupby("programming_language")
-        .sum()
-        .reset_index()
-    )
+    df_lang = df[["programming_language", "code_lines", "files"]].groupby("programming_language").sum().reset_index()
 
     # Handle case where groupby results in empty dataframe
     if df_lang.empty:
@@ -190,14 +182,14 @@ def process_data(df: pd.DataFrame):
     # This preserves the true percentages
     total_lines_after_svg = df_lang["code_lines"].sum()
     total_files_after_svg = df_lang["files"].sum()
-    
+
     # Use the totals after SVG modification for percentage calculation
     # but ensure we don't divide by zero
     if total_lines_after_svg > 0:
         df_lang["Code %"] = (df_lang["code_lines"] / total_lines_after_svg) * 100
     else:
         df_lang["Code %"] = 0
-        
+
     if total_files_after_svg > 0:
         df_lang["Files %"] = (df_lang["files"] / total_files_after_svg) * 100
     else:
@@ -226,7 +218,7 @@ def process_data(df: pd.DataFrame):
         # Keep only the languages above threshold and add "Other"
         df_lang = pd.concat([df_lang[~other_mask], other_row], ignore_index=True)
 
-    # Handle case where all languages got grouped into "Other" 
+    # Handle case where all languages got grouped into "Other"
     # (shouldn't happen, but let's be safe)
     if df_lang.empty:
         df_lang = pd.DataFrame(
@@ -243,7 +235,6 @@ def process_data(df: pd.DataFrame):
     df_lang = df_lang.sort_values(by="files", axis=0, ascending=False).reset_index(drop=True)
 
     return df_lang
-
 
 def create_figure(df: pd.DataFrame, view):
 
