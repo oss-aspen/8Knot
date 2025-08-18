@@ -10,6 +10,7 @@ from .visualizations.contributors_types_over_time import gc_contributors_over_ti
 from .visualizations.active_drifting_contributors import gc_active_drifting_contributors
 from .visualizations.new_contributor import gc_new_contributor
 from .visualizations.contributor_radar import gc_contributor_radar
+from .visualizations.contributor_funnel import gc_contributor_funnel
 
 
 warnings.filterwarnings("ignore")
@@ -38,6 +39,13 @@ layout = dbc.Container(
             [
                 dbc.Col(gc_contributors_over_time, width=6),
                 dbc.Col(gc_contributor_radar, width=6),
+            ],
+            align="center",
+            style={"marginBottom": ".5%"},
+        ),
+        dbc.Row(
+            [
+                dbc.Col(gc_contributor_funnel, width=6),
             ],
             align="center",
             style={"marginBottom": ".5%"},
