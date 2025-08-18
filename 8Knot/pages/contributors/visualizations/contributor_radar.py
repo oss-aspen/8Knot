@@ -1,0 +1,151 @@
+import logging
+import time
+from datetime import date, timedelta, datetime
+
+import dash_bootstrap_components as dbc
+import pandas as pd
+import plotly.express as px
+from dash import dcc, html, callback
+from dash.dependencies import Input, Output, State
+from dash.exceptions import PreventUpdate
+
+import app
+from cache_manager import cache_facade as cf
+from pages.utils.job_utils import nodata_graph
+from queries.contributors_query import contributors_query as cnq
+
+PAGE = "contributors"
+VIZ_ID = "contributor-radar"
+
+gc_contributor_radar = dbc.Card(
+    [
+        dbc.CardBody(
+            [
+                html.H3("Contributor Activity Radar", className="card-title", style={"textAlign": "center"}),
+                dbc.Popover(
+                    [
+                        dbc.PopoverHeader("Graph Info:"),
+                        dbc.PopoverBody("This radar chart shows the number of unique contributors performing different key activities within the selected time range.")
+                    ],
+                    id=f"popover-{PAGE}-{VIZ_ID}",
+                    target=f"popover-target-{PAGE}-{VIZ_ID}",
+                    placement="top",
+                    is_open=False,
+                ),
+
+                dcc.Loading(dcc.Graph(id=f"{PAGE}-{VIZ_ID}", figure=nodata_graph)),
+
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            [
+                                html.Label("Select Time Range:", style={'margin-right': '10px'}),
+                                dcc.DatePickerRange(
+                                    id=f"{PAGE}-{VIZ_ID}-date-picker",
+                                    min_date_allowed=date(2015, 1, 1),
+                                    max_date_allowed=date.today(),
+                                    start_date=date.today() - timedelta(days=180),
+                                    end_date=date.today(),
+                                    display_format='YYYY-MM-DD',
+                                ),
+                            ],
+                            width="auto",
+                            className="d-flex align-items-center"
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                color="secondary",
+                                size="small" 
+                            ),
+                            width="auto",
+                            className="ms-auto"
+                        ),
+                    ],
+                    align="center",
+                    className="mt-2"
+                ),
+            ]
+        ),
+    ],
+)
+
+@callback(
+    Output(f"{PAGE}-{VIZ_ID}", "figure"),
+    Input(f"{PAGE}-{VIZ_ID}-date-picker", "start_date"),
+    Input(f"{PAGE}-{VIZ_ID}-date-picker", "end_date"),
+    Input("repo-choices", "data"),
+    Input("bot-switch", "value"),
+    background=True,
+)
+def generate_radar_chart_from_data(start_date, end_date, repolist, bot_switch):
+    """
+    This callback fetches raw contributor actions, applies the date filter in Pandas,
+    aggregates the data, and then creates the radar chart.
+    """
+    logging.warning(f"--- {VIZ_ID} CALLBACK TRIGGERED ---")
+    if not repolist or not start_date or not end_date:
+        raise PreventUpdate
+
+    func_name = cnq.__name__
+    not_cached = cf.get_uncached(func_name=func_name, repolist=repolist)
+    if not_cached:
+        logging.warning(f"{VIZ_ID}: Raw action data for {len(not_cached)} repos not cached. Dispatching worker.")
+        cnq.apply_async(args=[not_cached])
+        timeout = 180
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            if not cf.get_uncached(func_name=func_name, repolist=not_cached):
+                break
+            time.sleep(2)
+
+    df_raw = cf.retrieve_from_cache(tablename=func_name, repolist=repolist)
+    if df_raw.empty: return nodata_graph()
+
+    df_raw['created_at'] = pd.to_datetime(df_raw['created_at'], utc=True)
+    start_date_dt = pd.to_datetime(start_date, utc=True)
+    end_date_dt = pd.to_datetime(end_date, utc=True)
+
+    df_filtered = df_raw[(df_raw['created_at'] >= start_date_dt) & (df_raw['created_at'] <= end_date_dt)]
+    if df_filtered.empty: return nodata_graph()
+
+    df_agg = df_filtered.groupby(['repo_id', 'cntrb_id', 'login']).agg(
+        created_issue=('action', lambda x: 1 if 'issue_opened' in x.values else 0),
+        opened_pr=('action', lambda x: 1 if 'pull_request_open' in x.values else 0),
+        pr_commented=('action', lambda x: 1 if 'pull_request_comment' in x.values else 0),
+        committed=('action', lambda x: 1 if 'commit' in x.values else 0),
+        pr_merged=('action', lambda x: 1 if 'pull_request_merged' in x.values else 0),
+    ).reset_index()
+
+    df = df_agg
+    if bot_switch and "cntrb_id" in df.columns:
+        df = df[~df["cntrb_id"].isin(app.bots_list)]
+    if df.empty: return nodata_graph()
+
+    activity_metrics = {
+        "Issue Creators": df[df["created_issue"] == 1]["login"].nunique(),
+        "PR Openers": df[df["opened_pr"] == 1]["login"].nunique(),
+        "PR Commenters": df[df["pr_commented"] == 1]["login"].nunique(),
+        "PR Mergers": df[df["pr_merged"] == 1]["login"].nunique(),
+    }
+
+    radar_df = pd.DataFrame(dict(Count=list(activity_metrics.values()), Activity=list(activity_metrics.keys())))
+
+    fig = px.line_polar(
+        radar_df, r='Count', theta='Activity', line_close=True, markers=True,
+        title=" "
+    )
+    fig.update_traces(fill='toself')
+    fig.update_layout(margin=dict(l=60, r=60, t=60, b=40), font=dict(size=12))
+
+    return fig
+
+@callback(
+    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
+    Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks"),
+    State(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
+)
+def toggle_radar_popover(n, is_open):
+    if n: return not is_open
+    return is_open
