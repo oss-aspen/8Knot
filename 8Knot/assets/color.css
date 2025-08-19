@@ -199,7 +199,7 @@ input.botlist-filter-switch:checked {
 
 /* Ensure footer spacer actually takes effect in case of collapsed margins */
 #sidebar-footer > div[style*="height"] {
-  display: block; 
+  display: block;
 }
 
 /* ==== CARD COMPONENTS ==== */
