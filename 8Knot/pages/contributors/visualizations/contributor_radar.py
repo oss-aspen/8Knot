@@ -1,13 +1,13 @@
-import logging
-import time
-from datetime import date, timedelta, datetime
-
+from dash import html, dcc, callback
+import dash
 import dash_bootstrap_components as dbc
-import pandas as pd
-import plotly.express as px
-from dash import dcc, html, callback
 from dash.dependencies import Input, Output, State
+from datetime import date, timedelta, datetime
+import pandas as pd
+import logging
+import plotly.express as px
 from dash.exceptions import PreventUpdate
+import time
 
 import app
 from cache_manager import cache_facade as cf
@@ -21,62 +21,87 @@ gc_contributor_radar = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3("Contributor Activity Radar", className="card-title", style={"textAlign": "center"}),
+                html.H3(
+                    "Contributor Activity Radar",
+                    className="card-title",
+                    style={"textAlign": "center"},
+                ),
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody("This radar chart shows the number of unique contributors performing different key activities within the selected time range.")
+                        dbc.PopoverBody(
+                            "This radar chart shows the number of unique contributors performing different key activities within the selected time range."
+                        ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
                     target=f"popover-target-{PAGE}-{VIZ_ID}",
                     placement="top",
                     is_open=False,
                 ),
-
-                dcc.Loading(dcc.Graph(id=f"{PAGE}-{VIZ_ID}", figure=nodata_graph)),
-
-                dbc.Row(
+                dcc.Loading(
+                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}", figure=nodata_graph),
+                ),
+                dbc.Form(
                     [
-                        dbc.Col(
+                        dbc.Row(
                             [
-                                html.Label("Select Time Range:", style={'margin-right': '10px'}),
-                                dcc.DatePickerRange(
-                                    id=f"{PAGE}-{VIZ_ID}-date-picker",
-                                    min_date_allowed=date(2015, 1, 1),
-                                    max_date_allowed=date.today(),
-                                    start_date=date.today() - timedelta(days=180),
-                                    end_date=date.today(),
-                                    display_format='YYYY-MM-DD',
+                                dbc.Label(
+                                    "Select Time Range:",
+                                    html_for=f"date-picker-{PAGE}-{VIZ_ID}",
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    dcc.DatePickerRange(
+                                        id=f"date-picker-{PAGE}-{VIZ_ID}",
+                                        min_date_allowed=date(2015, 1, 1),
+                                        max_date_allowed=date.today(),
+                                        start_date=date.today() - timedelta(days=180),
+                                        end_date=date.today(),
+                                        display_format='YYYY-MM-DD',
+                                    ),
+                                    width="auto",
+                                ),
+                                dbc.Col(
+                                    dbc.Button(
+                                        "About Graph",
+                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                        color="secondary",
+                                        size="sm",
+                                    ),
+                                    width="auto",
+                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
-                            width="auto",
-                            className="d-flex align-items-center"
+                            align="center",
                         ),
-                        dbc.Col(
-                            dbc.Button(
-                                "About Graph",
-                                id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                color="secondary",
-                                size="small" 
-                            ),
-                            width="auto",
-                            className="ms-auto"
-                        ),
-                    ],
-                    align="center",
-                    className="mt-2"
+                    ]
                 ),
             ]
         ),
     ],
 )
 
+# callback for graph info popover
+@callback(
+    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
+    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
+    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
+)
+def toggle_popover(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
+
+# callback for contributor radar graph
 @callback(
     Output(f"{PAGE}-{VIZ_ID}", "figure"),
-    Input(f"{PAGE}-{VIZ_ID}-date-picker", "start_date"),
-    Input(f"{PAGE}-{VIZ_ID}-date-picker", "end_date"),
-    Input("repo-choices", "data"),
-    Input("bot-switch", "value"),
+    [
+        Input(f"date-picker-{PAGE}-{VIZ_ID}", "start_date"),
+        Input(f"date-picker-{PAGE}-{VIZ_ID}", "end_date"),
+        Input("repo-choices", "data"),
+        Input("bot-switch", "value"),
+    ],
     background=True,
 )
 def generate_radar_chart_from_data(start_date, end_date, repolist, bot_switch):
@@ -88,6 +113,7 @@ def generate_radar_chart_from_data(start_date, end_date, repolist, bot_switch):
     if not repolist or not start_date or not end_date:
         raise PreventUpdate
 
+    # wait for data to asynchronously download and become available.
     func_name = cnq.__name__
     not_cached = cf.get_uncached(func_name=func_name, repolist=repolist)
     if not_cached:
@@ -100,15 +126,39 @@ def generate_radar_chart_from_data(start_date, end_date, repolist, bot_switch):
                 break
             time.sleep(2)
 
-    df_raw = cf.retrieve_from_cache(tablename=func_name, repolist=repolist)
-    if df_raw.empty: return nodata_graph()
+    logging.warning(f"{VIZ_ID} - START")
+    start = time.perf_counter()
 
+    # GET ALL DATA FROM POSTGRES CACHE
+    df_raw = cf.retrieve_from_cache(tablename=func_name, repolist=repolist)
+
+    # test if there is data
+    if df_raw.empty:
+        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
+        return nodata_graph()
+
+    # function for all data pre processing
+    df = process_data(df_raw, start_date, end_date, bot_switch)
+
+    if df.empty:
+        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE AFTER PROCESSING")
+        return nodata_graph()
+
+    fig = create_figure(df)
+
+    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
+    return fig
+
+
+def process_data(df_raw: pd.DataFrame, start_date, end_date, bot_switch):
+    """Process the raw contributor data and filter by date range and bot switch."""
     df_raw['created_at'] = pd.to_datetime(df_raw['created_at'], utc=True)
     start_date_dt = pd.to_datetime(start_date, utc=True)
     end_date_dt = pd.to_datetime(end_date, utc=True)
 
     df_filtered = df_raw[(df_raw['created_at'] >= start_date_dt) & (df_raw['created_at'] <= end_date_dt)]
-    if df_filtered.empty: return nodata_graph()
+    if df_filtered.empty:
+        return pd.DataFrame()
 
     df_agg = df_filtered.groupby(['repo_id', 'cntrb_id', 'login']).agg(
         created_issue=('action', lambda x: 1 if 'issue_opened' in x.values else 0),
@@ -119,10 +169,15 @@ def generate_radar_chart_from_data(start_date, end_date, repolist, bot_switch):
     ).reset_index()
 
     df = df_agg
+    # remove bot data
     if bot_switch and "cntrb_id" in df.columns:
         df = df[~df["cntrb_id"].isin(app.bots_list)]
-    if df.empty: return nodata_graph()
+    
+    return df
 
+
+def create_figure(df: pd.DataFrame):
+    """Create the radar chart figure."""
     activity_metrics = {
         "Issue Creators": df[df["created_issue"] == 1]["login"].nunique(),
         "PR Openers": df[df["opened_pr"] == 1]["login"].nunique(),
@@ -137,15 +192,10 @@ def generate_radar_chart_from_data(start_date, end_date, repolist, bot_switch):
         title=" "
     )
     fig.update_traces(fill='toself')
-    fig.update_layout(margin=dict(l=60, r=60, t=60, b=40), font=dict(size=12))
+    fig.update_layout(
+        margin=dict(l=60, r=60, t=60, b=40),
+        font=dict(size=14)
+    )
 
     return fig
 
-@callback(
-    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
-    Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks"),
-    State(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
-)
-def toggle_radar_popover(n, is_open):
-    if n: return not is_open
-    return is_open

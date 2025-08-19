@@ -1,11 +1,12 @@
-import logging
-import time
-import pandas as pd
-import plotly.express as px
+from dash import html, dcc, callback
+import dash
 import dash_bootstrap_components as dbc
-from dash import dcc, html, callback
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
+import pandas as pd
+import logging
+import plotly.express as px
 from dash.exceptions import PreventUpdate
+import time
 
 from pages.utils.job_utils import nodata_graph
 from queries.contributor_funnel_query import contributor_funnel_query as cfq
@@ -19,8 +20,46 @@ gc_contributor_funnel = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H4("Contributor Funnel", className="card-title text-center"),
-                dcc.Loading(dcc.Graph(id=f"{PAGE}-{VIZ_ID}-funnel-graph")),
+                html.H3(
+                    "Contributor Funnel",
+                    className="card-title",
+                    style={"textAlign": "center"},
+                ),
+                dbc.Popover(
+                    [
+                        dbc.PopoverHeader("Graph Info:"),
+                        dbc.PopoverBody(
+                            "This funnel chart shows the progression of contributors through different engagement stages, from initial interest to active contribution."
+                        ),
+                    ],
+                    id=f"popover-{PAGE}-{VIZ_ID}-funnel",
+                    target=f"popover-target-{PAGE}-{VIZ_ID}-funnel",
+                    placement="top",
+                    is_open=False,
+                ),
+                dcc.Loading(
+                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}-funnel-graph"),
+                ),
+                dbc.Form(
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    dbc.Button(
+                                        "About Graph",
+                                        id=f"popover-target-{PAGE}-{VIZ_ID}-funnel",
+                                        color="secondary",
+                                        size="sm",
+                                    ),
+                                    width="auto",
+                                    className="ms-auto",
+                                    style={"paddingTop": ".5em"},
+                                ),
+                            ],
+                            align="center",
+                        ),
+                    ]
+                ),
             ]
         ),
     ],
@@ -31,17 +70,82 @@ gc_contributor_dropoff = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H4("Drop-offs Between Stages", className="card-title text-center"),
-                dcc.Loading(dcc.Graph(id=f"{PAGE}-{VIZ_ID}-dropoff-graph")),
+                html.H3(
+                    "Drop-offs Between Stages",
+                    className="card-title",
+                    style={"textAlign": "center"},
+                ),
+                dbc.Popover(
+                    [
+                        dbc.PopoverHeader("Graph Info:"),
+                        dbc.PopoverBody(
+                            "This bar chart shows the number of contributors who drop off between each stage of the contributor funnel."
+                        ),
+                    ],
+                    id=f"popover-{PAGE}-{VIZ_ID}-dropoff",
+                    target=f"popover-target-{PAGE}-{VIZ_ID}-dropoff",
+                    placement="top",
+                    is_open=False,
+                ),
+                dcc.Loading(
+                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}-dropoff-graph"),
+                ),
+                dbc.Form(
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    dbc.Button(
+                                        "About Graph",
+                                        id=f"popover-target-{PAGE}-{VIZ_ID}-dropoff",
+                                        color="secondary",
+                                        size="sm",
+                                    ),
+                                    width="auto",
+                                    className="ms-auto",
+                                    style={"paddingTop": ".5em"},
+                                ),
+                            ],
+                            align="center",
+                        ),
+                    ]
+                ),
             ]
         ),
     ],
 )
 
+# callback for funnel graph info popover
+@callback(
+    Output(f"popover-{PAGE}-{VIZ_ID}-funnel", "is_open"),
+    [Input(f"popover-target-{PAGE}-{VIZ_ID}-funnel", "n_clicks")],
+    [State(f"popover-{PAGE}-{VIZ_ID}-funnel", "is_open")],
+)
+def toggle_funnel_popover(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
+
+# callback for dropoff graph info popover
+@callback(
+    Output(f"popover-{PAGE}-{VIZ_ID}-dropoff", "is_open"),
+    [Input(f"popover-target-{PAGE}-{VIZ_ID}-dropoff", "n_clicks")],
+    [State(f"popover-{PAGE}-{VIZ_ID}-dropoff", "is_open")],
+)
+def toggle_dropoff_popover(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
+
+# callback for contributor funnel and dropoff graphs
 @callback(
     Output(f"{PAGE}-{VIZ_ID}-funnel-graph", "figure"),
     Output(f"{PAGE}-{VIZ_ID}-dropoff-graph", "figure"),
-    Input("repo-choices", "data"),
+    [
+        Input("repo-choices", "data"),
+    ],
     background=True,
 )
 def create_funnel_and_dropoff_charts(repolist):
@@ -62,10 +166,23 @@ def create_funnel_and_dropoff_charts(repolist):
         repolist=repolist,
     )
 
+    # test if there is data
     if df_counts is None or df_counts.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return nodata_graph(), nodata_graph()
 
+    # function for all data pre processing
+    df_funnel, df_dropoff = process_data(df_counts)
+
+    funnel_fig = create_funnel_figure(df_funnel)
+    dropoff_fig = create_dropoff_figure(df_dropoff)
+    
+    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
+    return funnel_fig, dropoff_fig
+
+
+def process_data(df_counts: pd.DataFrame):
+    """Process the funnel data and create separate dataframes for funnel and dropoff charts."""
     counts = df_counts.iloc[0].to_dict()
     stages = list(counts.keys())
     values = list(counts.values())
@@ -88,16 +205,26 @@ def create_funnel_and_dropoff_charts(repolist):
         'Drop-off Count': dropoff_counts
     })
 
-    # Create funnel chart
+    return df_funnel, df_dropoff
+
+
+def create_funnel_figure(df_funnel: pd.DataFrame):
+    """Create the funnel chart figure."""
     funnel_fig = px.funnel(
         df_funnel,
         x='Count',
         y='Stage',
         labels={'Count': 'Number of Contributors'}
     )
-    funnel_fig.update_layout(margin=dict(l=40, r=40, t=40, b=40))
+    funnel_fig.update_layout(
+        margin=dict(l=40, r=40, t=40, b=40),
+        font=dict(size=14)
+    )
+    return funnel_fig
 
-    # Create drop-off bar chart
+
+def create_dropoff_figure(df_dropoff: pd.DataFrame):
+    """Create the drop-off bar chart figure."""
     dropoff_fig = px.bar(
         df_dropoff,
         x='Drop-off Count',
@@ -108,9 +235,8 @@ def create_funnel_and_dropoff_charts(repolist):
     dropoff_fig.update_layout(
         yaxis_title=None,
         xaxis_title="Number of Dropped Contributors",
-        margin=dict(l=40, r=40, t=40, b=40)
+        margin=dict(l=40, r=40, t=40, b=40),
+        font=dict(size=14)
     )
     dropoff_fig.update_traces(textposition='outside')
-    
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
-    return funnel_fig, dropoff_fig
+    return dropoff_fig
