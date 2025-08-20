@@ -23,7 +23,7 @@ baby_blue = [
     "#F7B009",  # Yellow 500 - main yellow
     "#FEDF89",  # Yellow 200 - light yellow
     "#B54708",  # Yellow 700 - dark yellow
-]
+
 
 
 def get_graph_time_values(interval):
