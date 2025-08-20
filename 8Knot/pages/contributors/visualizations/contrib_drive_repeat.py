@@ -6,7 +6,7 @@ from dash.dependencies import Input, Output, State
 import pandas as pd
 import logging
 import plotly.express as px
-from pages.utils.graph_utils import color_seq
+from pages.utils.graph_utils import baby_blue
 from pages.utils.job_utils import nodata_graph
 from queries.contributors_query import contributors_query as ctq
 import time
@@ -23,10 +23,29 @@ gc_contrib_drive_repeat = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    id=f"graph-title-{PAGE}-{VIZ_ID}",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                id=f"graph-title-{PAGE}-{VIZ_ID}",
+                                className="card-title",
+                                style={"textAlign": "center"},
+                            ),
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                color="outline-secondary",
+                                size="sm",
+                                className="about-graph-button",
+                            ),
+                            width="auto",
+                        ),
+                    ],
+                    align="center",
+                    justify="between",
+                    className="mb-3",
                 ),
                 dbc.Popover(
                     [
@@ -48,6 +67,14 @@ gc_contrib_drive_repeat = dbc.Card(
                 ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
+                    style={"marginBottom": "1rem"},
+                ),
+                html.Hr(  # Divider between graph and controls
+                    style={
+                        "borderColor": "#909090",
+                        "margin": "1.5rem -1.5rem",
+                        "width": "calc(100% + 3rem)",
+                    }
                 ),
                 dbc.Form(
                     [
@@ -67,19 +94,16 @@ gc_contrib_drive_repeat = dbc.Card(
                                         step=1,
                                         value=4,
                                         size="sm",
+                                        style={"width": "80px"},
+                                        className="dark-input",
                                     ),
                                     className="me-2",
                                     width=2,
                                 ),
-                            ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
                                 dbc.Label(
                                     "Graph View:",
                                     html_for=f"graph-view-{PAGE}-{VIZ_ID}",
-                                    width="auto",
+                                    width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     dbc.RadioItems(
@@ -96,27 +120,19 @@ gc_contrib_drive_repeat = dbc.Card(
                                         ],
                                         value="drive",
                                         inline=True,
+                                        className="custom-radio-buttons",
                                     ),
-                                    className="me-2",
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
                             align="center",
                         ),
                     ]
                 ),
-            ]
-        ),
+            ],
+            style={"padding": "1.5rem"},
+        )
     ],
+    className="dark-card",
 )
 
 
@@ -225,7 +241,7 @@ def create_figure(df_cont_subset):
         df_cont_subset,
         x="created_at",
         color="Action",
-        color_discrete_sequence=color_seq,
+        color_discrete_sequence=baby_blue,
     )
 
     # creates bins with 3 month size and customizes the hover value for the bars

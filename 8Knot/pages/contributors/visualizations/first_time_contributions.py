@@ -6,7 +6,7 @@ from dash.dependencies import Input, Output, State
 import pandas as pd
 import logging
 import plotly.express as px
-from pages.utils.graph_utils import color_seq
+from pages.utils.graph_utils import baby_blue
 from queries.contributors_query import contributors_query as ctq
 import time
 from pages.utils.job_utils import nodata_graph
@@ -21,10 +21,29 @@ gc_first_time_contributions = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "First Time Contributions Per Quarter",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "First Time Contributors Per Quarter",
+                                className="card-title",
+                                style={"textAlign": "center"},
+                            ),
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                color="outline-secondary",
+                                size="sm",
+                                className="about-graph-button",
+                            ),
+                            width="auto",
+                        ),
+                    ],
+                    align="center",
+                    justify="between",
+                    className="mb-3",
                 ),
                 dbc.Popover(
                     [
@@ -44,18 +63,10 @@ gc_first_time_contributions = dbc.Card(
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                 ),
-                dbc.Row(
-                    dbc.Button(
-                        "About Graph",
-                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                        color="secondary",
-                        size="small",
-                    ),
-                    style={"paddingTop": ".5em"},
-                ),
             ]
         ),
     ],
+    className="dark-card",
 )
 
 
@@ -130,7 +141,7 @@ def process_data(df):
 
 def create_figure(df):
     # create plotly express histogram
-    fig = px.histogram(df, x="created_at", color="Action", color_discrete_sequence=color_seq)
+    fig = px.histogram(df, x="created_at", color="Action", color_discrete_sequence=baby_blue)
 
     # creates bins with 3 month size and customizes the hover value for the bars
     fig.update_traces(
