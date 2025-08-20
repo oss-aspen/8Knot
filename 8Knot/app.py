@@ -76,6 +76,8 @@ plt_io.templates["custom_dark"]["layout"]["colorway"] = [
     "#0284C7",  # Baby Blue 700 - dark
     "#0369A1",  # Baby Blue 800 - very dark
     "#F7B009",  # Yellow 500 - main yellow
+    "#FEDF89",  # Yellow 200 - light yellow
+    "#B54708",  # Yellow 700 - dark yellow
 ]
 
 # Match plot backgrounds, fonts, and legend styling to the dark shell/card theme

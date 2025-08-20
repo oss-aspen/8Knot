@@ -9,7 +9,7 @@ import datetime as dt
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
-from pages.utils.graph_utils import get_graph_time_values, color_seq
+from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from queries.issues_query import issues_query as iq
 from pages.utils.job_utils import nodata_graph
 import time
@@ -23,10 +23,28 @@ gc_issue_staleness = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "Issue Activity- Staleness",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "Issue Activity- Staleness",
+                                className="card-title",
+                            ),
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                color="outline-secondary",
+                                size="sm",
+                                className="about-graph-button",
+                            ),
+                            width="auto",
+                        ),
+                    ],
+                    align="center",
+                    justify="between",
+                    className="mb-3",
                 ),
                 dbc.Popover(
                     [
@@ -46,6 +64,14 @@ gc_issue_staleness = dbc.Card(
                 ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
+                    style={"marginBottom": "1rem"},
+                ),
+                html.Hr(  # Divider between graph and controls
+                    style={
+                        "borderColor": "#909090",
+                        "margin": "1.5rem -1.5rem",
+                        "width": "calc(100% + 3rem)",
+                    }
                 ),
                 dbc.Form(
                     [
@@ -65,6 +91,8 @@ gc_issue_staleness = dbc.Card(
                                         step=1,
                                         value=7,
                                         size="sm",
+                                        style={"width": "80px"},
+                                        className="dark-input",
                                     ),
                                     className="me-2",
                                     width=2,
@@ -83,6 +111,8 @@ gc_issue_staleness = dbc.Card(
                                         step=1,
                                         value=30,
                                         size="sm",
+                                        style={"width": "80px"},
+                                        className="dark-input",
                                     ),
                                     className="me-2",
                                     width=2,
@@ -103,7 +133,7 @@ gc_issue_staleness = dbc.Card(
                                 dbc.Label(
                                     "Date Interval:",
                                     html_for=f"date-interval-{PAGE}-{VIZ_ID}",
-                                    width="auto",
+                                    width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     [
@@ -116,27 +146,20 @@ gc_issue_staleness = dbc.Card(
                                             ],
                                             value="M",
                                             inline=True,
+                                            className="custom-radio-buttons",
                                         ),
                                     ]
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
                             align="center",
                         ),
                     ]
                 ),
-            ]
+            ],
+            style={"padding": "1.5rem"},
         )
     ],
+    className="dark-card",
 )
 
 
@@ -255,7 +278,7 @@ def create_figure(df_status: pd.DataFrame, interval):
                     mode="lines",
                     showlegend=True,
                     hovertemplate="Issues New: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
-                    marker=dict(color=color_seq[1]),
+                    marker=dict(color=baby_blue[0]),
                 ),
                 go.Scatter(
                     name="Staling",
@@ -264,7 +287,7 @@ def create_figure(df_status: pd.DataFrame, interval):
                     mode="lines",
                     showlegend=True,
                     hovertemplate="Issues Staling: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
-                    marker=dict(color=color_seq[5]),
+                    marker=dict(color=baby_blue[2]),
                 ),
                 go.Scatter(
                     name="Stale",
@@ -273,7 +296,7 @@ def create_figure(df_status: pd.DataFrame, interval):
                     mode="lines",
                     showlegend=True,
                     hovertemplate="Issues Stale: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
-                    marker=dict(color=color_seq[2]),
+                    marker=dict(color=baby_blue[6]),
                 ),
             ]
         )
@@ -282,7 +305,7 @@ def create_figure(df_status: pd.DataFrame, interval):
             df_status,
             x="Date",
             y=["New", "Staling", "Stale"],
-            color_discrete_sequence=[color_seq[1], color_seq[5], color_seq[2]],
+            color_discrete_sequence=[baby_blue[0], baby_blue[2], baby_blue[6]],
         )
 
         # edit hover values

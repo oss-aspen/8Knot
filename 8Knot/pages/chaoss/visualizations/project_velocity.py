@@ -7,7 +7,7 @@ import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
-from pages.utils.graph_utils import get_graph_time_values, color_seq
+from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from queries.contributors_query import contributors_query as ctq
 from pages.utils.job_utils import nodata_graph
 import time
@@ -26,10 +26,28 @@ gc_project_velocity = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "Project Velocity",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "Project Velocity",
+                                className="card-title",
+                            ),
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                color="outline-secondary",
+                                size="sm",
+                                className="about-graph-button",
+                            ),
+                            width="auto",
+                        ),
+                    ],
+                    align="center",
+                    justify="between",
+                    className="mb-3",
                 ),
                 dbc.Popover(
                     [
@@ -48,6 +66,14 @@ gc_project_velocity = dbc.Card(
                 ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
+                    style={"marginBottom": "1rem"},
+                ),
+                html.Hr(  # Divider between graph and controls
+                    style={
+                        "borderColor": "#909090",
+                        "margin": "1.5rem -1.5rem",
+                        "width": "calc(100% + 3rem)",
+                    }
                 ),
                 dbc.Form(
                     [
@@ -67,6 +93,8 @@ gc_project_velocity = dbc.Card(
                                         step=0.1,
                                         value=0.3,
                                         size="sm",
+                                        style={"width": "80px"},
+                                        className="dark-input",
                                     ),
                                     className="me-2",
                                     width=2,
@@ -85,6 +113,8 @@ gc_project_velocity = dbc.Card(
                                         step=0.1,
                                         value=0.4,
                                         size="sm",
+                                        style={"width": "80px"},
+                                        className="dark-input",
                                     ),
                                     className="me-2",
                                     width=2,
@@ -108,6 +138,8 @@ gc_project_velocity = dbc.Card(
                                         step=0.1,
                                         value=0.5,
                                         size="sm",
+                                        style={"width": "80px"},
+                                        className="dark-input",
                                     ),
                                     className="me-2",
                                     width=2,
@@ -126,6 +158,8 @@ gc_project_velocity = dbc.Card(
                                         step=0.1,
                                         value=0.7,
                                         size="sm",
+                                        style={"width": "80px"},
+                                        className="dark-input",
                                     ),
                                     className="me-2",
                                     width=2,
@@ -149,6 +183,8 @@ gc_project_velocity = dbc.Card(
                                         step=0.1,
                                         value=0.2,
                                         size="sm",
+                                        style={"width": "80px"},
+                                        className="dark-input",
                                     ),
                                     className="me-2",
                                     width=2,
@@ -156,7 +192,7 @@ gc_project_velocity = dbc.Card(
                                 dbc.Label(
                                     "Y-axis:",
                                     html_for=f"graph-view-{PAGE}-{VIZ_ID}",
-                                    width="auto",
+                                    width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     dbc.RadioItems(
@@ -167,6 +203,7 @@ gc_project_velocity = dbc.Card(
                                         ],
                                         value=False,
                                         inline=True,
+                                        className="custom-radio-buttons",
                                     ),
                                     className="me-2",
                                 ),
@@ -182,28 +219,19 @@ gc_project_velocity = dbc.Card(
                                         max_date_allowed=dt.date.today(),
                                         initial_visible_month=dt.date(dt.date.today().year, 1, 1),
                                         clearable=True,
+                                        className="dark-date-picker",
                                     ),
-                                    width="auto",
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
+                                    width=5,
                                 ),
                             ],
-                            align="center",
-                            justify="between",
                         ),
                     ]
                 ),
-            ]
+            ],
+            style={"padding": "1.5rem"},
         )
     ],
+    className="dark-card",
 )
 
 
@@ -376,7 +404,7 @@ def create_figure(df: pd.DataFrame, log):
             "Issue Opened",
             "num_unique_contributors",
         ],
-        color_discrete_sequence=color_seq,
+        color_discrete_sequence=baby_blue,
     )
 
     fig.update_traces(
