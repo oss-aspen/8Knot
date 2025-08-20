@@ -153,9 +153,22 @@ def create_funnel_and_dropoff_charts(repolist):
         raise PreventUpdate
 
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=cfq.__name__, repolist=repolist):
-        logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
+    func_name = cfq.__name__
+    not_cached = cf.get_uncached(func_name=func_name, repolist=repolist)
+    if not_cached:
+        logging.warning(f"{VIZ_ID}: Funnel data for {len(not_cached)} repos not cached. Dispatching worker.")
+        cfq.apply_async(args=[not_cached])
+        timeout = 180
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            if not cf.get_uncached(func_name=func_name, repolist=not_cached):
+                break
+            time.sleep(2)
+        
+        # Check if data is still not available after timeout
+        if cf.get_uncached(func_name=func_name, repolist=repolist):
+            logging.warning(f"{VIZ_ID} - TIMEOUT WAITING FOR DATA")
+            return nodata_graph(), nodata_graph()
 
     logging.warning(f"{VIZ_ID} - START")
     start = time.perf_counter()

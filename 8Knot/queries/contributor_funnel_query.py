@@ -29,25 +29,33 @@ def contributor_funnel_query(self, repos):
 
     query_string = """
         WITH
-          stage0_new AS (
+          all_contributors AS (
             SELECT COUNT(DISTINCT cntrb_id) AS total_contributors
-            FROM augur_data.augur_new_contributors
+            FROM augur_data.contributor_engagement
             WHERE repo_id in %s
           ),
-          stage1_basic AS (
-            SELECT COUNT(DISTINCT cntrb_id) AS engaged_contributors
-            FROM augur_data.d1_contributor_engagement
+          basic_contributors AS (
+            SELECT COUNT(DISTINCT cntrb_id) AS basic_count
+            FROM augur_data.contributor_engagement
             WHERE repo_id in %s
+              AND (d1_first_issue_created_at IS NOT NULL 
+                   OR d1_first_pr_opened_at IS NOT NULL 
+                   OR d1_first_pr_commented_at IS NOT NULL)
           ),
-          stage2_deep AS (
-            SELECT COUNT(DISTINCT cntrb_id) AS deeply_engaged_contributors
-            FROM augur_data.d2_contributor_engagement
+          deep_contributors AS (
+            SELECT COUNT(DISTINCT cntrb_id) AS deep_count
+            FROM augur_data.contributor_engagement
             WHERE repo_id in %s
+              AND (d2_has_merged_pr = true 
+                   OR d2_created_many_issues = true 
+                   OR d2_total_comments >= 5
+                   OR d2_has_pr_with_many_commits = true 
+                   OR d2_commented_on_multiple_prs = true)
           )
         SELECT
-          (SELECT total_contributors FROM stage0_new) AS "All New Contributors",
-          (SELECT engaged_contributors FROM stage1_basic) AS "Basic Engagement",
-          (SELECT deeply_engaged_contributors FROM stage2_deep) AS "Deeper Engagement"
+          (SELECT total_contributors FROM all_contributors) AS "All Contributors",
+          (SELECT basic_count FROM basic_contributors) AS "Basic Engagement",
+          (SELECT deep_count FROM deep_contributors) AS "Deep Engagement"
     """
 
     # used for caching
