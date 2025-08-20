@@ -448,3 +448,32 @@ input.dark-input:focus,
   margin: 1.5rem -1.5rem;
   width: calc(100% + 3rem);
 }
+
+/* =============================================================================
+   TABLE COMPONENTS STYLING
+============================================================================= */
+
+/* Scoped to app to avoid global overrides */
+.dbc .table {
+  /* Bootstrap 5 table CSS variables for consistent theming */
+  --bs-table-bg: var(--color-dark-bg);
+  --bs-table-color: var(--color-white);
+  --bs-table-border-color: var(--multiselect-hover-bg);
+  --bs-table-striped-bg: #222;
+  --bs-table-hover-bg: #2e2e2e;
+  --bs-table-active-bg: #2e2e2e;
+  background-color: var(--bs-table-bg);
+  color: var(--bs-table-color);
+}
+.dbc .table th,
+.dbc .table td {
+  border-color: var(--bs-table-border-color);
+  background-color: var(--bs-table-bg);
+}
+.dbc .table thead th {
+  background-color: var(--color-topbar-bg);
+  color: var(--color-white);
+}
+.dbc .table-striped tbody tr:nth-of-type(odd) { background-color: var(--bs-table-striped-bg); }
+.dbc .table-hover tbody tr:hover { background-color: var(--bs-table-hover-bg); }
+.dbc .table-bordered { border-color: var(--bs-table-border-color); }
