@@ -66,6 +66,7 @@ def contributor_funnel_query(self, repos):
         func_name=func_name,
         query=query_string,
         repolist=repos,
+        n_repolist_uses=3,
     )
 
     logging.warning(f"{contributor_funnel_query.__name__} COLLECTION - END")
