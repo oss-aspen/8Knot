@@ -7,7 +7,7 @@ import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
-from pages.utils.graph_utils import color_seq
+from pages.utils.graph_utils import baby_blue
 from queries.commits_query import commits_query as cmq
 import cache_manager.cache_facade as cf
 from pages.utils.job_utils import nodata_graph
@@ -21,10 +21,28 @@ gc_contrib_activity_cycle = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "Contributor Activity Cycle",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "Contributor Activity Cycle",
+                                className="card-title",
+                            ),
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                color="outline-secondary",
+                                size="sm",
+                                className="about-graph-button",
+                            ),
+                            width="auto",
+                        ),
+                    ],
+                    align="center",
+                    justify="between",
+                    className="mb-3",
                 ),
                 dbc.Popover(
                     [
@@ -43,7 +61,9 @@ gc_contrib_activity_cycle = dbc.Card(
                 ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
+                    style={"marginBottom": "1rem"},
                 ),
+                html.Hr(className="card-split"),  # Divider between graph and controls
                 dbc.Form(
                     [
                         dbc.Row(
@@ -51,42 +71,36 @@ gc_contrib_activity_cycle = dbc.Card(
                                 dbc.Label(
                                     "Date Interval:",
                                     html_for=f"date-interval-{PAGE}-{VIZ_ID}",
-                                    width="auto",
+                                    width={"size": "auto"},
                                 ),
                                 dbc.Col(
-                                    [
-                                        dbc.RadioItems(
-                                            id=f"date-interval-{PAGE}-{VIZ_ID}",
-                                            options=[
-                                                {
-                                                    "label": "Weekday",
-                                                    "value": "D",
-                                                },
-                                                {"label": "Hourly", "value": "H"},
-                                            ],
-                                            value="D",
-                                            inline=True,
-                                        ),
-                                    ]
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
+                                    dbc.RadioItems(
+                                        id=f"date-interval-{PAGE}-{VIZ_ID}",
+                                        options=[
+                                            {
+                                                "label": "Weekday",
+                                                "value": "D",
+                                            },
+                                            {"label": "Hourly", "value": "H"},
+                                        ],
+                                        value="D",
+                                        inline=True,
+                                        className="custom-radio-buttons",
                                     ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
+                                    className="me-2",
+                                    width=4,
                                 ),
                             ],
                             align="center",
+                            justify="start",
                         ),
                     ]
                 ),
-            ]
+            ],
+            style={"padding": "1.5rem"},
         )
     ],
+    className="dark-card",
 )
 
 
@@ -187,7 +201,7 @@ def create_figure(df: pd.DataFrame, interval):
     if interval == "H":
         column = "Hour"
 
-    fig = px.bar(df, y=column, color_discrete_sequence=[color_seq[3]])
+    fig = px.bar(df, y=column, color_discrete_sequence=[baby_blue[3]])
     hover = "%{x} Activity Count: %{y}<br>"
     if interval == "H":
         hover = "Hour: %{x}:00 Activity Count: %{y}<br>"

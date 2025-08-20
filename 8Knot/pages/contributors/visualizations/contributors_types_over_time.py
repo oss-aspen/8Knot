@@ -7,7 +7,7 @@ import pandas as pd
 import logging
 import numpy as np
 import plotly.express as px
-from pages.utils.graph_utils import get_graph_time_values, color_seq
+from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from pages.utils.job_utils import nodata_graph
 from queries.contributors_query import contributors_query as ctq
 import time
@@ -24,10 +24,28 @@ gc_contributors_over_time = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "Contributor Types Over Time",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "Contributor Types Over Time",
+                                className="card-title",
+                            ),
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                color="outline-secondary",
+                                size="sm",
+                                className="about-graph-button",
+                            ),
+                            width="auto",
+                        ),
+                    ],
+                    align="center",
+                    justify="between",
+                    className="mb-3",
                 ),
                 dbc.Popover(
                     [
@@ -48,7 +66,9 @@ gc_contributors_over_time = dbc.Card(
                 ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
+                    style={"marginBottom": "1rem"},
                 ),
+                html.Hr(className="card-split"),  # Divider between graph and controls
                 dbc.Form(
                     [
                         dbc.Row(
@@ -67,19 +87,16 @@ gc_contributors_over_time = dbc.Card(
                                         step=1,
                                         value=4,
                                         size="sm",
+                                        style={"width": "80px"},
+                                        className="dark-input",
                                     ),
                                     className="me-2",
                                     width=2,
                                 ),
-                            ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
                                 dbc.Label(
                                     "Date Interval:",
                                     html_for=f"date-interval-{PAGE}-{VIZ_ID}",
-                                    width="auto",
+                                    width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     dbc.RadioItems(
@@ -94,27 +111,22 @@ gc_contributors_over_time = dbc.Card(
                                         ],
                                         value="M",
                                         inline=True,
+                                        className="custom-radio-buttons",
                                     ),
                                     className="me-2",
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
+                                    width=4,
                                 ),
                             ],
                             align="center",
+                            justify="start",
                         ),
                     ]
                 ),
-            ]
-        ),
+            ],
+            style={"padding": "1.5rem"},
+        )
     ],
+    className="dark-card",
 )
 
 
@@ -256,7 +268,7 @@ def create_figure(df_drive_repeat, interval):
         x="Date",
         y=["Repeat", "Drive"],
         labels={"x": x_name, "y": "Contributors"},
-        color_discrete_sequence=[color_seq[1], color_seq[2]],
+        color_discrete_sequence=[baby_blue[6], baby_blue[8]],
     )
     fig.update_traces(
         hovertemplate=hover + "<br>Contributors: %{y}<br><extra></extra>",
