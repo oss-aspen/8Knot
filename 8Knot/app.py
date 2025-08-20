@@ -67,13 +67,44 @@ dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.mi
 # making custom plotly template with custom colors on top of the slate design template
 plt_io.templates["custom_dark"] = plt_io.templates["slate"]
 plt_io.templates["custom_dark"]["layout"]["colorway"] = [
-    "#B5B682",  # sage
-    "#c0bc5d",  # citron (yellow-ish)
-    "#6C8975",  # reseda green
-    "#D9AE8E",  # buff (pale pink)
-    "#FFBF51",  # xanthous (orange-ish)
-    "#C7A5A5",  # rosy brown
+    "#F0F9FF",  # Baby Blue 100 - very light
+    "#E0F2FE",  # Baby Blue 200 - light
+    "#BAE6FD",  # Baby Blue 300 - medium light
+    "#7DD3FC",  # Baby Blue 400 - light blue
+    "#38BDF8",  # Baby Blue 500 - main baby blue
+    "#0EA5E9",  # Baby Blue 600 - medium dark
+    "#0284C7",  # Baby Blue 700 - dark
+    "#0369A1",  # Baby Blue 800 - very dark
+    "#F7B009",  # Yellow 500 - main yellow
 ]
+
+# Match plot backgrounds, fonts, and legend styling to the dark shell/card theme
+_tpl = plt_io.templates["custom_dark"]
+_tpl["layout"].update(
+    {
+        "paper_bgcolor": "#292929",  # matches card background
+        "plot_bgcolor": "#292929",
+        "font": {"color": "white"},
+        "title": {"x": 0, "font": {"color": "white"}},
+        "legend": {"font": {"color": "white"}, "bgcolor": "rgba(0,0,0,0)"},
+        "hoverlabel": {"bgcolor": "#404040", "font": {"color": "white"}},
+        "xaxis": {
+            "gridcolor": "#404040",
+            "zerolinecolor": "#404040",
+            "linecolor": "#606060",
+            "tickfont": {"color": "white"},
+            "title": {"font": {"color": "white"}},
+        },
+        "yaxis": {
+            "gridcolor": "#404040",
+            "zerolinecolor": "#404040",
+            "linecolor": "#606060",
+            "tickfont": {"color": "white"},
+            "title": {"font": {"color": "white"}},
+        },
+        "margin": {"l": 40, "r": 20, "t": 40, "b": 40},
+    }
+)
 
 plt_io.templates.default = "custom_dark"
 

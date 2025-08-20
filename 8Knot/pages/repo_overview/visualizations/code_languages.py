@@ -57,47 +57,39 @@ gc_code_language = dbc.Card(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                     style={"marginBottom": "1rem"},
                 ),
-                html.Hr(  # Divider between graph and controls
-                    style={
-                        "borderColor": "#909090",
-                        "margin": "1.5rem -1.5rem",
-                        "width": "calc(100% + 3rem)",
-                    }
-                ),
+                html.Hr(className="card-split"),  # Divider between graph and controls
                 dbc.Form(
                     [
                         dbc.Row(
                             [
+                                dbc.Label(
+                                    "Graph View:",
+                                    html_for=f"graph-view-{PAGE}-{VIZ_ID}",
+                                    width={"size": "auto"},
+                                ),
                                 dbc.Col(
-                                    [
-                                        dbc.Label(
-                                            "Graph View:",
-                                            html_for=f"graph-view-{PAGE}-{VIZ_ID}",
-                                            style={"fontSize": "12px", "fontWeight": "bold", "marginBottom": "0.5rem"},
-                                        ),
-                                        dbc.RadioItems(
-                                            id=f"graph-view-{PAGE}-{VIZ_ID}",
-                                            options=[
-                                                {
-                                                    "label": "Files",
-                                                    "value": "file",
-                                                },
-                                                {
-                                                    "label": "Lines of Code",
-                                                    "value": "line",
-                                                },
-                                            ],
-                                            value="file",
-                                            inline=True,
-                                            className="custom-radio-buttons",
-                                        ),
-                                    ],
-                                    width="auto",
+                                    dbc.RadioItems(
+                                        id=f"graph-view-{PAGE}-{VIZ_ID}",
+                                        options=[
+                                            {
+                                                "label": "Files",
+                                                "value": "file",
+                                            },
+                                            {
+                                                "label": "Lines of Code",
+                                                "value": "line",
+                                            },
+                                        ],
+                                        value="file",
+                                        inline=True,
+                                        className="custom-radio-buttons",
+                                    ),
+                                    className="me-2",
+                                    width=4,
                                 ),
                             ],
                             align="center",
-                            justify="between",
-                            className="mb-0",
+                            justify="start",
                         ),
                     ]
                 ),
@@ -211,15 +203,6 @@ def create_figure(df: pd.DataFrame, view):
         textposition="inside",
         textinfo="percent+label",
         hovertemplate="%{label} <br>Amount: %{value}<br><extra></extra>",
-    )
-
-    # add legend title
-    fig.update_layout(
-        legend_title_text="Languages",
-        paper_bgcolor="#292929",
-        plot_bgcolor="#292929",
-        font=dict(color="white"),  # Makes all text white
-        legend=dict(font=dict(color="white")),  # Specifically makes legend text white
     )
 
     return fig

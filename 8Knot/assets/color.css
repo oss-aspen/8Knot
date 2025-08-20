@@ -15,6 +15,7 @@
   --color-dark-bg: #1D1D1D;
   --color-card-bg: #272b30;
   --color-border: #292929;
+  --color-topbar-bg: #242424;
   --color-text-light: #f0f0f0;
   --spacing-sm: 0.25rem;
   --spacing-md: 0.5rem;
@@ -55,7 +56,7 @@ blockquote {
 }
 
 blockquote p {
-  margin-top: 1px;
+  margin-top: var(--placeholder-top-offset);
   margin-bottom: 1px;
   width: auto;
   min-width: 50px;
@@ -181,11 +182,11 @@ input.botlist-filter-switch:checked {
 
 /* Ensure links are readable on dark background */
 .navbar.fixed-bottom .navbar-nav .nav-link {
-  color: #9c9c9c !important;
+  color: var(--placeholder-text-color) !important;
 }
 
 .navbar.fixed-bottom .navbar-nav .nav-link:hover {
-  color: #ffffff !important;
+  color: var(--color-white) !important;
 }
 
 /* Remove underline for button-as-link in sidebar */
@@ -228,8 +229,8 @@ div.card h3.card-title {
 }
 
 .custom-radio-buttons .form-check-input {
-  width: 0.8em;
-  height: 0.8em;
+  width: 1em;
+  height: 1em;
   border: 1px solid #C7C7C7;
   background-color: transparent;
   margin-right: 0.4rem;
@@ -250,7 +251,7 @@ div.card h3.card-title {
 
 .custom-radio-buttons .form-check-label {
   color: var(--color-white);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   margin-left: 0.1rem;
@@ -267,7 +268,7 @@ button.about-graph-button {
   min-width: 120px;
   padding: 0.33rem var(--spacing-lg);
   color: var(--color-white);
-  border: 0.5px solid #404040;
+  border: 0.5px solid var(--multiselect-hover-bg);
   background-color: transparent;
   transition: all 0.2s ease;
 }
@@ -287,4 +288,163 @@ div.dark-card {
   border-radius: 12px;
   border: 1px solid var(--color-border);
   background-color: var(--color-border);
+}
+
+/* =============================================================================
+   DROPDOWN COMPONENTS
+============================================================================= */
+
+/* Dark Dropdown Box Styling */
+.dark-dropdown .Select-control,
+.dark-dropdown .Select-control:hover {
+  background-color: var(--multiselect-hover-bg)!important;
+  border-color: var(--multiselect-hover-bg)!important;
+  color: white !important;
+  min-width: 150px !important;
+}
+
+/* Dark Dropdown Placeholder Styling */
+.dark-dropdown .Select-placeholder,
+.dark-dropdown .Select-value-label {
+  color: white !important;
+}
+
+/* Fix for the vertical bar issue */
+.dbc input:not([type=radio]):not([type=checkbox]) {
+  color: var(--bs-body-color) !important;
+  background-color: #404040 !important;
+}
+
+/* =============================================================================
+   DATE PICKER COMPONENTS
+============================================================================= */
+
+/**
+ * Date Picker Dark Theme
+ * Styling for React-Dates and similar date picker components
+ */
+ .dark-date-picker .DateInput_input {
+  background-color: var(--multiselect-hover-bg)!important;
+  border-color: var(--multiselect-hover-bg) !important;
+  color: white !important;
+}
+
+.dark-date-picker .DateInput_input:focus {
+  background-color: var(--multiselect-hover-bg) !important;
+  border-color: #555555 !important;
+  color: white !important;
+}
+
+.dark-date-picker .DateRangePickerInput {
+  background-color: var(--multiselect-hover-bg) !important;
+  border-color: var(--multiselect-hover-bg) !important;
+}
+
+/**
+ * Date Range Picker Specific Styling
+ * The Date picker within plotly involves a lot of internal classes that need to be styled.
+ */
+.dark-date-picker
+.DateRangePickerInput .DateInput_input,
+.DateInput_input__focused {
+  height: var(--placeholder-font-size);
+  outline: 0;
+  background: var(--multiselect-hover-bg) !important;
+  border: 0 !important;
+  border-top: 0 !important;
+  border-right: 0;
+  border-bottom: 2px solid #008489;
+  border-left: 0;
+}
+
+.dark-date-picker
+.DateInput_input {
+  font-weight: 400;
+  font-size: 19px;
+  color: var(--color-white);
+}
+
+.dark-date-picker
+.DateInput {
+  background: var(--multiselect-hover-bg) !important;
+}
+
+ /* Dark Date Picker Border Styling */
+.dark-date-picker
+.DateRangePickerInput__withBorder {
+    border-radius: 7px;
+    border: 1px solid var(--multiselect-hover-bg);
+}
+
+/**
+ * Date Picker Arrow Customization
+ * Hides default SVG arrow and replaces with text-based arrow
+ */
+.dark-date-picker
+.DateRangePickerInput_arrow_svg {
+    display: none !important;
+}
+
+.dark-date-picker
+.DateRangePickerInput_arrow::before {
+  content: "→" !important;
+  font-size: 1.2em !important;
+  color: #fff9f9 !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  background-color: var(--multiselect-hover-bg) !important;
+}
+
+/* Placeholder text (the Start Date and End Date labels) */
+.dark-date-picker input::placeholder {
+  background-color: var(--multiselect-hover-bg) !important;
+}
+
+/* =============================================================================
+   TEXT INPUT CONTROLS
+============================================================================= */
+
+/* Dark Input Box Styling */
+.dark-input,
+.form-control.form-control-sm.dark-input,
+.form-control.form-control-sm.dark-input[type="number"]{
+  width: 80px !important;
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+  color: white !important;
+  background-image: none !important;
+}
+
+
+/* Dark Input Focus Styling */
+.dark-input:focus,
+input.dark-input:focus,
+.form-control.dark-input:focus,
+.form-control.form-control-sm.dark-input:focus,
+.form-control.form-control-sm.dark-input[type="number"]:focus{
+  background-color: #404040 !important;
+  border-color: #555555 !important;
+  color: white !important;
+  box-shadow: 0 0 0 0.2rem rgba(64, 64, 64, 0.25) !important;
+  background-image: none !important;
+}
+
+/* Labels for dark inputs (scoped to a wrapper) */
+.dark-input-group label,
+.dark-input-group .form-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-white);
+  margin-bottom: 0;
+  margin-right: 0.5rem;
+  margin-bottom: 0;
+}
+
+/* ==== CARD DIVIDER (card-split) ==== */
+/* Horizontal divider used to separate graph from controls inside cards */
+.card-split {
+  border: 0;
+  border-top: 1px solid #909090;
+  margin: 1.5rem -1.5rem;
+  width: calc(100% + 3rem);
 }
