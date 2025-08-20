@@ -174,7 +174,7 @@ topbar = html.Div(
     style={
         "height": "60px",
         "width": "100%",
-        "background-color": "#242424",
+        "backgroundColor": "#242424",
         "display": "flex",
         "alignItems": "center",
         "justifyContent": "space-between",
@@ -386,7 +386,7 @@ search_bar = html.Div(
                     is_open=False,
                     color="light",
                     # if number of repos is large, render as a scrolling window
-                    style={"overflow-y": "scroll", "max-height": "440px"},
+                    style={"overflowY": "scroll", "max-height": "440px"},
                 ),
             ],
             style={
@@ -608,11 +608,11 @@ layout = html.Div(
                                         id="left-sidebar",
                                         style={
                                             "width": "340px",
-                                            "background-color": "#1D1D1D",
-                                            "border-radius": "12px 0 0 12px",
-                                            "border-right": "1.5px solid #292929",
+                                            "backgroundColor": "#1D1D1D",
+                                            "borderRadius": "12px 0 0 12px",
+                                            "borderRight": "1.5px solid #292929",
                                             "padding": "1rem",
-                                            "flex-shrink": 0,
+                                            "flexShrink": 0,
                                             "display": "flex",
                                             "flexDirection": "column",
                                             "height": "calc(100vh - 60px - 56px - 4px)",
@@ -644,9 +644,9 @@ layout = html.Div(
                                         id="page-container",
                                         style={
                                             "border-radius": "0 12px 12px 0",
-                                            "background-color": "#1D1D1D",
+                                            "backgroundColor": "#1D1D1D",
                                             "padding": "1rem",
-                                            "overflow-y": "auto",
+                                            "overflowY": "auto",
                                             "height": "100%",
                                             "flex": "1",
                                         },
@@ -669,8 +669,8 @@ layout = html.Div(
         fluid=True,
         className="dbc",
         style={
-            "background-color": "#242424",
+            "backgroundColor": "#242424",
         },
     ),
-    style={"background-color": "#242424", "min-height": "100vh", "margin": "0", "padding": "0"},
+    style={"backgroundColor": "#242424", "minHeight": "100vh", "margin": "0", "padding": "0"},
 )

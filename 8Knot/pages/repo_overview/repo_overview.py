@@ -18,7 +18,7 @@ dash.register_page(__name__, path="/repo_overview")
 
 layout = dbc.Container(
     [
-        html.H1("Search Bar Populated Analysis", style={"text-align": "center", "marginBottom": "1%"}),
+        html.H1("Search Bar Populated Analysis", style={"textAlign": "center", "marginBottom": "1%"}),
         dbc.Row(
             [
                 dbc.Col(gc_code_language, width=5),
