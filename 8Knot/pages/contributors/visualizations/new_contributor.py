@@ -6,7 +6,7 @@ from dash.dependencies import Input, Output, State
 import pandas as pd
 import logging
 import plotly.express as px
-from pages.utils.graph_utils import get_graph_time_values, color_seq
+from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from queries.contributors_query import contributors_query as ctq
 from pages.utils.job_utils import nodata_graph
 import time
@@ -21,18 +21,34 @@ gc_new_contributor = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    id=f"graph-title-{PAGE}-{VIZ_ID}",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "New Contributors Over Time",
+                                className="card-title",
+                            ),
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                color="outline-secondary",
+                                size="sm",
+                                className="about-graph-button",
+                            ),
+                            width="auto",
+                        ),
+                    ],
+                    align="center",
+                    justify="between",
+                    className="mb-3",
                 ),
                 dbc.Popover(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "Visualizes the growth of contributor base by tracking the arrival of novel contributors over time.\n\
-                            Trend: This view is the total growth of contributors over time \n\
-                            Month/Year: This view looks specifically at the new contributors by selected time bucket."
+                            "Visualizes the growth of contributor base by tracking the arrival of novel contributors over time."
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}",
@@ -42,6 +58,14 @@ gc_new_contributor = dbc.Card(
                 ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
+                    style={"marginBottom": "1rem"},
+                ),
+                html.Hr(  # Divider between graph and controls
+                    style={
+                        "borderColor": "#909090",
+                        "margin": "1.5rem -1.5rem",
+                        "width": "calc(100% + 3rem)",
+                    }
                 ),
                 dbc.Form(
                     [
@@ -50,42 +74,35 @@ gc_new_contributor = dbc.Card(
                                 dbc.Label(
                                     "Date Interval",
                                     html_for=f"date-interval-{PAGE}-{VIZ_ID}",
-                                    width="auto",
+                                    width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     dbc.RadioItems(
                                         id=f"date-interval-{PAGE}-{VIZ_ID}",
                                         options=[
-                                            {
-                                                "label": "Trend",
-                                                "value": -1,
-                                            },
+                                            {"label": "Day", "value": "D"},
+                                            {"label": "Week", "value": "W"},
                                             {"label": "Month", "value": "M"},
                                             {"label": "Year", "value": "Y"},
                                         ],
                                         value="M",
                                         inline=True,
+                                        className="custom-radio-buttons",
                                     ),
                                     className="me-2",
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
+                                    width=4,
                                 ),
                             ],
                             align="center",
+                            justify="start",
                         ),
                     ]
                 ),
-            ]
+            ],
+            style={"padding": "1.5rem"},
         ),
     ],
+    className="dark-card",
 )
 
 
@@ -99,22 +116,6 @@ def toggle_popover_1(n, is_open):
     if n:
         return not is_open
     return is_open
-
-
-# callback to dynamically change the graph title
-@callback(
-    Output(f"graph-title-{PAGE}-{VIZ_ID}", "children"),
-    Input(f"date-interval-{PAGE}-{VIZ_ID}", "value"),
-)
-def graph_title(view):
-    title = ""
-    if view == -1:
-        title = "Total Contributors Over Time"
-    elif view == "M":
-        title = "New Contributors by Month"
-    else:
-        title = "New Contributors by Year"
-    return title
 
 
 @callback(
@@ -182,8 +183,11 @@ def process_data(df, interval):
     df.drop_duplicates(subset=["cntrb_id"], inplace=True)
     df.reset_index(inplace=True)
 
-    if interval == -1:
-        return df, None
+    # variable to slice on to handle weekly period edge case
+    period_slice = None
+    if interval == "W":
+        # this is to slice the extra period information that comes with the weekly case
+        period_slice = 10
 
     # get the count of new contributors in the desired interval in pandas period format, sort index to order entries
     created_range = pd.to_datetime(df["created_at"]).dt.to_period(interval).value_counts().sort_index()
@@ -208,45 +212,25 @@ def create_figure(df, df_contribs, interval):
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
-    if interval == -1:
-        fig = px.line(df, x="created_at", y=df.index, color_discrete_sequence=[color_seq[3]])
-        fig.update_traces(hovertemplate="Contributors: %{y}<br>%{x|%b %d, %Y} <extra></extra>")
-    else:
-        fig = px.bar(
-            df_contribs,
-            x="Date",
-            y="contribs",
-            range_x=x_r,
-            labels={"x": x_name, "y": "Contributors"},
-            color_discrete_sequence=[color_seq[3]],
-        )
-        fig.update_traces(hovertemplate=hover + "<br>Contributors: %{y}<br>")
-
-    """
-        Ref. for this awesome button thing:
-        https://plotly.com/python/range-slider/
-    """
-    # add the date-range selector
-    fig.update_layout(
-        xaxis=dict(
-            rangeselector=dict(
-                buttons=list(
-                    [
-                        dict(count=1, label="1m", step="month", stepmode="backward"),
-                        dict(count=6, label="6m", step="month", stepmode="backward"),
-                        dict(count=1, label="YTD", step="year", stepmode="todate"),
-                        dict(count=1, label="1y", step="year", stepmode="backward"),
-                        dict(step="all"),
-                    ]
-                )
-            ),
-            rangeslider=dict(visible=True),
-            type="date",
-        )
+    fig = px.bar(
+        df_contribs,
+        x="Date",
+        y="contribs",
+        range_x=x_r,
+        labels={"x": x_name, "y": "Contributors"},
+        color_discrete_sequence=[baby_blue[8]],
     )
-    # label the figure correctly
+    fig.update_traces(hovertemplate=hover + "<br>Contributors: %{y}<br>")
+    fig.update_xaxes(
+        showgrid=True,
+        ticklabelmode="period",
+        dtick=period,
+        rangeslider_yaxis_rangemode="match",
+        range=x_r,
+    )
+
     fig.update_layout(
-        xaxis_title="Time",
+        xaxis_title=x_name,
         yaxis_title="Number of Contributors",
         margin_b=40,
         margin_r=20,
