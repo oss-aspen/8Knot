@@ -20,6 +20,7 @@ baby_blue = [
     "#0EA5E9",  # Baby Blue 600 - medium dark
     "#0284C7",  # Baby Blue 700 - dark
     "#0369A1",  # Baby Blue 800 - very dark
+    "#F7B009",  # Yellow 500 - main yellow
 ]
 
 
