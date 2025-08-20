@@ -39,6 +39,12 @@ def ossf_score_query(self, repos):
                     repo_deps_scorecard
                 WHERE
                     repo_id IN %s
+                    AND data_collection_date = (
+                        SELECT MAX(data_collection_date)
+                        FROM repo_deps_scorecard rs2
+                        WHERE rs2.repo_id IN %s
+                    )
+
                 """
 
     func_name = ossf_score_query.__name__
@@ -48,6 +54,7 @@ def ossf_score_query(self, repos):
         func_name=func_name,
         query=query_string,
         repolist=repos,
+        n_repolist_uses=2,
     )
 
     logging.warning(f"{ossf_score_query.__name__} COLLECTION - END")
