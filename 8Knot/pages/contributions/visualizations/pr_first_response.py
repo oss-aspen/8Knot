@@ -7,7 +7,7 @@ import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
-from pages.utils.graph_utils import get_graph_time_values, color_seq
+from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from queries.pr_response_query import pr_response_query as prr
 import io
 from cache_manager.cache_manager import CacheManager as cm
@@ -23,10 +23,28 @@ gc_pr_first_response = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "Pull Request Time to First Response",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "Pull Request Time to First Response",
+                                className="card-title",
+                            ),
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                color="outline-secondary",
+                                size="sm",
+                                className="about-graph-button",
+                            ),
+                            width="auto",
+                        ),
+                    ],
+                    align="center",
+                    justify="between",
+                    className="mb-3",
                 ),
                 dbc.Popover(
                     [
@@ -45,6 +63,14 @@ gc_pr_first_response = dbc.Card(
                 ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
+                    style={"marginBottom": "1rem"},
+                ),
+                html.Hr(  # Divider between graph and controls
+                    style={
+                        "borderColor": "#909090",
+                        "margin": "1.5rem -1.5rem",
+                        "width": "calc(100% + 3rem)",
+                    }
                 ),
                 dbc.Form(
                     [
@@ -53,7 +79,7 @@ gc_pr_first_response = dbc.Card(
                                 dbc.Label(
                                     "Response Days:",
                                     html_for=f"response-days-{PAGE}-{VIZ_ID}",
-                                    width="auto",
+                                    width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     dbc.Input(
@@ -64,28 +90,22 @@ gc_pr_first_response = dbc.Card(
                                         step=1,
                                         value=2,
                                         size="sm",
-                                        style={"width": "100px"},
+                                        style={"width": "80px"},
+                                        className="dark-input",
                                     ),
                                     className="me-2",
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
+                                    width=2,
                                 ),
                             ],
                             align="center",
                         ),
                     ]
                 ),
-            ]
+            ],
+            style={"padding": "1.5rem"},
         )
     ],
+    className="dark-card",
 )
 
 
@@ -190,7 +210,7 @@ def create_figure(df: pd.DataFrame, num_days):
                 mode="lines",
                 showlegend=True,
                 hovertemplate="PR's Open: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
-                marker=dict(color=color_seq[1]),
+                marker=dict(color=baby_blue[8]),
             ),
             go.Scatter(
                 name="Response <" + str(num_days) + " days",
@@ -199,7 +219,7 @@ def create_figure(df: pd.DataFrame, num_days):
                 mode="lines",
                 showlegend=True,
                 hovertemplate="PRs: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
-                marker=dict(color=color_seq[5]),
+                marker=dict(color=baby_blue[2]),
             ),
         ]
     )
