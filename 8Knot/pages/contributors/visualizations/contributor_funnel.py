@@ -9,13 +9,12 @@ from dash.exceptions import PreventUpdate
 import time
 
 from pages.utils.job_utils import nodata_graph
-from queries.contributor_funnel_query import contributor_funnel_query as cfq
+from queries.contributor_funnel_query import contributor_engagement_query as ceq
 import cache_manager.cache_facade as cf
 
 PAGE = "contributors"
 VIZ_ID = "contributor-funnel"
 
-# Card for the Funnel Chart
 gc_contributor_funnel = dbc.Card(
     [
         dbc.CardBody(
@@ -65,7 +64,6 @@ gc_contributor_funnel = dbc.Card(
     ],
 )
 
-# Card for the Drop-off Chart
 gc_contributor_dropoff = dbc.Card(
     [
         dbc.CardBody(
@@ -115,7 +113,6 @@ gc_contributor_dropoff = dbc.Card(
     ],
 )
 
-# callback for funnel graph info popover
 @callback(
     Output(f"popover-{PAGE}-{VIZ_ID}-funnel", "is_open"),
     [Input(f"popover-target-{PAGE}-{VIZ_ID}-funnel", "n_clicks")],
@@ -127,7 +124,6 @@ def toggle_funnel_popover(n, is_open):
     return is_open
 
 
-# callback for dropoff graph info popover
 @callback(
     Output(f"popover-{PAGE}-{VIZ_ID}-dropoff", "is_open"),
     [Input(f"popover-target-{PAGE}-{VIZ_ID}-dropoff", "n_clicks")],
@@ -139,7 +135,6 @@ def toggle_dropoff_popover(n, is_open):
     return is_open
 
 
-# callback for contributor funnel and dropoff graphs
 @callback(
     Output(f"{PAGE}-{VIZ_ID}-funnel-graph", "figure"),
     Output(f"{PAGE}-{VIZ_ID}-dropoff-graph", "figure"),
@@ -152,12 +147,11 @@ def create_funnel_and_dropoff_charts(repolist):
     if not repolist:
         raise PreventUpdate
 
-    # wait for data to asynchronously download and become available.
-    func_name = cfq.__name__
+    func_name = ceq.__name__
     not_cached = cf.get_uncached(func_name=func_name, repolist=repolist)
     if not_cached:
-        logging.warning(f"{VIZ_ID}: Funnel data for {len(not_cached)} repos not cached. Dispatching worker.")
-        cfq.apply_async(args=[not_cached])
+        logging.warning(f"{VIZ_ID}: Engagement data for {len(not_cached)} repos not cached. Dispatching worker.")
+        ceq.apply_async(args=[not_cached])
         timeout = 180
         start_time = time.time()
         while time.time() - start_time < timeout:
@@ -165,27 +159,23 @@ def create_funnel_and_dropoff_charts(repolist):
                 break
             time.sleep(2)
         
-        # Check if data is still not available after timeout
         if cf.get_uncached(func_name=func_name, repolist=repolist):
             logging.warning(f"{VIZ_ID} - TIMEOUT WAITING FOR DATA")
-            return nodata_graph(), nodata_graph()
+            return nodata_graph, nodata_graph
 
     logging.warning(f"{VIZ_ID} - START")
     start = time.perf_counter()
 
-    # GET ALL DATA FROM POSTGRES CACHE
-    df_counts = cf.retrieve_from_cache(
-        tablename=cfq.__name__,
+    df_engagement = cf.retrieve_from_cache(
+        tablename=ceq.__name__,
         repolist=repolist,
     )
 
-    # test if there is data
-    if df_counts is None or df_counts.empty:
+    if df_engagement is None or df_engagement.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
-        return nodata_graph(), nodata_graph()
+        return nodata_graph, nodata_graph
 
-    # function for all data pre processing
-    df_funnel, df_dropoff = process_data(df_counts)
+    df_funnel, df_dropoff = process_data(df_engagement)
 
     funnel_fig = create_funnel_figure(df_funnel)
     dropoff_fig = create_dropoff_figure(df_dropoff)
@@ -194,19 +184,40 @@ def create_funnel_and_dropoff_charts(repolist):
     return funnel_fig, dropoff_fig
 
 
-def process_data(df_counts: pd.DataFrame):
-    """Process the funnel data and create separate dataframes for funnel and dropoff charts."""
-    counts = df_counts.iloc[0].to_dict()
-    stages = list(counts.keys())
-    values = list(counts.values())
+def process_data(df: pd.DataFrame):
+    """
+    Process the raw engagement data to calculate funnel stages.
+    This function now replicates the logic from the original SQL query.
+    """
+    if df.empty:
+        return pd.DataFrame(), pd.DataFrame()
 
-    # Data for funnel chart
+    all_contributors_count = df['cntrb_id'].nunique()
+
+    basic_mask = (
+        df['d1_first_issue_created_at'].notna() |
+        df['d1_first_pr_opened_at'].notna() |
+        df['d1_first_pr_commented_at'].notna()
+    )
+    basic_contributors_count = df[basic_mask]['cntrb_id'].nunique()
+
+    deep_mask = (
+        (df['d2_has_merged_pr'] == True) |
+        (df['d2_created_many_issues'] == True) |
+        (df['d2_total_comments'] >= 5) |
+        (df['d2_has_pr_with_many_commits'] == True) |
+        (df['d2_commented_on_multiple_prs'] == True)
+    )
+    deep_contributors_count = df[deep_mask]['cntrb_id'].nunique()
+
+    stages = ["All Contributors", "Basic Engagement", "Deep Engagement"]
+    values = [all_contributors_count, basic_contributors_count, deep_contributors_count]
+    
     df_funnel = pd.DataFrame({
         'Stage': stages,
         'Count': values
     })
 
-    # Data for drop-off chart
     dropoff_stages = []
     dropoff_counts = []
     for i in range(len(values) - 1):
