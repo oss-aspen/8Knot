@@ -134,29 +134,17 @@ gc_pr_staleness = dbc.Card(
                                     width={"size": "auto"},
                                 ),
                                 dbc.Col(
-                                    [
-                                        dbc.RadioItems(
-                                            id=f"date-interval-{PAGE}-{VIZ_ID}",
-                                            options=[
-                                                {"label": "Trend", "value": "D"},
-                                                {"label": "Month", "value": "M"},
-                                                {"label": "Year", "value": "Y"},
-                                            ],
-                                            value="M",
-                                            inline=True,
-                                            className="custom-radio-buttons",
-                                        ),
-                                    ]
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
+                                    dbc.RadioItems(
+                                        id=f"date-interval-{PAGE}-{VIZ_ID}",
+                                        options=[
+                                            {"label": "Trend", "value": "D"},
+                                            {"label": "Month", "value": "M"},
+                                            {"label": "Year", "value": "Y"},
+                                        ],
+                                        value="M",
+                                        inline=True,
+                                        className="custom-radio-buttons",
                                     ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
                             align="center",
