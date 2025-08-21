@@ -568,7 +568,7 @@ def wait_queries(job_ids):
         if all(j.successful() for j in jobs):
             logging.warning([(j.name, j.status) for j in jobs])
             jobs = [j.forget() for j in jobs]
-            return "Data Ready", "#b5b683"
+            return "Data Ready", "#0F5880"
 
         # or one of them has failed
         if any(j.failed() for j in jobs):

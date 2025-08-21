@@ -222,14 +222,3 @@
   height: 75%;
   width: 75%;
 }
-
-/* Blue switch styling */
-.blue-switch .form-check-input:checked {
-  background-color: #0d6efd !important;
-  border-color: #0d6efd !important;
-}
-
-.blue-switch .form-check-input:focus {
-  border-color: #0d6efd !important;
-  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
-}

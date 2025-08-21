@@ -6,9 +6,9 @@
   --placeholder-line-height: 20px;
   --placeholder-top-offset: 1px;
   --multiselect-hover-bg: #404040;
-  --color-primary: #6b8976;
+  --color-primary: #F0F9FF;
   --color-secondary: #b5b683;
-  --color-accent: #8d9d92;
+  --color-accent: #BAE6FD;
   --color-muted: #aaa;
   --color-white: #ffffff;
   --color-black: #000000;
@@ -21,6 +21,13 @@
   --spacing-md: 0.5rem;
   --spacing-lg: 1rem;
   --border-radius: 1rem;
+  --baby-blue-100: #DFF0FB;
+  --baby-blue-200: #A8D9F5;
+  --baby-blue-300: #76C5EF;
+  --baby-blue-400: #3FB0E9;
+  --baby-blue-500: #199AD6;
+  --baby-blue-600: #147AAE;
+  --baby-blue-700: #0F5880;
 }
 
 /* ==== TYPOGRAPHY WITH HIGHER SPECIFICITY ==== */
@@ -64,10 +71,6 @@ blockquote p {
 }
 
 /* ==== DASH SPECIFIC COMPONENTS ==== */
-.dash-spinner.dash-default-spinner {
-  filter: contrast(1.2) hue-rotate(308deg) grayscale(0.76);
-}
-
 /* Utility classes */
 .explanation-p {
   width: auto;
@@ -123,7 +126,8 @@ div.glace_headers {
 /* Switch styling with higher specificity */
 .filter-container .botlist-filter-switch:checked,
 input.botlist-filter-switch:checked {
-  background-color: var(--color-primary);
+  background-color: var(--baby-blue-700);
+  color: var(--placeholder-text-color)!important;
 }
 
 /* Popover styling */
