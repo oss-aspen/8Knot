@@ -6,13 +6,13 @@ ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 ENV UV_PROJECT_ENVIRONMENT=/opt/app-root/
 
 WORKDIR /opt/app-root/
-RUN --mount=type=bind,source=uv.lock,target=uv.lock,z \
-    --mount=type=bind,source=pyproject.toml,target=pyproject.toml,z \
-    uv sync --python=/opt/app-root/bin/python --locked --no-install-project --no-dev --no-cache
+COPY pyproject.toml pyproject.toml
+COPY uv.lock uv.lock
+RUN uv sync --python=/opt/app-root/bin/python --locked --no-install-project --no-dev --no-cache
 
 # remove uv binary copied in earlier to hopefully save some space
 USER root
-RUN rm /bin/uv
+RUN rm /bin/uv pyproject.toml uv.lock
 USER default
 
 COPY ./8Knot/ /opt/app-root/src/
