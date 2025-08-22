@@ -28,6 +28,8 @@ def contributor_engagement_query(self, repos):
     if not repos:
         return None
 
+    # This query now fetches the raw data needed for calculations.
+    # FIX: Added 'repo_id' to the SELECT statement to match the table schema.
     query_string = """
         SELECT
             repo_id,
@@ -44,13 +46,15 @@ def contributor_engagement_query(self, repos):
         WHERE repo_id IN %s
     """
 
+    # The function name is used as the table name in the cache.
     func_name = contributor_engagement_query.__name__
 
+    # The caching wrapper will now cache the raw engagement data.
     cf.caching_wrapper(
         func_name=func_name,
         query=query_string,
         repolist=repos,
-        n_repolist_uses=1, 
+        n_repolist_uses=1, # Only one %s in the query
     )
 
     logging.warning(f"{contributor_engagement_query.__name__} COLLECTION - END")
