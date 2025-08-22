@@ -7,7 +7,7 @@ import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
-from pages.utils.graph_utils import get_graph_time_values, color_seq
+from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from queries.pr_assignee_query import pr_assignee_query as praq
 from pages.utils.job_utils import nodata_graph
 import time
@@ -22,10 +22,28 @@ gc_pr_assignment = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "Pull Request Review Status Counts",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "Pull Request Review Status Counts",
+                                className="card-title",
+                            ),
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                color="outline-secondary",
+                                size="sm",
+                                className="about-graph-button",
+                            ),
+                            width="auto",
+                        ),
+                    ],
+                    align="center",
+                    justify="between",
+                    className="mb-3",
                 ),
                 dbc.Popover(
                     [
@@ -44,6 +62,14 @@ gc_pr_assignment = dbc.Card(
                 ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
+                    style={"marginBottom": "1rem"},
+                ),
+                html.Hr(  # Divider between graph and controls
+                    style={
+                        "borderColor": "#909090",
+                        "margin": "1.5rem -1.5rem",
+                        "width": "calc(100% + 3rem)",
+                    }
                 ),
                 dbc.Form(
                     [
@@ -52,41 +78,35 @@ gc_pr_assignment = dbc.Card(
                                 dbc.Label(
                                     "Date Interval:",
                                     html_for=f"date-radio-{PAGE}-{VIZ_ID}",
-                                    width="auto",
+                                    width={"size": "auto"},
                                 ),
                                 dbc.Col(
-                                    [
-                                        dbc.RadioItems(
-                                            id=f"date-radio-{PAGE}-{VIZ_ID}",
-                                            options=[
-                                                {"label": "Trend", "value": "D"},
-                                                {"label": "Week", "value": "W"},
-                                                {"label": "Month", "value": "M"},
-                                                {"label": "Year", "value": "Y"},
-                                            ],
-                                            value="W",
-                                            inline=True,
-                                        ),
-                                    ]
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
+                                    dbc.RadioItems(
+                                        id=f"date-radio-{PAGE}-{VIZ_ID}",
+                                        options=[
+                                            {"label": "Trend", "value": "D"},
+                                            {"label": "Week", "value": "W"},
+                                            {"label": "Month", "value": "M"},
+                                            {"label": "Year", "value": "Y"},
+                                        ],
+                                        value="W",
+                                        inline=True,
+                                        className="custom-radio-buttons",
                                     ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
+                                    className="me-2",
+                                    width=4,
                                 ),
                             ],
                             align="center",
+                            justify="start",
                         ),
                     ]
                 ),
-            ]
+            ],
+            style={"padding": "1.5rem"},
         )
     ],
+    className="dark-card",
 )
 
 
@@ -213,7 +233,7 @@ def create_figure(df: pd.DataFrame, interval):
                     mode="lines",
                     showlegend=True,
                     hovertemplate="PRs Assigned: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
-                    marker=dict(color=color_seq[2]),
+                    marker=dict(color=baby_blue[8]),
                 ),
                 go.Scatter(
                     name="Unassigned",
@@ -222,7 +242,7 @@ def create_figure(df: pd.DataFrame, interval):
                     mode="lines",
                     showlegend=True,
                     hovertemplate="PRs Unassigned: %{y}<br>%{x|%b %d, %Y}<extra></extra>",
-                    marker=dict(color=color_seq[3]),
+                    marker=dict(color=baby_blue[6]),
                 ),
             ]
         )
@@ -231,7 +251,7 @@ def create_figure(df: pd.DataFrame, interval):
             df,
             x="start_date",
             y=["Assigned", "Unassigned"],
-            color_discrete_sequence=[color_seq[2], color_seq[3]],
+            color_discrete_sequence=[baby_blue[8], baby_blue[6]],
         )
 
         # edit hover values

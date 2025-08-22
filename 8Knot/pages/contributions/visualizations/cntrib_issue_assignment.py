@@ -7,7 +7,7 @@ import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
-from pages.utils.graph_utils import get_graph_time_values, color_seq
+from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from queries.issue_assignee_query import issue_assignee_query as iaq
 from pages.utils.job_utils import nodata_graph
 import time
@@ -22,10 +22,28 @@ gc_cntrib_issue_assignment = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "Contributor Issue Assignment",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "Contributor Issue Assignment",
+                                className="card-title",
+                            ),
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                color="outline-secondary",
+                                size="sm",
+                                className="about-graph-button",
+                            ),
+                            width="auto",
+                        ),
+                    ],
+                    align="center",
+                    justify="between",
+                    className="mb-3",
                 ),
                 dbc.Popover(
                     [
@@ -45,6 +63,14 @@ gc_cntrib_issue_assignment = dbc.Card(
                 ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
+                    style={"marginBottom": "1rem"},
+                ),
+                html.Hr(  # Divider between graph and controls
+                    style={
+                        "borderColor": "#909090",
+                        "margin": "1.5rem -1.5rem",
+                        "width": "calc(100% + 3rem)",
+                    }
                 ),
                 dbc.Form(
                     [
@@ -53,7 +79,7 @@ gc_cntrib_issue_assignment = dbc.Card(
                                 dbc.Label(
                                     "Date Interval:",
                                     html_for=f"date-radio-{PAGE}-{VIZ_ID}",
-                                    width="auto",
+                                    width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     [
@@ -67,8 +93,10 @@ gc_cntrib_issue_assignment = dbc.Card(
                                             ],
                                             value="W",
                                             inline=True,
+                                            className="custom-radio-buttons",
                                         ),
                                     ],
+                                    className="me-2",
                                     width=4,
                                 ),
                                 dbc.Label(
@@ -85,6 +113,8 @@ gc_cntrib_issue_assignment = dbc.Card(
                                         step=1,
                                         value=10,
                                         size="sm",
+                                        style={"width": "80px"},
+                                        className="dark-input",
                                     ),
                                     className="me-2",
                                     width=2,
@@ -114,18 +144,9 @@ gc_cntrib_issue_assignment = dbc.Card(
                                             dt.date.today().day,
                                         ),
                                         clearable=True,
+                                        className="dark-date-picker",
                                     ),
-                                    width="auto",
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
+                                    width=5,
                                 ),
                             ],
                             align="center",
@@ -133,9 +154,11 @@ gc_cntrib_issue_assignment = dbc.Card(
                         ),
                     ]
                 ),
-            ]
+            ],
+            style={"padding": "1.5rem"},
         )
     ],
+    className="dark-card",
 )
 
 
@@ -298,7 +321,7 @@ def create_figure(df: pd.DataFrame, interval):
                 mode="lines",
                 showlegend=True,
                 hovertemplate="Issues Assigned: %{y}<br>%{x|%b %d, %Y}",
-                marker=dict(color=color_seq[marker_val]),
+                marker=dict(color=baby_blue[marker_val]),
             )
             lines.append(line)
             marker_val = (marker_val + 1) % 6
@@ -308,7 +331,7 @@ def create_figure(df: pd.DataFrame, interval):
             df,
             x="start_date",
             y=contribs,
-            color_discrete_sequence=color_seq,
+            color_discrete_sequence=baby_blue,
         )
 
         # edit hover values
