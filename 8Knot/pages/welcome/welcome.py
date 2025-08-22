@@ -46,7 +46,7 @@ layout = html.Div(
                                     children=[
                                         # Main heading
                                         html.H1(
-                                            "Advanced Open Source Project Analysis by Augur",
+                                            "Advanced Open Source Project Analysis by 8Knot",
                                             className="welcome-main-heading",
                                         ),
                                         # Subtitle
