@@ -514,7 +514,7 @@ def show_help_alert(n_clicks, openness):
     [Input("repo-list-button", "n_clicks")],
     [State("help-alert", "is_open"), State("repo-choices", "data")],
 )
-def show_help_alert(n_clicks, openness, repo_ids):
+def show_repolist_alert(n_clicks, openness, repo_ids):
     """Sets the 'open' state of a help message
     for the search bar to encourage users to check
     their spelling and to ask for data to be loaded
