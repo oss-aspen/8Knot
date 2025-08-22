@@ -31,14 +31,21 @@ def ossf_score_query(self, repos):
 
     query_string = """
                 SELECT
-                    repo_id as id,
-                    name,
-                    score,
-                    data_collection_date
+                    rds.repo_id,
+                    rds.name,
+                    rds.score,
+                    rds.data_collection_date
                 FROM
-                    repo_deps_scorecard
-                WHERE
-                    repo_id IN %s
+                    repo_deps_scorecard rds
+                JOIN (
+                    SELECT repo_id, MAX(data_collection_date) AS max_date
+                    FROM repo_deps_scorecard
+                    WHERE repo_id IN %s
+                    GROUP BY repo_id
+                ) latest
+                ON latest.repo_id = rds.repo_id
+                AND latest.max_date = rds.data_collection_date
+                WHERE rds.repo_id IN %s
                 """
 
     func_name = ossf_score_query.__name__
@@ -48,6 +55,7 @@ def ossf_score_query(self, repos):
         func_name=func_name,
         query=query_string,
         repolist=repos,
+        n_repolist_uses=2,
     )
 
     logging.warning(f"{ossf_score_query.__name__} COLLECTION - END")

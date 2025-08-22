@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 import logging
 from dateutil.relativedelta import *  # type: ignore
-from pages.utils.graph_utils import get_graph_time_values, color_seq
+from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from queries.contributors_query import contributors_query as ctq
 import io
 from pages.utils.job_utils import nodata_graph
@@ -26,10 +26,29 @@ gc_lottery_factor_over_time = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    id=f"graph-title-{PAGE}-{VIZ_ID}",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "Lottery Factor: 6 Month Windows",
+                                id=f"graph-title-{PAGE}-{VIZ_ID}",
+                                className="card-title",
+                            ),
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                color="outline-secondary",
+                                size="sm",
+                                className="about-graph-button",
+                            ),
+                            width="auto",
+                        ),
+                    ],
+                    align="center",
+                    justify="between",
+                    className="mb-3",
                 ),
                 dbc.Popover(
                     [
@@ -59,6 +78,14 @@ gc_lottery_factor_over_time = dbc.Card(
                 ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
+                    style={"marginBottom": "1rem"},
+                ),
+                html.Hr(  # Divider between graph and controls
+                    style={
+                        "borderColor": "#909090",
+                        "margin": "1.5rem -1.5rem",
+                        "width": "calc(100% + 3rem)",
+                    }
                 ),
                 dbc.Form(
                     [
@@ -67,7 +94,7 @@ gc_lottery_factor_over_time = dbc.Card(
                                 dbc.Label(
                                     "Window Width (Months):",
                                     html_for=f"window-width-{PAGE}-{VIZ_ID}",
-                                    width="auto",
+                                    width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     dbc.Input(
@@ -78,6 +105,8 @@ gc_lottery_factor_over_time = dbc.Card(
                                         step=1,
                                         value=6,
                                         size="sm",
+                                        style={"width": "80px"},
+                                        className="dark-input",
                                     ),
                                     className="me-2",
                                     width=2,
@@ -96,6 +125,8 @@ gc_lottery_factor_over_time = dbc.Card(
                                         step=1,
                                         value=6,
                                         size="sm",
+                                        style={"width": "80px"},
+                                        className="dark-input",
                                     ),
                                     className="me-2",
                                     width=2,
@@ -116,7 +147,7 @@ gc_lottery_factor_over_time = dbc.Card(
                                 dbc.Label(
                                     "Threshold:",
                                     html_for=f"threshold-{PAGE}-{VIZ_ID}",
-                                    width="auto",
+                                    width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     [
@@ -126,29 +157,22 @@ gc_lottery_factor_over_time = dbc.Card(
                                             max=95,
                                             value=50,
                                             marks={i: f"{i}%" for i in range(10, 100, 5)},
+                                            className="dark-slider",
                                         ),
                                     ],
                                     className="me-2",
                                     width=9,
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
                             align="center",
                         ),
                     ]
                 ),
-            ]
+            ],
+            style={"padding": "1.5rem"},
         )
     ],
+    className="dark-card",
 )
 
 
@@ -292,7 +316,7 @@ def create_figure(df_final, threshold, step_size):
                 customdata=customdata,
                 mode="lines",
                 showlegend=True,
-                marker=dict(color=color_seq[0]),
+                marker=dict(color=baby_blue[0]),
             ),
             go.Scatter(
                 name="Issue Opened",
@@ -302,7 +326,7 @@ def create_figure(df_final, threshold, step_size):
                 customdata=customdata,
                 mode="lines",
                 showlegend=True,
-                marker=dict(color=color_seq[1]),
+                marker=dict(color=baby_blue[2]),
             ),
             go.Scatter(
                 name="Issue Comment",
@@ -312,7 +336,7 @@ def create_figure(df_final, threshold, step_size):
                 customdata=customdata,
                 mode="lines",
                 showlegend=True,
-                marker=dict(color=color_seq[2]),
+                marker=dict(color=baby_blue[4]),
             ),
             go.Scatter(
                 name="Issue Closed",
@@ -322,7 +346,7 @@ def create_figure(df_final, threshold, step_size):
                 customdata=customdata,
                 mode="lines",
                 showlegend=True,
-                marker=dict(color=color_seq[3]),
+                marker=dict(color=baby_blue[6]),
             ),
             go.Scatter(
                 name="PR Opened",
@@ -332,7 +356,7 @@ def create_figure(df_final, threshold, step_size):
                 customdata=customdata,
                 mode="lines",
                 showlegend=True,
-                marker=dict(color=color_seq[4]),
+                marker=dict(color=baby_blue[9]),
             ),
             go.Scatter(
                 name="PR Comment",
@@ -342,7 +366,7 @@ def create_figure(df_final, threshold, step_size):
                 customdata=customdata,
                 mode="lines",
                 showlegend=True,
-                marker=dict(color=color_seq[5]),
+                marker=dict(color=baby_blue[8]),
             ),
             go.Scatter(
                 name="PR Review",
@@ -352,7 +376,7 @@ def create_figure(df_final, threshold, step_size):
                 customdata=customdata,
                 mode="lines",
                 showlegend=True,
-                marker=dict(color=color_seq[0]),
+                marker=dict(color=baby_blue[10]),
             ),
         ],
     )

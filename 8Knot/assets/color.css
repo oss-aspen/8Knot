@@ -1,21 +1,52 @@
-h2,
-h4,
-h5,
-h6 {
-  color: #b5b683 !important;
+/* ==== CSS VARIABLES FOR CONSISTENT THEMING ==== */
+:root {
+  --placeholder-bg-color: #1D1D1D;
+  --placeholder-text-color: #9c9c9c;
+  --placeholder-font-size: 16px;
+  --placeholder-line-height: 20px;
+  --placeholder-top-offset: 1px;
+  --multiselect-hover-bg: #404040;
+  --color-primary: #6b8976;
+  --color-secondary: #b5b683;
+  --color-accent: #8d9d92;
+  --color-muted: #aaa;
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-dark-bg: #1D1D1D;
+  --color-card-bg: #272b30;
+  --color-border: #292929;
+  --color-topbar-bg: #242424;
+  --color-text-light: #f0f0f0;
+  --spacing-sm: 0.25rem;
+  --spacing-md: 0.5rem;
+  --spacing-lg: 1rem;
+  --border-radius: 1rem;
 }
 
-h1,
-h3 {
-  color: #6b8976 !important;
+/* ==== TYPOGRAPHY WITH HIGHER SPECIFICITY ==== */
+body h2,
+body h4,
+body h5,
+body h6 {
+  color: var(--color-secondary);
 }
 
+body h1,
+body h3 {
+  color: var(--color-primary);
+}
+
+/* Blockquote styling with higher specificity */
+article blockquote h5,
+div blockquote h5,
 blockquote h5 {
-  color: #aaa !important;
+  color: var(--color-muted);
 }
 
+article blockquote,
+div blockquote,
 blockquote {
-  color: #8d9d92 !important;
+  color: var(--color-accent);
   font-style: normal;
   font-size: 18px;
   margin-left: 32px;
@@ -25,32 +56,38 @@ blockquote {
 }
 
 blockquote p {
-  margin-top: 1px;
+  margin-top: var(--placeholder-top-offset);
   margin-bottom: 1px;
   width: auto;
   min-width: 50px;
   max-width: 950px;
 }
 
-/* this is to change the color for the spinner, cant be changed directly */
+/* ==== DASH SPECIFIC COMPONENTS ==== */
 .dash-spinner.dash-default-spinner {
-  filter: contrast(1.2) hue-rotate(308deg) grayscale(0.76) !important;
+  filter: contrast(1.2) hue-rotate(308deg) grayscale(0.76);
 }
 
+/* Utility classes */
 .explanation-p {
   width: auto;
   min-width: 50px;
   max-width: 550px;
 }
 
-.navbar-brand {
-  color: #6b8976 !important;
+/* Navigation brand with higher specificity */
+.navbar .navbar-brand,
+nav .navbar-brand {
+  color: var(--color-primary);
 }
 
-.metric_data {
-  color: #000000 !important;
-  text-shadow: none !important;
-  padding-bottom: 15px !important;
+/* ==== DATA DISPLAY COMPONENTS ==== */
+/* Metric data with higher specificity */
+.metric-container .metric_data,
+div.metric_data {
+  color: var(--color-black);
+  text-shadow: none;
+  padding-bottom: 15px;
 }
 
 .box_emissions {
@@ -62,28 +99,381 @@ blockquote p {
   text-align: center;
 }
 
-.glace_headers {
-  color: #000000 !important;
-  text-shadow: none !important;
-  font-weight: "normal" !important;
+/* Headers with higher specificity */
+.glace-container .glace_headers,
+div.glace_headers {
+  color: var(--color-black);
+  text-shadow: none;
+  font-weight: normal;
 }
 
-/* changes the color of an alert */
-.alert-warning {
-    background-color: #B5B682 !important;
+/* ==== BOOTSTRAP COMPONENT OVERRIDES ==== */
+/* Alert warning with higher specificity */
+.alert.alert-warning {
+  background-color: var(--color-secondary);
 }
 
-/* updates background of the dmc-multiselect in visualizations */
+/* ==== DASH MANTINE COMPONENTS ==== */
+/* DMC multiselect custom styling */
 .dmc-multiselect-custom {
-  background-color: #272b30;
+  background-color: var(--color-card-bg);
 }
 
-/* updates background color of switch*/
-.botlist-filter-switch:checked {
-  background-color: #6b8976;
+/* ==== FORM COMPONENTS ==== */
+/* Switch styling with higher specificity */
+.filter-container .botlist-filter-switch:checked,
+input.botlist-filter-switch:checked {
+  background-color: var(--color-primary);
 }
 
-/* updates popover size to allow more text per line */
+/* Popover styling */
 .popover {
   max-width: 500px;
 }
+
+/* ==== MULTISELECT DROPDOWN STYLING ==== */
+/* Override Mantine MultiSelect hover state */
+.mantine-MultiSelect-item[data-hovered] {
+  background-color: var(--multiselect-hover-bg);
+}
+
+.dbc .searchbar-dropdown input:not([type=radio]):not([type=checkbox]) {
+  color: var(--bs-body-color);
+  background-color: var(--placeholder-bg-color)!important;
+}
+
+/* Override placeholder text background color */
+.searchbar-dropdown input::placeholder {
+  background-color: var(--placeholder-bg-color)!important;
+  color: var(--placeholder-text-color);
+  font-size: var(--placeholder-font-size);
+  line-height: var(--placeholder-line-height);
+  position: relative;
+  top: var(--placeholder-top-offset);
+}
+
+/* Ensure the placeholder background matches when focused */
+.searchbar-dropdown input:focus::placeholder {
+  background-color: var(--placeholder-bg-color)!important;
+  color: var(--placeholder-text-color);
+  font-size: var(--placeholder-font-size);
+  line-height: var(--placeholder-line-height);
+  position: relative;
+  top: var(--placeholder-top-offset);
+}
+
+/* Override any Mantine-specific placeholder styling */
+.mantine-MultiSelect-input::placeholder {
+  background-color: var(--placeholder-bg-color);
+  color: var(--placeholder-text-color);
+  font-size: var(--placeholder-font-size);
+  line-height: var(--placeholder-line-height);
+  position: relative;
+  top: var(--placeholder-top-offset);
+}
+
+/* Force bottom navbar background to #292929 */
+.navbar.fixed-bottom,
+.navbar.fixed-bottom.bg-primary,
+.navbar.fixed-bottom.navbar-dark {
+  background-color: #242424 !important; /* match topbar */
+  border-top: none !important;
+}
+
+/* Ensure links are readable on dark background */
+.navbar.fixed-bottom .navbar-nav .nav-link {
+  color: var(--placeholder-text-color) !important;
+}
+
+.navbar.fixed-bottom .navbar-nav .nav-link:hover {
+  color: var(--color-white) !important;
+}
+
+/* Remove underline for button-as-link in sidebar */
+.sidebar-link-button,
+.sidebar-link-button:hover,
+.sidebar-link-button:focus,
+.sidebar-link-button:active {
+  text-decoration: none !important;
+  box-shadow: none !important;
+}
+
+/* Ensure footer spacer actually takes effect in case of collapsed margins */
+#sidebar-footer > div[style*="height"] {
+  display: block;
+}
+
+/* ==== CARD COMPONENTS ==== */
+/* Card title with higher specificity */
+.card h3.card-title,
+div.card h3.card-title {
+  color: var(--color-white);
+  text-align: left;
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 0;
+}
+
+/* ==== CUSTOM RADIO BUTTONS ==== */
+.custom-radio-buttons {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.custom-radio-buttons .form-check {
+  margin-right: var(--spacing-md);
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+}
+
+.custom-radio-buttons .form-check-input {
+  width: 1em;
+  height: 1em;
+  border: 1px solid #C7C7C7;
+  background-color: transparent;
+  margin-right: 0.4rem;
+  margin-top: 0;
+  flex-shrink: 0;
+}
+
+.custom-radio-buttons .form-check-input:checked {
+  background-color: var(--color-border);
+  border-color: #C7C7C7;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='2.5' fill='%23C7C7C7'/%3e%3c/svg%3e");
+}
+
+.custom-radio-buttons .form-check-input:focus {
+  border-color: #C7C7C7;
+  box-shadow: 0 0 0 0.2rem rgba(199, 199, 199, 0.25);
+}
+
+.custom-radio-buttons .form-check-label {
+  color: var(--color-white);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: 0.1rem;
+  margin-bottom: 0;
+  line-height: 1;
+}
+
+/* ==== CUSTOM BUTTON STYLES ==== */
+/* About graph button with higher specificity */
+.graph-container .about-graph-button,
+button.about-graph-button {
+  border-radius: var(--border-radius);
+  font-weight: 400;
+  min-width: 120px;
+  padding: 0.33rem var(--spacing-lg);
+  color: var(--color-white);
+  border: 0.5px solid var(--multiselect-hover-bg);
+  background-color: transparent;
+  transition: all 0.2s ease;
+}
+
+.graph-container .about-graph-button:hover,
+button.about-graph-button:hover {
+  border-color: #606060;
+  color: var(--color-text-light);
+  background-color: rgba(64, 64, 64, 0.1);
+}
+
+/* ==== CARD STYLES ==== */
+/* Dark card with higher specificity */
+.card-container .dark-card,
+div.dark-card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-border);
+}
+
+/* =============================================================================
+   DROPDOWN COMPONENTS
+============================================================================= */
+
+/* Dark Dropdown Box Styling */
+.dark-dropdown .Select-control,
+.dark-dropdown .Select-control:hover {
+  background-color: var(--multiselect-hover-bg)!important;
+  border-color: var(--multiselect-hover-bg)!important;
+  color: white !important;
+  min-width: 150px !important;
+}
+
+/* Dark Dropdown Placeholder Styling */
+.dark-dropdown .Select-placeholder,
+.dark-dropdown .Select-value-label {
+  color: white !important;
+}
+
+/* Fix for the vertical bar issue */
+.dbc input:not([type=radio]):not([type=checkbox]) {
+  color: var(--bs-body-color) !important;
+  background-color: #404040 !important;
+}
+
+/* =============================================================================
+   DATE PICKER COMPONENTS
+============================================================================= */
+
+/**
+ * Date Picker Dark Theme
+ * Styling for React-Dates and similar date picker components
+ */
+ .dark-date-picker .DateInput_input {
+  background-color: var(--multiselect-hover-bg)!important;
+  border-color: var(--multiselect-hover-bg) !important;
+  color: white !important;
+}
+
+.dark-date-picker .DateInput_input:focus {
+  background-color: var(--multiselect-hover-bg) !important;
+  border-color: #555555 !important;
+  color: white !important;
+}
+
+.dark-date-picker .DateRangePickerInput {
+  background-color: var(--multiselect-hover-bg) !important;
+  border-color: var(--multiselect-hover-bg) !important;
+}
+
+/**
+ * Date Range Picker Specific Styling
+ * The Date picker within plotly involves a lot of internal classes that need to be styled.
+ */
+.dark-date-picker
+.DateRangePickerInput .DateInput_input,
+.DateInput_input__focused {
+  height: var(--placeholder-font-size);
+  outline: 0;
+  background: var(--multiselect-hover-bg) !important;
+  border: 0 !important;
+  border-top: 0 !important;
+  border-right: 0;
+  border-bottom: 2px solid #008489;
+  border-left: 0;
+}
+
+.dark-date-picker
+.DateInput_input {
+  font-weight: 400;
+  font-size: 19px;
+  color: var(--color-white);
+}
+
+.dark-date-picker
+.DateInput {
+  background: var(--multiselect-hover-bg) !important;
+}
+
+ /* Dark Date Picker Border Styling */
+.dark-date-picker
+.DateRangePickerInput__withBorder {
+    border-radius: 7px;
+    border: 1px solid var(--multiselect-hover-bg);
+}
+
+/**
+ * Date Picker Arrow Customization
+ * Hides default SVG arrow and replaces with text-based arrow
+ */
+.dark-date-picker
+.DateRangePickerInput_arrow_svg {
+    display: none !important;
+}
+
+.dark-date-picker
+.DateRangePickerInput_arrow::before {
+  content: "→" !important;
+  font-size: 1.2em !important;
+  color: #fff9f9 !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  background-color: var(--multiselect-hover-bg) !important;
+}
+
+/* Placeholder text (the Start Date and End Date labels) */
+.dark-date-picker input::placeholder {
+  background-color: var(--multiselect-hover-bg) !important;
+}
+
+/* =============================================================================
+   TEXT INPUT CONTROLS
+============================================================================= */
+
+/* Dark Input Box Styling */
+.dark-input,
+.form-control.form-control-sm.dark-input,
+.form-control.form-control-sm.dark-input[type="number"]{
+  width: 80px !important;
+  background-color: #404040 !important;
+  border-color: #404040 !important;
+  color: white !important;
+  background-image: none !important;
+}
+
+
+/* Dark Input Focus Styling */
+.dark-input:focus,
+input.dark-input:focus,
+.form-control.dark-input:focus,
+.form-control.form-control-sm.dark-input:focus,
+.form-control.form-control-sm.dark-input[type="number"]:focus{
+  background-color: #404040 !important;
+  border-color: #555555 !important;
+  color: white !important;
+  box-shadow: 0 0 0 0.2rem rgba(64, 64, 64, 0.25) !important;
+  background-image: none !important;
+}
+
+/* Labels for dark inputs (scoped to a wrapper) */
+.dark-input-group label,
+.dark-input-group .form-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-white);
+  margin-bottom: 0;
+  margin-right: 0.5rem;
+  margin-bottom: 0;
+}
+
+/* ==== CARD DIVIDER (card-split) ==== */
+/* Horizontal divider used to separate graph from controls inside cards */
+.card-split {
+  border: 0;
+  border-top: 1px solid #909090;
+  margin: 1.5rem -1.5rem;
+  width: calc(100% + 3rem);
+}
+
+/* =============================================================================
+   TABLE COMPONENTS STYLING
+============================================================================= */
+
+/* Scoped to app to avoid global overrides */
+.dbc .table {
+  /* Bootstrap 5 table CSS variables for consistent theming */
+  --bs-table-bg: var(--color-dark-bg);
+  --bs-table-color: var(--color-white);
+  --bs-table-border-color: var(--multiselect-hover-bg);
+  --bs-table-striped-bg: #222;
+  --bs-table-hover-bg: #2e2e2e;
+  --bs-table-active-bg: #2e2e2e;
+  background-color: var(--bs-table-bg);
+  color: var(--bs-table-color);
+}
+.dbc .table th,
+.dbc .table td {
+  border-color: var(--bs-table-border-color);
+  background-color: var(--bs-table-bg);
+}
+.dbc .table thead th {
+  background-color: var(--color-topbar-bg);
+  color: var(--color-white);
+}
+.dbc .table-striped tbody tr:nth-of-type(odd) { background-color: var(--bs-table-striped-bg); }
+.dbc .table-hover tbody tr:hover { background-color: var(--bs-table-hover-bg); }
+.dbc .table-bordered { border-color: var(--bs-table-border-color); }
