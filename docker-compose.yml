@@ -46,6 +46,8 @@ services:
       ]
     # ports:
     #   - 8080:8080
+    volumes:
+      - ./8Knot:/opt/app-root/src/:z
     depends_on:
       - worker-callback
       - worker-query
