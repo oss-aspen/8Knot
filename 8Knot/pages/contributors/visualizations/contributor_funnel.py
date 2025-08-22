@@ -9,14 +9,12 @@ from dash.exceptions import PreventUpdate
 import time
 
 from pages.utils.job_utils import nodata_graph
-# UPDATE: Import the new refactored query function
 from queries.contributor_funnel_query import contributor_engagement_query as ceq
 import cache_manager.cache_facade as cf
 
 PAGE = "contributors"
 VIZ_ID = "contributor-funnel"
 
-# Card for the Funnel Chart
 gc_contributor_funnel = dbc.Card(
     [
         dbc.CardBody(
@@ -66,7 +64,6 @@ gc_contributor_funnel = dbc.Card(
     ],
 )
 
-# Card for the Drop-off Chart
 gc_contributor_dropoff = dbc.Card(
     [
         dbc.CardBody(
@@ -116,7 +113,6 @@ gc_contributor_dropoff = dbc.Card(
     ],
 )
 
-# callback for funnel graph info popover
 @callback(
     Output(f"popover-{PAGE}-{VIZ_ID}-funnel", "is_open"),
     [Input(f"popover-target-{PAGE}-{VIZ_ID}-funnel", "n_clicks")],
@@ -128,7 +124,6 @@ def toggle_funnel_popover(n, is_open):
     return is_open
 
 
-# callback for dropoff graph info popover
 @callback(
     Output(f"popover-{PAGE}-{VIZ_ID}-dropoff", "is_open"),
     [Input(f"popover-target-{PAGE}-{VIZ_ID}-dropoff", "n_clicks")],
@@ -140,7 +135,6 @@ def toggle_dropoff_popover(n, is_open):
     return is_open
 
 
-# callback for contributor funnel and dropoff graphs
 @callback(
     Output(f"{PAGE}-{VIZ_ID}-funnel-graph", "figure"),
     Output(f"{PAGE}-{VIZ_ID}-dropoff-graph", "figure"),
@@ -153,13 +147,10 @@ def create_funnel_and_dropoff_charts(repolist):
     if not repolist:
         raise PreventUpdate
 
-    # wait for data to asynchronously download and become available.
-    # UPDATE: Use the new query function name
     func_name = ceq.__name__
     not_cached = cf.get_uncached(func_name=func_name, repolist=repolist)
     if not_cached:
         logging.warning(f"{VIZ_ID}: Engagement data for {len(not_cached)} repos not cached. Dispatching worker.")
-        # UPDATE: Call the new celery task
         ceq.apply_async(args=[not_cached])
         timeout = 180
         start_time = time.time()
@@ -168,30 +159,22 @@ def create_funnel_and_dropoff_charts(repolist):
                 break
             time.sleep(2)
         
-        # Check if data is still not available after timeout
         if cf.get_uncached(func_name=func_name, repolist=repolist):
             logging.warning(f"{VIZ_ID} - TIMEOUT WAITING FOR DATA")
-            # FIX: Remove parentheses to avoid TypeError
             return nodata_graph, nodata_graph
 
     logging.warning(f"{VIZ_ID} - START")
     start = time.perf_counter()
 
-    # GET ALL DATA FROM POSTGRES CACHE
-    # UPDATE: Use the new table name from the new function name
     df_engagement = cf.retrieve_from_cache(
         tablename=ceq.__name__,
         repolist=repolist,
     )
 
-    # test if there is data
     if df_engagement is None or df_engagement.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
-        # FIX: Remove parentheses to avoid TypeError
         return nodata_graph, nodata_graph
 
-    # function for all data pre processing
-    # UPDATE: process_data now does the aggregation
     df_funnel, df_dropoff = process_data(df_engagement)
 
     funnel_fig = create_funnel_figure(df_funnel)
@@ -209,10 +192,8 @@ def process_data(df: pd.DataFrame):
     if df.empty:
         return pd.DataFrame(), pd.DataFrame()
 
-    # 1. All Contributors: Count all unique contributors in the dataset.
     all_contributors_count = df['cntrb_id'].nunique()
 
-    # 2. Basic Engagement: Contributors with at least one initial action.
     basic_mask = (
         df['d1_first_issue_created_at'].notna() |
         df['d1_first_pr_opened_at'].notna() |
@@ -220,7 +201,6 @@ def process_data(df: pd.DataFrame):
     )
     basic_contributors_count = df[basic_mask]['cntrb_id'].nunique()
 
-    # 3. Deep Engagement: Contributors who have performed significant actions.
     deep_mask = (
         (df['d2_has_merged_pr'] == True) |
         (df['d2_created_many_issues'] == True) |
@@ -230,7 +210,6 @@ def process_data(df: pd.DataFrame):
     )
     deep_contributors_count = df[deep_mask]['cntrb_id'].nunique()
 
-    # Data for funnel chart
     stages = ["All Contributors", "Basic Engagement", "Deep Engagement"]
     values = [all_contributors_count, basic_contributors_count, deep_contributors_count]
     
@@ -239,7 +218,6 @@ def process_data(df: pd.DataFrame):
         'Count': values
     })
 
-    # Data for drop-off chart
     dropoff_stages = []
     dropoff_counts = []
     for i in range(len(values) - 1):
