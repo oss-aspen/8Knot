@@ -7,7 +7,7 @@ import json
 from celery.result import AsyncResult
 import dash_bootstrap_components as dbc
 import dash
-from dash import callback
+from dash import callback, html
 from dash.dependencies import Input, Output, State, MATCH
 from app import augur
 from flask_login import current_user
@@ -528,11 +528,20 @@ def show_repolist_alert(n_clicks, openness, repo_ids):
     print(repo_ids)
     url_list = [augur.repo_id_to_git(i) for i in repo_ids]
 
+    url_list = [l[8:] if l.startswith("https://") else l for l in url_list]
+    
+    element_list = [html.Li(l) for l in url_list]
+
+    elements = [
+        html.Strong("Included Repositories:"),
+        html.Ul(element_list)
+    ]
+
     if n_clicks == 0:
-        return dash.no_update, str(url_list)
+        return dash.no_update, elements
     # switch the openness parameter, allows button to also
     # dismiss the Alert.
-    return not openness, str(url_list)
+    return not openness, elements
 
 
 @callback(
