@@ -512,7 +512,7 @@ def show_help_alert(n_clicks, openness):
 @callback(
     [Output("repo-list-alert", "is_open"), Output("repo-list-alert", "children")],
     [Input("repo-list-button", "n_clicks")],
-    [State("help-alert", "is_open"), State("repo-choices", "data")],
+    [State("repo-list-alert", "is_open"), State("repo-choices", "data")],
 )
 def show_repolist_alert(n_clicks, openness, repo_ids):
     """Sets the 'open' state of a help message
