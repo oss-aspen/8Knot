@@ -135,17 +135,17 @@ input.botlist-filter-switch:checked {
   max-width: 500px;
 }
 
-.popover-header {
+.popover > .popover-header {
   color: var(--color-primary);
   background-color: var(--color-card-bg);
   font-weight: bold;
 }
 
-.popover-body {
+.popover > .popover-body {
   background-color: var(--color-card-bg);
 }
 
-.popover-arrow {
+.popover > .popover-arrow {
   color: var(--color-card-bg);
 }
 
