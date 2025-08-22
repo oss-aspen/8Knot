@@ -272,10 +272,6 @@
     position: relative;
 }
 
-.welcome-fluid-container {
-    padding: 0;
-}
-
 .welcome-main-section {
     padding: 80px 20px;
     text-align: center;
@@ -383,8 +379,10 @@
 
 .welcome-content-section {
     background: rgba(255, 255, 255, 0.95);
-    padding: 40px 0;
+    padding: 40px 20px;
     display: none;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 .welcome-content-section-visible {
