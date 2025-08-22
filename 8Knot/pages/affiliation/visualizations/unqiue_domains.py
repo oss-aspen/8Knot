@@ -61,6 +61,7 @@ gc_unique_domains = dbc.Card(
                     target=f"popover-target-{PAGE}-{VIZ_ID}",  # needs to be the same as dbc.Button id
                     placement="top",
                     is_open=False,
+                    className="graph_info_popover",
                 ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),

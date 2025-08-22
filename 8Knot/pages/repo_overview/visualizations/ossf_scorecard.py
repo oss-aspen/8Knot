@@ -51,6 +51,7 @@ gc_ossf_scorecard = dbc.Card(
                     target=f"popover-target-{PAGE}-{VIZ_ID}",
                     placement="top",
                     is_open=False,
+                    className="graph_info_popover",
                 ),
                 dcc.Loading(
                     html.Div(id=f"{PAGE}-{VIZ_ID}", style={"marginTop": "20px"}),

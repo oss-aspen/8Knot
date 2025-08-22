@@ -59,18 +59,13 @@ gc_pr_staleness = dbc.Card(
                     target=f"popover-target-{PAGE}-{VIZ_ID}",  # needs to be the same as dbc.Button id
                     placement="top",
                     is_open=False,
+                    className="graph_info_popover",
                 ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                     style={"marginBottom": "1rem"},
                 ),
-                html.Hr(  # Divider between graph and controls
-                    style={
-                        "borderColor": "#909090",
-                        "margin": "1.5rem -1.5rem",
-                        "width": "calc(100% + 3rem)",
-                    }
-                ),
+                html.Hr(className="card-split"),  # Divider between graph and controls
                 dbc.Form(
                     [
                         dbc.Row(
