@@ -16,119 +16,43 @@ dash.register_page(__name__, path="/", order=1)
 
 
 layout = html.Div(
-    style={
-        "background": "#FFFFFF",  # pure white like Figma base
-        "minHeight": "100vh",
-        "padding": "0",
-        "margin": "0",
-        "position": "relative",
-    },
+    className="welcome-page-container",
     children=[
         dbc.Container(
             fluid=True,
-            style={"padding": "0"},
+            className="welcome-fluid-container",
             children=[
                 # unified section with gradients through the page
                 html.Div(
-                    style={
-                        "padding": "80px 20px",
-                        "textAlign": "center",
-                        "minHeight": "100vh",
-                        "display": "flex",
-                        "flexDirection": "column",
-                        "justifyContent": "center",
-                        "alignItems": "center",
-                        "position": "relative",  # for positioning of the ellipses
-                        "overflow": "hidden",  # hide overflowing ellipses
-                    },
+                    className="welcome-main-section",
                     children=[
                         # background ellipses
                         html.Div(
                             [
                                 # Ellipse 1(Pink gradient)
-                                html.Div(
-                                    style={
-                                        "position": "absolute",
-                                        "width": "2329px",
-                                        "height": "2329px",
-                                        "left": "-1305px",
-                                        "top": "-887px",
-                                        "background": "radial-gradient(50% 50% at 50% 50%, rgba(255, 107, 160, 0.2) 0%, rgba(255, 255, 255, 0) 62.81%)",
-                                        "filter": "blur(9.3138px)",
-                                        "zIndex": "1",
-                                    }
-                                ),
+                                html.Div(className="welcome-gradient-ellipse-pink"),
                                 # Ellipse 2 (Green gradient)
-                                html.Div(
-                                    style={
-                                        "position": "absolute",
-                                        "width": "2278px",
-                                        "height": "2278px",
-                                        "left": "106px",
-                                        "top": "20px",
-                                        "background": "radial-gradient(50% 50% at 50% 50%, rgba(94, 184, 148, 0.3) 0%, rgba(255, 255, 255, 0) 62.81%)",
-                                        "backdropFilter": "blur(5px)",
-                                        "zIndex": "1",
-                                    }
-                                ),
+                                html.Div(className="welcome-gradient-ellipse-green"),
                                 # Ellipse 3 (Blue gradient)
-                                html.Div(
-                                    style={
-                                        "position": "absolute",
-                                        "width": "1978px",
-                                        "height": "1978px",
-                                        "left": "350px",
-                                        "top": "-989px",
-                                        "background": "radial-gradient(50% 50% at 50% 50%, rgba(98, 203, 251, 0.3) 0%, rgba(255, 255, 255, 0) 62.81%)",
-                                        "filter": "blur(7.68531px)",
-                                        "zIndex": "1",
-                                    }
-                                ),
+                                html.Div(className="welcome-gradient-ellipse-blue"),
                             ]
                         ),
                         html.Div(
-                            style={
-                                "position": "relative",
-                                "zIndex": "2",
-                                "display": "flex",
-                                "flexDirection": "column",
-                                "alignItems": "center",
-                                "width": "100%",
-                                "maxWidth": "931px",  # Max width for content
-                                "margin": "0 auto",
-                                "gap": "40px",  # Space between sections
-                            },
+                            className="welcome-content-overlay",
                             children=[
                                 # Main content section
                                 html.Div(
-                                    style={"textAlign": "center"},
+                                    className="welcome-main-content",
                                     children=[
                                         # Main heading
                                         html.H1(
                                             "Advanced Open Source Project Analysis by Augur",
-                                            style={
-                                                "fontSize": "38px",
-                                                "fontWeight": "800",
-                                                "fontFamily": '"Eloquia Display", sans-serif',
-                                                "color": "#000000",  # black
-                                                "marginBottom": "16px",
-                                                "lineHeight": "110%",
-                                                "textAlign": "center",
-                                            },
+                                            className="welcome-main-heading",
                                         ),
                                         # Subtitle
                                         html.P(
                                             "8Knot hosts advanced analysis of open source projects, enriching the study of communities for community architects, developers, and Business Intelligence experts alike.",
-                                            style={
-                                                "fontSize": "16px",
-                                                "fontWeight": "400",
-                                                "fontFamily": '"Inter", system-ui, -apple-system, sans-serif',
-                                                "color": "#030303",
-                                                "lineHeight": "120%",
-                                                "textAlign": "center",
-                                                "maxWidth": "797px",
-                                                "margin": "0 auto 52px auto",
-                                            },
+                                            className="welcome-subtitle",
                                         ),
                                         # Search bar in the center of the page - COMMENTED OUT
                                         # Now using sidebar search bar instead
@@ -186,34 +110,20 @@ layout = html.Div(
                                 ),
                                 # CTA section - now part of the same unified section with gradients
                                 html.Div(
-                                    style={"textAlign": "center", "marginTop": "80px"},  # Space from search section
+                                    className="welcome-cta-section",
                                     children=[
                                         html.P(
                                             "Is this your first time here?",
-                                            style={
-                                                "fontSize": "1rem",
-                                                "marginBottom": "20px",
-                                                "fontWeight": "500",
-                                                "color": "#333333",
-                                            },
+                                            className="welcome-cta-text",
                                         ),
                                         dbc.Button(
                                             [
                                                 "Learn how 8Knot works ",
-                                                html.I(className="fas fa-chevron-down", style={"marginLeft": "8px"}),
+                                                html.I(className="fas fa-chevron-down welcome-icon-margin"),
                                             ],
                                             id="learn-button",
                                             color="light",
-                                            style={
-                                                "background": "#f8f9fa",
-                                                "color": "#333",
-                                                "padding": "12px 25px",
-                                                "borderRadius": "25px",
-                                                "fontWeight": "500",
-                                                "boxShadow": "0 2px 8px rgba(0,0,0,0.1)",
-                                                "border": "1px solid #e9ecef",
-                                                "cursor": "pointer",
-                                            },
+                                            className="welcome-learn-button",
                                         ),
                                     ],
                                 ),
@@ -224,41 +134,37 @@ layout = html.Div(
                 # Welcome content section - initially hidden - this is the section that appears when the learn button is clicked
                 html.Div(
                     id="welcome-content",
-                    style={
-                        "background": "rgba(255, 255, 255, 0.95)",  # Semi-transparent white for readability
-                        "padding": "40px 0",
-                        "display": "none",  # Hidden by default
-                    },
+                    className="welcome-content-section",
                     children=[
                         dbc.Container(
                             children=[
                                 dcc.Tabs(
                                     value="plotlyfiguretools",
-                                    style={"marginBottom": "30px"},
+                                    className="welcome-tabs",
                                     children=[
                                         dcc.Tab(
                                             label="Using 8Knot Visualizations",
                                             value="plotlyfiguretools",
                                             children=[plotly_tab_contents],
-                                            style={"padding": "10px 20px"},
+                                            className="welcome-tab",
                                         ),
                                         dcc.Tab(
                                             label="How 8Knot Works",
                                             value="general",
                                             children=[general_tab_contents],
-                                            style={"padding": "10px 20px"},
+                                            className="welcome-tab",
                                         ),
                                         dcc.Tab(
                                             label="Logging into Augur",
                                             value="auguraccount",
                                             children=[augur_tab_contents],
-                                            style={"padding": "10px 20px"},
+                                            className="welcome-tab",
                                         ),
                                         dcc.Tab(
                                             label="Creating Project Groups",
                                             value="usergroup",
                                             children=[group_tab_contents],
-                                            style={"padding": "10px 20px"},
+                                            className="welcome-tab",
                                         ),
                                     ],
                                 )
@@ -269,7 +175,7 @@ layout = html.Div(
                 # Store to track if welcome content should be shown
                 dcc.Store(id="show-welcome-content", data=False),
                 # JavaScript for smooth scrolling to welcome content
-                html.Div(id="scroll-trigger", style={"display": "none"}),
+                html.Div(id="scroll-trigger", className="welcome-scroll-trigger"),
                 html.Script(
                     """
                     // Function to observe when welcome content appears and scroll to it
@@ -333,12 +239,8 @@ layout = html.Div(
 )
 def toggle_welcome_content(n_clicks):
     if n_clicks:
-        # Show the welcome content when button is clicked
-        style = {
-            "background": "rgba(255, 255, 255, 0.95)",
-            "padding": "40px 0",
-            "display": "block",
-        }
+        # Show the welcome content when button is clicked - only override display, CSS handles the rest
+        style = {"display": "block"}
         # Trigger scroll with JavaScript
         scroll_script = html.Script(
             f"""
@@ -356,8 +258,4 @@ def toggle_welcome_content(n_clicks):
         )
         return style, scroll_script
 
-    return {
-        "background": "rgba(255, 255, 255, 0.95)",  # Semi-transparent white for readability
-        "padding": "40px 0",
-        "display": "none",
-    }, html.Div()
+    return {"display": "none"}, html.Div()
