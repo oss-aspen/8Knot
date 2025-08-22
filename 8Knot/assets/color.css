@@ -176,23 +176,6 @@ input.botlist-filter-switch:checked {
   top: var(--placeholder-top-offset);
 }
 
-/* Force bottom navbar background to #292929 */
-.navbar.fixed-bottom,
-.navbar.fixed-bottom.bg-primary,
-.navbar.fixed-bottom.navbar-dark {
-  background-color: #242424 !important; /* match topbar */
-  border-top: none !important;
-}
-
-/* Ensure links are readable on dark background */
-.navbar.fixed-bottom .navbar-nav .nav-link {
-  color: var(--placeholder-text-color) !important;
-}
-
-.navbar.fixed-bottom .navbar-nav .nav-link:hover {
-  color: var(--color-white) !important;
-}
-
 /* Remove underline for button-as-link in sidebar */
 .sidebar-link-button,
 .sidebar-link-button:hover,

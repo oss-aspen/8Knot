@@ -174,14 +174,16 @@ topbar = html.Div(
     style={
         "height": "60px",
         "width": "100%",
-        "background-color": "#242424",
+        "background-color": "#1D1D1D",
         "display": "flex",
         "alignItems": "center",
         "justifyContent": "space-between",
         "paddingLeft": "10px",
         "paddingRight": "10px",
+        "border-bottom": "1.5px solid #292929",
     },
 )
+
 
 #  login banner that will be displayed when login is disabled
 login_banner = None
@@ -310,91 +312,63 @@ search_bar = html.Div(
             className="search-bar-component",
         ),
         # Search input section
-        html.Div(
-            [
-                html.Div(
-                    [
-                        html.Img(
-                            src="/assets/search.svg",
-                            alt="Search",
-                            style={
-                                "width": "16px",
-                                "height": "16px",
-                                "position": "absolute",
-                                "left": "16px",
-                                "top": "50%",
-                                "transform": "translateY(-50%)",
-                                "pointerEvents": "none",
-                                "opacity": "0.7",
-                                "zIndex": 2,
-                            },
-                        ),
-                        dmc.MultiSelect(
-                            id="projects",
-                            searchable=True,
-                            clearable=True,
-                            nothingFound="No matching repos/orgs.",
-                            placeholder="Search",
-                            variant="filled",
-                            debounce=100,  # debounce time for the search input, since we're implementing client-side caching, we can use a faster debounce
-                            data=[augur.initial_multiselect_option()],
-                            value=[augur.initial_multiselect_option()["value"]],
-                            className="searchbar-dropdown",
-                            styles={
-                                "input": {
-                                    "fontSize": "16px",
-                                    "height": "48px",
-                                    "padding": "0 16px 0 44px",
-                                    "borderRadius": "20px",
-                                    "display": "flex",
-                                    "alignItems": "center",
-                                    "backgroundColor": "#1D1D1D",
-                                    "borderColor": "#404040",
-                                    "position": "relative",
-                                    "zIndex": 1,
-                                },
-                                "dropdown": {
-                                    "borderRadius": "12px",
-                                    "backgroundColor": "#1D1D1D",
-                                    "border": "1px solid #444",
-                                },
-                                "item": {
-                                    "borderRadius": "8px",
-                                    "margin": "2px 4px",
-                                    "color": "white",
-                                },
-                            },
-                        ),
-                    ],
-                    style={"position": "relative"},
-                ),
-                dbc.Alert(
-                    children='Please ensure that your spelling is correct. \
-                        If your selection definitely isn\'t present, please request that \
-                        it be loaded using the help button "REPO/ORG Request" \
-                        in the bottom right corner of the screen.',
-                    id="help-alert",
-                    dismissable=True,
-                    fade=True,
-                    is_open=False,
-                    color="info",
-                ),
-                dbc.Alert(
-                    children="List of repos",
-                    id="repo-list-alert",
-                    dismissable=True,
-                    fade=True,
-                    is_open=False,
-                    color="light",
-                    # if number of repos is large, render as a scrolling window
-                    style={"overflow-y": "scroll", "max-height": "440px"},
-                ),
-            ],
-            style={
-                "width": "100%",
-                "marginBottom": "1rem",
-                "padding": "0 6px",
+        dmc.MultiSelect(
+            id="projects",
+            searchable=True,
+            clearable=True,
+            nothingFound="No matching repos/orgs.",
+            placeholder="Search",
+            variant="filled",
+            debounce=100,  # debounce time for the search input, since we're implementing client-side caching, we can use a faster debounce
+            data=[augur.initial_multiselect_option()],
+            value=[augur.initial_multiselect_option()["value"]],
+            className="searchbar-dropdown",
+            styles={
+                "input": {
+                    "fontSize": "16px",
+                    "height": "48px",
+                    "padding": "0 16px 0 44px",
+                    "borderRadius": "20px",
+                    "display": "flex",
+                    "alignItems": "center",
+                    "backgroundColor": "#1D1D1D",
+                    "borderColor": "#404040",
+                    "position": "relative",
+                    "zIndex": 1,
+                },
+                "dropdown": {
+                    "borderRadius": "12px",
+                    "backgroundColor": "#1D1D1D",
+                    "border": "1px solid #444",
+                },
+                "item": {
+                    "borderRadius": "8px",
+                    "margin": "2px 4px",
+                    "color": "white",
+                    "backgroundColor": "#404040",
+                },
             },
+        ),
+        dbc.Alert(
+            children='Please ensure that your spelling is correct. \
+                If your selection definitely isn\'t present, please request that \
+                it be loaded using the help button "REPO/ORG Request" \
+                in the bottom right corner of the screen.',
+            id="help-alert",
+            dismissable=True,
+            fade=True,
+            is_open=False,
+            color="info",
+        ),
+        dbc.Alert(
+            children="List of repos",
+            id="repo-list-alert",
+            dismissable=True,
+            fade=True,
+            is_open=False,
+            color="light",
+            # if number of repos is large, render as a scrolling window
+            style={"overflow-y": "scroll", "max-height": "440px"},
         ),
         dbc.Stack(
             [
@@ -488,11 +462,10 @@ navbar_bottom = dbc.NavbarSimple(
     ],
     brand="",
     brand_href="#",
-    color="primary",
-    dark=True,
     fluid=True,
     fixed="bottom",
-    style={"backgroundColor": "#242424"},
+    color="#1D1D1D",
+    dark=True,
 )
 
 # We need to wrap the container in a div to allow for custom styling
