@@ -136,12 +136,12 @@ input.botlist-filter-switch:checked {
 }
 
 /* Graph info popover theme */
-.graph_info_popover .popover-body {
+.popover > .popover-body {
   background-color: #404040;
   color: #E5E5E5;
 }
 
-.graph_info_popover .popover-header {
+.popover > .popover-header {
   background-color: #E5E5E5;
   color: #404040;
 }

@@ -61,7 +61,6 @@ gc_issue_staleness = dbc.Card(
                     target=f"popover-target-{PAGE}-{VIZ_ID}",
                     placement="top",
                     is_open=False,
-                    className="graph_info_popover",
                 ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),

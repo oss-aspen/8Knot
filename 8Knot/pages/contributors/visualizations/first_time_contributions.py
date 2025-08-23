@@ -59,7 +59,6 @@ gc_first_time_contributions = dbc.Card(
                     target=f"popover-target-{PAGE}-{VIZ_ID}",
                     placement="top",
                     is_open=False,
-                    className="graph_info_popover",
                 ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
