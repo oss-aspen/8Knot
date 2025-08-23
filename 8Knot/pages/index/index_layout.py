@@ -316,21 +316,6 @@ search_bar = html.Div(
             [
                 html.Div(
                     [
-                        html.Img(
-                            src="/assets/search.svg",
-                            alt="Search",
-                            style={
-                                "width": "16px",
-                                "height": "16px",
-                                "position": "absolute",
-                                "left": "16px",
-                                "top": "50%",
-                                "transform": "translateY(-50%)",
-                                "pointerEvents": "none",
-                                "opacity": "0.7",
-                                "zIndex": 2,
-                            },
-                        ),
                         dmc.MultiSelect(
                             id="projects",
                             searchable=True,
@@ -367,6 +352,27 @@ search_bar = html.Div(
                                 },
                             },
                         ),
+                        dbc.Button(
+                            html.I(className="fas fa-search"),
+                            id="search",
+                            n_clicks=0,
+                            size="sm",
+                            color="outline-secondary",
+                            title="Search",
+                            style={
+                                "backgroundColor": "transparent",
+                                "border": "none",
+                                "fontSize": "16px",
+                                "width": "16px",
+                                "height": "16px",
+                                "position": "absolute",
+                                "right": "24px",
+                                "top": "50%",
+                                "transform": "translateY(-100%)",
+                                "fontWeight": "bold",
+                                "zIndex": 2,
+                            },
+                        ),
                     ],
                     style={"position": "relative"},
                 ),
@@ -400,20 +406,6 @@ search_bar = html.Div(
         ),
         dbc.Stack(
             [
-                dbc.Button(
-                    html.I(className="fas fa-search"),
-                    id="search",
-                    n_clicks=0,
-                    size="sm",
-                    color="outline-secondary",
-                    title="Search",
-                    style={
-                        "backgroundColor": "transparent",
-                        "border": "none",
-                        "padding": "4px 8px",
-                        "fontSize": "14px",
-                    },
-                ),
                 dbc.Button(
                     html.I(className="fas fa-question-circle"),
                     id="search-help",
