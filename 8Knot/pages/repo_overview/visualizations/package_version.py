@@ -44,7 +44,7 @@ gc_package_version = dbc.Card(
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
                             """
-                            Visualizes for each packaged dependancy, if it is up to date and if not if it is
+                            Visualizes for each packaged dependency, if it is up to date and if not if it is
                             less than 6 months out, between 6 months and a year, or greater than a year.
                             """
                         ),
