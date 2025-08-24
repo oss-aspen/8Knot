@@ -378,25 +378,422 @@
 }
 
 .welcome-content-section {
+    /* Figma design implementation for "How 8Knot Works" section */
     background: rgba(255, 255, 255, 0.95);
-    padding: 40px 20px;
     display: none;
-    max-width: 1200px;
+    /* Initially hidden */
+    /* Figma auto layout */
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 80px 0px 40px;
+    gap: 84px;
+    /* Natural flow positioning - no gap */
+    position: relative;
+    /* the absolute positioning is causing the page to create a big gap between the welcome page and the content section */
+    width: 100%;
+    /* these params were made flexible to allow for the page to be responsive */
+    max-width: 1440px;
     margin: 0 auto;
+    min-height: 600px;
 }
 
 .welcome-content-section-visible {
+    /* When visible, show as flex to match Figma design */
     background: rgba(255, 255, 255, 0.95);
-    padding: 40px 0;
-    display: block;
+    display: flex !important;
+    /* Override the display: none */
 }
 
-.welcome-tabs {
-    margin-bottom: 30px;
+
+/* Section Title - "8Knot Documentation" */
+
+.welcome-section-title {
+    /* Auto layout */
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 0px 120px;
+    width: 1440px;
+    height: 53px;
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 0;
 }
 
-.welcome-tab {
-    padding: 10px 20px;
+.welcome-section-title h1 {
+    width: 1200px;
+    height: 53px;
+    font-family: 'Eloquia Display';
+    font-style: normal;
+    font-weight: 800;
+    font-size: 48px;
+    line-height: 110%;
+    /* Neutral/Gray/GR01 */
+    color: #030303;
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    flex-grow: 1;
+    margin: 0;
+}
+
+
+/* New Tab Structure - Matching Target Design */
+
+.welcome-tabs-container {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.welcome-tab-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    padding: 0 120px;
+    border-bottom: 1px solid #DEE2E6;
+}
+
+.welcome-tab-button {
+    background: #F8F9FA;
+    border: 1px solid #DEE2E6;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    padding: 12px 24px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: #495057;
+    cursor: pointer;
+    flex: 1;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.welcome-tab-button:hover {
+    background: #E9ECEF;
+    border-color: #ADB5BD;
+}
+
+.welcome-tab-active {
+    background: #343A40 !important;
+    color: #FFFFFF !important;
+    border-color: #343A40 !important;
+}
+
+
+/* Content Area Layout */
+
+.welcome-tab-content-area {
+    display: flex;
+    flex-direction: row;
+    padding: 0 120px;
+    gap: 40px;
+    background: #FFFFFF;
+    min-height: 400px;
+}
+
+
+/* Left Sidebar */
+
+.welcome-content-sidebar {
+    width: 200px;
+    flex-shrink: 0;
+    padding: 24px 0;
+}
+
+.welcome-sidebar-title {
+    font-family: 'Eloquia Display', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: #E91E63;
+    margin-bottom: 12px;
+}
+
+.welcome-sidebar-link {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: #6C757D;
+    cursor: pointer;
+}
+
+.welcome-sidebar-link:hover {
+    color: #495057;
+}
+
+
+/* Main Content Area */
+
+.welcome-main-content {
+    flex: 1;
+    padding: 24px 0;
+}
+
+.welcome-content-header {
+    margin-bottom: 32px;
+}
+
+.welcome-content-header h2 {
+    font-family: 'Eloquia Display', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: #212529;
+    margin: 0 0 12px 0;
+}
+
+.welcome-content-header p {
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    color: #6C757D;
+    margin: 0;
+    line-height: 1.5;
+}
+
+
+/* Content Grid for Cards */
+
+.welcome-content-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    background: #F8F9FA;
+    padding: 24px;
+    border-radius: 8px;
+    border: 1px solid #DEE2E6;
+}
+
+.welcome-content-card {
+    background: #FFFFFF;
+    padding: 20px;
+    border-radius: 6px;
+    border: 1px solid #E9ECEF;
+}
+
+.welcome-content-card h3 {
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: #212529;
+    margin: 0 0 8px 0;
+}
+
+.welcome-content-card p {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: #6C757D;
+    margin: 0;
+    line-height: 1.4;
+}
+
+
+/* Tab Content Container */
+
+.welcome-tab-content {
+    /* Auto layout */
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 0px 0px 0px 120px;
+    gap: 48px;
+    width: 1160px;
+    height: 318px;
+    /* Inside auto layout */
+    flex: none;
+    order: 2;
+    flex-grow: 0;
+}
+
+
+/* Side Navigation */
+
+.welcome-side-nav {
+    /* Auto layout */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0px;
+    gap: 12px;
+    width: 180px;
+    height: 70px;
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+
+/* Tab Title in Side Nav */
+
+.welcome-tab-title {
+    /* Auto layout */
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 4px 0px;
+    gap: 4px;
+    width: 180px;
+    height: 26px;
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 0;
+}
+
+.welcome-tab-title h3 {
+    font-family: 'Theinhardt Pan';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 18px;
+    line-height: 18px;
+    color: #D61B5E;
+    margin: 0;
+    /* Inside auto layout */
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}
+
+
+/* Main Content Area */
+
+.welcome-content {
+    /* Auto layout */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0px;
+    gap: 32px;
+    width: 812px;
+    height: 318px;
+    /* Inside auto layout */
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}
+
+
+/* Summary Section */
+
+.welcome-summary {
+    /* Auto layout */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0px;
+    gap: 8px;
+    width: 688px;
+    height: 66px;
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.welcome-summary h2 {
+    font-family: 'Eloquia Display';
+    font-style: normal;
+    font-weight: 800;
+    font-size: 24px;
+    line-height: 29px;
+    /* Neutral/Gray/GR01 */
+    color: #030303;
+    margin: 0;
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.welcome-summary p {
+    font-family: 'Theinhardt Pan';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 180%;
+    /* Neutral/Gray/GR01 */
+    color: #030303;
+    margin: 0;
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 0;
+}
+
+
+/* Cards Section */
+
+.welcome-cards-section {
+    box-sizing: border-box;
+    /* Auto layout */
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    align-content: flex-start;
+    padding: 20px;
+    gap: 32px;
+    width: 812px;
+    height: 220px;
+    background: #EFF4FB;
+    border: 1px solid #ADCFF8;
+    border-radius: 8px;
+    /* Inside auto layout */
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}
+
+
+/* Individual Cards */
+
+.welcome-card {
+    /* Auto layout */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0px;
+    gap: 8px;
+    width: 236px;
+    height: 74px;
+    /* Inside auto layout */
+    flex: none;
+    flex-grow: 0;
+}
+
+.welcome-card h3 {
+    font-family: 'Theinhardt Pan';
+    font-style: normal;
+    font-weight: 500;
+    font-size: 18px;
+    line-height: 18px;
+    /* Neutral/Gray/GR01 */
+    color: #030303;
+    margin: 0;
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.welcome-card p {
+    font-family: 'Theinhardt Pan';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 148%;
+    /* Neutral/Gray/GR01 */
+    color: #030303;
+    margin: 0;
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 0;
 }
 
 .welcome-icon-margin {
@@ -405,6 +802,64 @@
 
 .welcome-scroll-trigger {
     display: none;
+}
+
+
+/* Responsive adjustments for welcome content section */
+
+@media (max-width: 1440px) {
+    .welcome-content-section {
+        width: 100vw;
+        left: 0;
+        padding: 120px 20px 12px;
+    }
+}
+
+@media (max-width: 1440px) {
+    .welcome-tab-buttons,
+    .welcome-tab-content-area {
+        padding: 0 40px;
+    }
+}
+
+@media (max-width: 768px) {
+    .welcome-content-section {
+        padding: 40px 15px 20px;
+        gap: 40px;
+        min-height: auto;
+    }
+    .welcome-tab-buttons,
+    .welcome-tab-content-area {
+        padding: 0 15px;
+        flex-direction: column;
+    }
+    .welcome-tab-buttons {
+        gap: 8px;
+    }
+    .welcome-tab-button {
+        font-size: 12px;
+        padding: 8px 12px;
+    }
+    .welcome-content-sidebar {
+        width: 100%;
+        padding: 16px 0;
+        margin-bottom: 16px;
+        border-bottom: 1px solid #DEE2E6;
+    }
+    .welcome-main-content {
+        padding: 16px 0;
+    }
+    .welcome-content-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 16px;
+    }
+    .welcome-content-header h2 {
+        font-size: 24px;
+    }
+    .welcome-content-header p {
+        font-size: 14px;
+    }
 }
 
 

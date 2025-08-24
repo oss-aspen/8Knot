@@ -1,4 +1,4 @@
-from dash import dcc, html, callback
+from dash import dcc, html, callback, callback_context
 from dash.dependencies import Input, Output
 import dash
 import dash_bootstrap_components as dbc
@@ -132,36 +132,115 @@ layout = html.Div(
             id="welcome-content",
             className="welcome-content-section",
             children=[
-                dcc.Tabs(
-                    value="plotlyfiguretools",
-                    className="welcome-tabs",
+                # Section Title
+                html.Div(className="welcome-section-title", children=[html.H1("8Knot Documentation")]),
+                # Custom Tab Navigation (matching target design)
+                html.Div(
+                    className="welcome-tabs-container",
                     children=[
-                        dcc.Tab(
-                            label="Using 8Knot Visualizations",
-                            value="plotlyfiguretools",
-                            children=[plotly_tab_contents],
-                            className="welcome-tab",
-                        ),
-                        dcc.Tab(
-                            label="How 8Knot Works",
-                            value="general",
-                            children=[general_tab_contents],
-                            className="welcome-tab",
-                        ),
-                        dcc.Tab(
-                            label="Logging into Augur",
-                            value="auguraccount",
-                            children=[augur_tab_contents],
-                            className="welcome-tab",
-                        ),
-                        dcc.Tab(
-                            label="Creating Project Groups",
-                            value="usergroup",
-                            children=[group_tab_contents],
-                            className="welcome-tab",
+                        html.Div(
+                            className="welcome-tab-buttons",
+                            children=[
+                                html.Button(
+                                    "Using 8Knot Visualizations",
+                                    id="tab-viz",
+                                    className="welcome-tab-button welcome-tab-active",
+                                    n_clicks=0,
+                                ),
+                                html.Button(
+                                    "How 8Knot Works", id="tab-works", className="welcome-tab-button", n_clicks=0
+                                ),
+                                html.Button(
+                                    "Logging into Augur", id="tab-augur", className="welcome-tab-button", n_clicks=0
+                                ),
+                                html.Button(
+                                    "Creating Project Groups",
+                                    id="tab-groups",
+                                    className="welcome-tab-button",
+                                    n_clicks=0,
+                                ),
+                            ],
                         ),
                     ],
-                )
+                ),
+                # Content Area
+                html.Div(
+                    className="welcome-tab-content-area",
+                    children=[
+                        # Left sidebar
+                        html.Div(
+                            className="welcome-content-sidebar",
+                            children=[
+                                html.Div(className="welcome-sidebar-title", children=["8Knot Pages"]),
+                                html.Div(className="welcome-sidebar-link", children=["How 8Knot works"]),
+                            ],
+                        ),
+                        # Main content
+                        html.Div(
+                            id="welcome-main-content",
+                            className="welcome-main-content",
+                            children=[
+                                # Default content - 8Knot Visualizations
+                                html.Div(
+                                    className="welcome-content-header",
+                                    children=[
+                                        html.H2("8Knot Visualizations"),
+                                        html.P(
+                                            "Each page approaches the study of open source communities from a different perspective."
+                                        ),
+                                    ],
+                                ),
+                                html.Div(
+                                    className="welcome-content-grid",
+                                    children=[
+                                        html.Div(
+                                            className="welcome-content-card",
+                                            children=[
+                                                html.H3("Repo Overview"),
+                                                html.P("General information at the repo group and single repo level"),
+                                            ],
+                                        ),
+                                        html.Div(
+                                            className="welcome-content-card",
+                                            children=[
+                                                html.H3("Contributions"),
+                                                html.P("General information at the repo group and single repo level"),
+                                            ],
+                                        ),
+                                        html.Div(
+                                            className="welcome-content-card",
+                                            children=[
+                                                html.H3("Contributors"),
+                                                html.P("General information at the repo group and single repo level"),
+                                            ],
+                                        ),
+                                        html.Div(
+                                            className="welcome-content-card",
+                                            children=[
+                                                html.H3("CHAOSS"),
+                                                html.P("General information at the repo group and single repo level"),
+                                            ],
+                                        ),
+                                        html.Div(
+                                            className="welcome-content-card",
+                                            children=[
+                                                html.H3("Affiliations"),
+                                                html.P("General information at the repo group and single repo level"),
+                                            ],
+                                        ),
+                                        html.Div(
+                                            className="welcome-content-card",
+                                            children=[
+                                                html.H3("Info"),
+                                                html.P("General information at the repo group and single repo level"),
+                                            ],
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
             ],
         ),
         # Store to track if welcome content should be shown
@@ -222,6 +301,140 @@ layout = html.Div(
 )
 
 
+# Callback to handle tab switching and content updates
+@callback(
+    [
+        Output("welcome-main-content", "children"),
+        Output("tab-viz", "className"),
+        Output("tab-works", "className"),
+        Output("tab-augur", "className"),
+        Output("tab-groups", "className"),
+    ],
+    [
+        Input("tab-viz", "n_clicks"),
+        Input("tab-works", "n_clicks"),
+        Input("tab-augur", "n_clicks"),
+        Input("tab-groups", "n_clicks"),
+    ],
+    prevent_initial_call=False,
+)
+def update_tab_content(viz_clicks, works_clicks, augur_clicks, groups_clicks):
+    """Update the content and active tab styling based on button clicks."""
+
+    # Determine which tab was clicked
+    ctx = callback_context
+    if not ctx.triggered:
+        # Default to visualizations tab
+        active_tab = "viz"
+    else:
+        button_id = ctx.triggered[0]["prop_id"].split(".")[0]
+        active_tab = button_id.split("-")[1]  # Extract tab name from id
+
+    # Set active classes
+    viz_class = "welcome-tab-button welcome-tab-active" if active_tab == "viz" else "welcome-tab-button"
+    works_class = "welcome-tab-button welcome-tab-active" if active_tab == "works" else "welcome-tab-button"
+    augur_class = "welcome-tab-button welcome-tab-active" if active_tab == "augur" else "welcome-tab-button"
+    groups_class = "welcome-tab-button welcome-tab-active" if active_tab == "groups" else "welcome-tab-button"
+
+    # Generate content based on active tab
+    if active_tab == "viz":
+        content = [
+            html.Div(
+                className="welcome-content-header",
+                children=[
+                    html.H2("8Knot Visualizations"),
+                    html.P("Each page approaches the study of open source communities from a different perspective."),
+                ],
+            ),
+            html.Div(
+                className="welcome-content-grid",
+                children=[
+                    html.Div(
+                        className="welcome-content-card",
+                        children=[
+                            html.H3("Repo Overview"),
+                            html.P("General information at the repo group and single repo level"),
+                        ],
+                    ),
+                    html.Div(
+                        className="welcome-content-card",
+                        children=[
+                            html.H3("Contributions"),
+                            html.P("General information at the repo group and single repo level"),
+                        ],
+                    ),
+                    html.Div(
+                        className="welcome-content-card",
+                        children=[
+                            html.H3("Contributors"),
+                            html.P("General information at the repo group and single repo level"),
+                        ],
+                    ),
+                    html.Div(
+                        className="welcome-content-card",
+                        children=[
+                            html.H3("CHAOSS"),
+                            html.P("General information at the repo group and single repo level"),
+                        ],
+                    ),
+                    html.Div(
+                        className="welcome-content-card",
+                        children=[
+                            html.H3("Affiliations"),
+                            html.P("General information at the repo group and single repo level"),
+                        ],
+                    ),
+                    html.Div(
+                        className="welcome-content-card",
+                        children=[
+                            html.H3("Info"),
+                            html.P("General information at the repo group and single repo level"),
+                        ],
+                    ),
+                ],
+            ),
+        ]
+    elif active_tab == "works":
+        content = [
+            html.Div(
+                className="welcome-content-header",
+                children=[
+                    html.H2("How 8Knot Works"),
+                    html.P(
+                        "8Knot is a data science application that uses data from Augur to render visualizations and generate metrics."
+                    ),
+                ],
+            ),
+            general_tab_contents,
+        ]
+    elif active_tab == "augur":
+        content = [
+            html.Div(
+                className="welcome-content-header",
+                children=[
+                    html.H2("Logging into Augur"),
+                    html.P("Connect your Augur account to access personalized features and data."),
+                ],
+            ),
+            augur_tab_contents,
+        ]
+    elif active_tab == "groups":
+        content = [
+            html.Div(
+                className="welcome-content-header",
+                children=[
+                    html.H2("Creating Project Groups"),
+                    html.P("Organize and manage your repositories into meaningful groups for analysis."),
+                ],
+            ),
+            group_tab_contents,
+        ]
+    else:
+        content = [html.Div("Content loading...")]
+
+    return content, viz_class, works_class, augur_class, groups_class
+
+
 # Callback to handle Learn button and show/hide welcome content
 @callback(
     [Output("welcome-content", "style"), Output("scroll-trigger", "children")],
@@ -230,9 +443,10 @@ layout = html.Div(
 )
 def toggle_welcome_content(n_clicks):
     if n_clicks:
-        # Show the welcome content when button is clicked - only override display, CSS handles the rest
-        style = {"display": "block"}
-        # Trigger scroll with JavaScript
+        # Show the welcome content when button is clicked - use flex for more flow
+        # The welcome page implementation for now, is purely based in CSS, so this expands when user clicks the button
+        style = {"display": "flex"}
+        # Trigger scroll with JavaScript - shorter delay since no gap to bridge
         scroll_script = html.Script(
             f"""
             setTimeout(function() {{
@@ -244,7 +458,7 @@ def toggle_welcome_content(n_clicks):
                         block: 'start'
                     }});
                 }}
-            }}, 500);
+            }}, 200);
             """
         )
         return style, scroll_script
