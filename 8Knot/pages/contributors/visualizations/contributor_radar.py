@@ -21,10 +21,28 @@ gc_contributor_radar = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "Contributor Activity Radar",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "Contributor Activity Radar",
+                                className="card-title",
+                            ),
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                color="outline-secondary",
+                                size="sm",
+                                className="about-graph-button",
+                            ),
+                            width="auto",
+                        ),
+                    ],
+                    align="center",
+                    justify="between",
+                    className="mb-3",
                 ),
                 dbc.Popover(
                     [
@@ -40,6 +58,14 @@ gc_contributor_radar = dbc.Card(
                 ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}", figure=nodata_graph),
+                    style={"marginBottom": "1rem"},
+                ),
+                html.Hr(  # Divider between graph and controls
+                    style={
+                        "borderColor": "#909090",
+                        "margin": "1.5rem -1.5rem",
+                        "width": "calc(100% + 3rem)",
+                    }
                 ),
                 dbc.Form(
                     [
@@ -58,27 +84,20 @@ gc_contributor_radar = dbc.Card(
                                         start_date=date.today() - timedelta(days=180),
                                         end_date=date.today(),
                                         display_format='YYYY-MM-DD',
+                                        className="dark-date-picker",
                                     ),
-                                    width="auto",
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
+                                    width=5,
                                 ),
                             ],
                             align="center",
                         ),
                     ]
                 ),
-            ]
+            ],
+            style={"padding": "1.5rem"},
         ),
     ],
+    className="dark-card",
 )
 
 # callback for graph info popover

@@ -2,6 +2,7 @@ from dash import html, dcc, callback
 import dash
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
+from datetime import date, timedelta
 import pandas as pd
 import logging
 import plotly.express as px
@@ -11,6 +12,7 @@ import time
 from pages.utils.job_utils import nodata_graph
 from queries.contributor_funnel_query import contributor_engagement_query as ceq
 import cache_manager.cache_facade as cf
+import app
 
 PAGE = "contributors"
 VIZ_ID = "contributor-funnel"
@@ -19,10 +21,28 @@ gc_contributor_funnel = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "Contributor Funnel",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "Contributor Funnel",
+                                className="card-title",
+                            ),
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}-funnel",
+                                color="outline-secondary",
+                                size="sm",
+                                className="about-graph-button",
+                            ),
+                            width="auto",
+                        ),
+                    ],
+                    align="center",
+                    justify="between",
+                    className="mb-3",
                 ),
                 dbc.Popover(
                     [
@@ -38,40 +58,74 @@ gc_contributor_funnel = dbc.Card(
                 ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}-funnel-graph"),
+                    style={"marginBottom": "1rem"},
+                ),
+                html.Hr(  # Divider between graph and controls
+                    style={
+                        "borderColor": "#909090",
+                        "margin": "1.5rem -1.5rem",
+                        "width": "calc(100% + 3rem)",
+                    }
                 ),
                 dbc.Form(
                     [
                         dbc.Row(
                             [
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}-funnel",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
+                                dbc.Label(
+                                    "Select Time Range:",
+                                    html_for=f"date-picker-{PAGE}-{VIZ_ID}-funnel",
                                     width="auto",
-                                    className="ms-auto",
-                                    style={"paddingTop": ".5em"},
+                                ),
+                                dbc.Col(
+                                    dcc.DatePickerRange(
+                                        id=f"date-picker-{PAGE}-{VIZ_ID}-funnel",
+                                        min_date_allowed=date(2015, 1, 1),
+                                        max_date_allowed=date.today(),
+                                        start_date=date.today() - timedelta(days=365),
+                                        end_date=date.today(),
+                                        display_format='YYYY-MM-DD',
+                                        className="dark-date-picker",
+                                    ),
+                                    width=5,
                                 ),
                             ],
                             align="center",
                         ),
                     ]
                 ),
-            ]
+            ],
+            style={"padding": "1.5rem"},
         ),
     ],
+    className="dark-card",
 )
 
 gc_contributor_dropoff = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "Drop-offs Between Stages",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "Drop-offs Between Stages",
+                                className="card-title",
+                            ),
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}-dropoff",
+                                color="outline-secondary",
+                                size="sm",
+                                className="about-graph-button",
+                            ),
+                            width="auto",
+                        ),
+                    ],
+                    align="center",
+                    justify="between",
+                    className="mb-3",
                 ),
                 dbc.Popover(
                     [
@@ -87,30 +141,46 @@ gc_contributor_dropoff = dbc.Card(
                 ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}-dropoff-graph"),
+                    style={"marginBottom": "1rem"},
+                ),
+                html.Hr(  # Divider between graph and controls
+                    style={
+                        "borderColor": "#909090",
+                        "margin": "1.5rem -1.5rem",
+                        "width": "calc(100% + 3rem)",
+                    }
                 ),
                 dbc.Form(
                     [
                         dbc.Row(
                             [
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}-dropoff",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
+                                dbc.Label(
+                                    "Select Time Range:",
+                                    html_for=f"date-picker-{PAGE}-{VIZ_ID}-dropoff",
                                     width="auto",
-                                    className="ms-auto",
-                                    style={"paddingTop": ".5em"},
+                                ),
+                                dbc.Col(
+                                    dcc.DatePickerRange(
+                                        id=f"date-picker-{PAGE}-{VIZ_ID}-dropoff",
+                                        min_date_allowed=date(2015, 1, 1),
+                                        max_date_allowed=date.today(),
+                                        start_date=date.today() - timedelta(days=365),
+                                        end_date=date.today(),
+                                        display_format='YYYY-MM-DD',
+                                        className="dark-date-picker",
+                                    ),
+                                    width=5,
                                 ),
                             ],
                             align="center",
                         ),
                     ]
                 ),
-            ]
+            ],
+            style={"padding": "1.5rem"},
         ),
     ],
+    className="dark-card",
 )
 
 @callback(
@@ -140,10 +210,15 @@ def toggle_dropoff_popover(n, is_open):
     Output(f"{PAGE}-{VIZ_ID}-dropoff-graph", "figure"),
     [
         Input("repo-choices", "data"),
+        Input(f"date-picker-{PAGE}-{VIZ_ID}-funnel", "start_date"),
+        Input(f"date-picker-{PAGE}-{VIZ_ID}-funnel", "end_date"),
+        Input(f"date-picker-{PAGE}-{VIZ_ID}-dropoff", "start_date"),
+        Input(f"date-picker-{PAGE}-{VIZ_ID}-dropoff", "end_date"),
+        Input("bot-switch", "value"),
     ],
     background=True,
 )
-def create_funnel_and_dropoff_charts(repolist):
+def create_funnel_and_dropoff_charts(repolist, funnel_start_date, funnel_end_date, dropoff_start_date, dropoff_end_date, bot_switch):
     if not repolist:
         raise PreventUpdate
 
@@ -161,7 +236,7 @@ def create_funnel_and_dropoff_charts(repolist):
         
         if cf.get_uncached(func_name=func_name, repolist=repolist):
             logging.warning(f"{VIZ_ID} - TIMEOUT WAITING FOR DATA")
-            return nodata_graph, nodata_graph
+            return nodata_graph(), nodata_graph()
 
     logging.warning(f"{VIZ_ID} - START")
     start = time.perf_counter()
@@ -173,9 +248,13 @@ def create_funnel_and_dropoff_charts(repolist):
 
     if df_engagement is None or df_engagement.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
-        return nodata_graph, nodata_graph
+        return nodata_graph(), nodata_graph()
 
-    df_funnel, df_dropoff = process_data(df_engagement)
+    # Process funnel data with its own date filters
+    df_funnel, _ = process_data(df_engagement, funnel_start_date, funnel_end_date, bot_switch)
+    
+    # Process dropoff data with its own date filters
+    _, df_dropoff = process_data(df_engagement, dropoff_start_date, dropoff_end_date, bot_switch)
 
     funnel_fig = create_funnel_figure(df_funnel)
     dropoff_fig = create_dropoff_figure(df_dropoff)
@@ -184,13 +263,36 @@ def create_funnel_and_dropoff_charts(repolist):
     return funnel_fig, dropoff_fig
 
 
-def process_data(df: pd.DataFrame):
+def process_data(df: pd.DataFrame, start_date, end_date, bot_switch):
     """
     Process the raw engagement data to calculate funnel stages.
     This function now replicates the logic from the original SQL query.
     """
     if df.empty:
         return pd.DataFrame(), pd.DataFrame()
+
+    # Apply date filtering if provided
+    if start_date and end_date:
+        # Convert date strings to datetime
+        start_dt = pd.to_datetime(start_date, utc=True)
+        end_dt = pd.to_datetime(end_date, utc=True)
+        
+        # Filter based on date fields that exist
+        date_mask = pd.Series(False, index=df.index)
+        
+        for col in ['d1_first_issue_created_at', 'd1_first_pr_opened_at', 'd1_first_pr_commented_at']:
+            if col in df.columns:
+                col_dt = pd.to_datetime(df[col], utc=True)
+                date_mask |= ((col_dt >= start_dt) & (col_dt <= end_dt))
+        
+        df = df[date_mask]
+        
+    if df.empty:
+        return pd.DataFrame(), pd.DataFrame()
+
+    # Apply bot filtering
+    if bot_switch and "cntrb_id" in df.columns:
+        df = df[~df["cntrb_id"].isin(app.bots_list)]
 
     all_contributors_count = df['cntrb_id'].nunique()
 
