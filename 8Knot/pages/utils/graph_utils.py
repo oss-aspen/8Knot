@@ -12,13 +12,13 @@ color_seq = [
 
 # Baby Blue color scale for graph gradients
 baby_blue = [
-    "#F0F9FF",  # Baby Blue 100 - very light
-    "#E0F2FE",  # Baby Blue 200 - light
-    "#BAE6FD",  # Baby Blue 300 - medium light
-    "#7DD3FC",  # Baby Blue 400 - light blue
-    "#38BDF8",  # Baby Blue 500 - main baby blue
-    "#0EA5E9",  # Baby Blue 600 - medium dark
-    "#0284C7",  # Baby Blue 700 - dark
+    "#DFF0FB",  # Baby Blue 100 - very light
+    "#A8D9F5",  # Baby Blue 200 - light
+    "#76C5EF",  # Baby Blue 300 - medium light
+    "#3FB0E9",  # Baby Blue 400 - light blue
+    "#199AD6",  # Baby Blue 500 - main baby blue
+    "#147AAE",  # Baby Blue 600 - medium dark
+    "#0F5880",  # Baby Blue 700 - dark
     "#0369A1",  # Baby Blue 800 - very dark
     "#F7B009",  # Yellow 500 - main yellow
     "#FEDF89",  # Yellow 200 - light yellow

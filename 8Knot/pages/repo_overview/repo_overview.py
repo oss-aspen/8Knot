@@ -34,16 +34,16 @@ layout = dbc.Container(
                     [
                         html.H1("Per Repo Analysis:"),
                     ],
-                    width=2,
+                    width=3,
                 ),
                 dbc.Col(
                     [
                         dmc.Select(
                             id="repo-info-selection",
                             placeholder="Repo for info section",
-                            classNames={"values": "dmc-multiselect-custom"},
                             searchable=True,
                             clearable=True,
+                            className="dark-dropdown",
                         ),
                     ],
                     width=3,

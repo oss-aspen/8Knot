@@ -7,7 +7,7 @@ import json
 from celery.result import AsyncResult
 import dash_bootstrap_components as dbc
 import dash
-from dash import callback
+from dash import callback, html
 from dash.dependencies import Input, Output, State, MATCH
 from app import augur
 from flask_login import current_user
@@ -512,9 +512,9 @@ def show_help_alert(n_clicks, openness):
 @callback(
     [Output("repo-list-alert", "is_open"), Output("repo-list-alert", "children")],
     [Input("repo-list-button", "n_clicks")],
-    [State("help-alert", "is_open"), State("repo-choices", "data")],
+    [State("repo-list-alert", "is_open"), State("repo-choices", "data")],
 )
-def show_help_alert(n_clicks, openness, repo_ids):
+def show_repolist_alert(n_clicks, openness, repo_ids):
     """Sets the 'open' state of a help message
     for the search bar to encourage users to check
     their spelling and to ask for data to be loaded
@@ -528,11 +528,20 @@ def show_help_alert(n_clicks, openness, repo_ids):
     print(repo_ids)
     url_list = [augur.repo_id_to_git(i) for i in repo_ids]
 
+    url_list = [l[8:] if l.startswith("https://") else l for l in url_list]
+    
+    element_list = [html.Li(l) for l in url_list]
+
+    elements = [
+        html.Strong("Included Repositories:"),
+        html.Ul(element_list)
+    ]
+
     if n_clicks == 0:
-        return dash.no_update, str(url_list)
+        return dash.no_update, elements
     # switch the openness parameter, allows button to also
     # dismiss the Alert.
-    return not openness, str(url_list)
+    return not openness, elements
 
 
 @callback(
@@ -568,7 +577,7 @@ def wait_queries(job_ids):
         if all(j.successful() for j in jobs):
             logging.warning([(j.name, j.status) for j in jobs])
             jobs = [j.forget() for j in jobs]
-            return "Data Ready", "#b5b683"
+            return "Data Ready", "#0F5880"
 
         # or one of them has failed
         if any(j.failed() for j in jobs):

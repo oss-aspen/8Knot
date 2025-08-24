@@ -1,24 +1,25 @@
-FROM registry.access.redhat.com/ubi9/python-39:latest AS base
+FROM registry.access.redhat.com/ubi9/python-39:latest
 
-
-FROM base AS builder
 COPY --from=ghcr.io/astral-sh/uv:0.4.9 /uv /bin/uv
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
-WORKDIR /opt/app-root/src
-COPY uv.lock pyproject.toml /opt/app-root/src/
-RUN --mount=type=cache,target=/root/.cache/uv \
-  uv sync --frozen --no-install-project --no-dev
+
+ENV UV_PROJECT_ENVIRONMENT=/opt/app-root/
+
+WORKDIR /opt/app-root/
+COPY pyproject.toml pyproject.toml
+COPY uv.lock uv.lock
+RUN uv sync --python=/opt/app-root/bin/python --locked --no-install-project --no-dev --no-cache
+
+# remove uv binary copied in earlier to hopefully save some space
+USER root
+RUN rm /bin/uv pyproject.toml uv.lock
+USER default
+
 COPY ./8Knot/ /opt/app-root/src/
-RUN --mount=type=cache,target=/root/.cache/uv \
-  uv sync --frozen --no-dev
 
+ENV PATH="/opt/app-root/bin:$PATH"
 
-FROM base
-COPY --from=builder /opt/app-root/src /opt/app-root/src
-ENV PATH="/opt/app-root/src/.venv/bin:$PATH"
-
-# Explicitly tell Python where to find packages
-ENV PYTHONPATH="/opt/app-root/src/.venv/lib/python3.9/site-packages:/opt/app-root/src"
+WORKDIR /opt/app-root/src
 
 # Description of how to choose the number of workers and threads.
 # common wisdom is (2*CPU)+1 workers:

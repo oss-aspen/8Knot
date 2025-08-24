@@ -210,13 +210,14 @@ if os.getenv("AUGUR_LOGIN_ENABLED", "False") != "True":
             ],
             color="light",
             dismissable=True,
+            duration=60000,
             id="login-disabled-banner",
             className="mb-0",
             style={
-                "backgroundColor": "#EDF7ED",  # Light green background
-                "borderColor": "#6b8976",  # Darker green border from palette
-                "border": "1px solid #6b8976",
-                "borderLeft": "5px solid #6b8976",
+                "backgroundColor": "#DFF0FB",  # Light blue background
+                "borderColor": "#0F5880",  # Darker blue border from palette
+                "border": "1px solid #0F5880",
+                "borderLeft": "5px solid #0F5880",
                 "boxShadow": "0 2px 8px rgba(0, 0, 0, 0.15)",
                 "maxWidth": "400px",
                 "padding": "15px",
@@ -443,7 +444,6 @@ search_bar = html.Div(
                     id="bot-switch",
                     label="GitHub Bot Filter",
                     value=True,
-                    className="blue-switch",
                     input_class_name="botlist-filter-switch",
                     style={"fontSize": 12, "marginTop": "8px", "marginLeft": "10px"},
                 ),
@@ -631,13 +631,13 @@ layout = html.Div(
                                                 dbc.Badge(
                                                     children="Data Loaded",
                                                     id="data-badge",
-                                                    color="#436755",
+                                                    color="#0F5880",
                                                     className="me-1",
                                                     style={"marginBottom": ".5%"},
-                                                    text_color="dark",
+                                                    # text_color="dark",
                                                 ),
                                                 type="cube",
-                                                color="#436755",
+                                                color="#0F5880",
                                             ),
                                             dash.page_container,
                                         ],
