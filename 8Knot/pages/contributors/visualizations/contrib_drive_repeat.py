@@ -69,13 +69,7 @@ gc_contrib_drive_repeat = dbc.Card(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                     style={"marginBottom": "1rem"},
                 ),
-                html.Hr(  # Divider between graph and controls
-                    style={
-                        "borderColor": "#909090",
-                        "margin": "1.5rem -1.5rem",
-                        "width": "calc(100% + 3rem)",
-                    }
-                ),
+                html.Hr(className="card-split"),  # Divider between graph and controls
                 dbc.Form(
                     [
                         dbc.Row(

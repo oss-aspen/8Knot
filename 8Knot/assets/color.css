@@ -135,6 +135,17 @@ input.botlist-filter-switch:checked {
   max-width: 500px;
 }
 
+/* Graph info popover theme */
+.popover > .popover-body {
+  background-color: #404040;
+  color: #E5E5E5;
+}
+
+.popover > .popover-header {
+  background-color: #E5E5E5;
+  color: #404040;
+}
+
 /* ==== MULTISELECT DROPDOWN STYLING ==== */
 /* Override Mantine MultiSelect hover state */
 .mantine-MultiSelect-item[data-hovered] {
