@@ -25,12 +25,17 @@ layout = dbc.Container(
                         html.Img(src="assets/logo-color.png"),
                         html.P(
                             """
-                            8Knot hosts advanced analysis of open source projects, enriching
-                            the study of communities for community architects, developers,
-                            and Business Intelligence experts alike.
+                            Advanced Open Source Project Analysis by 8Knot
                             """
                         ),
                     ],
+                ),
+                html.P(
+                    """
+                    8Knot hosts advanced analysis of open source projects, enriching
+                    the study of communities for community architects, developers,
+                    and Business Intelligence experts alike.
+                    """
                 ),
                 html.Div(
                     className="welcome_instructions_section",
