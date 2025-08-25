@@ -174,14 +174,16 @@ topbar = html.Div(
     style={
         "height": "60px",
         "width": "100%",
-        "background-color": "#242424",
+        "background-color": "#1D1D1D",
         "display": "flex",
         "alignItems": "center",
         "justifyContent": "space-between",
         "paddingLeft": "10px",
         "paddingRight": "10px",
+        "border-bottom": "1.5px solid #292929",
     },
 )
+
 
 #  login banner that will be displayed when login is disabled
 login_banner = None
@@ -314,21 +316,6 @@ search_bar = html.Div(
             [
                 html.Div(
                     [
-                        html.Img(
-                            src="/assets/search.svg",
-                            alt="Search",
-                            style={
-                                "width": "16px",
-                                "height": "16px",
-                                "position": "absolute",
-                                "left": "16px",
-                                "top": "50%",
-                                "transform": "translateY(-50%)",
-                                "pointerEvents": "none",
-                                "opacity": "0.7",
-                                "zIndex": 2,
-                            },
-                        ),
                         dmc.MultiSelect(
                             id="projects",
                             searchable=True,
@@ -365,6 +352,27 @@ search_bar = html.Div(
                                 },
                             },
                         ),
+                        dbc.Button(
+                            html.I(className="fas fa-search"),
+                            id="search",
+                            n_clicks=0,
+                            size="sm",
+                            color="outline-secondary",
+                            title="Search",
+                            style={
+                                "backgroundColor": "transparent",
+                                "border": "none",
+                                "fontSize": "16px",
+                                "width": "16px",
+                                "height": "16px",
+                                "position": "absolute",
+                                "left": "10px",
+                                "top": "50%",
+                                "transform": "translateY(-100%)",
+                                "fontWeight": "bold",
+                                "zIndex": 2,
+                            },
+                        ),
                     ],
                     style={"position": "relative"},
                 ),
@@ -398,20 +406,6 @@ search_bar = html.Div(
         ),
         dbc.Stack(
             [
-                dbc.Button(
-                    html.I(className="fas fa-search"),
-                    id="search",
-                    n_clicks=0,
-                    size="sm",
-                    color="outline-secondary",
-                    title="Search",
-                    style={
-                        "backgroundColor": "transparent",
-                        "border": "none",
-                        "padding": "4px 8px",
-                        "fontSize": "14px",
-                    },
-                ),
                 dbc.Button(
                     html.I(className="fas fa-question-circle"),
                     id="search-help",
@@ -488,11 +482,10 @@ navbar_bottom = dbc.NavbarSimple(
     ],
     brand="",
     brand_href="#",
-    color="primary",
-    dark=True,
     fluid=True,
     fixed="bottom",
-    style={"backgroundColor": "#242424"},
+    color="#1D1D1D",
+    dark=True,
 )
 
 # We need to wrap the container in a div to allow for custom styling
