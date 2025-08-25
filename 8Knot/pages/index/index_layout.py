@@ -366,7 +366,7 @@ search_bar = html.Div(
                                 "width": "16px",
                                 "height": "16px",
                                 "position": "absolute",
-                                "right": "24px",
+                                "left": "10px",
                                 "top": "50%",
                                 "transform": "translateY(-100%)",
                                 "fontWeight": "bold",
