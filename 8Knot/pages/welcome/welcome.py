@@ -22,7 +22,7 @@ layout = dbc.Container(
                 html.Div(
                     className="welcome_callout_section",
                     children=[
-                        html.Img(src="assets/logo-color.png"),
+                        html.Img(src="assets/8Knot.svg"),
                         html.P(
                             """
                             Advanced Open Source Project Analysis by 8Knot
