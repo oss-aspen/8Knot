@@ -149,15 +149,15 @@ def generate_radar_chart_from_data(start_date, end_date, repolist, bot_switch):
     start = time.perf_counter()
 
     # GET ALL DATA FROM POSTGRES CACHE
-    df_raw = cf.retrieve_from_cache(tablename=func_name, repolist=repolist)
+    df = cf.retrieve_from_cache(tablename=func_name, repolist=repolist)
 
     # test if there is data
-    if df_raw.empty:
+    if df.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return nodata_graph()
 
     # function for all data pre processing
-    df = process_data(df_raw, start_date, end_date, bot_switch)
+    df = process_data(df, start_date, end_date, bot_switch)
 
     if df.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE AFTER PROCESSING")
@@ -169,13 +169,13 @@ def generate_radar_chart_from_data(start_date, end_date, repolist, bot_switch):
     return fig
 
 
-def process_data(df_raw: pd.DataFrame, start_date, end_date, bot_switch):
+def process_data(df: pd.DataFrame, start_date, end_date, bot_switch):
     """Process the raw contributor data and filter by date range and bot switch."""
-    df_raw['created_at'] = pd.to_datetime(df_raw['created_at'], utc=True)
+    df['created_at'] = pd.to_datetime(df['created_at'], utc=True)
     start_date_dt = pd.to_datetime(start_date, utc=True)
     end_date_dt = pd.to_datetime(end_date, utc=True)
 
-    df_filtered = df_raw[(df_raw['created_at'] >= start_date_dt) & (df_raw['created_at'] <= end_date_dt)]
+    df_filtered = df[(df['created_at'] >= start_date_dt) & (df['created_at'] <= end_date_dt)]
     if df_filtered.empty:
         return pd.DataFrame()
 
