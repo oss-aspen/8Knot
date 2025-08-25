@@ -29,7 +29,6 @@ def contributor_engagement_query(self, repos):
         return None
 
     # This query now fetches the raw data needed for calculations.
-    # FIX: Added 'repo_id' to the SELECT statement to match the table schema.
     query_string = """
         SELECT
             repo_id,

@@ -156,30 +156,26 @@ def generate_radar_chart_from_data(start_date, end_date, repolist, bot_switch):
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return nodata_graph()
 
-    # function for all data pre processing
-    df = process_data(df, start_date, end_date, bot_switch)
-
-    if df.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE AFTER PROCESSING")
-        return nodata_graph()
-
-    fig = create_figure(df)
+    # function for all data pre processing and figure creation
+    fig = process_data_and_create_figure(df, start_date, end_date, bot_switch)
 
     logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
 
-def process_data(df: pd.DataFrame, start_date, end_date, bot_switch):
-    """Process the raw contributor data and filter by date range and bot switch."""
+def process_data_and_create_figure(df: pd.DataFrame, start_date, end_date, bot_switch):
+    """
+    Process the raw contributor data, filter by date range and bot switch,
+    and create the radar chart figure.
+    """
+    # Convert to datetime and filter by date range
     df['created_at'] = pd.to_datetime(df['created_at'], utc=True)
     start_date_dt = pd.to_datetime(start_date, utc=True)
     end_date_dt = pd.to_datetime(end_date, utc=True)
+    df = df[(df['created_at'] >= start_date_dt) & (df['created_at'] <= end_date_dt)]
 
-    df_filtered = df[(df['created_at'] >= start_date_dt) & (df['created_at'] <= end_date_dt)]
-    if df_filtered.empty:
-        return pd.DataFrame()
-
-    df_agg = df_filtered.groupby(['repo_id', 'cntrb_id', 'login']).agg(
+    # Aggregate actions for each contributor
+    df_agg = df.groupby(['repo_id', 'cntrb_id', 'login']).agg(
         created_issue=('action', lambda x: 1 if 'issue_opened' in x.values else 0),
         opened_pr=('action', lambda x: 1 if 'pull_request_open' in x.values else 0),
         pr_commented=('action', lambda x: 1 if 'pull_request_comment' in x.values else 0),
@@ -187,21 +183,21 @@ def process_data(df: pd.DataFrame, start_date, end_date, bot_switch):
         pr_merged=('action', lambda x: 1 if 'pull_request_merged' in x.values else 0),
     ).reset_index()
 
-    df = df_agg
-    # remove bot data
-    if bot_switch and "cntrb_id" in df.columns:
-        df = df[~df["cntrb_id"].isin(app.bots_list)]
-    
-    return df
+    # remove bot data if switch is on
+    if bot_switch and "cntrb_id" in df_agg.columns:
+        df_agg = df_agg[~df_agg["cntrb_id"].isin(app.bots_list)]
 
+    # return no data graph if df is empty after processing
+    if df_agg.empty:
+        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE AFTER PROCESSING")
+        return nodata_graph()
 
-def create_figure(df: pd.DataFrame):
-    """Create the radar chart figure."""
+    # Create the radar chart figure
     activity_metrics = {
-        "Issue Creators": df[df["created_issue"] == 1]["login"].nunique(),
-        "PR Openers": df[df["opened_pr"] == 1]["login"].nunique(),
-        "PR Commenters": df[df["pr_commented"] == 1]["login"].nunique(),
-        "PR Mergers": df[df["pr_merged"] == 1]["login"].nunique(),
+        "Issue Creators": df_agg[df_agg["created_issue"] == 1]["login"].nunique(),
+        "PR Openers": df_agg[df_agg["opened_pr"] == 1]["login"].nunique(),
+        "PR Commenters": df_agg[df_agg["pr_commented"] == 1]["login"].nunique(),
+        "PR Mergers": df_agg[df_agg["pr_merged"] == 1]["login"].nunique(),
     }
 
     radar_df = pd.DataFrame(dict(Count=list(activity_metrics.values()), Activity=list(activity_metrics.keys())))
@@ -217,4 +213,3 @@ def create_figure(df: pd.DataFrame):
     )
 
     return fig
-
