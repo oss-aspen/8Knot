@@ -529,13 +529,10 @@ def show_repolist_alert(n_clicks, openness, repo_ids):
     url_list = [augur.repo_id_to_git(i) for i in repo_ids]
 
     url_list = [l[8:] if l.startswith("https://") else l for l in url_list]
-    
+
     element_list = [html.Li(l) for l in url_list]
 
-    elements = [
-        html.Strong("Included Repositories:"),
-        html.Ul(element_list)
-    ]
+    elements = [html.Strong("Included Repositories:"), html.Ul(element_list)]
 
     if n_clicks == 0:
         return dash.no_update, elements
