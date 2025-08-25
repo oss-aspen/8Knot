@@ -10,8 +10,7 @@ from dash.exceptions import PreventUpdate
 import time
 
 from pages.utils.job_utils import nodata_graph
-# CHANGED: Use the raw contributors_query instead of the pre-aggregated one
-from queries.contributors_query import contributors_query as cnq
+from queries.contributor_funnel_query import contributor_engagement_query as ceq
 import cache_manager.cache_facade as cf
 import app
 
@@ -49,7 +48,7 @@ gc_contributor_funnel = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "This funnel chart shows the progression of contributors through different engagement stages, from initial interest to active contribution, within the selected time range."
+                            "This funnel chart shows the progression of contributors through different engagement stages, from initial interest to active contribution."
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}-funnel",
@@ -132,7 +131,7 @@ gc_contributor_dropoff = dbc.Card(
                     [
                         dbc.PopoverHeader("Graph Info:"),
                         dbc.PopoverBody(
-                            "This bar chart shows the number of contributors who drop off between each stage of the contributor funnel for the selected time range."
+                            "This bar chart shows the number of contributors who drop off between each stage of the contributor funnel."
                         ),
                     ],
                     id=f"popover-{PAGE}-{VIZ_ID}-dropoff",
@@ -144,7 +143,6 @@ gc_contributor_dropoff = dbc.Card(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}-dropoff-graph"),
                     style={"marginBottom": "1rem"},
                 ),
-                # REMOVED: Redundant date picker controls for this graph. It will now sync with the funnel chart's date picker.
             ],
             style={"padding": "1.5rem"},
         ),
@@ -174,7 +172,6 @@ def toggle_dropoff_popover(n, is_open):
     return is_open
 
 
-# UPDATED: Callback now uses a single date picker for both graphs
 @callback(
     Output(f"{PAGE}-{VIZ_ID}-funnel-graph", "figure"),
     Output(f"{PAGE}-{VIZ_ID}-dropoff-graph", "figure"),
@@ -190,19 +187,18 @@ def create_funnel_and_dropoff_charts(repolist, start_date, end_date, bot_switch)
     if not repolist:
         raise PreventUpdate
 
-    # UPDATED: Using contributors_query (cnq) now
-    func_name = cnq.__name__
+    func_name = ceq.__name__
     not_cached = cf.get_uncached(func_name=func_name, repolist=repolist)
     if not_cached:
         logging.warning(f"{VIZ_ID}: Engagement data for {len(not_cached)} repos not cached. Dispatching worker.")
-        cnq.apply_async(args=[not_cached])
+        ceq.apply_async(args=[not_cached])
         timeout = 180
         start_time = time.time()
         while time.time() - start_time < timeout:
             if not cf.get_uncached(func_name=func_name, repolist=not_cached):
                 break
             time.sleep(2)
-
+        
         if cf.get_uncached(func_name=func_name, repolist=repolist):
             logging.warning(f"{VIZ_ID} - TIMEOUT WAITING FOR DATA")
             return nodata_graph(), nodata_graph()
@@ -210,88 +206,101 @@ def create_funnel_and_dropoff_charts(repolist, start_date, end_date, bot_switch)
     logging.warning(f"{VIZ_ID} - START")
     start = time.perf_counter()
 
-    # UPDATED: Retrieving raw action data from cache
-    df_actions = cf.retrieve_from_cache(
-        tablename=cnq.__name__,
+    df_engagement = cf.retrieve_from_cache(
+        tablename=ceq.__name__,
         repolist=repolist,
     )
 
-    if df_actions is None or df_actions.empty:
+    if df_engagement is None or df_engagement.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return nodata_graph(), nodata_graph()
 
-    # UPDATED: Call the new processing function once for both graphs
-    df_funnel, df_dropoff = process_data(df_actions, start_date, end_date, bot_switch)
+    # Process data for both funnel and dropoff charts using a single date range
+    df_funnel, df_dropoff = process_data(df_engagement, start_date, end_date, bot_switch)
 
     if df_funnel.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE AFTER PROCESSING")
+        logging.warning(f"{VIZ_ID} - NO DATA AFTER PROCESSING")
         return nodata_graph(), nodata_graph()
 
     funnel_fig = create_funnel_figure(df_funnel)
     dropoff_fig = create_dropoff_figure(df_dropoff)
-
+    
     logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return funnel_fig, dropoff_fig
 
 
-# REWRITTEN: This function now processes the raw action data to build the funnel dynamically.
 def process_data(df: pd.DataFrame, start_date, end_date, bot_switch):
     """
-    Process the raw contributor action data to calculate funnel stages based on activity
-    within the selected date range.
+    Process the raw engagement data to calculate funnel stages.
+    Filters contributors based on their first engagement activity within the time range.
     """
     if df.empty:
         return pd.DataFrame(), pd.DataFrame()
 
-    # Convert to datetime and filter by date range
-    df['created_at'] = pd.to_datetime(df['created_at'], utc=True)
-    start_dt = pd.to_datetime(start_date, utc=True)
-    end_dt = pd.to_datetime(end_date, utc=True)
-    df_filtered = df[(df['created_at'] >= start_dt) & (df['created_at'] <= end_dt)]
-
-    if df_filtered.empty:
+    # Apply bot filtering first
+    if bot_switch and "cntrb_id" in df.columns:
+        df = df[~df["cntrb_id"].isin(app.bots_list)]
+    
+    if df.empty:
         return pd.DataFrame(), pd.DataFrame()
 
-    # Apply bot filtering
-    if bot_switch and "cntrb_id" in df_filtered.columns:
-        df_filtered = df_filtered[~df_filtered["cntrb_id"].isin(app.bots_list)]
+    # 'All Contributors' is the total number of unique contributors before date filtering
+    all_contributors_count = df['cntrb_id'].nunique()
 
-    # Define actions for each engagement level
-    basic_actions = ['issue_opened', 'pull_request_open', 'pull_request_comment']
-    deep_actions = ['pull_request_merged']
+    # Filter for contributors whose first basic engagement occurred within the time range
+    df_filtered = df
+    if start_date and end_date:
+        start_dt = pd.to_datetime(start_date, utc=True)
+        end_dt = pd.to_datetime(end_date, utc=True)
 
-    # Get unique contributors who performed these actions within the time range
-    basic_contributors = set(df_filtered[df_filtered['action'].isin(basic_actions)]['cntrb_id'].unique())
-    deep_contributors_from_actions = set(df_filtered[df_filtered['action'].isin(deep_actions)]['cntrb_id'].unique())
+        date_mask = pd.Series(False, index=df.index)
+        activity_cols = ['d1_first_issue_created_at', 'd1_first_pr_opened_at', 'd1_first_pr_commented_at']
 
-    # The top of the funnel includes anyone who performed a basic or deep action.
-    total_engaged_contributors = basic_contributors.union(deep_contributors_from_actions)
+        for col in activity_cols:
+            if col in df.columns:
+                col_dt = pd.to_datetime(df[col], utc=True, errors='coerce')
+                date_mask |= (col_dt >= start_dt) & (col_dt <= end_dt)
+        
+        df_filtered = df[date_mask]
 
-    # The bottom of the funnel are those from the top set who also performed a deep action.
-    deeply_engaged_contributors = total_engaged_contributors.intersection(deep_contributors_from_actions)
+    # 'Basic Engagement' are contributors from the time-filtered set
+    basic_contributors_count = df_filtered['cntrb_id'].nunique()
 
-    # Define funnel stages and values
-    stages = ["Engaged Contributors", "Deeply Engaged (Merged PR)"]
-    values = [len(total_engaged_contributors), len(deeply_engaged_contributors)]
+    # 'Deep Engagement' are contributors from the basic group who meet deep engagement criteria
+    deep_mask = (
+        (df_filtered['d2_has_merged_pr'] == True) |
+        (df_filtered['d2_created_many_issues'] == True) |
+        (df_filtered['d2_total_comments'] >= 5) |
+        (df_filtered['d2_has_pr_with_many_commits'] == True) |
+        (df_filtered['d2_commented_on_multiple_prs'] == True)
+    )
+    deep_contributors_count = df_filtered[deep_mask]['cntrb_id'].nunique() if not df_filtered.empty else 0
 
-    df_funnel = pd.DataFrame({'Stage': stages, 'Count': values})
+    stages = ["All Contributors", "Basic Engagement", "Deep Engagement"]
+    values = [all_contributors_count, basic_contributors_count, deep_contributors_count]
+    
+    df_funnel = pd.DataFrame({
+        'Stage': stages,
+        'Count': values
+    })
 
-    # Calculate drop-offs between stages
+    # Calculate drop-offs based on the funnel values
     dropoff_stages = []
     dropoff_counts = []
-    if len(values) > 1:
-        dropoff_stages.append(f"{stages[0]} → {stages[1]}")
-        dropoff_counts.append(values[0] - values[1])
+    for i in range(len(values) - 1):
+        dropoff_stages.append(f"{stages[i]} → {stages[i+1]}")
+        dropoff_counts.append(values[i] - values[i+1])
 
-    df_dropoff = pd.DataFrame({'Transition': dropoff_stages, 'Drop-off Count': dropoff_counts})
+    df_dropoff = pd.DataFrame({
+        'Transition': dropoff_stages,
+        'Drop-off Count': dropoff_counts
+    })
 
     return df_funnel, df_dropoff
 
 
 def create_funnel_figure(df_funnel: pd.DataFrame):
     """Create the funnel chart figure."""
-    if df_funnel.empty:
-        return nodata_graph()
     funnel_fig = px.funnel(
         df_funnel,
         x='Count',
@@ -307,8 +316,6 @@ def create_funnel_figure(df_funnel: pd.DataFrame):
 
 def create_dropoff_figure(df_dropoff: pd.DataFrame):
     """Create the drop-off bar chart figure."""
-    if df_dropoff.empty:
-        return nodata_graph()
     dropoff_fig = px.bar(
         df_dropoff,
         x='Drop-off Count',
