@@ -22,15 +22,20 @@ layout = dbc.Container(
                 html.Div(
                     className="welcome_callout_section",
                     children=[
-                        html.Img(src="assets/logo-color.png"),
+                        html.Img(src="assets/8Knot.svg"),
                         html.P(
                             """
-                            8Knot hosts advanced analysis of open source projects, enriching
-                            the study of communities for community architects, developers,
-                            and Business Intelligence experts alike.
+                            Advanced Open Source Project Analysis by 8Knot
                             """
                         ),
                     ],
+                ),
+                html.P(
+                    """
+                    8Knot hosts advanced analysis of open source projects, enriching
+                    the study of communities for community architects, developers,
+                    and Business Intelligence experts alike.
+                    """
                 ),
                 html.Div(
                     className="welcome_instructions_section",

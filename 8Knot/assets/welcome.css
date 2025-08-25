@@ -222,3 +222,10 @@
   height: 75%;
   width: 75%;
 }
+
+body h2,
+body h4,
+body h5,
+body h6 {
+  color: #9fc2e8;
+}
