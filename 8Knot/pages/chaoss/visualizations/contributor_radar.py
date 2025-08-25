@@ -12,7 +12,7 @@ import time
 import app
 from cache_manager import cache_facade as cf
 from pages.utils.job_utils import nodata_graph
-from queries.contributor_radar_query import contributors_query as cnq
+from queries.contributors_query import contributors_query as cnq
 
 PAGE = "contributors"
 VIZ_ID = "contributor-radar"
