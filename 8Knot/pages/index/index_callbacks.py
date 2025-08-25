@@ -789,3 +789,48 @@ else:
         [Output("nav-login-container", "children")],
         Input("url", "href"),
     )(_login_username_button_disabled)
+
+
+# Callback to handle sidebar collapse/expand functionality using dbc.Collapse
+@callback(
+    Output("sidebar-collapse", "is_open"),
+    Input("sidebar-toggle", "n_clicks"),
+    State("sidebar-collapse", "is_open"),
+    prevent_initial_call=True,
+)
+def toggle_sidebar_collapse(n_clicks, is_open):
+    """Toggle the sidebar using dbc.Collapse component."""
+    if n_clicks:
+        # Simply toggle the collapse state
+        return not is_open
+
+    return dash.no_update
+
+
+# Callback to adjust main content area when sidebar state changes
+@callback(
+    Output("page-container", "style"),
+    Input("sidebar-collapse", "is_open"),
+    prevent_initial_call=True,
+)
+def adjust_content_area_collapse(is_open):
+    """Adjust the main content area styling based on sidebar collapse state."""
+    # Base styling that doesn't change
+    base_style = {
+        "background-color": "#1D1D1D",
+        "padding": "1rem",
+        "overflow-y": "auto",
+        "height": "100%",
+        "flex": "1",
+        "transition": "border-radius 0.3s ease",
+    }
+
+    # Only modify the border-radius based on sidebar state
+    if not is_open:
+        # When sidebar is collapsed, content area takes full width with rounded corners
+        base_style["border-radius"] = "12px"
+    else:
+        # When sidebar is expanded, content area has right-side border radius only
+        base_style["border-radius"] = "0 12px 12px 0"
+
+    return base_style
