@@ -15,6 +15,8 @@
   --color-dark-bg: #1D1D1D;
   --color-card-bg: #272b30;
   --color-border: #292929;
+  --color-single-dropdown-bg: #292929;
+  --color-lighter: rgba(255, 255, 255, 0.05);
   --color-topbar-bg: #242424;
   --color-text-light: #f0f0f0;
   --spacing-sm: 0.25rem;
@@ -302,6 +304,21 @@ div.dark-card {
   min-width: 150px !important;
 }
 
+.dark-dropdown .VirtualizedSelectOption  {
+  background-color: var(--color-single-dropdown-bg) !important;
+}
+
+.dark-dropdown .VirtualizedSelectOption:hover, .dark-dropdown .VirtualizedSelectFocusedOption  {
+  color: white;
+  background-color: var(--color-lighter);
+  font-weight: bold;
+}
+
+.dark-dropdown .VirtualizedSelectSelectedOption {
+  color: white;
+  font-weight: normal;
+}
+
 /* Dark Dropdown Placeholder Styling */
 .dark-dropdown .Select-placeholder,
 .dark-dropdown .Select-value-label {
@@ -309,6 +326,7 @@ div.dark-card {
 }
 
 /* Fix for the vertical bar issue */
+/* Still relevant 8/26/25 AE */
 .dbc input:not([type=radio]):not([type=checkbox]) {
   color: var(--bs-body-color) !important;
   background-color: #404040 !important;
