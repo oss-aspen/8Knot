@@ -28,6 +28,7 @@
   --baby-blue-500: #199AD6;
   --baby-blue-600: #147AAE;
   --baby-blue-700: #0F5880;
+  --content-subtle: #C7C7C7;
 }
 
 /* ==== TYPOGRAPHY WITH HIGHER SPECIFICITY ==== */
@@ -229,7 +230,7 @@ div.card h3.card-title {
 .custom-radio-buttons .form-check-input {
   width: 1em;
   height: 1em;
-  border: 1px solid #C7C7C7;
+  border: 1px solid var(--content-subtle);
   background-color: transparent;
   margin-right: 0.4rem;
   margin-top: 0;
@@ -238,19 +239,19 @@ div.card h3.card-title {
 
 .custom-radio-buttons .form-check-input:checked {
   background-color: var(--color-border);
-  border-color: #C7C7C7;
+  border-color: var(--content-subtle);
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='2.5' fill='%23C7C7C7'/%3e%3c/svg%3e");
 }
 
 .custom-radio-buttons .form-check-input:focus {
-  border-color: #C7C7C7;
+  border-color: var(--content-subtle);
   box-shadow: 0 0 0 0.2rem rgba(199, 199, 199, 0.25);
 }
 
 .custom-radio-buttons .form-check-label {
-  color: var(--color-white);
+  color: var(--content-subtle);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   cursor: pointer;
   margin-left: 0.1rem;
   margin-bottom: 0;
