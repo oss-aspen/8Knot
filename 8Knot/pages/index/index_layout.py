@@ -95,9 +95,24 @@ def sidebar_dropdown(
 # Top bar with logos and navigation links
 topbar = html.Div(
     [
-        # Left section with logos
+        # Left section with hamburger menu and logos
         html.Div(
             [
+                # Hamburger menu toggle button
+                dbc.Button(
+                    html.I(className="fas fa-bars sidebar-toggle-icon"),
+                    id="sidebar-toggle",
+                    color="link",
+                    size="sm",
+                    style={
+                        "color": "#9c9c9c",
+                        "fontSize": "18px",
+                        "padding": "8px 12px",
+                        "marginRight": "10px",
+                        "border": "none",
+                        "backgroundColor": "transparent",
+                    },
+                ),
                 html.Img(
                     src="/assets/8Knot.svg",
                     alt="8Knot Logo",
@@ -549,67 +564,74 @@ layout = html.Div(
                             # We are wrapping this in a div to allow for custom styling
                             html.Div(
                                 [
-                                    # Left sidebar
-                                    html.Div(
-                                        [
-                                            # Sidebar body (grows), contains search and nav
-                                            html.Div(
-                                                [
-                                                    search_bar,
-                                                    # Navigation menu
-                                                    html.Div(
-                                                        [
-                                                            sidebar_section(
-                                                                "/assets/repo_overview.svg",
-                                                                "Repo Overview",
-                                                                "/repo_overview",
-                                                            ),
-                                                            sidebar_section(
-                                                                "/assets/contributions.svg",
-                                                                "Contributions",
-                                                                "/contributions",
-                                                            ),
-                                                            sidebar_dropdown(
-                                                                "/assets/contributors.svg",
-                                                                "Contributors",
-                                                                [
-                                                                    sidebar_section(
-                                                                        icon_src=None,
-                                                                        text="Behavior",
-                                                                        page_link="/contributors/behavior",
-                                                                    ),
-                                                                    sidebar_section(
-                                                                        text="Contribution Types",
-                                                                        page_link="/contributors/contribution_types",
-                                                                    ),
-                                                                ],
-                                                                dropdown_id="contributors-dropdown",
-                                                            ),
-                                                            sidebar_section(
-                                                                "/assets/affiliation.svg", "Affiliation", "/affiliation"
-                                                            ),
-                                                            sidebar_section(
-                                                                "/assets/chaoss_small.svg", "CHAOSS", "/chaoss"
-                                                            ),
-                                                        ],
-                                                        style={"marginTop": "2rem", "paddingLeft": "6px"},
-                                                    ),
-                                                ],
-                                                style={"flex": "1 1 auto", "overflowY": "auto"},
-                                            ),
-                                        ],
-                                        id="left-sidebar",
-                                        style={
-                                            "width": "340px",
-                                            "background-color": "#1D1D1D",
-                                            "border-radius": "12px 0 0 12px",
-                                            "border-right": "1.5px solid #292929",
-                                            "padding": "1rem",
-                                            "flex-shrink": 0,
-                                            "display": "flex",
-                                            "flexDirection": "column",
-                                            "height": "calc(100vh - 60px - 56px - 4px)",
-                                        },
+                                    # Left sidebar with dbc.Collapse
+                                    dbc.Collapse(
+                                        html.Div(
+                                            [
+                                                # Sidebar body (grows), contains search and nav
+                                                html.Div(
+                                                    [
+                                                        search_bar,
+                                                        # Navigation menu
+                                                        html.Div(
+                                                            [
+                                                                sidebar_section(
+                                                                    "/assets/repo_overview.svg",
+                                                                    "Repo Overview",
+                                                                    "/repo_overview",
+                                                                ),
+                                                                sidebar_section(
+                                                                    "/assets/contributions.svg",
+                                                                    "Contributions",
+                                                                    "/contributions",
+                                                                ),
+                                                                sidebar_dropdown(
+                                                                    "/assets/contributors.svg",
+                                                                    "Contributors",
+                                                                    [
+                                                                        sidebar_section(
+                                                                            icon_src=None,
+                                                                            text="Behavior",
+                                                                            page_link="/contributors/behavior",
+                                                                        ),
+                                                                        sidebar_section(
+                                                                            text="Contribution Types",
+                                                                            page_link="/contributors/contribution_types",
+                                                                        ),
+                                                                    ],
+                                                                    dropdown_id="contributors-dropdown",
+                                                                ),
+                                                                sidebar_section(
+                                                                    "/assets/affiliation.svg",
+                                                                    "Affiliation",
+                                                                    "/affiliation",
+                                                                ),
+                                                                sidebar_section(
+                                                                    "/assets/chaoss_small.svg", "CHAOSS", "/chaoss"
+                                                                ),
+                                                            ],
+                                                            style={"marginTop": "2rem", "paddingLeft": "6px"},
+                                                        ),
+                                                    ],
+                                                    style={"flex": "1 1 auto", "overflowY": "auto"},
+                                                ),
+                                            ],
+                                            style={
+                                                "width": "340px",
+                                                "background-color": "#1D1D1D",
+                                                "border-radius": "12px 0 0 12px",
+                                                "border-right": "1.5px solid #292929",
+                                                "padding": "1rem",
+                                                "flex-shrink": 0,
+                                                "display": "flex",
+                                                "flexDirection": "column",
+                                                "height": "calc(100vh - 60px - 56px - 4px)",
+                                                "overflow": "hidden",
+                                            },
+                                        ),
+                                        id="sidebar-collapse",
+                                        is_open=False,  # Start with sidebar collapsed
+                                        dimension="width",  # Collapse horizontally
                                     ),
                                     # Main content area (your existing page-container)
                                     html.Div(
