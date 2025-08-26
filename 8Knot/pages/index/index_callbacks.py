@@ -794,15 +794,34 @@ else:
 # Callback to handle sidebar collapse/expand functionality using dbc.Collapse
 @callback(
     Output("sidebar-collapse", "is_open"),
-    Input("sidebar-toggle", "n_clicks"),
+    [Input("sidebar-toggle", "n_clicks"), Input("url", "pathname")],
     State("sidebar-collapse", "is_open"),
     prevent_initial_call=True,
 )
-def toggle_sidebar_collapse(n_clicks, is_open):
-    """Toggle the sidebar using dbc.Collapse component."""
-    if n_clicks:
-        # Simply toggle the collapse state
+def toggle_sidebar_collapse(n_clicks, pathname, is_open):
+    """Toggle the sidebar using dbc.Collapse component and auto-open for visualization pages."""
+    ctx = dash.callback_context
+
+    # Check which input triggered the callback
+    if ctx.triggered_id == "sidebar-toggle" and n_clicks:
+        # Manual toggle - simply toggle the collapse state
         return not is_open
+    elif ctx.triggered_id == "url":
+        # URL change - check if we should auto-open for visualization pages
+        visualization_paths = [
+            "/repo_overview",
+            "/contributions",
+            "/contributors/behavior",
+            "/contributors/contribution_types",
+            "/affiliation",
+            "/chaoss",
+        ]
+
+        # Check if current path starts with any visualization path
+        should_open = any(pathname.startswith(path) for path in visualization_paths if pathname)
+
+        if should_open and not is_open:
+            return True
 
     return dash.no_update
 
