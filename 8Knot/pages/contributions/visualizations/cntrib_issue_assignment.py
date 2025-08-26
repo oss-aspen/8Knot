@@ -99,6 +99,11 @@ gc_cntrib_issue_assignment = dbc.Card(
                                     className="me-2",
                                     width=4,
                                 ),
+                            ],
+                            align="center",
+                        ),
+                        dbc.Row(
+                            [
                                 dbc.Label(
                                     "Total Assignments Required:",
                                     html_for=f"assignments-required-{PAGE}-{VIZ_ID}",
@@ -127,11 +132,6 @@ gc_cntrib_issue_assignment = dbc.Card(
                                     is_open=False,
                                     color="warning",
                                 ),
-                            ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
                                 dbc.Col(
                                     dcc.DatePickerRange(
                                         id=f"date-picker-range-{PAGE}-{VIZ_ID}",

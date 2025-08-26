@@ -65,13 +65,7 @@ gc_cntrib_pr_assignment = dbc.Card(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
                     style={"marginBottom": "1rem"},
                 ),
-                html.Hr(  # Divider between graph and controls
-                    style={
-                        "borderColor": "#909090",
-                        "margin": "1.5rem -1.5rem",
-                        "width": "calc(100% + 3rem)",
-                    }
-                ),
+                html.Hr(className="card-split"),  # Divider between graph and controls
                 dbc.Form(
                     [
                         dbc.Row(
@@ -99,6 +93,11 @@ gc_cntrib_pr_assignment = dbc.Card(
                                     className="me-2",
                                     width=4,
                                 ),
+                            ],
+                            align="center",
+                        ),
+                        dbc.Row(
+                            [
                                 dbc.Label(
                                     "Total Assignments Required:",
                                     html_for=f"assignments-required-{PAGE}-{VIZ_ID}",
@@ -113,7 +112,6 @@ gc_cntrib_pr_assignment = dbc.Card(
                                         step=1,
                                         value=10,
                                         size="sm",
-                                        style={"width": "80px"},
                                         className="dark-input",
                                     ),
                                     className="me-2",
@@ -127,11 +125,6 @@ gc_cntrib_pr_assignment = dbc.Card(
                                     is_open=False,
                                     color="warning",
                                 ),
-                            ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
                                 dbc.Col(
                                     dcc.DatePickerRange(
                                         id=f"date-picker-range-{PAGE}-{VIZ_ID}",
