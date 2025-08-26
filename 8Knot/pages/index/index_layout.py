@@ -158,7 +158,7 @@ topbar = html.Div(
                 ),
                 dbc.NavLink(
                     "Visualizations",
-                    href="/repo_overview",
+                    href="/repo_overview?sidebar=open",
                     active="exact",
                     style={
                         "backgroundColor": "transparent",

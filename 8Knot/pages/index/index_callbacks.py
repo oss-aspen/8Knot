@@ -34,6 +34,7 @@ from queries.repo_info_query import repo_info_query as riq
 import redis
 import flask
 from .search_utils import fuzzy_search
+from urllib.parse import parse_qs
 
 # list of queries to be run
 # QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq] - codebase page disabled
@@ -794,12 +795,29 @@ else:
 # Callback to handle sidebar collapse/expand functionality using dbc.Collapse
 @callback(
     Output("sidebar-collapse", "is_open"),
-    Input("sidebar-toggle", "n_clicks"),
+    [
+        Input("sidebar-toggle", "n_clicks"),
+        Input("url", "search")
+    ],
     State("sidebar-collapse", "is_open"),
     prevent_initial_call=True,
 )
-def toggle_sidebar_collapse(n_clicks, is_open):
+def toggle_sidebar_collapse(n_clicks, search, is_open):
     """Toggle the sidebar using dbc.Collapse component."""
+
+    # Determine what triggered the callback
+    triggered_id = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
+
+    # If triggered by URL on page load
+    if triggered_id == "url":
+        # Parse the query string
+        query_params = parse_qs(search.removeprefix('?'))
+        # Check if 'sidebar=open' exists
+        if query_params.get("sidebar") == ["open"]:
+            return True
+        return dash.no_update # Keep current state if param is not present
+
+
     if n_clicks:
         # Simply toggle the collapse state
         return not is_open
