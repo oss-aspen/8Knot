@@ -117,7 +117,7 @@ jobs:
           context: .
           file: ./docker/Dockerfile
           platforms: linux/amd64
-          tags: ghcr.io/${{ github.repository_owner }}/8knot-app:test,8knot-app:test
+          tags: 8knot-app:test
           cache-from: type=gha,scope=container-database
           cache-to: type=gha,scope=container-database,mode=min
           load: true
