@@ -48,3 +48,21 @@ div#sidebar-collapse {
     height: calc(100vh - 60px - 56px - 4px);
     overflow: hidden;
 }
+
+
+/* 
+ * search box
+ */
+
+button.searchbox-accessory {
+    background-color: transparent;
+    border: none;
+    padding: 4px 8px;
+    font-size: 14px;
+}
+
+.form-switch.searchbox-accessory {
+    font-size: 12px;
+    margin-top: 8px;
+    margin-left: 10px;
+}
