@@ -504,185 +504,185 @@ navbar_bottom = dbc.NavbarSimple(
 )
 
 layout = dbc.Container(
-        [
-            # componets to store data from queries
-            dcc.Store(id="repo-choices", storage_type="session", data=[]),
-            # components to store job-ids for the worker queue
-            dcc.Store(id="job-ids", storage_type="session", data=[]),
-            dcc.Store(id="user-group-loading-signal", data="", storage_type="memory"),
-            dcc.Location(id="url"),
-            # Add client-side script to handle storage quota issues
-            # This script does two things:
-            # 1. Listens for global JavaScript errors related to storage quota being exceeded.
-            #    If such an error occurs, finds the element with id 'storage-quota-warning'
-            #    and makes it visible to alert the user.
-            # 2. Tests if sessionStorage can store a 512KB string.
-            #    If the test fails (due to quota limits), it displays the warning.
-            # The user will see the warning if the browser's session storage is full
-            html.Script(
-                """
-            window.addEventListener('error', function(event) {
-                if (event.message && event.message.toLowerCase().includes('quota') &&
-                    event.message.toLowerCase().includes('exceeded')) {
-                    var warningEl = document.getElementById('storage-quota-warning');
-                    if (warningEl) {
-                        warningEl.style.display = 'block';
-                    }
-                }
-            });
-
-            // Test storage capacity
-            try {
-                var testKey = 'storage_test';
-                var testString = new Array(512 * 1024).join('a');  // 512KB
-                sessionStorage.setItem(testKey, testString);
-                sessionStorage.removeItem(testKey);
-            } catch (e) {
-                if (e.name === 'QuotaExceededError' ||
-                    (e.message &&
-                    (e.message.toLowerCase().includes('quota') ||
-                     e.message.toLowerCase().includes('exceeded')))) {
-                    var warningEl = document.getElementById('storage-quota-warning');
-                    if (warningEl) {
-                        warningEl.style.display = 'block';
-                    }
+    [
+        # componets to store data from queries
+        dcc.Store(id="repo-choices", storage_type="session", data=[]),
+        # components to store job-ids for the worker queue
+        dcc.Store(id="job-ids", storage_type="session", data=[]),
+        dcc.Store(id="user-group-loading-signal", data="", storage_type="memory"),
+        dcc.Location(id="url"),
+        # Add client-side script to handle storage quota issues
+        # This script does two things:
+        # 1. Listens for global JavaScript errors related to storage quota being exceeded.
+        #    If such an error occurs, finds the element with id 'storage-quota-warning'
+        #    and makes it visible to alert the user.
+        # 2. Tests if sessionStorage can store a 512KB string.
+        #    If the test fails (due to quota limits), it displays the warning.
+        # The user will see the warning if the browser's session storage is full
+        html.Script(
+            """
+        window.addEventListener('error', function(event) {
+            if (event.message && event.message.toLowerCase().includes('quota') &&
+                event.message.toLowerCase().includes('exceeded')) {
+                var warningEl = document.getElementById('storage-quota-warning');
+                if (warningEl) {
+                    warningEl.style.display = 'block';
                 }
             }
+        });
+
+        // Test storage capacity
+        try {
+            var testKey = 'storage_test';
+            var testString = new Array(512 * 1024).join('a');  // 512KB
+            sessionStorage.setItem(testKey, testString);
+            sessionStorage.removeItem(testKey);
+        } catch (e) {
+            if (e.name === 'QuotaExceededError' ||
+                (e.message &&
+                (e.message.toLowerCase().includes('quota') ||
+                    e.message.toLowerCase().includes('exceeded')))) {
+                var warningEl = document.getElementById('storage-quota-warning');
+                if (warningEl) {
+                    warningEl.style.display = 'block';
+                }
+            }
+        }
         """
-            ),
-            # navbar,
-            # Add login banner overlay (will be positioned via CSS)
-            login_banner if login_banner else html.Div(),
-            dbc.Row(
-                [
-                    dbc.Col(
-                        [
-                            topbar,
-                            # where our page will be rendered
-                            # We are wrapping this in a div to allow for custom styling
-                            html.Div(
-                                [
-                                    # Left sidebar with dbc.Collapse
-                                    dbc.Collapse(
-                                        html.Div(
-                                            [
-                                                # Sidebar body (grows), contains search and nav
-                                                html.Div(
-                                                    [
-                                                        search_bar,
-                                                        # Navigation menu
-                                                        html.Div(
-                                                            [
-                                                                sidebar_section(
-                                                                    "/assets/repo_overview.svg",
-                                                                    "Repo Overview",
-                                                                    "/repo_overview",
-                                                                ),
-                                                                sidebar_section(
-                                                                    "/assets/contributions.svg",
-                                                                    "Contributions",
-                                                                    "/contributions",
-                                                                ),
-                                                                sidebar_dropdown(
-                                                                    "/assets/contributors.svg",
-                                                                    "Contributors",
-                                                                    [
-                                                                        sidebar_section(
-                                                                            icon_src=None,
-                                                                            text="Behavior",
-                                                                            page_link="/contributors/behavior",
-                                                                        ),
-                                                                        sidebar_section(
-                                                                            text="Contribution Types",
-                                                                            page_link="/contributors/contribution_types",
-                                                                        ),
-                                                                    ],
-                                                                    dropdown_id="contributors-dropdown",
-                                                                ),
-                                                                sidebar_section(
-                                                                    "/assets/affiliation.svg",
-                                                                    "Affiliation",
-                                                                    "/affiliation",
-                                                                ),
-                                                                sidebar_section(
-                                                                    "/assets/chaoss_small.svg", "CHAOSS", "/chaoss"
-                                                                ),
-                                                            ],
-                                                            style={"marginTop": "2rem", "paddingLeft": "6px"},
-                                                        ),
-                                                    ],
-                                                    style={"flex": "1 1 auto", "overflowY": "auto"},
-                                                ),
-                                            ],
-                                            style={
-                                                "width": "340px",
-                                                "background-color": "#1D1D1D",
-                                                "border-radius": "12px 0 0 12px",
-                                                "border-right": "1.5px solid #292929",
-                                                "padding": "1rem",
-                                                "flex-shrink": 0,
-                                                "display": "flex",
-                                                "flexDirection": "column",
-                                                "height": "calc(100vh - 60px - 56px - 4px)",
-                                                "overflow": "hidden",
-                                            },
-                                        ),
-                                        id="sidebar-collapse",
-                                        is_open=False,  # Start with sidebar collapsed
-                                        dimension="width",  # Collapse horizontally
-                                    ),
-                                    # Main content area (your existing page-container)
+        ),
+        # navbar,
+        # Add login banner overlay (will be positioned via CSS)
+        login_banner if login_banner else html.Div(),
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        topbar,
+                        # where our page will be rendered
+                        # We are wrapping this in a div to allow for custom styling
+                        html.Div(
+                            [
+                                # Left sidebar with dbc.Collapse
+                                dbc.Collapse(
                                     html.Div(
                                         [
-                                            dcc.Loading(
-                                                children=[html.Div(id="results-output-container", className="mb-4")],
-                                                color="#119DFF",
-                                                type="dot",
-                                                fullscreen=True,
+                                            # Sidebar body (grows), contains search and nav
+                                            html.Div(
+                                                [
+                                                    search_bar,
+                                                    # Navigation menu
+                                                    html.Div(
+                                                        [
+                                                            sidebar_section(
+                                                                "/assets/repo_overview.svg",
+                                                                "Repo Overview",
+                                                                "/repo_overview",
+                                                            ),
+                                                            sidebar_section(
+                                                                "/assets/contributions.svg",
+                                                                "Contributions",
+                                                                "/contributions",
+                                                            ),
+                                                            sidebar_dropdown(
+                                                                "/assets/contributors.svg",
+                                                                "Contributors",
+                                                                [
+                                                                    sidebar_section(
+                                                                        icon_src=None,
+                                                                        text="Behavior",
+                                                                        page_link="/contributors/behavior",
+                                                                    ),
+                                                                    sidebar_section(
+                                                                        text="Contribution Types",
+                                                                        page_link="/contributors/contribution_types",
+                                                                    ),
+                                                                ],
+                                                                dropdown_id="contributors-dropdown",
+                                                            ),
+                                                            sidebar_section(
+                                                                "/assets/affiliation.svg",
+                                                                "Affiliation",
+                                                                "/affiliation",
+                                                            ),
+                                                            sidebar_section(
+                                                                "/assets/chaoss_small.svg", "CHAOSS", "/chaoss"
+                                                            ),
+                                                        ],
+                                                        style={"marginTop": "2rem", "paddingLeft": "6px"},
+                                                    ),
+                                                ],
+                                                style={"flex": "1 1 auto", "overflowY": "auto"},
                                             ),
-                                            dcc.Loading(
-                                                dbc.Badge(
-                                                    children="Data Loaded",
-                                                    id="data-badge",
-                                                    color="#0F5880",
-                                                    className="me-1",
-                                                    style={"marginBottom": ".5%"},
-                                                    # text_color="dark",
-                                                ),
-                                                type="cube",
-                                                color="#0F5880",
-                                            ),
-                                            dash.page_container,
                                         ],
-                                        id="page-container",
                                         style={
-                                            "border-radius": "0 12px 12px 0",
+                                            "width": "340px",
                                             "background-color": "#1D1D1D",
+                                            "border-radius": "12px 0 0 12px",
+                                            "border-right": "1.5px solid #292929",
                                             "padding": "1rem",
-                                            "overflow-y": "auto",
-                                            "height": "100%",
-                                            "flex": "1",
+                                            "flex-shrink": 0,
+                                            "display": "flex",
+                                            "flexDirection": "column",
+                                            "height": "calc(100vh - 60px - 56px - 4px)",
+                                            "overflow": "hidden",
                                         },
                                     ),
-                                ],
-                                id="main-layout-container",
-                                style={
-                                    "display": "flex",
-                                    "height": "calc(100vh - 60px - 56px - 4px)",
-                                },
-                            ),
-                        ],
-                    ),
-                ],
-                justify="start",
-            ),
-            # Bottom navbar fixed to viewport bottom (render last)
-            navbar_bottom,
-        ],
-        fluid=True,
-        className="dbc",
-        id="siteContainer",
-        style={
-            "background-color": "#242424",
-        },
-    )
+                                    id="sidebar-collapse",
+                                    is_open=False,  # Start with sidebar collapsed
+                                    dimension="width",  # Collapse horizontally
+                                ),
+                                # Main content area (your existing page-container)
+                                html.Div(
+                                    [
+                                        dcc.Loading(
+                                            children=[html.Div(id="results-output-container", className="mb-4")],
+                                            color="#119DFF",
+                                            type="dot",
+                                            fullscreen=True,
+                                        ),
+                                        dcc.Loading(
+                                            dbc.Badge(
+                                                children="Data Loaded",
+                                                id="data-badge",
+                                                color="#0F5880",
+                                                className="me-1",
+                                                style={"marginBottom": ".5%"},
+                                                # text_color="dark",
+                                            ),
+                                            type="cube",
+                                            color="#0F5880",
+                                        ),
+                                        dash.page_container,
+                                    ],
+                                    id="page-container",
+                                    style={
+                                        "border-radius": "0 12px 12px 0",
+                                        "background-color": "#1D1D1D",
+                                        "padding": "1rem",
+                                        "overflow-y": "auto",
+                                        "height": "100%",
+                                        "flex": "1",
+                                    },
+                                ),
+                            ],
+                            id="main-layout-container",
+                            style={
+                                "display": "flex",
+                                "height": "calc(100vh - 60px - 56px - 4px)",
+                            },
+                        ),
+                    ],
+                ),
+            ],
+            justify="start",
+        ),
+        # Bottom navbar fixed to viewport bottom (render last)
+        navbar_bottom,
+    ],
+    fluid=True,
+    className="dbc",
+    id="siteContainer",
+    style={
+        "background-color": "#242424",
+    },
+)
