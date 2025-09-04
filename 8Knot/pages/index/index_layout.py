@@ -503,9 +503,7 @@ navbar_bottom = dbc.NavbarSimple(
     dark=True,
 )
 
-# We need to wrap the container in a div to allow for custom styling
-layout = html.Div(
-    dbc.Container(
+layout = dbc.Container(
         [
             # componets to store data from queries
             dcc.Store(id="repo-choices", storage_type="session", data=[]),
@@ -683,9 +681,8 @@ layout = html.Div(
         ],
         fluid=True,
         className="dbc",
+        id="siteContainer",
         style={
             "background-color": "#242424",
         },
-    ),
-    style={"background-color": "#242424", "min-height": "100vh"},
-)
+    )
