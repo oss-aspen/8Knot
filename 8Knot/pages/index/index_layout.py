@@ -21,9 +21,10 @@ def sidebar_section(icon_src=None, text="Hello", page_link="/", horizontal_paddi
         return dbc.NavLink(
             [
                 html.Img(src=icon_src, alt=text),
-                html.Span(text, className="sidebarLink"),
+                html.Span(text),
             ],
             href=page_link,
+            className="sidebarLink",
             style={
                 "display": "flex",
                 "alignItems": "center",
@@ -37,6 +38,7 @@ def sidebar_section(icon_src=None, text="Hello", page_link="/", horizontal_paddi
         return dbc.NavLink(
             text,
             href=page_link,
+            className="sidebarLink",
             style={
                 "color": "#9c9c9c",
                 "fontSize": "14px",
