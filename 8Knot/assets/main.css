@@ -9,3 +9,10 @@ a.nav-link > img {
     height:24px;
     margin-right: 12px
 }
+
+
+a.nav-link > .sidebarLink {
+    color: #9c9c9c;
+    font-size: 16px;
+    font-weight: 400;
+}
