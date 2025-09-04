@@ -564,57 +564,55 @@ layout = dbc.Container(
                             [
                                 # Left sidebar with dbc.Collapse
                                 dbc.Collapse(
-                                    html.Div(
-                                        [
-                                            # Sidebar body (grows), contains search and nav
-                                            html.Div(
-                                                [
-                                                    search_bar,
-                                                    # Navigation menu
-                                                    html.Div(
-                                                        [
-                                                            sidebar_section(
-                                                                "/assets/repo_overview.svg",
-                                                                "Repo Overview",
-                                                                "/repo_overview",
-                                                            ),
-                                                            sidebar_section(
-                                                                "/assets/contributions.svg",
-                                                                "Contributions",
-                                                                "/contributions",
-                                                            ),
-                                                            sidebar_dropdown(
-                                                                "/assets/contributors.svg",
-                                                                "Contributors",
-                                                                [
-                                                                    sidebar_section(
-                                                                        icon_src=None,
-                                                                        text="Behavior",
-                                                                        page_link="/contributors/behavior",
-                                                                    ),
-                                                                    sidebar_section(
-                                                                        text="Contribution Types",
-                                                                        page_link="/contributors/contribution_types",
-                                                                    ),
-                                                                ],
-                                                                dropdown_id="contributors-dropdown",
-                                                            ),
-                                                            sidebar_section(
-                                                                "/assets/affiliation.svg",
-                                                                "Affiliation",
-                                                                "/affiliation",
-                                                            ),
-                                                            sidebar_section(
-                                                                "/assets/chaoss_small.svg", "CHAOSS", "/chaoss"
-                                                            ),
-                                                        ],
-                                                        style={"marginTop": "2rem", "paddingLeft": "6px"},
-                                                    ),
-                                                ],
-                                                style={"flex": "1 1 auto", "overflowY": "auto"},
-                                            ),
-                                        ],
-                                    ),
+                                    [
+                                        # Sidebar body (grows), contains search and nav
+                                        html.Div(
+                                            [
+                                                search_bar,
+                                                # Navigation menu
+                                                html.Div(
+                                                    [
+                                                        sidebar_section(
+                                                            "/assets/repo_overview.svg",
+                                                            "Repo Overview",
+                                                            "/repo_overview",
+                                                        ),
+                                                        sidebar_section(
+                                                            "/assets/contributions.svg",
+                                                            "Contributions",
+                                                            "/contributions",
+                                                        ),
+                                                        sidebar_dropdown(
+                                                            "/assets/contributors.svg",
+                                                            "Contributors",
+                                                            [
+                                                                sidebar_section(
+                                                                    icon_src=None,
+                                                                    text="Behavior",
+                                                                    page_link="/contributors/behavior",
+                                                                ),
+                                                                sidebar_section(
+                                                                    text="Contribution Types",
+                                                                    page_link="/contributors/contribution_types",
+                                                                ),
+                                                            ],
+                                                            dropdown_id="contributors-dropdown",
+                                                        ),
+                                                        sidebar_section(
+                                                            "/assets/affiliation.svg",
+                                                            "Affiliation",
+                                                            "/affiliation",
+                                                        ),
+                                                        sidebar_section(
+                                                            "/assets/chaoss_small.svg", "CHAOSS", "/chaoss"
+                                                        ),
+                                                    ],
+                                                    style={"marginTop": "2rem", "paddingLeft": "6px"},
+                                                ),
+                                            ],
+                                            style={"flex": "1 1 auto", "overflowY": "auto"},
+                                        ),
+                                    ],
                                     id="sidebar-collapse",
                                     is_open=False,  # Start with sidebar collapsed
                                     dimension="width",  # Collapse horizontally
