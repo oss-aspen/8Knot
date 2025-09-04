@@ -4,6 +4,11 @@
     background-color: #242424;
 }
 
+div#main-layout-container {
+    display: flex;
+    height: calc(100vh - 60px - 56px - 4px);
+}
+
 /* 
  *  Sidebar Styling
  */

@@ -559,7 +559,7 @@ layout = dbc.Container(
                     [
                         topbar,
                         # where our page will be rendered
-                        # We are wrapping this in a div to allow for custom styling
+                        # removing this stylng div requires making the footer not float over the content (so we can stop controlling the height manually with offsets)
                         html.Div(
                             [
                                 # Left sidebar with dbc.Collapse
@@ -651,11 +651,7 @@ layout = dbc.Container(
                                     },
                                 ),
                             ],
-                            id="main-layout-container",
-                            style={
-                                "display": "flex",
-                                "height": "calc(100vh - 60px - 56px - 4px)",
-                            },
+                            id="main-layout-container"
                         ),
                     ],
                 ),
