@@ -186,17 +186,6 @@ topbar = html.Div(
         ),
     ],
     id="rectangular-bar",
-    style={
-        "height": "60px",
-        "width": "100%",
-        "background-color": "#1D1D1D",
-        "display": "flex",
-        "alignItems": "center",
-        "justifyContent": "space-between",
-        "paddingLeft": "10px",
-        "paddingRight": "10px",
-        "border-bottom": "1.5px solid #292929",
-    },
 )
 
 

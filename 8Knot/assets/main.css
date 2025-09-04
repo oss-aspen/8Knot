@@ -19,6 +19,24 @@ div#page-container {
 }
 
 /* 
+ *  top nav Styling
+ */
+
+ div#rectangular-bar {
+
+    height: 60px;
+    width: 100%;
+    background-color: #1D1D1D;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-left: 10px;
+    padding-right: 10px;
+    border-bottom: 1.5px solid #292929;
+ }
+
+
+/* 
  *  Sidebar Styling
  */
 
