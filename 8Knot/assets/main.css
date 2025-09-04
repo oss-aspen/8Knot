@@ -9,6 +9,15 @@ div#main-layout-container {
     height: calc(100vh - 60px - 56px - 4px);
 }
 
+div#page-container {
+    border-radius: 0 12px 12px 0;
+    background-color: #1D1D1D;
+    padding: 1rem;
+    overflow-y: auto;
+    height: 100%;
+    flex: 1;
+}
+
 /* 
  *  Sidebar Styling
  */

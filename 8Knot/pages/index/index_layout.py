@@ -641,14 +641,6 @@ layout = dbc.Container(
                                         dash.page_container,
                                     ],
                                     id="page-container",
-                                    style={
-                                        "border-radius": "0 12px 12px 0",
-                                        "background-color": "#1D1D1D",
-                                        "padding": "1rem",
-                                        "overflow-y": "auto",
-                                        "height": "100%",
-                                        "flex": "1",
-                                    },
                                 ),
                             ],
                             id="main-layout-container"
