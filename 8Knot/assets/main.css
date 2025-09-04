@@ -35,6 +35,16 @@ div#page-container {
     border-bottom: 1.5px solid #292929;
  }
 
+ div#rectangular-bar a.nav-link {
+    color: #9c9c9c;
+    font-size: 16px;
+    text-align: left;
+    padding: 4px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    line-height: 1.2;
+}
+
 
 /* 
  *  Sidebar Styling
