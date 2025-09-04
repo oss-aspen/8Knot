@@ -20,7 +20,7 @@ def sidebar_section(icon_src=None, text="Hello", page_link="/", horizontal_paddi
     if icon_src:
         return dbc.NavLink(
             [
-                html.Img(src=icon_src, alt=text, style={"width": "24px", "height": "24px", "marginRight": "12px"}),
+                html.Img(src=icon_src, alt=text),
                 html.Span(text, style={"color": "#9c9c9c", "fontSize": "16px", "fontWeight": "400"}),
             ],
             href=page_link,
