@@ -687,5 +687,5 @@ layout = html.Div(
             "background-color": "#242424",
         },
     ),
-    style={"background-color": "#242424", "min-height": "100vh", "margin": "0", "padding": "0"},
+    style={"background-color": "#242424", "min-height": "100vh"},
 )
