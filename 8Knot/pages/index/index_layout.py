@@ -614,18 +614,6 @@ layout = dbc.Container(
                                                 style={"flex": "1 1 auto", "overflowY": "auto"},
                                             ),
                                         ],
-                                        style={
-                                            "width": "340px",
-                                            "background-color": "#1D1D1D",
-                                            "border-radius": "12px 0 0 12px",
-                                            "border-right": "1.5px solid #292929",
-                                            "padding": "1rem",
-                                            "flex-shrink": 0,
-                                            "display": "flex",
-                                            "flexDirection": "column",
-                                            "height": "calc(100vh - 60px - 56px - 4px)",
-                                            "overflow": "hidden",
-                                        },
                                     ),
                                     id="sidebar-collapse",
                                     is_open=False,  # Start with sidebar collapsed
