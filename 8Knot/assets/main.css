@@ -35,6 +35,13 @@ div#page-container {
     border-bottom: 1.5px solid #292929;
  }
 
+ div.topnav-container {
+    display: flex;
+    align-Items: center;
+    justify-content: center;
+    flex: 1;
+ }
+
  div#rectangular-bar a.nav-link {
     color: #9c9c9c;
     font-size: 16px;

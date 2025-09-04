@@ -153,12 +153,7 @@ topbar = html.Div(
                     active="exact",
                 ),
             ],
-            style={
-                "display": "flex",
-                "alignItems": "center",
-                "justifyContent": "center",
-                "flex": "1",
-            },
+            className="topnav-container"
         ),
         # Right section (empty for now, can be used for future additions)
         html.Div(
