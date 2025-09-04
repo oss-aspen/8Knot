@@ -61,44 +61,54 @@ def sidebar_dropdown(
         horizontal_padding (int): Horizontal padding for the toggle button
         vertical_padding (int): Vertical padding for the toggle button
     """
-    return html.Div(
+    return dbc.Card(
         [
-            html.Div(
-                [
-                    html.Img(
-                        src=icon_src,
-                        alt=text,
-                        style={"width": "24px", "height": "24px", "marginRight": "12px"},
-                    ),
-                    html.Span(text, style={"color": "#9c9c9c", "fontSize": "16px", "fontWeight": "400"}),
-                ],
-                style={
-                    "display": "flex",
-                    "alignItems": "center",
-                    "padding": f"{horizontal_padding}px {vertical_padding}px",
-                    "borderRadius": "8px",
-                    "cursor": "pointer",
-                },
-                id={"type": "sidebar-dropdown-toggle", "index": dropdown_id},
+            dbc.CardBody(
+                dbc.Button(
+                    [
+                        html.Img(
+                            src=icon_src,
+                            alt=text,
+                            style={"width": "24px", "height": "24px", "marginRight": "12px"},
+                        ),
+                        html.Span(text, style={"color": "#9c9c9c", "fontSize": "16px", "fontWeight": "400"}),
+                    ],
+                    id={"type": "sidebar-dropdown-toggle", "index": dropdown_id},
+                    color="link",
+                    className="sidebar-dropdown-toggle-button",
+                    style={
+                        "backgroundColor": "transparent",
+                        "display": "flex",
+                        "alignItems": "center",
+                        "padding": f"{horizontal_padding}px {vertical_padding}px",
+                        "borderRadius": "8px",
+                    },
+                ),
+                className="sidebar-dropdown-header",
             ),
-            html.Div(
-                dropdown_links,
+            dbc.Collapse(
+                dbc.CardBody(
+                    dropdown_links,
+                    className="sidebar-dropdown-content",
+                    style={"borderRadius": "0 0 8px 8px"},
+                ),
                 id={"type": "sidebar-dropdown-content", "index": dropdown_id},
-                style={"display": "none", "padding": "8px 0", "borderRadius": "0 0 8px 8px"},
+                is_open=False,
             ),
         ],
         id={"type": "sidebar-dropdown-container", "index": dropdown_id},
-        style={"borderRadius": "8px", "marginBottom": "8px"},
+        color="dark",
+        outline=False,
+        style={"backgroundColor": "transparent", "border": "none", "borderRadius": "8px", "marginBottom": "8px"},
     )
 
 
 # Top bar with logos and navigation links
-topbar = html.Div(
+topbar = dbc.Navbar(
     [
         # Left section with hamburger menu and logos
         html.Div(
             [
-                # Hamburger menu toggle button
                 dbc.Button(
                     html.I(className="fas fa-bars sidebar-toggle-icon"),
                     id="sidebar-toggle",
@@ -108,7 +118,7 @@ topbar = html.Div(
                         "color": "#9c9c9c",
                         "fontSize": "18px",
                         "padding": "8px 12px",
-                        "marginRight": "10px",
+                        "marginRight": "15px",
                         "border": "none",
                         "backgroundColor": "transparent",
                     },
@@ -119,7 +129,7 @@ topbar = html.Div(
                     style={
                         "width": "70px",
                         "height": "22px",
-                        "margin": "20px 20px",
+                        "marginRight": "15px",
                         "display": "inline-block",
                         "verticalAlign": "middle",
                     },
@@ -130,72 +140,86 @@ topbar = html.Div(
                     style={
                         "width": "70px",
                         "height": "22px",
-                        "margin": "10px -20px",
                         "display": "inline-block",
                         "verticalAlign": "middle",
                     },
                 ),
             ],
-            style={"display": "flex", "alignItems": "center"},
-        ),
-        # Middle section with navigation links (moved from sidebar footer)
-        html.Div(
-            [
-                dbc.NavLink(
-                    "Welcome",
-                    href="/",
-                    external_link=True,
-                    target="_self",
-                    style={
-                        "color": "#9c9c9c",
-                        "fontSize": "16px",
-                        "padding": "6px 16px",
-                        "marginRight": "16px",
-                        "textDecoration": "none",
-                        "borderRadius": "8px",
-                        "lineHeight": "1.2",
-                    },
-                ),
-                dbc.NavLink(
-                    "Visualizations",
-                    href="/repo_overview",
-                    active="exact",
-                    style={
-                        "backgroundColor": "transparent",
-                        "border": "none",
-                        "color": "#9c9c9c",
-                        "fontSize": "16px",
-                        "textAlign": "left",
-                        "padding": "4px 16px",
-                        "borderRadius": "8px",
-                        "textDecoration": "none",
-                        "lineHeight": "1.2",
-                    },
-                ),
-            ],
+            className="navbar-brand-section",
             style={
                 "display": "flex",
                 "alignItems": "center",
-                "justifyContent": "center",
-                "flex": "1",
+                "flex": "0 0 auto",
             },
         ),
-        # Right section (empty for now, can be used for future additions)
+        # Middle section with navigation links - centered
         html.Div(
-            style={"minWidth": "150px"},  # Balances the left section
+            dbc.Nav(
+                [
+                    dbc.NavItem(
+                        dbc.NavLink(
+                            "Welcome",
+                            href="/",
+                            external_link=True,
+                            target="_self",
+                            style={
+                                "color": "#9c9c9c",
+                                "fontSize": "16px",
+                                "padding": "8px 20px",
+                                "textDecoration": "none",
+                                "borderRadius": "8px",
+                                "lineHeight": "1.2",
+                            },
+                        )
+                    ),
+                    dbc.NavItem(
+                        dbc.NavLink(
+                            "Visualizations",
+                            href="/repo_overview",
+                            active="exact",
+                            style={
+                                "backgroundColor": "transparent",
+                                "border": "none",
+                                "color": "#9c9c9c",
+                                "fontSize": "16px",
+                                "padding": "8px 20px",
+                                "borderRadius": "8px",
+                                "textDecoration": "none",
+                                "lineHeight": "1.2",
+                            },
+                        )
+                    ),
+                ],
+                className="navbar-main-navigation",
+                navbar=True,
+                style={"gap": "0px"},
+            ),
+            className="navbar-navigation-section",
+            style={
+                "display": "flex",
+                "justifyContent": "center",
+                "alignItems": "center",
+                "flex": "1 1 auto",
+            },
+        ),
+        # Right section - empty spacer for balance
+        html.Div(
+            style={
+                "flex": "0 0 auto",
+                "width": "200px",  # Match approximate width of left section
+            },
         ),
     ],
     id="rectangular-bar",
+    color="#1D1D1D",
+    dark=True,
     style={
         "height": "60px",
-        "width": "100%",
-        "background-color": "#1D1D1D",
+        "border-bottom": "1.5px solid #292929",
+        "padding": "0 20px",
         "display": "flex",
         "alignItems": "center",
         "justifyContent": "space-between",
-        "paddingLeft": "10px",
-        "paddingRight": "10px",
-        "border-bottom": "1.5px solid #292929",
     },
 )
 
@@ -203,45 +227,45 @@ topbar = html.Div(
 #  login banner that will be displayed when login is disabled
 login_banner = None
 if os.getenv("AUGUR_LOGIN_ENABLED", "False") != "True":
-    login_banner = html.Div(
-        dbc.Alert(
-            [
-                html.H4(
-                    "Login is Currently Disabled",
-                    className="alert-heading",
-                    style={"color": "black", "fontWeight": "600", "margin": "0 0 8px 0", "textShadow": "none"},
-                ),
-                html.P(
-                    [
-                        "If you need to collect data on new repositories, please ",
-                        html.A(
-                            "create a repository collection request",
-                            href="https://github.com/oss-aspen/8Knot/issues/new?template=augur_load.md",
-                            target="_blank",
-                            style={"fontWeight": "500", "color": "#1565C0"},
-                        ),
-                        ".",
-                    ],
-                    style={"color": "#333333", "margin": "0 0 10px 0"},
-                ),
-            ],
-            color="light",
-            dismissable=True,
-            duration=60000,
-            id="login-disabled-banner",
-            className="mb-0",
-            style={
-                "backgroundColor": "#DFF0FB",  # Light blue background
-                "borderColor": "#0F5880",  # Darker blue border from palette
-                "border": "1px solid #0F5880",
-                "borderLeft": "5px solid #0F5880",
-                "boxShadow": "0 2px 8px rgba(0, 0, 0, 0.15)",
-                "maxWidth": "400px",
-                "padding": "15px",
-                "zIndex": "1000",
-            },
-        ),
-        style={"position": "fixed", "top": "70px", "right": "20px", "zIndex": "1000"},  # Position below navbar
+    login_banner = dbc.Alert(
+        [
+            html.H4(
+                "Login is Currently Disabled",
+                className="alert-heading",
+                style={"color": "black", "fontWeight": "600", "margin": "0 0 8px 0", "textShadow": "none"},
+            ),
+            html.P(
+                [
+                    "If you need to collect data on new repositories, please ",
+                    html.A(
+                        "create a repository collection request",
+                        href="https://github.com/oss-aspen/8Knot/issues/new?template=augur_load.md",
+                        target="_blank",
+                        style={"fontWeight": "500", "color": "#1565C0"},
+                    ),
+                    ".",
+                ],
+                style={"color": "#333333", "margin": "0 0 10px 0"},
+            ),
+        ],
+        color="light",
+        dismissable=True,
+        duration=60000,
+        id="login-disabled-banner",
+        className="mb-0",
+        style={
+            "backgroundColor": "#DFF0FB",  # Light blue background
+            "borderColor": "#0F5880",  # Darker blue border from palette
+            "border": "1px solid #0F5880",
+            "borderLeft": "5px solid #0F5880",
+            "boxShadow": "0 2px 8px rgba(0, 0, 0, 0.15)",
+            "maxWidth": "400px",
+            "padding": "15px",
+            "position": "fixed",
+            "top": "70px",
+            "right": "20px",
+            "zIndex": "1000",
+        },
     )
 
 # if param doesn't exist, default to False. Otherwise, use the param's value.
@@ -312,160 +336,258 @@ search_bar = html.Div(
         # Storage quota warning
         dcc.Store(id="search-cache-init-hidden", storage_type="session"),
         # Warning alert for when browser storage quota is exceeded
-        html.Div(
-            dbc.Alert(
-                [
-                    html.I(className="quota-warning-icon"),  # Warning icon
-                    "Browser storage limit reached. Search will use a reduced cache which may slightly impact performance. All features will still work normally.",
-                ],
-                id="storage-quota-warning",  # ID used by Javascript to show/hide this alert
-                color="warning",
-                dismissable=True,
-                style={"display": "none"},  # Initially hidden, controlled by JavaScript
-                className="mt-2 mb-0",
-            ),
-            className="search-bar-component",
+        dbc.Alert(
+            [
+                html.I(className="quota-warning-icon"),  # Warning icon
+                "Browser storage limit reached. Search will use a reduced cache which may slightly impact performance. All features will still work normally.",
+            ],
+            id="storage-quota-warning",  # ID used by Javascript to show/hide this alert
+            color="warning",
+            dismissable=True,
+            style={"display": "none", "marginBottom": "12px"},  # Initially hidden, controlled by JavaScript
+            className="search-storage-warning",
         ),
-        # Search input section
+        # Main search input with proper dropdown positioning
+        html.Div(
+            dbc.InputGroup(
+                [
+                    dbc.InputGroupText(
+                        html.I(className="fas fa-search"),
+                        style={
+                            "backgroundColor": "#323232",
+                            "border": "1px solid #484848",
+                            "borderRight": "none",
+                            "borderRadius": "12px 0 0 12px",
+                            "fontSize": "14px",
+                            "color": "#9c9c9c",
+                            "height": "42px",
+                            "display": "flex",
+                            "alignItems": "center",
+                            "justifyContent": "center",
+                            "width": "42px",
+                            "minWidth": "42px",
+                            "maxWidth": "42px",  # Prevent icon area from expanding
+                            "flex": "0 0 42px",  # Fixed flex basis
+                        },
+                    ),
+                    dmc.MultiSelect(
+                        id="projects",
+                        searchable=True,
+                        clearable=True,
+                        nothingFound="No matching repos/orgs.",
+                        placeholder="Search repos & orgs...",  # Shorter placeholder
+                        variant="filled",
+                        debounce=100,
+                        data=[augur.initial_multiselect_option()],
+                        value=[augur.initial_multiselect_option()["value"]],
+                        className="search-multiselect-input",
+                        style={
+                            "width": "320px",  # Fixed width to prevent wrapping
+                            "minWidth": "320px",  # Same as width for consistency
+                            "maxWidth": "320px",  # Lock the width
+                            "flex": "0 0 320px",  # Fixed flex basis
+                        },
+                        styles={
+                            "input": {
+                                "fontSize": "14px",
+                                "height": "42px",
+                                "padding": "0 8px",  # Reduced padding for tighter fit
+                                "borderRadius": "0 12px 12px 0",
+                                "display": "flex",
+                                "alignItems": "center",
+                                "backgroundColor": "#323232",
+                                "borderColor": "#484848",
+                                "borderLeft": "none",
+                                "color": "#ffffff",
+                                "fontWeight": "400",
+                                "width": "320px !important",  # Fixed width
+                                "minWidth": "320px !important",  # Same as width
+                                "maxWidth": "320px !important",  # Lock the width
+                                "flex": "0 0 320px !important",  # Fixed flex basis
+                            },
+                            "dropdown": {
+                                "borderRadius": "8px",
+                                "backgroundColor": "#323232",
+                                "border": "1px solid #484848",
+                                "boxShadow": "0 4px 16px rgba(0, 0, 0, 0.4)",
+                                "zIndex": 1000,
+                                "width": "368px",  # Fixed width to match container
+                                "minWidth": "368px",  # Prevent shrinking
+                                "maxWidth": "368px",  # Prevent expansion
+                                "position": "absolute",  # Use absolute positioning for overlay
+                                "marginTop": "2px",  # Small gap between input and dropdown
+                                "left": "0",  # Align with parent left
+                                "top": "100%",  # Position below input
+                                "contain": "layout style paint",  # CSS containment
+                            },
+                            "item": {
+                                "borderRadius": "6px",
+                                "margin": "2px 4px",
+                                "color": "#ffffff",
+                                "fontSize": "13px",
+                                "padding": "8px 12px",
+                                "whiteSpace": "nowrap",  # Prevent text wrapping
+                                "overflow": "hidden",  # Hide overflow
+                                "textOverflow": "ellipsis",  # Add ellipsis for very long text
+                                "lineHeight": "1.4",
+                            },
+                            "value": {
+                                "backgroundColor": "#404040",
+                                "color": "#ffffff",
+                                "borderRadius": "6px",
+                                "fontSize": "11px",  # Smaller font for selected values
+                                "maxWidth": "120px",  # Reduced width for selected values
+                                "overflow": "hidden",
+                                "textOverflow": "ellipsis",
+                                "whiteSpace": "nowrap",  # Prevent text wrapping
+                                "display": "inline-block",  # Ensure proper inline behavior
+                                "margin": "2px",  # Reduced margin
+                            },
+                            "searchInput": {
+                                "fontSize": "14px",
+                                "color": "#ffffff",
+                                "backgroundColor": "transparent",
+                            },
+                        },
+                    ),
+                    dbc.Button(
+                        html.I(className="fas fa-search", style={"display": "none"}),
+                        id="search",
+                        n_clicks=0,
+                        size="sm",
+                        color="outline-secondary",
+                        title="Search",
+                        style={"display": "none"},  # Hidden since we have InputGroupText now
+                    ),
+                ],
+                style={
+                    "marginBottom": "16px",
+                    "boxShadow": "0 2px 8px rgba(0, 0, 0, 0.15)",
+                    "width": "368px",  # Fixed total width (42px icon + 320px input + 6px gap)
+                    "minWidth": "368px",  # Prevent shrinking
+                    "maxWidth": "368px",  # Prevent expansion
+                    "boxSizing": "border-box",  # Include padding/border in width calculation
+                    "display": "flex",  # Use flexbox for stable layout
+                    "alignItems": "stretch",  # Ensure all children have same height
+                    "flexWrap": "nowrap",  # Prevent wrapping
+                },
+            ),
+            style={
+                "position": "relative",  # Enable positioning context
+                "zIndex": 10,  # Ensure dropdown appears above other elements
+                "overflow": "visible",  # Allow dropdown to extend
+                "width": "368px",  # Fixed width to match InputGroup
+                "minWidth": "368px",  # Prevent shrinking
+                "maxWidth": "368px",  # Prevent expansion
+                "boxSizing": "border-box",  # Include padding/border in width calculation
+            },
+        ),
+        # Compact action buttons with better spacing
         html.Div(
             [
-                html.Div(
+                dbc.ButtonGroup(
                     [
-                        dmc.MultiSelect(
-                            id="projects",
-                            searchable=True,
-                            clearable=True,
-                            nothingFound="No matching repos/orgs.",
-                            placeholder="Search",
-                            variant="filled",
-                            debounce=100,  # debounce time for the search input, since we're implementing client-side caching, we can use a faster debounce
-                            data=[augur.initial_multiselect_option()],
-                            value=[augur.initial_multiselect_option()["value"]],
-                            className="searchbar-dropdown",
-                            styles={
-                                "input": {
-                                    "fontSize": "16px",
-                                    "height": "48px",
-                                    "padding": "0 16px 0 44px",
-                                    "borderRadius": "20px",
-                                    "display": "flex",
-                                    "alignItems": "center",
-                                    "backgroundColor": "#1D1D1D",
-                                    "borderColor": "#404040",
-                                    "position": "relative",
-                                    "zIndex": 1,
-                                },
-                                "dropdown": {
-                                    "borderRadius": "12px",
-                                    "backgroundColor": "#1D1D1D",
-                                    "border": "1px solid #444",
-                                },
-                                "item": {
-                                    "borderRadius": "8px",
-                                    "margin": "2px 4px",
-                                    "color": "white",
-                                },
-                            },
-                        ),
                         dbc.Button(
-                            html.I(className="fas fa-search"),
-                            id="search",
+                            html.I(className="fas fa-question-circle"),
+                            id="search-help",
                             n_clicks=0,
                             size="sm",
                             color="outline-secondary",
-                            title="Search",
+                            title="Search Help",
                             style={
                                 "backgroundColor": "transparent",
-                                "border": "none",
-                                "fontSize": "16px",
-                                "width": "16px",
-                                "height": "16px",
-                                "position": "absolute",
-                                "left": "10px",
-                                "top": "50%",
-                                "transform": "translateY(-100%)",
-                                "fontWeight": "bold",
-                                "zIndex": 2,
+                                "border": "1px solid #484848",
+                                "borderRadius": "6px",
+                                "padding": "4px 8px",
+                                "fontSize": "12px",
+                                "color": "#9c9c9c",
+                                "width": "36px",
+                                "height": "28px",
+                            },
+                        ),
+                        dbc.Button(
+                            html.I(className="fas fa-list"),
+                            id="repo-list-button",
+                            n_clicks=0,
+                            size="sm",
+                            color="outline-secondary",
+                            title="Repository List",
+                            style={
+                                "backgroundColor": "transparent",
+                                "border": "1px solid #484848",
+                                "borderRadius": "6px",
+                                "padding": "4px 8px",
+                                "fontSize": "12px",
+                                "color": "#9c9c9c",
+                                "width": "36px",
+                                "height": "28px",
                             },
                         ),
                     ],
-                    style={"position": "relative"},
+                    style={"gap": "6px"},
                 ),
-                dbc.Alert(
-                    children='Please ensure that your spelling is correct. \
-                        If your selection definitely isn\'t present, please request that \
-                        it be loaded using the help button "REPO/ORG Request" \
-                        in the bottom right corner of the screen.',
-                    id="help-alert",
-                    dismissable=True,
-                    fade=True,
-                    is_open=False,
-                    color="info",
-                ),
-                dbc.Alert(
-                    children="List of repos",
-                    id="repo-list-alert",
-                    dismissable=True,
-                    fade=True,
-                    is_open=False,
-                    color="light",
-                    # if number of repos is large, render as a scrolling window
-                    style={"overflow-y": "scroll", "max-height": "440px"},
+                # Bot filter switch with clean design
+                html.Div(
+                    dbc.Switch(
+                        id="bot-switch",
+                        label="Bot Filter",
+                        value=True,
+                        input_class_name="botlist-filter-switch",
+                        style={
+                            "fontSize": "13px",
+                            "color": "#9c9c9c",
+                            "fontWeight": "400",
+                        },
+                    ),
+                    style={"marginTop": "12px"},
                 ),
             ],
+            style={"marginBottom": "16px"},
+        ),
+        # Alerts section with minimal styling
+        dbc.Alert(
+            children="Please ensure that your spelling is correct. "
+            "If your selection definitely isn't present, please request that "
+            'it be loaded using the help button "REPO/ORG Request" '
+            "in the bottom right corner of the screen.",
+            id="help-alert",
+            dismissable=True,
+            fade=True,
+            is_open=False,
+            color="info",
             style={
-                "width": "100%",
-                "marginBottom": "1rem",
-                "padding": "0 6px",
+                "marginBottom": "12px",
+                "fontSize": "13px",
+                "padding": "8px 12px",
             },
         ),
-        dbc.Stack(
-            [
-                dbc.Button(
-                    html.I(className="fas fa-question-circle"),
-                    id="search-help",
-                    n_clicks=0,
-                    size="sm",
-                    color="outline-secondary",
-                    title="Help",
-                    style={
-                        "backgroundColor": "transparent",
-                        "border": "none",
-                        "padding": "4px 8px",
-                        "fontSize": "14px",
-                    },
-                ),
-                dbc.Button(
-                    html.I(className="fas fa-list"),
-                    id="repo-list-button",
-                    n_clicks=0,
-                    size="sm",
-                    color="outline-secondary",
-                    title="Repo List",
-                    style={
-                        "backgroundColor": "transparent",
-                        "border": "none",
-                        "padding": "4px 8px",
-                        "fontSize": "14px",
-                    },
-                ),
-                dbc.Switch(
-                    id="bot-switch",
-                    label="GitHub Bot Filter",
-                    value=True,
-                    input_class_name="botlist-filter-switch",
-                    style={"fontSize": 12, "marginTop": "8px", "marginLeft": "10px"},
-                ),
-            ],
-            direction="horizontal",
+        dbc.Alert(
+            children="List of repos",
+            id="repo-list-alert",
+            dismissable=True,
+            fade=True,
+            is_open=False,
+            color="light",
             style={
-                "width": "100%",
-                "justifyContent": "center",
-                "marginTop": "16px",
+                "overflow-y": "scroll",
+                "max-height": "300px",
+                "marginBottom": "0px",
+                "fontSize": "13px",
+                "padding": "8px 12px",
             },
         ),
     ],
-    style={"paddingTop": "16px"},  # Top padding adjusted slightly
+    className="search-container",
+    style={
+        "padding": "20px 8px 16px 8px",  # Further reduced padding for single line fit
+        "backgroundColor": "transparent",
+        "overflow": "visible",  # Allow dropdown to extend beyond container
+        "position": "relative",  # Enable proper positioning context
+        "width": "100%",  # Use full container width
+        "maxWidth": "100%",  # Ensure container doesn't exceed sidebar width
+        "boxSizing": "border-box",  # Include padding in width calculation
+        "contain": "layout",  # CSS containment for better layout control
+    },
 )
 
 navbar_bottom = dbc.NavbarSimple(
@@ -497,7 +619,6 @@ navbar_bottom = dbc.NavbarSimple(
     ],
     brand="",
     brand_href="#",
-    fluid=True,
     fixed="bottom",
     color="#1D1D1D",
     dark=True,
@@ -554,123 +675,139 @@ layout = html.Div(
             ),
             # navbar,
             # Add login banner overlay (will be positioned via CSS)
-            login_banner if login_banner else html.Div(),
+            login_banner or html.Div(),
             dbc.Row(
                 [
                     dbc.Col(
                         [
                             topbar,
-                            # where our page will be rendered
-                            # We are wrapping this in a div to allow for custom styling
+                            # Main layout with improved flexbox structure
                             html.Div(
                                 [
                                     # Left sidebar with dbc.Collapse
                                     dbc.Collapse(
-                                        html.Div(
-                                            [
-                                                # Sidebar body (grows), contains search and nav
-                                                html.Div(
-                                                    [
-                                                        search_bar,
-                                                        # Navigation menu
-                                                        html.Div(
-                                                            [
-                                                                sidebar_section(
-                                                                    "/assets/repo_overview.svg",
-                                                                    "Repo Overview",
-                                                                    "/repo_overview",
-                                                                ),
-                                                                sidebar_section(
-                                                                    "/assets/contributions.svg",
-                                                                    "Contributions",
-                                                                    "/contributions",
-                                                                ),
-                                                                sidebar_dropdown(
-                                                                    "/assets/contributors.svg",
-                                                                    "Contributors",
-                                                                    [
-                                                                        sidebar_section(
-                                                                            icon_src=None,
-                                                                            text="Behavior",
-                                                                            page_link="/contributors/behavior",
-                                                                        ),
-                                                                        sidebar_section(
-                                                                            text="Contribution Types",
-                                                                            page_link="/contributors/contribution_types",
-                                                                        ),
-                                                                    ],
-                                                                    dropdown_id="contributors-dropdown",
-                                                                ),
-                                                                sidebar_section(
-                                                                    "/assets/affiliation.svg",
-                                                                    "Affiliation",
-                                                                    "/affiliation",
-                                                                ),
-                                                                sidebar_section(
-                                                                    "/assets/chaoss_small.svg", "CHAOSS", "/chaoss"
-                                                                ),
-                                                            ],
-                                                            style={"marginTop": "2rem", "paddingLeft": "6px"},
-                                                        ),
-                                                    ],
-                                                    style={"flex": "1 1 auto", "overflowY": "auto"},
-                                                ),
-                                            ],
+                                        dbc.Card(
+                                            dbc.CardBody(
+                                                [
+                                                    search_bar,
+                                                    # Navigation menu
+                                                    dbc.Nav(
+                                                        [
+                                                            sidebar_section(
+                                                                "/assets/repo_overview.svg",
+                                                                "Repo Overview",
+                                                                "/repo_overview",
+                                                            ),
+                                                            sidebar_section(
+                                                                "/assets/contributions.svg",
+                                                                "Contributions",
+                                                                "/contributions",
+                                                            ),
+                                                            sidebar_dropdown(
+                                                                "/assets/contributors.svg",
+                                                                "Contributors",
+                                                                [
+                                                                    sidebar_section(
+                                                                        icon_src=None,
+                                                                        text="Behavior",
+                                                                        page_link="/contributors/behavior",
+                                                                    ),
+                                                                    sidebar_section(
+                                                                        text="Contribution Types",
+                                                                        page_link="/contributors/contribution_types",
+                                                                    ),
+                                                                ],
+                                                                dropdown_id="contributors-dropdown",
+                                                            ),
+                                                            sidebar_section(
+                                                                "/assets/affiliation.svg",
+                                                                "Affiliation",
+                                                                "/affiliation",
+                                                            ),
+                                                            sidebar_section(
+                                                                "/assets/chaoss_small.svg", "CHAOSS", "/chaoss"
+                                                            ),
+                                                        ],
+                                                        vertical=True,
+                                                        pills=True,
+                                                        className="sidebar-navigation-menu",
+                                                    ),
+                                                ],
+                                                className="sidebar-content-body",
+                                                style={"overflow": "visible"},  # Allow dropdown to be visible
+                                            ),
+                                            color="dark",
+                                            outline=False,
                                             style={
-                                                "width": "340px",
+                                                "width": "450px",
+                                                "minWidth": "450px",
                                                 "background-color": "#1D1D1D",
                                                 "border-radius": "12px 0 0 12px",
                                                 "border-right": "1.5px solid #292929",
-                                                "padding": "1rem",
-                                                "flex-shrink": 0,
-                                                "display": "flex",
-                                                "flexDirection": "column",
+                                                "border": "none",
                                                 "height": "calc(100vh - 60px - 56px - 4px)",
-                                                "overflow": "hidden",
+                                                "overflow-y": "auto",
+                                                "overflow-x": "visible",  # Allow dropdown to be fully visible
                                             },
                                         ),
                                         id="sidebar-collapse",
                                         is_open=False,  # Start with sidebar collapsed
                                         dimension="width",  # Collapse horizontally
+                                        className="sidebar-collapse-container",
+                                        style={"overflow": "visible"},  # Allow dropdown to be visible
                                     ),
-                                    # Main content area (your existing page-container)
-                                    html.Div(
-                                        [
-                                            dcc.Loading(
-                                                children=[html.Div(id="results-output-container", className="mb-4")],
-                                                color="#119DFF",
-                                                type="dot",
-                                                fullscreen=True,
-                                            ),
-                                            dcc.Loading(
-                                                dbc.Badge(
-                                                    children="Data Loaded",
-                                                    id="data-badge",
-                                                    color="#0F5880",
-                                                    className="me-1",
-                                                    style={"marginBottom": ".5%"},
-                                                    # text_color="dark",
+                                    # Main content area with flex-grow
+                                    dbc.Card(
+                                        dbc.CardBody(
+                                            [
+                                                dcc.Loading(
+                                                    children=[
+                                                        html.Div(
+                                                            id="results-output-container",
+                                                            className="results-output-section",
+                                                        )
+                                                    ],
+                                                    color="#119DFF",
+                                                    type="dot",
+                                                    fullscreen=True,
                                                 ),
-                                                type="cube",
-                                                color="#0F5880",
-                                            ),
-                                            dash.page_container,
-                                        ],
+                                                dcc.Loading(
+                                                    dbc.Badge(
+                                                        children="Data Loaded",
+                                                        id="data-badge",
+                                                        color="#0F5880",
+                                                        className="data-status-badge",
+                                                        style={"marginBottom": ".5%"},
+                                                    ),
+                                                    type="cube",
+                                                    color="#0F5880",
+                                                ),
+                                                dash.page_container,
+                                            ],
+                                            className="main-content-body",
+                                        ),
                                         id="page-container",
+                                        color="dark",
+                                        outline=False,
                                         style={
-                                            "border-radius": "0 12px 12px 0",
                                             "background-color": "#1D1D1D",
-                                            "padding": "1rem",
-                                            "overflow-y": "auto",
-                                            "height": "100%",
+                                            "border": "none",
+                                            "borderRadius": "0 12px 12px 0",
+                                            "height": "calc(100vh - 60px - 56px - 4px)",
                                             "flex": "1",
+                                            "minWidth": "0",  # Allow flex shrinking
+                                            "overflow-y": "auto",
                                         },
+                                        className="main-content-container",
                                     ),
                                 ],
                                 id="main-layout-container",
+                                className="main-layout-flexbox",
                                 style={
                                     "display": "flex",
                                     "height": "calc(100vh - 60px - 56px - 4px)",
+                                    "gap": "0px",
+                                    "alignItems": "stretch",
                                 },
                             ),
                         ],
@@ -682,7 +819,7 @@ layout = html.Div(
             navbar_bottom,
         ],
         fluid=True,
-        className="dbc",
+        className="app-main-container",
         style={
             "background-color": "#242424",
         },
