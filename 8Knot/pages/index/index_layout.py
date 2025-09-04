@@ -7,7 +7,7 @@ import os
 import logging
 
 #
-def sidebar_section(icon_src=None, text="Hello", page_link="/", horizontal_padding=12, vertical_padding=16):
+def sidebar_section(icon_src=None, text="Hello", page_link="/"):
     """
     Creates a clickable section in the sidebar, which allows navigation to different pages
 
@@ -25,28 +25,12 @@ def sidebar_section(icon_src=None, text="Hello", page_link="/", horizontal_paddi
             ],
             href=page_link,
             className="sidebarLink",
-            style={
-                "display": "flex",
-                "alignItems": "center",
-                "padding": f"{horizontal_padding}px {vertical_padding}px",
-                "borderRadius": "8px",
-                "marginBottom": "8px",
-                "textDecoration": "none",
-            },
         )
     else:
         return dbc.NavLink(
             text,
             href=page_link,
             className="sidebarLink",
-            style={
-                "color": "#9c9c9c",
-                "fontSize": "14px",
-                "padding": f"{horizontal_padding}px {vertical_padding}px",
-                "marginBottom": "4px",
-                "textDecoration": "none",
-                "display": "block",
-            },
         )
 
 

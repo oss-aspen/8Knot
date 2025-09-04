@@ -68,6 +68,10 @@ a.nav-link > .sidebarLink {
     color: #9c9c9c;
     font-size: 16px;
     font-weight: 400;
+    text-decoration: none;
+    padding: 12px 16px;
+    align-items: center;
+    display: flex;
 }
 
 
