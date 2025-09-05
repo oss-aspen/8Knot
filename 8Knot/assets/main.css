@@ -64,7 +64,7 @@ a.nav-link > img {
 }
 
 
-a.nav-link > .sidebarLink {
+a.nav-link.sidebarLink {
     color: #9c9c9c;
     font-size: 16px;
     font-weight: 400;
