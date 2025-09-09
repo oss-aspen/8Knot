@@ -40,7 +40,7 @@ requires-dist = [
     { name = "dash", specifier = "~=3.2.0" },
     { name = "dash-bootstrap-components", specifier = "==1.5.0" },
     { name = "dash-bootstrap-templates", specifier = "==1.1.2" },
-    { name = "dash-mantine-components", specifier = "==0.12.1" },
+    { name = "dash-mantine-components", specifier = "~=2.0" },
     { name = "flask", specifier = "==3.0.2" },
     { name = "flask-login", specifier = "==0.6.3" },
     { name = "fuzzywuzzy", specifier = "==0.18.0" },
@@ -329,11 +329,14 @@ wheels = [
 
 [[package]]
 name = "dash-mantine-components"
-version = "0.12.1"
+version = "2.2.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/9a/69/5a9ae8cbff338871f15417837a0d5f4280b5685fadec0137c3a9236b96b9/dash_mantine_components-0.12.1.tar.gz", hash = "sha256:c3dcbfd89813a1539654b8d016eb953dc5f67aafe1a77d45b5ec9faa6f25d3e7", size = 359777, upload-time = "2023-04-09T14:53:06.943Z" }
+dependencies = [
+    { name = "dash" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/05/fb/57b582b21e002c8571a0edc2533d60a84d4dcbf72d4fff74b859d598ead7/dash_mantine_components-2.2.1.tar.gz", hash = "sha256:cd3aefd3191be365db0435067196fe037e3803c996794c174f0f0409c24efac4", size = 878143, upload-time = "2025-08-24T14:46:10.226Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9e/f6/fa240391c9f7e76d29b965c1784ca0d146534f544bb48dcd98a80bb2293c/dash_mantine_components-0.12.1-py3-none-any.whl", hash = "sha256:2630bca31cb96d96fb2c4f986e639b9f92d6319aba8cba02f76da6c0d8f5ca48", size = 500823, upload-time = "2023-04-09T14:53:04.232Z" },
+    { url = "https://files.pythonhosted.org/packages/ac/4b/b764da9f07a8fd8789c019929fe079b4bf3d5c11b3fc59e7ebb26aec9dcb/dash_mantine_components-2.2.1-py3-none-any.whl", hash = "sha256:a54acdb8b3e7a80251e9d68947a84b0a1d16285f5ca33363dbc29f287a13ebaa", size = 1303289, upload-time = "2025-08-24T14:46:08.748Z" },
 ]
 
 [[package]]
