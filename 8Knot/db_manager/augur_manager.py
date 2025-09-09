@@ -181,6 +181,7 @@ class AugurManager:
         # Output is of the form: [{"label": repo_url, "value": repo_id}, ...]
         multiselect_repos = (
             df_search_bar[["repo_git", "repo_id"]]
+            .astype({"repo_id": str})
             .rename(columns={"repo_git": "label", "repo_id": "value"})
             .to_dict("records")
         )
@@ -295,7 +296,7 @@ class AugurManager:
         except Exception as e:
             logging.error(f"Error in initial_multiselect_option: {str(e)}")
             # Return a fallback option in case of any error
-            return {"label": "repo: Fallback Option", "value": -1}
+            return {"label": "repo: Fallback Option", "value": "-1"}
 
     def get_multiselect_options(self):
         """Getter method on all entries in repo+orgs options
