@@ -4,10 +4,10 @@ import dash_bootstrap_components as dbc
 
 # Import welcome sections for tabs
 try:
-    from ..welcome.sections.general_section import layout as general_tab_contents
-    from ..welcome.sections.plotly_section import layout as plotly_tab_contents
-    from ..welcome.sections.augur_login_section import layout as augur_tab_contents
-    from ..welcome.sections.user_group_section import layout as group_tab_contents
+    from .sections.general_section import layout as general_tab_contents
+    from .sections.plotly_section import layout as plotly_tab_contents
+    from .sections.augur_login_section import layout as augur_tab_contents
+    from .sections.user_group_section import layout as group_tab_contents
 except ImportError:
     # Fallback if sections don't exist
     general_tab_contents = html.Div("General section not available")
@@ -17,6 +17,7 @@ except ImportError:
 
 # Register this as the main landing page
 dash.register_page(__name__, path="/", order=1, title="Welcome")
+
 
 def create_landing_hero():
     """Create the main hero section with 8Knot logo and title."""

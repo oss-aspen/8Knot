@@ -1,6 +1,6 @@
 /*
     Landing Page Styles
-    
+
     This file contains all styling for the landing/welcome page including:
     - Hero section styles
     - Learn button styles
@@ -360,5 +360,221 @@
         display: block !important;
         background: white;
         border: 1px solid black;
+    }
+}
+
+/* Welcome Section Styles */
+.tab_section_container {
+    width: 100%;
+    padding: 2rem;
+    background: var(--background-color);
+    color: var(--text-color);
+}
+
+.card_section_container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: var(--card-background);
+    border-radius: 10px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card_section_container_centered {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.card_section_description h1 {
+    color: var(--primary-color);
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.card_section_description p {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.card_section_body {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.card_section_body_vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.info_card {
+    background: var(--background-color);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.info_card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.info_card h2 {
+    color: var(--primary-color);
+    font-size: 1.4rem;
+    margin-bottom: 0.5rem;
+}
+
+.info_card p {
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.instruction_card {
+    background: var(--background-color);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 1rem;
+}
+
+.instruction_card_split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: center;
+}
+
+.instruction_card_body {
+    padding: 1rem;
+}
+
+.instruction_card h2 {
+    color: var(--primary-color);
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+}
+
+.instruction_card p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.centered_img {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.instruction_image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.instruction_image.scale_smaller {
+    max-width: 80%;
+}
+
+.plotly_instructions_section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.plotly_instructions_section_img {
+    max-width: 200px;
+    height: auto;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.arrow_icon {
+    width: 30px;
+    height: 30px;
+    opacity: 0.7;
+}
+
+.architecture_section {
+    margin-top: 3rem;
+    display: flex;
+    align-items: center;
+    gap: 3rem;
+}
+
+.architecture_section_part {
+    flex: 1;
+}
+
+.architecture_description h1 {
+    color: var(--primary-color);
+    font-size: 2.2rem;
+    margin-bottom: 1rem;
+}
+
+.architecture_description h2 {
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    margin: 2rem 0 0.5rem 0;
+}
+
+.architecture_description p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.architecture_image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive design for welcome sections */
+@media (max-width: 768px) {
+    .card_section_body {
+        grid-template-columns: 1fr;
+    }
+
+    .instruction_card_split {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .architecture_section {
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .plotly_instructions_section {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .plotly_instructions_section_img {
+        max-width: 150px;
+    }
+
+    .card_section_description h1 {
+        font-size: 2rem;
+    }
+
+    .tab_section_container {
+        padding: 1rem;
+    }
+
+    .card_section_container {
+        padding: 1rem;
     }
 }
