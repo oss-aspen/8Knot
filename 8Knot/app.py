@@ -50,6 +50,7 @@ augur.multiselect_startup()
 
 """IMPORT AFTER GLOBAL VARIABLES SET"""
 import pages.index.index_callbacks as index_callbacks
+import pages.landing.landing_callbacks as landing_callbacks
 
 # Import testing utilities for enhanced error detection in CI
 if os.getenv("DEBUG_8KNOT", "False") == "True":

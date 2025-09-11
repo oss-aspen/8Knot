@@ -1,0 +1,426 @@
+/*
+    Main Application Layout Styles
+    
+    This file contains all the styling for the main application shell including:
+    - Sidebar styles
+    - Main content area styles
+    - Navigation styles
+    - Layout containers
+*/
+
+
+/* CSS Variables for consistent theming */
+
+:root {
+    --bg-primary: #1D1D1D;
+    --bg-secondary: #242424;
+    --bg-tertiary: #292929;
+    --border-color: #404040;
+    --text-primary: #FFFFFF;
+    --text-secondary: #9c9c9c;
+    --text-muted: #CCCCCC;
+    --accent-blue: #119DFF;
+    --accent-success: #0F5880;
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --border-radius: 8px;
+    --border-radius-lg: 12px;
+    --border-radius-xl: 20px;
+    --transition: all 0.3s ease;
+}
+
+
+/* Main Layout Container */
+
+.main-layout-container {
+    display: flex;
+    height: calc(100vh - 60px - 56px - 4px);
+}
+
+
+/* Sidebar Styles */
+
+.sidebar-container {
+    width: 340px;
+    background-color: var(--bg-primary);
+    border-radius: var(--border-radius-lg) 0 0 var(--border-radius-lg);
+    border-right: 1.5px solid var(--bg-tertiary);
+    padding: var(--spacing-md);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 60px - 56px - 4px);
+    overflow: hidden;
+}
+
+.sidebar-body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+}
+
+.sidebar-navigation {
+    margin-top: var(--spacing-xl);
+    padding-left: 6px;
+}
+
+
+/* Sidebar Navigation Items */
+
+.sidebar-section {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-radius: var(--border-radius);
+    margin-bottom: var(--spacing-xs);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.sidebar-section:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.sidebar-section-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 12px;
+}
+
+.sidebar-section-text {
+    color: var(--text-secondary);
+    font-size: 16px;
+    font-weight: 400;
+}
+
+.sidebar-section-text-no-icon {
+    color: var(--text-secondary);
+    font-size: 14px;
+    padding: 12px 16px;
+    margin-bottom: 4px;
+    text-decoration: none;
+    display: block;
+}
+
+
+/* Sidebar Dropdown */
+
+.sidebar-dropdown-container {
+    border-radius: var(--border-radius);
+    margin-bottom: var(--spacing-xs);
+}
+
+.sidebar-dropdown-toggle {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.sidebar-dropdown-toggle:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.sidebar-dropdown-content {
+    display: none;
+    padding: var(--spacing-xs) 0;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+}
+
+
+/* Main Content Area */
+
+.page-container {
+    border-radius: 0 var(--border-radius-lg) var(--border-radius-lg) 0;
+    background-color: var(--bg-primary);
+    padding: var(--spacing-md);
+    overflow-y: auto;
+    height: 100%;
+    flex: 1;
+    transition: var(--transition);
+}
+
+
+/* When sidebar is collapsed */
+
+.page-container--sidebar-collapsed {
+    border-radius: var(--border-radius-lg);
+}
+
+
+/* Loading Components */
+
+.loading-container {
+    margin-bottom: var(--spacing-sm);
+}
+
+.data-badge {
+    margin-bottom: 0.5%;
+    display: inline-block;
+}
+
+.data-badge--hidden {
+    display: none;
+}
+
+
+/* Top Bar */
+
+.topbar {
+    height: 60px;
+    width: 100%;
+    background-color: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-left: 10px;
+    padding-right: 10px;
+    border-bottom: 1.5px solid var(--bg-tertiary);
+}
+
+.topbar-left {
+    display: flex;
+    align-items: center;
+}
+
+.topbar-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+}
+
+.topbar-right {
+    min-width: 150px;
+}
+
+
+/* Sidebar Toggle Button */
+
+.sidebar-toggle {
+    color: var(--text-secondary);
+    font-size: 18px;
+    padding: var(--spacing-xs) 12px;
+    margin-right: 10px;
+    border: none;
+    background-color: transparent;
+}
+
+
+/* Logo Styles */
+
+.logo {
+    width: 70px;
+    height: 22px;
+    margin: 20px 20px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.logo--chaoss {
+    margin: 10px -20px;
+}
+
+
+/* Navigation Links */
+
+.nav-link {
+    color: var(--text-secondary);
+    font-size: 16px;
+    padding: 6px 16px;
+    margin-right: 16px;
+    text-decoration: none;
+    border-radius: var(--border-radius);
+    line-height: 1.2;
+    transition: var(--transition);
+}
+
+.nav-link:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-tertiary);
+}
+
+.nav-link--visualization {
+    background-color: transparent;
+    border: none;
+    text-align: left;
+    padding: 4px 16px;
+}
+
+
+/* Bottom Navbar */
+
+.navbar-bottom {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: var(--bg-primary);
+    border-top: 1px solid var(--bg-tertiary);
+}
+
+
+/* Application Container */
+
+.app-container {
+    background-color: var(--bg-secondary);
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+.app-main-container {
+    background-color: var(--bg-secondary);
+}
+
+
+/* Search Bar Styles */
+
+.search-bar {
+    padding-top: 16px;
+}
+
+.search-bar-input {
+    font-size: 16px;
+    height: 48px;
+    padding: 0 16px 0 44px;
+    border-radius: var(--border-radius-xl);
+    display: flex;
+    align-items: center;
+    background-color: var(--bg-primary);
+    border-color: var(--border-color);
+    position: relative;
+    z-index: 1;
+}
+
+.search-bar-dropdown {
+    border-radius: var(--border-radius-lg);
+    background-color: var(--bg-primary);
+    border: 1px solid #444;
+}
+
+.search-bar-item {
+    border-radius: var(--border-radius);
+    margin: 2px 4px;
+    color: var(--text-primary);
+}
+
+.search-icon {
+    background-color: transparent;
+    border: none;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-100%);
+    font-weight: bold;
+    z-index: 2;
+}
+
+
+/* Search Controls */
+
+.search-controls {
+    width: 100%;
+    justify-content: center;
+    margin-top: 16px;
+}
+
+.search-help-button {
+    background-color: transparent;
+    border: none;
+    padding: 4px var(--spacing-xs);
+    font-size: 14px;
+}
+
+.search-list-button {
+    background-color: transparent;
+    border: none;
+    padding: 4px var(--spacing-xs);
+    font-size: 14px;
+}
+
+.bot-filter-switch {
+    font-size: 12px;
+    margin-top: var(--spacing-xs);
+    margin-left: 10px;
+}
+
+
+/* Storage Quota Warning */
+
+.storage-quota-warning {
+    display: none;
+    margin-top: var(--spacing-sm);
+    margin-bottom: 0;
+}
+
+
+/* Utility Classes */
+
+.hidden {
+    display: none !important;
+}
+
+.visible {
+    display: block !important;
+}
+
+.flex {
+    display: flex;
+}
+
+.flex-column {
+    flex-direction: column;
+}
+
+.flex-center {
+    justify-content: center;
+    align-items: center;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.w-100 {
+    width: 100%;
+}
+
+.h-100 {
+    height: 100%;
+}
+
+
+/* Responsive Design */
+
+@media (max-width: 768px) {
+    .sidebar-container {
+        width: 280px;
+    }
+    .topbar {
+        padding-left: var(--spacing-sm);
+        padding-right: var(--spacing-sm);
+    }
+    .nav-link {
+        font-size: 14px;
+        padding: 4px 12px;
+        margin-right: var(--spacing-xs);
+    }
+}
+
+@media (max-width: 480px) {
+    .sidebar-container {
+        width: 100%;
+        position: fixed;
+        z-index: 1000;
+    }
+    .main-layout-container {
+        flex-direction: column;
+    }
+}
