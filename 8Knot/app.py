@@ -144,13 +144,17 @@ def health_check():
 """DASH PAGES LAYOUT"""
 # layout of the app stored in the app_layout file, must be imported after the app is initiated
 from pages.index.index_layout import layout
+import dash_mantine_components as dmc
 
-app.layout = layout
+app.layout = dmc.MantineProvider(
+    layout,
+    forceColorScheme="dark",
+)
 
 """DASH STARTUP PARAMETERS"""
 
 if os.getenv("DEBUG_8KNOT", "False") == "True":
-    app.enable_dev_tools(dev_tools_ui=True, dev_tools_hot_reload=True)
+    app.enable_dev_tools(dev_tools_ui=True, dev_tools_hot_reload=True, debug=True)
 
 """GITHUB BOTS LIST"""
 bots_list = bots.get_bots_list()

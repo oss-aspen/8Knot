@@ -84,7 +84,7 @@ def repo_general_info(repo):
     start = time.perf_counter()
 
     # get dataframes of data from cache
-    df_repo_files, df_repo_info, df_releases = multi_query_helper([repo])
+    df_repo_files, df_repo_info, df_releases = multi_query_helper([int(repo)])
 
     # test if there is data
     if df_repo_files.empty and df_repo_info.empty and df_releases.empty:
@@ -197,7 +197,7 @@ def process_data(df_repo_files, df_repo_info, df_releases):
     return df, dbc.Label(updated_date)
 
 
-def multi_query_helper(repos):
+def multi_query_helper(repos: list[int]):
     """
     hack to put all of the cache-retrieval
     in the same place temporarily
