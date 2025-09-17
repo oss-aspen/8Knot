@@ -21,3 +21,9 @@ class SearchItem(Enum):
             return cls.REPO
         else:
             return cls.OTHER
+
+    def prefix(self, value: str):
+        """
+        Return a string that prefixes the provided string with the current search item type
+        """
+        return f"{self.value}: {value}"

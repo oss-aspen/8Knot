@@ -283,12 +283,9 @@ class AugurManager:
                         if default_label == opt["label"]:
                             # Create a copy of the option with the "repo:" prefix
                             self.initial_search_option = opt.copy()
-                            # Add "repo:" prefix if it's a repo (integer value)
+                            # Add "repo" or "org" prefix based on what type of search item this is
                             search_item = SearchItem.from_id(opt["value"])
-                            if search_item == SearchItem.REPO:
-                                self.initial_search_option["label"] = f"repo: {opt['label']}"
-                            elif search_item == SearchItem.ORG:
-                                self.initial_search_option["label"] = f"org: {opt['label']}"
+                            self.initial_search_option["label"] = search_item.prefix(opt["label"])
 
                             logging.warning(f"INITIAL SEARCHBAR OPTION: NEW DEFAULT: {self.initial_search_option}")
                             found_option = True

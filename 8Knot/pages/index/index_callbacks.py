@@ -325,12 +325,7 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
             seen_values.add(opt["value"])
             formatted_opt = opt.copy()
             search_item = SearchItem.from_id(opt["value"])
-            if search_item == SearchItem.ORG:
-                # It's an org
-                formatted_opt["label"] = f"org: {opt['label']}"
-            elif search_item == SearchItem.REPO:
-                # It's a repo
-                formatted_opt["label"] = f"repo: {opt['label']}"
+            formatted_opt["label"] = search_item.prefix(opt["label"])
             formatted_opts.append(formatted_opt)
 
         # Simple reordering: put organizations first, then repositories
@@ -371,12 +366,7 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
                     if opt["value"] == v:
                         formatted_v = opt.copy()
                         search_item = SearchItem.from_id(v)
-                        if search_item == SearchItem.ORG:
-                            # It's an org
-                            formatted_v["label"] = f"org: {opt['label']}"
-                        elif search_item == SearchItem.REPO:
-                            # It's a repo
-                            formatted_v["label"] = f"repo: {opt['label']}"
+                        formatted_v["label"] = search_item.prefix(opt["label"])
                         selected_options.append(formatted_v)
                         break
 
