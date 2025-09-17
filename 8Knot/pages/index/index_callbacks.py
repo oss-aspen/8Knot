@@ -323,7 +323,7 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
 
             seen_values.add(opt["value"])
             formatted_opt = opt.copy()
-            if isinstance(opt["value"], str):
+            if isinstance(opt["value"], str) and not opt["value"].isnumeric():
                 # It's an org
                 formatted_opt["label"] = f"org: {opt['label']}"
             else:
