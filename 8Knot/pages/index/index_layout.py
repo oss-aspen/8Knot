@@ -144,8 +144,7 @@ topbar = html.Div(
                 dbc.NavLink(
                     "Welcome",
                     href="/",
-                    external_link=True,
-                    target="_self",
+                    active="exact",
                     style={
                         "color": "#9c9c9c",
                         "fontSize": "16px",
