@@ -437,6 +437,8 @@ def multiselect_values_to_repo_ids(n_clicks, user_vals):
         logging.warning("NOTHING SELECTED IN SEARCH BAR")
         raise dash.exceptions.PreventUpdate
 
+    user_vals = [int(n) if n.isnumeric() else n for n in user_vals]
+
     # individual repo numbers
     repos = [r for r in user_vals if isinstance(r, int)]
     logging.warning(f"REPOS: {repos}")
