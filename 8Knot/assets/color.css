@@ -290,31 +290,6 @@ div.dark-card {
 }
 
 /* =============================================================================
-   DROPDOWN COMPONENTS
-============================================================================= */
-
-/* Dark Dropdown Box Styling */
-.dark-dropdown .Select-control,
-.dark-dropdown .Select-control:hover {
-  background-color: var(--multiselect-hover-bg)!important;
-  border-color: var(--multiselect-hover-bg)!important;
-  color: white !important;
-  min-width: 150px !important;
-}
-
-/* Dark Dropdown Placeholder Styling */
-.dark-dropdown .Select-placeholder,
-.dark-dropdown .Select-value-label {
-  color: white !important;
-}
-
-/* Fix for the vertical bar issue */
-.dbc input:not([type=radio]):not([type=checkbox]) {
-  color: var(--bs-body-color) !important;
-  background-color: #404040 !important;
-}
-
-/* =============================================================================
    DATE PICKER COMPONENTS
 ============================================================================= */
 
