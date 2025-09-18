@@ -55,6 +55,7 @@ gc_repo_general_info = dbc.Card(
         ),
     ],
     className="dark-card",
+    id="repo-general-info",
 )
 
 

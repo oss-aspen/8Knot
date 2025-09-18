@@ -110,8 +110,23 @@ def create_sidebar_navigation():
             ),
             sidebar_section(
                 None,
+                "Code Languages",
+                "/repo_overview#code-languages",
+            ),
+            sidebar_section(
+                None,
+                "Package Version",
+                "/repo_overview#package-version",
+            ),
+            sidebar_section(
+                None,
                 "OSSF Scorecard",
                 "/repo_overview#ossf-scorecard",
+            ),
+            sidebar_section(
+                None,
+                "Repo General Info",
+                "/repo_overview#repo-general-info",
             ),
             sidebar_section(
                 "/assets/contributions.svg",
