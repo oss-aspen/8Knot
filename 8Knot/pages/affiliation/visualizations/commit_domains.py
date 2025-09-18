@@ -112,6 +112,7 @@ gc_commit_domains = dbc.Card(
         ),
     ],
     className="dark-card",
+    id="commits-by-domain",
 )
 
 

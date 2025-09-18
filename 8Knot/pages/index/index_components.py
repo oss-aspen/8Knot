@@ -62,31 +62,144 @@ def create_sidebar_navigation():
                 "/repo_overview",
             ),
             DropdownNavItemAIO(
-                [],
+                [
+                    NavItemAIO(
+                        "Commits Over Time",
+                        "/contributions#commits-over-time",
+                    ),
+                    NavItemAIO(
+                        "PRs Over Time",
+                        "/contributions#prs-over-time",
+                    ),
+                    NavItemAIO(
+                        "PR Activity - Staleness",
+                        "/contributions#pr-staleness",
+                    ),
+                    NavItemAIO(
+                        "PR Time to First Response",
+                        "/contributions#pr-first-response",
+                    ),
+                    NavItemAIO(
+                        "PR Conversation Engagement",
+                        "/contributions#pr-review-response",
+                    ),
+                    NavItemAIO(
+                        "PR Review Status Counts",
+                        "/contributions#pr_assignment",
+                    ),
+                    NavItemAIO(
+                        "Contributor PR Review Assignment",
+                        "/contributions#cntrib-pr-assignment",
+                    ),
+                    NavItemAIO(
+                        "Issues Over Time",
+                        "/contributions#issues-over-time",
+                    ),
+                    NavItemAIO(
+                        "Issue Activity - Staleness",
+                        "/contributions#issue-staleness",
+                    ),
+                    NavItemAIO(
+                        "Issue Assignment Status Counts",
+                        "/contributions#issue_assignment",
+                    ),
+                    NavItemAIO(
+                        "Contributor Issue Assignment",
+                        "/contributions#cntrib-issue-assignment",
+                    ),
+                ],
                 "/assets/contributions.svg",
                 "Contributions",
                 "/contributions",
             ),
             DropdownNavItemAIO(
-                [],
+                [
+                    NavItemAIO(
+                        "Drive-Through Contributors",
+                        "/contributors/behavior#drive-throughs",
+                    ),
+                    NavItemAIO(
+                        "First-Time Contributors",
+                        "/contributors/behavior#first-time-contributors",
+                    ),
+                    NavItemAIO(
+                        "Engagement Growth",
+                        "/contributors/behavior#engagement-growth",
+                    ),
+                    NavItemAIO(
+                        "New Contributors",
+                        "/contributors/behavior#new-contributors",
+                    ),
+                    NavItemAIO(
+                        "Contributor Types",
+                        "/contributors/behavior#contributor-types",
+                    ),
+                ],
                 "/assets/contributors.svg",
                 "Contributor Behavior",
                 "/contributors/behavior",
             ),
             DropdownNavItemAIO(
-                [],
+                [
+                    NavItemAIO(
+                        "Contributor Actions",
+                        "/contributors/contribution_types#contributor-actions",
+                    ),
+                    NavItemAIO(
+                        "Contributor Activity Cycle",
+                        "/contributors/contribution_types#contributor-activity-cycle",
+                    ),
+                    NavItemAIO(
+                        "Bus Factor Snapshot",
+                        "/contributors/contribution_types#bus-factor-snapshot",
+                    ),
+                    NavItemAIO(
+                        "Bus Factor over Time",
+                        "/contributors/contribution_types#bus-factor-time",
+                    ),
+                ],
                 "/assets/contributors.svg",
                 "Contributor Types",
                 "/contributors/contribution_types",
             ),
             DropdownNavItemAIO(
-                [],
+                [
+                    NavItemAIO(
+                        "Commits by Domain",
+                        "/affiliation#commits-by-domain",
+                    ),
+                    NavItemAIO(
+                        "Unique Domains",
+                        "/affiliation#unique-domains",
+                    ),
+                    NavItemAIO(
+                        "Org Activity",
+                        "/affiliation#org-activity",
+                    ),
+                    NavItemAIO(
+                        "Org Core Contributors",
+                        "/affiliation#org-core-contributors",
+                    ),
+                    NavItemAIO(
+                        "GitHub Org Affiliation",
+                        "/affiliation#gh-org-affiliation",
+                    ),
+                ],
                 "/assets/affiliation.svg",
                 "Affiliation",
                 "/affiliation",
             ),
             DropdownNavItemAIO(
-                [],
+                [
+                    NavItemAIO(
+                        "Bus Factor",
+                        "/chaoss#bus-factor",
+                    ),
+                    NavItemAIO(
+                        "Project Velocity",
+                        "/chaoss#project-velocity",
+                    ),
+                ],
                 "/assets/chaoss_small.svg",
                 "CHAOSS",
                 "/chaoss",

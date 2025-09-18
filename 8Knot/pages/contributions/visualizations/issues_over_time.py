@@ -124,6 +124,7 @@ gc_issues_over_time = dbc.Card(
         ),
     ],
     className="dark-card",
+    id="issues-over-time",
 )
 
 

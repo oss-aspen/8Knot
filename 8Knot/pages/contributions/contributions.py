@@ -23,57 +23,57 @@ dash.register_page(__name__, path="/contributions")
 layout = dbc.Container(
     [
         dbc.Row(
-            gc_pr_staleness,
+            dbc.Col(gc_commits_over_time, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
-            gc_pr_over_time,
+            dbc.Col(gc_pr_over_time, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
-            gc_cntrib_pr_assignment,
+            dbc.Col(gc_pr_staleness, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
-            gc_pr_assignment,
+            dbc.Col(gc_pr_first_response, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
-            gc_issue_staleness,
+            dbc.Col(gc_pr_review_response, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
-            gc_issues_over_time,
+            dbc.Col(gc_pr_assignment, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
-            gc_cntrib_issue_assignment,
+            dbc.Col(gc_cntrib_pr_assignment, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
-            gc_issue_assignment,
+            dbc.Col(gc_issues_over_time, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
-            gc_commits_over_time,
+            dbc.Col(gc_issue_staleness, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
-            gc_pr_first_response,
+            dbc.Col(gc_issue_assignment, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
-            gc_pr_review_response,
+            dbc.Col(gc_cntrib_issue_assignment, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),

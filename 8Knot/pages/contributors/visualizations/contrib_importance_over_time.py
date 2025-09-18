@@ -167,6 +167,7 @@ gc_lottery_factor_over_time = dbc.Card(
         )
     ],
     className="dark-card",
+    id="bus-factor-time",
 )
 
 

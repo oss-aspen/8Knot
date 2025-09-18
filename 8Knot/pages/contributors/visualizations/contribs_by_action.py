@@ -153,6 +153,7 @@ gc_contribs_by_action = dbc.Card(
         )
     ],
     className="dark-card",
+    id="contributor-actions",
 )
 
 

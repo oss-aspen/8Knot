@@ -16,22 +16,22 @@ dash.register_page(__name__, path="/contributors/contribution_types")
 layout = dbc.Container(
     [
         dbc.Row(
-            dbc.Col(gc_contribs_by_action),
+            dbc.Col(gc_contribs_by_action, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
-            dbc.Col(gc_contrib_activity_cycle),
+            dbc.Col(gc_contrib_activity_cycle, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
-            dbc.Col(gc_contrib_importance_pie),
+            dbc.Col(gc_contrib_importance_pie, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
-            dbc.Col(gc_lottery_factor_over_time),
+            dbc.Col(gc_lottery_factor_over_time, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),

@@ -17,27 +17,27 @@ dash.register_page(__name__, path="/affiliation")
 layout = dbc.Container(
     [
         dbc.Row(
-            dbc.Col(gc_commit_domains),
+            dbc.Col(gc_commit_domains, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
-            dbc.Col(gc_unique_domains),
+            dbc.Col(gc_unique_domains, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
-            dbc.Col(gc_org_associated_activity),
+            dbc.Col(gc_org_associated_activity, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
-            dbc.Col(gc_org_core_contributors),
+            dbc.Col(gc_org_core_contributors, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
-            dbc.Col(gc_gh_org_affiliation),
+            dbc.Col(gc_gh_org_affiliation, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),

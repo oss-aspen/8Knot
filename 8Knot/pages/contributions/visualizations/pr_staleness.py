@@ -25,7 +25,7 @@ gc_pr_staleness = dbc.Card(
                     [
                         dbc.Col(
                             html.H3(
-                                "Pull Request Activity- Staleness",
+                                "Pull Request Activity - Staleness",
                                 className="card-title",
                             ),
                         ),
@@ -150,6 +150,7 @@ gc_pr_staleness = dbc.Card(
         )
     ],
     className="dark-card",
+    id="pr-staleness",
 )
 
 

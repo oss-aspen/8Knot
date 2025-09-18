@@ -101,6 +101,7 @@ gc_contrib_activity_cycle = dbc.Card(
         )
     ],
     className="dark-card",
+    id="contributor-activity-cycle",
 )
 
 

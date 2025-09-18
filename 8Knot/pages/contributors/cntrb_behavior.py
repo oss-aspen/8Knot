@@ -17,27 +17,27 @@ dash.register_page(__name__, path="/contributors/behavior")
 layout = dbc.Container(
     [
         dbc.Row(
-            dbc.Col(gc_contrib_drive_repeat),
+            dbc.Col(gc_contrib_drive_repeat, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
-            dbc.Col(gc_first_time_contributions),
+            dbc.Col(gc_first_time_contributions, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
-            dbc.Col(gc_active_drifting_contributors),
+            dbc.Col(gc_active_drifting_contributors, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
-            dbc.Col(gc_new_contributor),
+            dbc.Col(gc_new_contributor, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
-            dbc.Col(gc_contributors_over_time),
+            dbc.Col(gc_contributors_over_time, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),

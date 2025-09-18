@@ -103,6 +103,7 @@ gc_pr_over_time = dbc.Card(
         ),
     ],
     className="dark-card",
+    id="prs-over-time",
 )
 
 

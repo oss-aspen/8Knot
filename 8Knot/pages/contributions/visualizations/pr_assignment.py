@@ -101,6 +101,7 @@ gc_pr_assignment = dbc.Card(
         )
     ],
     className="dark-card",
+    id="pr_assignment",
 )
 
 

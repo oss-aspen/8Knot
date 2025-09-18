@@ -14,12 +14,12 @@ dash.register_page(__name__, path="/chaoss")
 layout = dbc.Container(
     [
         dbc.Row(
-            dbc.Col(gc_contrib_importance_pie),
+            dbc.Col(gc_contrib_importance_pie, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
-            dbc.Col(gc_project_velocity),
+            dbc.Col(gc_project_velocity, xl=10),
             align="center",
             style={"marginBottom": ".5%"},
         ),

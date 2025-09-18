@@ -159,6 +159,7 @@ gc_cntrib_issue_assignment = dbc.Card(
         )
     ],
     className="dark-card",
+    id="cntrib-issue-assignment",
 )
 
 

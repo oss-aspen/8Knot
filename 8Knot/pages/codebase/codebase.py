@@ -16,21 +16,21 @@ layout = dbc.Container(
     [
         dbc.Row(
             [
-                dbc.Col(gc_contribution_file_heatmap, width=12),
+                dbc.Col(gc_contribution_file_heatmap, xl=10),
             ],
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
             [
-                dbc.Col(gc_cntrb_file_heatmap, width=12),
+                dbc.Col(gc_cntrb_file_heatmap, xl=10),
             ],
             align="center",
             style={"marginBottom": ".5%"},
         ),
         dbc.Row(
             [
-                dbc.Col(gc_reviewer_file_heatmap, width=12),
+                dbc.Col(gc_reviewer_file_heatmap, xl=10),
             ],
             align="center",
             style={"marginBottom": ".5%"},
