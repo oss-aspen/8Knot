@@ -109,6 +109,11 @@ def create_sidebar_navigation():
                 "/repo_overview",
             ),
             sidebar_section(
+                None,
+                "OSSF Scorecard",
+                "/repo_overview#ossf-scorecard",
+            ),
+            sidebar_section(
                 "/assets/contributions.svg",
                 "Contributions",
                 "/contributions",
