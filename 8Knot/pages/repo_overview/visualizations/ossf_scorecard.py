@@ -74,7 +74,6 @@ gc_ossf_scorecard = dbc.Card(
         ),
     ],
     className="dark-card",
-    id="ossf-scorecard",
 )
 
 

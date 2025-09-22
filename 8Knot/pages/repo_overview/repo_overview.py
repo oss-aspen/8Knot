@@ -38,6 +38,7 @@ layout = dbc.Container(
                         html.H1("Per Repo Analysis:"),
                     ],
                     width=3,
+                    id="per-repo-analysis",
                 ),
                 dbc.Col(
                     [
@@ -57,12 +58,10 @@ layout = dbc.Container(
             style={"marginBottom": "1%"},
         ),
         dbc.Row(
-            gc_ossf_scorecard,
-            align="center",
-            style={"marginBottom": ".5%"},
-        ),
-        dbc.Row(
-            gc_repo_general_info,
+            [
+                dbc.Col(gc_ossf_scorecard, width=6),
+                dbc.Col(gc_repo_general_info, width=6),
+            ],
             align="center",
             style={"marginBottom": ".5%"},
         ),
