@@ -18,7 +18,7 @@ dependencies = [
     "plotly==5.18.0",
     "psycopg2-binary==2.9.9",
     "pyarrow==15.0.0",
-    "python-dateutil==2.8.2",
+    "python-dateutil~=2.9",
     "rapidfuzz==3.6.1",
     "redis==5.0.1",
     "sqlalchemy==2.0.25",
