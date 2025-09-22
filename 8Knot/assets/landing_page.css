@@ -9,13 +9,6 @@
 */
 
 
-/* Global smooth scrolling */
-
-html {
-    scroll-behavior: smooth;
-}
-
-
 /* CSS Variables for landing page */
 
 :root {
@@ -49,7 +42,6 @@ html {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    scroll-behavior: smooth;
 }
 
 
@@ -183,6 +175,238 @@ html {
     margin-bottom: var(--landing-spacing-lg);
 }
 
+
+/* DBC Card Container for Tabs - Figma Design */
+
+.card-container {
+    background: var(--color-card-bg) !important;
+    border: 1px solid var(--color-border) !important;
+    border-radius: var(--border-radius-lg) !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+}
+
+
+/* DBC Tabs Header */
+
+.tabs-header {
+    background: var(--color-topbar-bg) !important;
+    border: none !important;
+    border-bottom: 1px solid var(--baby-blue-500) !important;
+    padding: 0px var(--spacing-lg) !important;
+    margin: 0 !important;
+    border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0 !important;
+}
+
+
+/* Override DBC Tab Styles to Match Figma design */
+
+.tabs-header .nav-tabs {
+    border-bottom: none !important;
+    gap: 6px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.tabs-header .nav-tabs .nav-item {
+    margin: 0 !important;
+}
+
+.tabs-header .nav-tabs .nav-link {
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 8px 20px !important;
+    gap: 4px !important;
+    height: 45px !important;
+    background: var(--color-border) !important;
+    border-width: 1px 1px 0px 1px !important;
+    border-style: solid !important;
+    border-color: var(--baby-blue-500) !important;
+    border-radius: 8px 8px 0px 0px !important;
+    font-family: 'Inter', sans-serif !important;
+    font-style: normal !important;
+    font-weight: 400 !important;
+    font-size: 16px !important;
+    line-height: 180% !important;
+    text-align: center !important;
+    color: var(--text-secondary) !important;
+    transition: all 0.3s ease !important;
+    cursor: pointer !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+}
+
+.tabs-header .nav-tabs .nav-link:hover {
+    background: var(--multiselect-hover-bg) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--baby-blue-500) !important;
+}
+
+.tabs-header .nav-tabs .nav-link.active {
+    background: var(--baby-blue-500) !important;
+    color: var(--color-white) !important;
+    border-color: var(--baby-blue-500) !important;
+}
+
+
+/* Specific tab widths for DBC tabs */
+
+.tabs-header .nav-tabs .nav-item:nth-child(1) .nav-link {
+    width: 241px !important;
+}
+
+.tabs-header .nav-tabs .nav-item:nth-child(2) .nav-link {
+    width: 176px !important;
+}
+
+.tabs-header .nav-tabs .nav-item:nth-child(3) .nav-link {
+    width: 184px !important;
+}
+
+.tabs-header .nav-tabs .nav-item:nth-child(4) .nav-link {
+    width: 221px !important;
+}
+
+.tabs-header .nav-tabs .nav-item:nth-child(5) .nav-link {
+    width: 121px !important;
+}
+
+
+/* Dark Theme Content Styling */
+
+.content-container {
+    background: transparent !important;
+    color: var(--text-primary) !important;
+    padding: var(--spacing-lg) !important;
+}
+
+.summary-section {
+    margin-bottom: var(--spacing-xl) !important;
+}
+
+.main-title h1 {
+    color: var(--color-primary) !important;
+    font-size: 24px !important;
+    font-weight: 700 !important;
+    margin-bottom: var(--spacing-md) !important;
+}
+
+.body-text p {
+    color: var(--text-secondary) !important;
+    font-size: 16px !important;
+    line-height: 1.5 !important;
+    margin-bottom: var(--spacing-md) !important;
+}
+
+.section-bordered {
+    background: var(--color-dark-bg) !important;
+    border: 1px solid var(--baby-blue-500) !important;
+    border-radius: var(--border-radius) !important;
+    padding: var(--spacing-lg) !important;
+    margin-top: var(--spacing-lg) !important;
+}
+
+.feature-section {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    margin-bottom: var(--spacing-lg) !important;
+    gap: var(--spacing-lg) !important;
+}
+
+.feature-title {
+    flex: 0 0 300px !important;
+}
+
+.section-title h3 {
+    color: var(--color-secondary) !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    margin-bottom: var(--spacing-sm) !important;
+}
+
+.feature-body p {
+    color: var(--text-secondary) !important;
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+    margin-bottom: var(--spacing-sm) !important;
+}
+
+.image-container {
+    flex: 1 !important;
+    text-align: center !important;
+}
+
+.feature-image {
+    max-width: 100% !important;
+    height: auto !important;
+    border-radius: var(--border-radius) !important;
+    border: 1px solid var(--color-border) !important;
+}
+
+.image-caption {
+    color: var(--text-muted) !important;
+    font-size: 12px !important;
+    margin-top: var(--spacing-xs) !important;
+    font-style: italic !important;
+}
+
+
+/* Side Navigation in Card */
+
+.tab-content-container {
+    background: var(--color-card-bg) !important;
+    padding: var(--spacing-lg) !important;
+    border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg) !important;
+}
+
+.side-nav {
+    display: none !important;
+    /* Hide side nav for cleaner look */
+}
+
+.tab-content-main {
+    width: 100% !important;
+}
+
+
+/* Responsive Design for Dark Theme Tabs */
+
+@media (max-width: 768px) {
+    .tabs-header {
+        padding: 0px var(--spacing-sm) !important;
+    }
+    .tabs-header .nav-tabs .nav-item:nth-child(1) .nav-link,
+    .tabs-header .nav-tabs .nav-item:nth-child(2) .nav-link,
+    .tabs-header .nav-tabs .nav-item:nth-child(3) .nav-link,
+    .tabs-header .nav-tabs .nav-item:nth-child(4) .nav-link,
+    .tabs-header .nav-tabs .nav-item:nth-child(5) .nav-link {
+        width: auto !important;
+        font-size: 14px !important;
+        padding: 6px 12px !important;
+        min-width: 120px !important;
+    }
+    .feature-section {
+        flex-direction: column !important;
+        gap: var(--spacing-md) !important;
+    }
+    .feature-title {
+        flex: none !important;
+        width: 100% !important;
+    }
+    .content-container {
+        padding: var(--spacing-md) !important;
+    }
+    .tab-content-container {
+        padding: var(--spacing-md) !important;
+    }
+}
+
 .landing-tab {
     color: var(--landing-text-secondary) !important;
     background-color: transparent !important;
@@ -310,10 +534,6 @@ html {
 /* Accessibility */
 
 @media (prefers-reduced-motion: reduce) {
-    html,
-    .landing-page {
-        scroll-behavior: auto;
-    }
     .landing-learn-button,
     .landing-button-icon,
     .landing-welcome-content,
@@ -556,7 +776,214 @@ html {
 }
 
 
+/* Page navigation styles for How 8Knot Works */
+
+.two-page-container {
+    width: 100%;
+}
+
+.sidebar-navigation {
+    background: var(--color-card-bg) !important;
+    border: 1px solid var(--color-border) !important;
+    border-radius: var(--border-radius-md) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+}
+
+.sidebar-navigation .card-body {
+    background: transparent !important;
+}
+
+.page-nav-btn {
+    width: 100% !important;
+    text-align: center !important;
+    font-size: 0.85rem !important;
+    font-weight: 500 !important;
+    border-radius: 20px !important;
+    /* Rounded like main tabs */
+    transition: all 0.3s ease !important;
+    border: 1px solid var(--color-border) !important;
+    padding: 10px 16px !important;
+}
+
+.page-nav-btn-active {
+    background: var(--baby-blue-500) !important;
+    border-color: var(--baby-blue-500) !important;
+    color: var(--color-white) !important;
+}
+
+.page-nav-btn-inactive {
+    background: var(--color-border) !important;
+    border-color: var(--color-border) !important;
+    color: var(--text-secondary) !important;
+}
+
+.page-nav-btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+.page-nav-btn-inactive:hover {
+    background: var(--multiselect-hover-bg) !important;
+    color: var(--text-primary) !important;
+}
+
+.page-content {
+    width: 100%;
+    padding-left: 0;
+}
+
+
+/* Mobile responsive for sidebar */
+
+@media (max-width: 991px) {
+    .sidebar-navigation {
+        margin-bottom: var(--spacing-md) !important;
+    }
+    .sidebar-navigation .card-body {
+        padding: var(--spacing-sm) !important;
+    }
+    .page-nav-btn {
+        font-size: 0.85rem !important;
+        padding: 8px 12px !important;
+    }
+}
+
+.image-container-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--spacing-xl);
+}
+
+.main-feature-image {
+    max-width: 70%;
+    /* Reduced by 30% from 100% */
+    height: auto;
+    border-radius: var(--border-radius-md);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+
+/* DBC-based page items and features */
+
+.page-item {
+    background: var(--color-card-bg) !important;
+    border: 1px solid var(--color-border) !important;
+    border-radius: var(--border-radius-md) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.page-item:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.page-item .section-title,
+.feature-title,
+.step-title {
+    color: var(--text-primary) !important;
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    margin-bottom: var(--spacing-sm) !important;
+}
+
+.page-item .section-description,
+.feature-description,
+.step-description {
+    color: var(--text-secondary) !important;
+    font-size: 0.9rem !important;
+    line-height: 1.4 !important;
+    margin-bottom: 0 !important;
+}
+
+.feature-image {
+    max-width: 70%;
+    /* Reduced by 30% from 100% */
+    height: auto;
+    border-radius: var(--border-radius-sm);
+    margin: var(--spacing-sm) 0;
+}
+
+.image-caption {
+    font-size: 0.8rem !important;
+    color: var(--text-secondary) !important;
+    text-align: center;
+    margin-top: var(--spacing-xs) !important;
+}
+
+
+/* Bootstrap-based layout improvements */
+
+.content-container .card {
+    background: var(--color-card-bg) !important;
+    border: 1px solid var(--color-border) !important;
+    color: var(--text-primary) !important;
+}
+
+.content-container .card-body {
+    background: transparent !important;
+}
+
+.main-title {
+    color: var(--text-primary) !important;
+    font-size: 2rem !important;
+    font-weight: 700 !important;
+    margin-bottom: var(--spacing-md) !important;
+}
+
+.body-text {
+    color: var(--text-secondary) !important;
+    font-size: 1rem !important;
+    line-height: 1.6 !important;
+}
+
+
+/* Feature sections for vertical layout */
+
+.feature-section {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: var(--spacing-lg);
+}
+
+.feature-title {
+    margin-bottom: var(--spacing-md);
+}
+
+.about-body,
+.feature-body {
+    color: var(--text-secondary) !important;
+    font-size: 0.95rem !important;
+    line-height: 1.5 !important;
+    margin-bottom: var(--spacing-sm) !important;
+}
+
+.image-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: var(--spacing-sm);
+}
+
+
 /* Responsive design for welcome sections */
+
+@media (max-width: 1024px) and (min-width: 769px) {
+    /* Tablet view - 2x3 grid with smaller gaps */
+    .pages-grid {
+        gap: var(--spacing-md);
+        padding: var(--spacing-md);
+    }
+    .page-item {
+        padding: var(--spacing-sm);
+    }
+    .page-item .section-title h3 {
+        font-size: 1rem;
+    }
+    .page-item .section-description p {
+        font-size: 0.85rem;
+    }
+}
 
 @media (max-width: 768px) {
     .card_section_body {
@@ -585,5 +1012,21 @@ html {
     }
     .card_section_container {
         padding: 1rem;
+    }
+    /* Responsive 2x3 grid becomes 1x6 on mobile */
+    .pages-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(6, auto);
+        gap: var(--spacing-md);
+        padding: var(--spacing-md);
+    }
+    .page-item {
+        padding: var(--spacing-sm);
+    }
+    .page-item .section-title h3 {
+        font-size: 1rem;
+    }
+    .page-item .section-description p {
+        font-size: 0.85rem;
     }
 }
