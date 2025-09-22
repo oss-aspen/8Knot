@@ -12,7 +12,7 @@ dependencies = [
     "dash-mantine-components~=2.2",
     "flask==3.0.2",
     "flask-login==0.6.3",
-    "gunicorn==21.2.0",
+    "gunicorn~=23.0",
     "numpy==1.26.4",
     "pandas==2.2.0",
     "plotly==5.18.0",
