@@ -53,7 +53,7 @@ requires-dist = [
     { name = "python-dateutil", specifier = "~=2.9" },
     { name = "rapidfuzz", specifier = "~=3.13" },
     { name = "redis", specifier = "~=6.4" },
-    { name = "sqlalchemy", specifier = "==2.0.25" },
+    { name = "sqlalchemy", specifier = "~=2.0" },
 ]
 
 [[package]]
