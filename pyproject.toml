@@ -20,6 +20,6 @@ dependencies = [
     "pyarrow~=16.0",
     "python-dateutil~=2.9",
     "rapidfuzz~=3.13",
-    "redis==5.0.1",
+    "redis~=6.4",
     "sqlalchemy==2.0.25",
 ]
