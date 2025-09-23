@@ -9,6 +9,13 @@
 */
 
 
+/* Global smooth scrolling */
+
+html {
+    scroll-behavior: smooth;
+}
+
+
 /* CSS Variables for landing page */
 
 :root {
@@ -42,6 +49,7 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
+    scroll-behavior: smooth;
 }
 
 
@@ -302,6 +310,10 @@
 /* Accessibility */
 
 @media (prefers-reduced-motion: reduce) {
+    html,
+    .landing-page {
+        scroll-behavior: auto;
+    }
     .landing-learn-button,
     .landing-button-icon,
     .landing-welcome-content,
@@ -363,7 +375,9 @@
     }
 }
 
+
 /* Welcome Section Styles */
+
 .tab_section_container {
     width: 100%;
     padding: 2rem;
@@ -541,39 +555,34 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+
 /* Responsive design for welcome sections */
+
 @media (max-width: 768px) {
     .card_section_body {
         grid-template-columns: 1fr;
     }
-
     .instruction_card_split {
         grid-template-columns: 1fr;
         gap: 1rem;
     }
-
     .architecture_section {
         flex-direction: column;
         gap: 2rem;
     }
-
     .plotly_instructions_section {
         flex-direction: column;
         gap: 0.5rem;
     }
-
     .plotly_instructions_section_img {
         max-width: 150px;
     }
-
     .card_section_description h1 {
         font-size: 2rem;
     }
-
     .tab_section_container {
         padding: 1rem;
     }
-
     .card_section_container {
         padding: 1rem;
     }
