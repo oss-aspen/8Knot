@@ -31,6 +31,7 @@ from queries.package_version_query import package_version_query as pvq
 from queries.repo_releases_query import repo_releases_query as rrq
 from queries.ossf_score_query import ossf_score_query as osq
 from queries.repo_info_query import repo_info_query as riq
+from models import SearchItem
 import redis
 import flask
 from .search_utils import fuzzy_search
@@ -306,10 +307,10 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
 
         # Filter by prefix type if specified
         if prefix_type == "repo":
-            matched_options = [opt for opt in matched_options if isinstance(opt["value"], int)]
+            matched_options = [opt for opt in matched_options if SearchItem.from_id(opt["value"]) == SearchItem.REPO]
             logging.info(f"Filtered to {len(matched_options)} repos")
         elif prefix_type == "org":
-            matched_options = [opt for opt in matched_options if isinstance(opt["value"], str)]
+            matched_options = [opt for opt in matched_options if SearchItem.from_id(opt["value"]) == SearchItem.ORG]
             logging.info(f"Filtered to {len(matched_options)} orgs")
 
         # Format options with prefixes based on their type
@@ -323,17 +324,13 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
 
             seen_values.add(opt["value"])
             formatted_opt = opt.copy()
-            if isinstance(opt["value"], str):
-                # It's an org
-                formatted_opt["label"] = f"org: {opt['label']}"
-            else:
-                # It's a repo
-                formatted_opt["label"] = f"repo: {opt['label']}"
+            search_item = SearchItem.from_id(opt["value"])
+            formatted_opt["label"] = search_item.prefix(opt["label"])
             formatted_opts.append(formatted_opt)
 
         # Simple reordering: put organizations first, then repositories
-        orgs_first = [opt for opt in formatted_opts if isinstance(opt["value"], str)]
-        repos_after = [opt for opt in formatted_opts if isinstance(opt["value"], int)]
+        orgs_first = [opt for opt in formatted_opts if SearchItem.from_id(opt["value"]) == SearchItem.ORG]
+        repos_after = [opt for opt in formatted_opts if SearchItem.from_id(opt["value"]) == SearchItem.REPO]
         formatted_opts = orgs_first + repos_after
 
         # Always include the previous selections
@@ -354,10 +351,10 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
                 matched_opts = [opt for opt in all_options if opt["value"] == v]
                 if matched_opts:
                     formatted_v = matched_opts[0].copy()
-                    if isinstance(v, str):
+                    if SearchItem.from_id(v) == SearchItem.ORG:
                         # It's an org
                         formatted_v["label"] = f"org: {formatted_v['label']}"
-                    else:
+                    elif SearchItem.from_id(v) == SearchItem.REPO:
                         # It's a repo
                         formatted_v["label"] = f"repo: {formatted_v['label']}"
                     selected_options.append(formatted_v)
@@ -368,12 +365,8 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
                 for opt in all_current_options:
                     if opt["value"] == v:
                         formatted_v = opt.copy()
-                        if isinstance(v, str):
-                            # It's an org
-                            formatted_v["label"] = f"org: {opt['label']}"
-                        else:
-                            # It's a repo
-                            formatted_v["label"] = f"repo: {opt['label']}"
+                        search_item = SearchItem.from_id(v)
+                        formatted_v["label"] = search_item.prefix(opt["label"])
                         selected_options.append(formatted_v)
                         break
 
@@ -410,9 +403,10 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
                 for v in options:
                     if v["value"] in selections:
                         formatted_v = v.copy()
-                        if isinstance(v["value"], str):
+                        search_item = SearchItem.from_id(v)
+                        if search_item == SearchItem.ORG:
                             formatted_v["label"] = f"org: {v['label']}"
-                        else:
+                        elif search_item == SearchItem.REPO:
                             formatted_v["label"] = f"repo: {v['label']}"
                         default_options.append(formatted_v)
             except:
@@ -437,14 +431,12 @@ def multiselect_values_to_repo_ids(n_clicks, user_vals):
         logging.warning("NOTHING SELECTED IN SEARCH BAR")
         raise dash.exceptions.PreventUpdate
 
-    user_vals = [int(n) if n.isnumeric() else n for n in user_vals]
-
     # individual repo numbers
-    repos = [r for r in user_vals if isinstance(r, int)]
+    repos = [int(r) for r in user_vals if SearchItem.from_id(r) == SearchItem.REPO]
     logging.warning(f"REPOS: {repos}")
 
     # names of augur groups or orgs
-    names = [n for n in user_vals if isinstance(n, str)]
+    names = [n for n in user_vals if SearchItem.from_id(n) == SearchItem.ORG]
 
     org_repos = [augur.org_to_repos(o) for o in names if augur.is_org(o)]
     # flatten list repo_ids in orgs to 1D
@@ -690,10 +682,10 @@ def initialize_cache(_):
             options.sort(key=lambda x: x.get("label", "").lower())
 
         # For repos, keep the configured maximum number
-        repos = [opt for opt in options if isinstance(opt.get("value"), int)][:max_repos]
+        repos = [opt for opt in options if SearchItem.from_id(opt.get("value")) == SearchItem.REPO][:max_repos]
 
         # For orgs, keep all (there are usually only a few hundred)
-        orgs = [opt for opt in options if isinstance(opt.get("value"), str)]
+        orgs = [opt for opt in options if SearchItem.from_id(opt.get("value")) == SearchItem.ORG]
 
         # Combine and prepare for storage, limiting to max_total_results
         minimal_options = (repos + orgs)[:max_total_results]
