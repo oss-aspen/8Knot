@@ -31,7 +31,7 @@ from queries.package_version_query import package_version_query as pvq
 from queries.repo_releases_query import repo_releases_query as rrq
 from queries.ossf_score_query import ossf_score_query as osq
 from queries.repo_info_query import repo_info_query as riq
-from helpers import SearchItem
+from models import SearchItem
 import redis
 import flask
 from .search_utils import fuzzy_search

@@ -9,7 +9,7 @@ import logging
 import sys
 import requests
 from sqlalchemy.exc import SQLAlchemyError
-from helpers import SearchItem
+from models import SearchItem
 
 
 class AugurManager:
