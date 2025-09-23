@@ -12,7 +12,7 @@ from queries.affiliation_query import affiliation_query as aq
 from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
-from fuzzywuzzy import fuzz
+from rapidfuzz import fuzz
 import app
 import cache_manager.cache_facade as cf
 
@@ -242,7 +242,7 @@ def fuzzy_match(df, name):
     necessary for the loop to change the company name if there is a match. 70 is the match value
     threshold for the partial ratio to be considered a match
     """
-    matches = df.apply(lambda row: (fuzz.partial_ratio(row["company_name"], name) >= 70), axis=1)
+    matches = df.apply(lambda row: (fuzz.partial_ratio(row["company_name"], name, score_cutoff=70) >= 70), axis=1)
     return [i for i, x in enumerate(matches) if x]
 
 
