@@ -9,18 +9,19 @@ from dash import html, dcc
 import dash
 import dash_bootstrap_components as dbc
 
-# Global reference to search bar component (initialized by main layout)
-_search_bar_component = None
+# This will be imported from the main layout file
+search_bar = None
 
 
-def sidebar_section(icon_src=None, text="", page_link="/"):
+def sidebar_section(icon_src=None, text="Hello", page_link="/", horizontal_padding=12, vertical_padding=16):
     """
     Creates a clickable section in the sidebar, which allows navigation to different pages
 
     Args:
-        icon_src (str, optional): Path to icon image file
-        text (str): The text that will be displayed in the sidebar section
-        page_link (str): The page to navigate to
+        icon_src: Optionally label the section with an icon
+        text: The text that will be displayed in the sidebar section
+        page_link: The page to navigate to
+        horizontal_padding and vertical_padding: Fine-tune the spacing (kept for compatibility)
     """
     if icon_src:
         return dbc.NavLink(
@@ -39,7 +40,9 @@ def sidebar_section(icon_src=None, text="", page_link="/"):
         )
 
 
-def sidebar_dropdown(icon_src, text, dropdown_links, dropdown_id="dropdown"):
+def sidebar_dropdown(
+    icon_src, text, dropdown_links, dropdown_id="dropdown", horizontal_padding=12, vertical_padding=16
+):
     """Create a dropdown navigation with main item and dropdown content
 
     Args:
@@ -47,6 +50,8 @@ def sidebar_dropdown(icon_src, text, dropdown_links, dropdown_id="dropdown"):
         text (str): Text to display next to the icon
         dropdown_links (list): List of dropdown link components
         dropdown_id (str): Unique identifier for this dropdown (default: "dropdown")
+        horizontal_padding (int): Horizontal padding for the toggle button (kept for compatibility)
+        vertical_padding (int): Vertical padding for the toggle button (kept for compatibility)
     """
     return html.Div(
         [
@@ -77,6 +82,7 @@ def create_main_content_area():
         children=[
             dcc.Loading(
                 children=[html.Div(id="results-output-container", className="loading-container mb-4")],
+                color="var(--accent-blue)",
                 type="dot",
                 fullscreen=True,
             ),
@@ -84,10 +90,11 @@ def create_main_content_area():
                 dbc.Badge(
                     children="Data Loaded",
                     id="data-badge",
-                    color="success",
+                    color="var(--accent-success)",
                     className="data-badge me-1",
                 ),
                 type="cube",
+                color="var(--accent-success)",
             ),
             dash.page_container,
         ],
@@ -137,15 +144,12 @@ def create_sidebar_navigation():
 
 def create_sidebar():
     """Create the collapsible sidebar with search and navigation."""
-    if _search_bar_component is None:
-        raise ValueError("Search bar component not initialized. Call initialize_components() first.")
-
     return dbc.Collapse(
         html.Div(
             [
                 html.Div(
                     [
-                        _search_bar_component,
+                        search_bar,
                         create_sidebar_navigation(),
                     ],
                     className="sidebar-body",
@@ -216,10 +220,6 @@ def create_storage_quota_script():
 
 
 def initialize_components(search_bar_ref):
-    """Initialize component references from the main layout file.
-
-    Args:
-        search_bar_ref: The search bar component from the main layout
-    """
-    global _search_bar_component
-    _search_bar_component = search_bar_ref
+    """Initialize component references from the main layout file."""
+    global search_bar
+    search_bar = search_bar_ref
