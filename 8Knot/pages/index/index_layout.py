@@ -54,8 +54,7 @@ topbar = html.Div(
                 dbc.NavLink(
                     "Welcome",
                     href="/",
-                    external_link=True,
-                    target="_self",
+                    active="exact",
                     className="nav-link",
                 ),
                 dbc.NavLink(

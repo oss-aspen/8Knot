@@ -77,7 +77,6 @@ def create_main_content_area():
         children=[
             dcc.Loading(
                 children=[html.Div(id="results-output-container", className="loading-container mb-4")],
-                color="var(--accent-blue)",
                 type="dot",
                 fullscreen=True,
             ),
@@ -85,11 +84,10 @@ def create_main_content_area():
                 dbc.Badge(
                     children="Data Loaded",
                     id="data-badge",
-                    color="var(--accent-success)",
+                    color="success",
                     className="data-badge me-1",
                 ),
                 type="cube",
-                color="var(--accent-success)",
             ),
             dash.page_container,
         ],
