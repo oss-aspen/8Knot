@@ -831,7 +831,7 @@ def adjust_content_area_collapse(is_open):
     # Base styling that doesn't change
     base_style = {
         "background-color": "#1D1D1D",
-        "padding": "1rem",
+        "padding": "1rem",  # Restore normal padding
         "overflow-y": "auto",
         "height": "100%",
         "flex": "1",
@@ -847,3 +847,25 @@ def adjust_content_area_collapse(is_open):
         base_style["border-radius"] = "0 12px 12px 0"
 
     return base_style
+
+
+# Callback to hide loading components on landing page
+@callback(
+    [
+        Output("results-output-container", "style"),
+        Output("data-badge", "style"),
+    ],
+    Input("url", "pathname"),
+    prevent_initial_call=False,
+)
+def hide_loading_on_landing(pathname):
+    """Hide loading components when on landing page."""
+    if pathname == "/" or pathname is None:
+        # Hide loading components on landing page
+        return {"display": "none"}, {"display": "none"}
+    else:
+        # Show loading components on other pages
+        return {"display": "block"}, {"marginBottom": ".5%", "display": "inline-block"}
+
+
+# Note: Landing page callbacks moved to pages/landing/landing_callbacks.py
