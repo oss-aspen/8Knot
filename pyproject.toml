@@ -17,7 +17,7 @@ dependencies = [
     "pandas~=2.3.0",
     "plotly~=6.3",
     "psycopg2-binary==2.9.9",
-    "pyarrow~=16.0",
+    "pyarrow~=21.0",
     "python-dateutil~=2.9",
     "rapidfuzz~=3.13",
     "redis~=6.4",
