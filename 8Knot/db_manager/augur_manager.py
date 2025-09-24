@@ -9,6 +9,7 @@ import logging
 import sys
 import requests
 from sqlalchemy.exc import SQLAlchemyError
+from models import SearchItem
 
 
 class AugurManager:
@@ -282,11 +283,9 @@ class AugurManager:
                         if default_label == opt["label"]:
                             # Create a copy of the option with the "repo:" prefix
                             self.initial_search_option = opt.copy()
-                            # Add "repo:" prefix if it's a repo (integer value)
-                            if isinstance(opt["value"], int):
-                                self.initial_search_option["label"] = f"repo: {opt['label']}"
-                            else:
-                                self.initial_search_option["label"] = f"org: {opt['label']}"
+                            # Add "repo" or "org" prefix based on what type of search item this is
+                            search_item = SearchItem.from_id(opt["value"])
+                            self.initial_search_option["label"] = search_item.prefix(opt["label"])
 
                             logging.warning(f"INITIAL SEARCHBAR OPTION: NEW DEFAULT: {self.initial_search_option}")
                             found_option = True
