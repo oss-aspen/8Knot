@@ -276,7 +276,7 @@
 /* Dark Theme Content Styling */
 
 .content-container {
-    background: transparent !important;
+    background: var(--color-topbar-bg) !important;
     color: var(--text-primary) !important;
     padding: var(--spacing-lg) !important;
 }
@@ -300,8 +300,9 @@
 }
 
 .section-bordered {
-    background: var(--color-dark-bg) !important;
-    border: 1px solid var(--baby-blue-500) !important;
+    background: transparent !important;
+    border: none !important;
+    color: var(--color-topbar-bg) !important;
     border-radius: var(--border-radius) !important;
     padding: var(--spacing-lg) !important;
     margin-top: var(--spacing-lg) !important;
@@ -779,10 +780,10 @@
 }
 
 .sidebar-navigation {
-    background: var(--color-card-bg) !important;
-    border: 1px solid var(--color-border) !important;
+    background: transparent !important;
+    border: none !important;
     border-radius: var(--border-radius-md) !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+    box-shadow: none !important;
 }
 
 .sidebar-navigation .card-body {
@@ -911,8 +912,8 @@
 /* Bootstrap-based layout improvements */
 
 .content-container .card {
-    background: var(--color-card-bg) !important;
-    border: 1px solid var(--color-border) !important;
+    background: transparent !important;
+    border: none !important;
     color: var(--text-primary) !important;
 }
 
