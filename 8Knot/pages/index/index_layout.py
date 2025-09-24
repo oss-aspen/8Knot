@@ -6,91 +6,20 @@ from app import augur
 import os
 import logging
 
-#
-def sidebar_section(icon_src=None, text="Hello", page_link="/", horizontal_padding=12, vertical_padding=16):
-    """
-    Creates a clickable section in the sidebar, which allows navigation to different pages
+# Import layout components
+from .index_components import (
+    sidebar_section,
+    sidebar_dropdown,
+    create_main_content_area,
+    create_sidebar_navigation,
+    create_sidebar,
+    create_main_layout,
+    create_app_stores,
+    create_storage_quota_script,
+    initialize_components,
+)
 
-    Args:
-        icon_src: Optionally label the section with an icon
-        text: The text that will be displayed in the sidebar section
-        page_link: The page to navigate to
-        horizontal_padding and vertical_padding: Fine-tune the spacing
-    """
-    if icon_src:
-        return dbc.NavLink(
-            [
-                html.Img(src=icon_src, alt=text, style={"width": "24px", "height": "24px", "marginRight": "12px"}),
-                html.Span(text, style={"color": "#9c9c9c", "fontSize": "16px", "fontWeight": "400"}),
-            ],
-            href=page_link,
-            style={
-                "display": "flex",
-                "alignItems": "center",
-                "padding": f"{horizontal_padding}px {vertical_padding}px",
-                "borderRadius": "8px",
-                "marginBottom": "8px",
-                "textDecoration": "none",
-            },
-        )
-    else:
-        return dbc.NavLink(
-            text,
-            href=page_link,
-            style={
-                "color": "#9c9c9c",
-                "fontSize": "14px",
-                "padding": f"{horizontal_padding}px {vertical_padding}px",
-                "marginBottom": "4px",
-                "textDecoration": "none",
-                "display": "block",
-            },
-        )
-
-
-def sidebar_dropdown(
-    icon_src, text, dropdown_links, dropdown_id="dropdown", horizontal_padding=12, vertical_padding=16
-):
-    """Create a dropdown navigation with main item and dropdown content
-
-    Args:
-        icon_src (str): Source path for the icon image
-        text (str): Text to display next to the icon
-        dropdown_links (list): List of dropdown link components
-        dropdown_id (str): Unique identifier for this dropdown (default: "dropdown")
-        horizontal_padding (int): Horizontal padding for the toggle button
-        vertical_padding (int): Vertical padding for the toggle button
-    """
-    return html.Div(
-        [
-            html.Div(
-                [
-                    html.Img(
-                        src=icon_src,
-                        alt=text,
-                        style={"width": "24px", "height": "24px", "marginRight": "12px"},
-                    ),
-                    html.Span(text, style={"color": "#9c9c9c", "fontSize": "16px", "fontWeight": "400"}),
-                ],
-                style={
-                    "display": "flex",
-                    "alignItems": "center",
-                    "padding": f"{horizontal_padding}px {vertical_padding}px",
-                    "borderRadius": "8px",
-                    "cursor": "pointer",
-                },
-                id={"type": "sidebar-dropdown-toggle", "index": dropdown_id},
-            ),
-            html.Div(
-                dropdown_links,
-                id={"type": "sidebar-dropdown-content", "index": dropdown_id},
-                style={"display": "none", "padding": "8px 0", "borderRadius": "0 0 8px 8px"},
-            ),
-        ],
-        id={"type": "sidebar-dropdown-container", "index": dropdown_id},
-        style={"borderRadius": "8px", "marginBottom": "8px"},
-    )
-
+# Note: Welcome sections are now imported in pages/landing/landing.py
 
 # Top bar with logos and navigation links
 topbar = html.Div(
@@ -104,98 +33,44 @@ topbar = html.Div(
                     id="sidebar-toggle",
                     color="link",
                     size="sm",
-                    style={
-                        "color": "#9c9c9c",
-                        "fontSize": "18px",
-                        "padding": "8px 12px",
-                        "marginRight": "10px",
-                        "border": "none",
-                        "backgroundColor": "transparent",
-                    },
+                    className="sidebar-toggle",
                 ),
                 html.Img(
                     src="/assets/8Knot.svg",
                     alt="8Knot Logo",
-                    style={
-                        "width": "70px",
-                        "height": "22px",
-                        "margin": "20px 20px",
-                        "display": "inline-block",
-                        "verticalAlign": "middle",
-                    },
+                    className="logo",
                 ),
                 html.Img(
                     src="/assets/CHAOSS.svg",
                     alt="CHAOSS Logo",
-                    style={
-                        "width": "70px",
-                        "height": "22px",
-                        "margin": "10px -20px",
-                        "display": "inline-block",
-                        "verticalAlign": "middle",
-                    },
+                    className="logo logo--chaoss",
                 ),
             ],
-            style={"display": "flex", "alignItems": "center"},
+            className="topbar-left",
         ),
-        # Middle section with navigation links (moved from sidebar footer)
+        # Middle section with navigation links
         html.Div(
             [
                 dbc.NavLink(
                     "Welcome",
                     href="/",
                     active="exact",
-                    style={
-                        "color": "#9c9c9c",
-                        "fontSize": "16px",
-                        "padding": "6px 16px",
-                        "marginRight": "16px",
-                        "textDecoration": "none",
-                        "borderRadius": "8px",
-                        "lineHeight": "1.2",
-                    },
+                    className="nav-link",
                 ),
                 dbc.NavLink(
                     "Visualizations",
                     href="/repo_overview",
                     active="exact",
-                    style={
-                        "backgroundColor": "transparent",
-                        "border": "none",
-                        "color": "#9c9c9c",
-                        "fontSize": "16px",
-                        "textAlign": "left",
-                        "padding": "4px 16px",
-                        "borderRadius": "8px",
-                        "textDecoration": "none",
-                        "lineHeight": "1.2",
-                    },
+                    className="nav-link nav-link--visualization",
                 ),
             ],
-            style={
-                "display": "flex",
-                "alignItems": "center",
-                "justifyContent": "center",
-                "flex": "1",
-            },
+            className="topbar-center",
         ),
         # Right section (empty for now, can be used for future additions)
-        html.Div(
-            style={"minWidth": "150px"},  # Balances the left section
-        ),
+        html.Div(className="topbar-right"),
     ],
     id="rectangular-bar",
-    style={
-        "height": "60px",
-        "width": "100%",
-        "background-color": "#1D1D1D",
-        "display": "flex",
-        "alignItems": "center",
-        "justifyContent": "space-between",
-        "paddingLeft": "10px",
-        "paddingRight": "10px",
-        "border-bottom": "1.5px solid #292929",
-    },
+    className="topbar",
 )
 
 
@@ -502,189 +377,37 @@ navbar_bottom = dbc.NavbarSimple(
     dark=True,
 )
 
-# We need to wrap the container in a div to allow for custom styling
+# Initialize components with required references
+initialize_components(search_bar)
+
+# Note: Index layout provides the main application structure
+# The landing page is now registered separately in pages/landing/landing.py
+
+# Main application layout
 layout = html.Div(
     dbc.Container(
         [
-            # componets to store data from queries
-            dcc.Store(id="repo-choices", storage_type="session", data=[]),
-            # components to store job-ids for the worker queue
-            dcc.Store(id="job-ids", storage_type="session", data=[]),
-            dcc.Store(id="user-group-loading-signal", data="", storage_type="memory"),
-            dcc.Location(id="url"),
-            # Add client-side script to handle storage quota issues
-            # This script does two things:
-            # 1. Listens for global JavaScript errors related to storage quota being exceeded.
-            #    If such an error occurs, finds the element with id 'storage-quota-warning'
-            #    and makes it visible to alert the user.
-            # 2. Tests if sessionStorage can store a 512KB string.
-            #    If the test fails (due to quota limits), it displays the warning.
-            # The user will see the warning if the browser's session storage is full
-            html.Script(
-                """
-            window.addEventListener('error', function(event) {
-                if (event.message && event.message.toLowerCase().includes('quota') &&
-                    event.message.toLowerCase().includes('exceeded')) {
-                    var warningEl = document.getElementById('storage-quota-warning');
-                    if (warningEl) {
-                        warningEl.style.display = 'block';
-                    }
-                }
-            });
-
-            // Test storage capacity
-            try {
-                var testKey = 'storage_test';
-                var testString = new Array(512 * 1024).join('a');  // 512KB
-                sessionStorage.setItem(testKey, testString);
-                sessionStorage.removeItem(testKey);
-            } catch (e) {
-                if (e.name === 'QuotaExceededError' ||
-                    (e.message &&
-                    (e.message.toLowerCase().includes('quota') ||
-                     e.message.toLowerCase().includes('exceeded')))) {
-                    var warningEl = document.getElementById('storage-quota-warning');
-                    if (warningEl) {
-                        warningEl.style.display = 'block';
-                    }
-                }
-            }
-        """
-            ),
-            # navbar,
-            # Add login banner overlay (will be positioned via CSS)
+            # Application stores and scripts
+            *create_app_stores(),
+            create_storage_quota_script(),
+            # Login banner overlay
             login_banner if login_banner else html.Div(),
+            # Main application structure
             dbc.Row(
                 [
                     dbc.Col(
                         [
                             topbar,
-                            # where our page will be rendered
-                            # We are wrapping this in a div to allow for custom styling
-                            html.Div(
-                                [
-                                    # Left sidebar with dbc.Collapse
-                                    dbc.Collapse(
-                                        html.Div(
-                                            [
-                                                # Sidebar body (grows), contains search and nav
-                                                html.Div(
-                                                    [
-                                                        search_bar,
-                                                        # Navigation menu
-                                                        html.Div(
-                                                            [
-                                                                sidebar_section(
-                                                                    "/assets/repo_overview.svg",
-                                                                    "Repo Overview",
-                                                                    "/repo_overview",
-                                                                ),
-                                                                sidebar_section(
-                                                                    "/assets/contributions.svg",
-                                                                    "Contributions",
-                                                                    "/contributions",
-                                                                ),
-                                                                sidebar_dropdown(
-                                                                    "/assets/contributors.svg",
-                                                                    "Contributors",
-                                                                    [
-                                                                        sidebar_section(
-                                                                            icon_src=None,
-                                                                            text="Behavior",
-                                                                            page_link="/contributors/behavior",
-                                                                        ),
-                                                                        sidebar_section(
-                                                                            text="Contribution Types",
-                                                                            page_link="/contributors/contribution_types",
-                                                                        ),
-                                                                    ],
-                                                                    dropdown_id="contributors-dropdown",
-                                                                ),
-                                                                sidebar_section(
-                                                                    "/assets/affiliation.svg",
-                                                                    "Affiliation",
-                                                                    "/affiliation",
-                                                                ),
-                                                                sidebar_section(
-                                                                    "/assets/chaoss_small.svg", "CHAOSS", "/chaoss"
-                                                                ),
-                                                            ],
-                                                            style={"marginTop": "2rem", "paddingLeft": "6px"},
-                                                        ),
-                                                    ],
-                                                    style={"flex": "1 1 auto", "overflowY": "auto"},
-                                                ),
-                                            ],
-                                            style={
-                                                "width": "340px",
-                                                "background-color": "#1D1D1D",
-                                                "border-radius": "12px 0 0 12px",
-                                                "border-right": "1.5px solid #292929",
-                                                "padding": "1rem",
-                                                "flex-shrink": 0,
-                                                "display": "flex",
-                                                "flexDirection": "column",
-                                                "height": "calc(100vh - 60px - 56px - 4px)",
-                                                "overflow": "hidden",
-                                            },
-                                        ),
-                                        id="sidebar-collapse",
-                                        is_open=False,  # Start with sidebar collapsed
-                                        dimension="width",  # Collapse horizontally
-                                    ),
-                                    # Main content area (your existing page-container)
-                                    html.Div(
-                                        [
-                                            dcc.Loading(
-                                                children=[html.Div(id="results-output-container", className="mb-4")],
-                                                color="#119DFF",
-                                                type="dot",
-                                                fullscreen=True,
-                                            ),
-                                            dcc.Loading(
-                                                dbc.Badge(
-                                                    children="Data Loaded",
-                                                    id="data-badge",
-                                                    color="#0F5880",
-                                                    className="me-1",
-                                                    style={"marginBottom": ".5%"},
-                                                    # text_color="dark",
-                                                ),
-                                                type="cube",
-                                                color="#0F5880",
-                                            ),
-                                            dash.page_container,
-                                        ],
-                                        id="page-container",
-                                        style={
-                                            "border-radius": "0 12px 12px 0",
-                                            "background-color": "#1D1D1D",
-                                            "padding": "1rem",
-                                            "overflow-y": "auto",
-                                            "height": "100%",
-                                            "flex": "1",
-                                        },
-                                    ),
-                                ],
-                                id="main-layout-container",
-                                style={
-                                    "display": "flex",
-                                    "height": "calc(100vh - 60px - 56px - 4px)",
-                                },
-                            ),
+                            create_main_layout(),
                         ],
                     ),
                 ],
                 justify="start",
             ),
-            # Bottom navbar fixed to viewport bottom (render last)
             navbar_bottom,
         ],
         fluid=True,
-        className="dbc",
-        style={
-            "background-color": "#242424",
-        },
+        className="dbc app-main-container",
     ),
-    style={"background-color": "#242424", "min-height": "100vh", "margin": "0", "padding": "0"},
+    className="app-container",
 )
