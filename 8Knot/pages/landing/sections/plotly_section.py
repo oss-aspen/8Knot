@@ -9,10 +9,15 @@ layout = dbc.Container(
             [
                 dbc.Col(
                     [
-                        html.H1("Using 8Knot Visualizations", className="main-title"),
+                        html.H1(
+                            "Using 8Knot Visualizations",
+                            className="main-title",
+                            style={"font-size": "2.6rem !important"},
+                        ),
                         html.P(
                             "Visualizations in 8Knot are created with Plotly figures. These figures come with some convenient tools that might not be immediately obvious- please take a look at a few of the options below and use them to enhance your analysis.",
                             className="body-text",
+                            style={"font-size": "1.6rem !important"},
                         ),
                     ],
                     width=12,
@@ -30,10 +35,15 @@ layout = dbc.Container(
                             [
                                 dbc.Col(
                                     [
-                                        html.H3("About Graph", className="section-title"),
+                                        html.H3(
+                                            "About Graph",
+                                            className="section-title",
+                                            style={"font-size": "1.7rem !important"},
+                                        ),
                                         html.P(
                                             "Click on different parts of the graph to focus on them and zoom in for detail.",
-                                            className="about-body",
+                                            className="feature-body",
+                                            style={"font-size": "1.6rem !important"},
                                         ),
                                     ],
                                     width=12,
@@ -48,10 +58,15 @@ layout = dbc.Container(
                                     [
                                         html.Div(
                                             [
-                                                html.H3("Focus Areas", className="section-title"),
+                                                html.H3(
+                                                    "Focus Areas",
+                                                    className="section-title",
+                                                    style={"font-size": "1.7rem !important"},
+                                                ),
                                                 html.P(
                                                     "Click on any data point to focus on specific areas of the graph for detailed analysis.",
                                                     className="feature-body",
+                                                    style={"font-size": "1.6rem !important"},
                                                 ),
                                             ],
                                             className="feature-title",
@@ -83,9 +98,15 @@ layout = dbc.Container(
                                     [
                                         html.Div(
                                             [
-                                                html.H3("Exit Focus", className="section-title"),
+                                                html.H3(
+                                                    "Exit Focus",
+                                                    className="section-title",
+                                                    style={"font-size": "1.7rem !important"},
+                                                ),
                                                 html.P(
-                                                    "Double-click on the graph to exit focus.", className="feature-body"
+                                                    "Double-click on the graph to exit focus.",
+                                                    className="feature-body",
+                                                    style={"font-size": "1.6rem !important"},
                                                 ),
                                             ],
                                             className="feature-title",
@@ -117,10 +138,15 @@ layout = dbc.Container(
                                     [
                                         html.Div(
                                             [
-                                                html.H3("Legend Filter", className="section-title"),
+                                                html.H3(
+                                                    "Legend Filter",
+                                                    className="section-title",
+                                                    style={"font-size": "1.7rem !important"},
+                                                ),
                                                 html.P(
                                                     "Click on legend items to remove them from the graph; resets axes if necessary.",
                                                     className="feature-body",
+                                                    style={"font-size": "1.6rem !important"},
                                                 ),
                                             ],
                                             className="feature-title",
@@ -152,10 +178,15 @@ layout = dbc.Container(
                                     [
                                         html.Div(
                                             [
-                                                html.H3("Plotly Toolbar", className="section-title"),
+                                                html.H3(
+                                                    "Plotly Toolbar",
+                                                    className="section-title",
+                                                    style={"font-size": "1.7rem !important"},
+                                                ),
                                                 html.P(
                                                     "Hover over the top right corner to see Plotly tool options. Options available: Download image, Zoom, Pan, Box Select, Lasso Select, Zoom in, Zoom out, Autoscale, and Reset Axis.",
                                                     className="feature-body",
+                                                    style={"font-size": "1.6rem !important"},
                                                 ),
                                             ],
                                             className="feature-title",

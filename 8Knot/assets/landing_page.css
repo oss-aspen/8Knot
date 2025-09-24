@@ -223,18 +223,18 @@
     padding: 8px 20px !important;
     gap: 4px !important;
     height: 45px !important;
-    background: var(--color-border) !important;
+    background: var(--baby-blue-700) !important;
     border-width: 1px 1px 0px 1px !important;
     border-style: solid !important;
     border-color: var(--baby-blue-500) !important;
     border-radius: 8px 8px 0px 0px !important;
     font-family: 'Inter', sans-serif !important;
     font-style: normal !important;
-    font-weight: 400 !important;
-    font-size: 16px !important;
+    font-weight: 600 !important;
+    font-size: 18px !important;
     line-height: 180% !important;
     text-align: center !important;
-    color: var(--text-secondary) !important;
+    color: var(--color-white) !important;
     transition: all 0.3s ease !important;
     cursor: pointer !important;
     margin: 0 !important;
@@ -257,23 +257,19 @@
 /* Specific tab widths for DBC tabs */
 
 .tabs-header .nav-tabs .nav-item:nth-child(1) .nav-link {
-    width: 241px !important;
+    width: 260px !important;
 }
 
 .tabs-header .nav-tabs .nav-item:nth-child(2) .nav-link {
-    width: 176px !important;
+    width: 160px !important;
 }
 
 .tabs-header .nav-tabs .nav-item:nth-child(3) .nav-link {
-    width: 184px !important;
+    width: 180px !important;
 }
 
 .tabs-header .nav-tabs .nav-item:nth-child(4) .nav-link {
-    width: 221px !important;
-}
-
-.tabs-header .nav-tabs .nav-item:nth-child(5) .nav-link {
-    width: 121px !important;
+    width: 140px !important;
 }
 
 
@@ -360,7 +356,7 @@
 /* Side Navigation in Card */
 
 .tab-content-container {
-    background: var(--color-card-bg) !important;
+    background: var(--color-topbar-bg) !important;
     padding: var(--spacing-lg) !important;
     border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg) !important;
 }
@@ -897,8 +893,8 @@
 }
 
 .feature-image {
-    max-width: 70%;
-    /* Reduced by 30% from 100% */
+    max-width: 50% !important;
+    /* Optimized size for better layout */
     height: auto;
     border-radius: var(--border-radius-sm);
     margin: var(--spacing-sm) 0;

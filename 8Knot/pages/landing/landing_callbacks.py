@@ -3,20 +3,25 @@ import dash_bootstrap_components as dbc
 
 # Import welcome sections for tab content
 try:
-    from .sections.how_8knot_works_page1 import layout as general_tab_page1
-    from .sections.how_8knot_works_page2 import layout as general_tab_page2
+    from .sections.pages_overview_section import layout as general_tab_contents
     from .sections.plotly_section import layout as plotly_tab_contents
-    from .sections.augur_login_section import layout as augur_tab_contents
-    from .sections.user_group_section import layout as group_tab_contents
+    from .sections.how_8knot_works_section import layout as how_8knot_works_tab_contents
     from .sections.definitions_section import layout as definitions_tab_contents
+
+    # Keeping for future use
+    from .sections.how_8knot_works_page2 import layout as general_tab_page2
+
+    # from .sections.augur_login_section import layout as augur_tab_contents
+    # from .sections.user_group_section import layout as group_tab_contents
 except ImportError:
     # Fallback if sections don't exist
-    general_tab_page1 = html.Div("General section page 1 not available")
-    general_tab_page2 = html.Div("General section page 2 not available")
+    general_tab_contents = html.Div("General section not available")
     plotly_tab_contents = html.Div("Plotly section not available")
-    augur_tab_contents = html.Div("Augur section not available")
-    group_tab_contents = html.Div("User group section not available")
+    how_8knot_works_tab_contents = html.Div("How 8knot works section not available")
     definitions_tab_contents = html.Div("Definitions section not available")
+    general_tab_page2 = html.Div("General section page 2 not available")
+    # augur_tab_contents = html.Div("Augur section not available")
+    # group_tab_contents = html.Div("User group section not available")
 
 # Create the How 8Knot Works tab with two pages
 def create_how_8knot_works_content():
@@ -88,8 +93,6 @@ def create_how_8knot_works_content():
     )
 
 
-general_tab_contents = create_how_8knot_works_content()
-
 # Landing Page Callbacks
 
 # Callback to handle Learn button and show/hide welcome content
@@ -125,9 +128,6 @@ def toggle_welcome_content(n_clicks):
         "fas fa-chevron-down landing-button-icon",
         {"expanded": False},
     )
-
-
-# Note: Animation handling is now done via CSS classes in the main callback above
 
 
 # Callback to handle page navigation within How 8Knot Works tab
@@ -185,10 +185,11 @@ def update_tab_content(active_tab):
     """Update the main content and side navigation title based on the selected DBC tab."""
     tab_content_map = {
         "plotlyfiguretools": (plotly_tab_contents, "Using 8Knot Visualizations"),
-        "general": (general_tab_contents, "How 8Knot Works"),
-        "auguraccount": (augur_tab_contents, "Logging into Augur"),
-        "usergroup": (group_tab_contents, "Creating Group Projects"),
+        "general": (general_tab_contents, "8Knot Pages"),
+        "how8knotworks": (how_8knot_works_tab_contents, "How 8Knot Works"),
         "definitions": (definitions_tab_contents, "Definitions"),
+        # "auguraccount": (augur_tab_contents, "Logging into Augur"),
+        # "usergroup": (group_tab_contents, "Creating Group Projects"),
     }
 
     content, title = tab_content_map.get(active_tab, (plotly_tab_contents, "Using 8Knot Visualizations"))

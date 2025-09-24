@@ -10,10 +10,11 @@ layout = dbc.Container(
             [
                 dbc.Col(
                     [
-                        html.H1("8Knot Visualizations", className="main-title"),
+                        html.H1("8Knot Pages", className="main-title", style={"font-size": "2.6rem !important"}),
                         html.P(
                             "Each page approaches the study of open source communities from a different perspective.",
                             className="body-text mb-4",
+                            style={"font-size": "1.6rem !important"},
                         ),
                     ],
                     width=12,
@@ -35,10 +36,15 @@ layout = dbc.Container(
                                             [
                                                 dbc.CardBody(
                                                     [
-                                                        html.H3("Repo Overview", className="section-title"),
+                                                        html.H3(
+                                                            "Repo Overview",
+                                                            className="section-title",
+                                                            style={"font-size": "1.7rem !important"},
+                                                        ),
                                                         html.P(
                                                             "General information at the repo group and single repo level",
                                                             className="section-description",
+                                                            style={"font-size": "1.6rem !important"},
                                                         ),
                                                     ]
                                                 )
@@ -56,10 +62,15 @@ layout = dbc.Container(
                                             [
                                                 dbc.CardBody(
                                                     [
-                                                        html.H3("Contributions", className="section-title"),
+                                                        html.H3(
+                                                            "Contributions",
+                                                            className="section-title",
+                                                            style={"font-size": "1.7rem !important"},
+                                                        ),
                                                         html.P(
-                                                            "General information at the repo group and single repo level",
+                                                            "Track pull requests, commits, and issue activity across repositories",
                                                             className="section-description",
+                                                            style={"font-size": "1.6rem !important"},
                                                         ),
                                                     ]
                                                 )
@@ -77,10 +88,15 @@ layout = dbc.Container(
                                             [
                                                 dbc.CardBody(
                                                     [
-                                                        html.H3("Contributors", className="section-title"),
+                                                        html.H3(
+                                                            "Contributors",
+                                                            className="section-title",
+                                                            style={"font-size": "1.7rem !important"},
+                                                        ),
                                                         html.P(
-                                                            "General information at the repo group and single repo level",
+                                                            "Analyze contributor behavior, types, and engagement patterns",
                                                             className="section-description",
+                                                            style={"font-size": "1.6rem !important"},
                                                         ),
                                                     ]
                                                 )
@@ -104,10 +120,15 @@ layout = dbc.Container(
                                             [
                                                 dbc.CardBody(
                                                     [
-                                                        html.H3("CHAOSS", className="section-title"),
+                                                        html.H3(
+                                                            "CHAOSS",
+                                                            className="section-title",
+                                                            style={"font-size": "1.7rem !important"},
+                                                        ),
                                                         html.P(
-                                                            "General information at the repo group and single repo level",
+                                                            "Community health metrics and CHAOSS standard measurements",
                                                             className="section-description",
+                                                            style={"font-size": "1.6rem !important"},
                                                         ),
                                                     ]
                                                 )
@@ -125,10 +146,15 @@ layout = dbc.Container(
                                             [
                                                 dbc.CardBody(
                                                     [
-                                                        html.H3("Affiliations", className="section-title"),
+                                                        html.H3(
+                                                            "Affiliations",
+                                                            className="section-title",
+                                                            style={"font-size": "1.7rem !important"},
+                                                        ),
                                                         html.P(
-                                                            "General information at the repo group and single repo level",
+                                                            "Organization and company affiliations of project contributors",
                                                             className="section-description",
+                                                            style={"font-size": "1.6rem !important"},
                                                         ),
                                                     ]
                                                 )
@@ -146,10 +172,15 @@ layout = dbc.Container(
                                             [
                                                 dbc.CardBody(
                                                     [
-                                                        html.H3("Info", className="section-title"),
+                                                        html.H3(
+                                                            "Info",
+                                                            className="section-title",
+                                                            style={"font-size": "1.7rem !important"},
+                                                        ),
                                                         html.P(
-                                                            "General information at the repo group and single repo level",
+                                                            "Additional project information and metadata analysis",
                                                             className="section-description",
+                                                            style={"font-size": "1.6rem !important"},
                                                         ),
                                                     ]
                                                 )
