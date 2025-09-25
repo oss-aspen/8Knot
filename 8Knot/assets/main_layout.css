@@ -310,21 +310,6 @@
     color: var(--text-primary);
 }
 
-.search-icon {
-    background-color: transparent;
-    border: none;
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-100%);
-    font-weight: bold;
-    z-index: 2;
-}
-
-
 /* Search Controls */
 
 .search-controls {
