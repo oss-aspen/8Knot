@@ -74,7 +74,7 @@ layout = dbc.Container(
                                         html.Img(
                                             src="assets/8knot_works.png",
                                             className="img-fluid main-feature-image",
-                                            alt="8Knot Works Overview",
+                                            alt="a diagram showing how the 8Knot application works. on the left is the 8knot application which communicates with celery workers via two in-memory key-value stores (task queue and data cache) these workers then run the tasks or fetch data from the Augur database.",
                                             style={
                                                 "width": "100%",
                                                 "max-width": "800px",
