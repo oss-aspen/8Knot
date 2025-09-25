@@ -322,15 +322,16 @@
 
 .section-title h3 {
     color: var(--color-secondary) !important;
-    font-size: 18px !important;
+    font-size: 1.8rem !important;
     font-weight: 600 !important;
     margin-bottom: var(--spacing-sm) !important;
 }
 
 .feature-body p {
     color: var(--text-secondary) !important;
-    font-size: 14px !important;
-    line-height: 1.4 !important;
+    font-size: 1.8rem !important;
+    font-weight: 400 !important;
+    line-height: 1.6 !important;
     margin-bottom: var(--spacing-sm) !important;
 }
 
@@ -879,7 +880,7 @@
 .feature-title,
 .step-title {
     color: var(--text-primary) !important;
-    font-size: 1.1rem !important;
+    font-size: 1.8rem !important;
     font-weight: 600 !important;
     margin-bottom: var(--spacing-sm) !important;
 }
@@ -888,8 +889,9 @@
 .feature-description,
 .step-description {
     color: var(--text-secondary) !important;
-    font-size: 0.9rem !important;
-    line-height: 1.4 !important;
+    font-size: 1.8rem !important;
+    font-weight: 400 !important;
+    line-height: 1.6 !important;
     margin-bottom: 0 !important;
 }
 
@@ -923,14 +925,15 @@
 
 .main-title {
     color: var(--text-primary) !important;
-    font-size: 2rem !important;
+    font-size: 2.6rem !important;
     font-weight: 700 !important;
     margin-bottom: var(--spacing-md) !important;
 }
 
 .body-text {
     color: var(--text-secondary) !important;
-    font-size: 1rem !important;
+    font-size: 1.8rem !important;
+    font-weight: 400 !important;
     line-height: 1.6 !important;
 }
 
@@ -950,8 +953,9 @@
 .about-body,
 .feature-body {
     color: var(--text-secondary) !important;
-    font-size: 0.95rem !important;
-    line-height: 1.5 !important;
+    font-size: 1.8rem !important;
+    font-weight: 400 !important;
+    line-height: 1.6 !important;
     margin-bottom: var(--spacing-sm) !important;
 }
 

@@ -82,7 +82,6 @@ def create_main_content_area():
         children=[
             dcc.Loading(
                 children=[html.Div(id="results-output-container", className="loading-container mb-4")],
-                color="#119DFF",
                 type="dot",
                 fullscreen=True,
             ),
@@ -90,11 +89,9 @@ def create_main_content_area():
                 dbc.Badge(
                     children="Data Loaded",
                     id="data-badge",
-                    color="success",
                     className="data-badge me-1",
                 ),
                 type="cube",
-                color="#0F5880",
             ),
             dash.page_container,
         ],
@@ -220,6 +217,12 @@ def create_storage_quota_script():
 
 
 def initialize_components(search_bar_ref):
-    """Initialize component references from the main layout file."""
+    """
+    Initialize component references from the main layout file.
+
+    Args:
+        search_bar_ref: Reference to the search bar component from index_layout.py
+                       Used to make the search bar available to sidebar components
+    """
     global search_bar
     search_bar = search_bar_ref

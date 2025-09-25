@@ -11,11 +11,10 @@ layout = dbc.Container(
             [
                 dbc.Col(
                     [
-                        html.H1("How 8Knot Works", className="main-title", style={"font-size": "2.6rem !important"}),
+                        html.H1("How 8Knot Works", className="main-title"),
                         html.P(
                             "8Knot provides comprehensive analysis of open source project health and community dynamics using Augur's data foundation.",
                             className="body-text mb-4",
-                            style={"font-size": "1.6rem !important"},
                         ),
                     ],
                     width=12,

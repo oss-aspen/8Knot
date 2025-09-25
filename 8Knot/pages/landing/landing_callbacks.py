@@ -9,7 +9,7 @@ try:
     from .sections.definitions_section import layout as definitions_tab_contents
 
     # Keeping for future use
-    from .sections.how_8knot_works_page2 import layout as general_tab_page2
+    from .sections.how_8knot_works_architecture import layout as architecture_tab_layout
 
     # from .sections.augur_login_section import layout as augur_tab_contents
     # from .sections.user_group_section import layout as group_tab_contents
@@ -19,7 +19,7 @@ except ImportError:
     plotly_tab_contents = html.Div("Plotly section not available")
     how_8knot_works_tab_contents = html.Div("How 8knot works section not available")
     definitions_tab_contents = html.Div("Definitions section not available")
-    general_tab_page2 = html.Div("General section page 2 not available")
+    architecture_tab_layout = html.Div("Architecture section not available")
     # augur_tab_contents = html.Div("Augur section not available")
     # group_tab_contents = html.Div("User group section not available")
 
@@ -41,7 +41,7 @@ def create_how_8knot_works_content():
                                                 [
                                                     dbc.Button(
                                                         "8Knot Pages",
-                                                        id="page-1-btn",
+                                                        id="pages-overview-nav-btn",
                                                         className="page-nav-btn page-nav-btn-active",
                                                         n_clicks=0,
                                                         outline=False,
@@ -50,7 +50,7 @@ def create_how_8knot_works_content():
                                                     ),
                                                     dbc.Button(
                                                         "How 8Knot Works",
-                                                        id="page-2-btn",
+                                                        id="architecture-nav-btn",
                                                         className="page-nav-btn page-nav-btn-inactive",
                                                         n_clicks=0,
                                                         outline=True,
@@ -76,9 +76,9 @@ def create_how_8knot_works_content():
                     dbc.Col(
                         [
                             html.Div(
-                                id="page-content",
+                                id="how-8knot-works-content-area",
                                 className="page-content",
-                                children=[general_tab_page1],  # Default to page 1
+                                children=[general_tab_page1],  # Default to pages overview
                             ),
                         ],
                         width=12,
@@ -133,42 +133,42 @@ def toggle_welcome_content(n_clicks):
 # Callback to handle page navigation within How 8Knot Works tab
 @callback(
     [
-        Output("page-content", "children"),
-        Output("page-1-btn", "className"),
-        Output("page-2-btn", "className"),
-        Output("page-1-btn", "outline"),
-        Output("page-2-btn", "outline"),
+        Output("how-8knot-works-content-area", "children"),
+        Output("pages-overview-nav-btn", "className"),
+        Output("architecture-nav-btn", "className"),
+        Output("pages-overview-nav-btn", "outline"),
+        Output("architecture-nav-btn", "outline"),
     ],
     [
-        Input("page-1-btn", "n_clicks"),
-        Input("page-2-btn", "n_clicks"),
+        Input("pages-overview-nav-btn", "n_clicks"),
+        Input("architecture-nav-btn", "n_clicks"),
     ],
     prevent_initial_call=False,
 )
-def update_page_content(page1_clicks, page2_clicks):
-    """Update the page content within How 8Knot Works tab using DBC button states."""
+def update_how_8knot_works_content(pages_overview_clicks, architecture_clicks):
+    """Update the content area within How 8Knot Works tab based on navigation button clicks."""
     # Determine which button was clicked most recently
-    if page1_clicks is None:
-        page1_clicks = 0
-    if page2_clicks is None:
-        page2_clicks = 0
+    if pages_overview_clicks is None:
+        pages_overview_clicks = 0
+    if architecture_clicks is None:
+        architecture_clicks = 0
 
-    # Show page 2 if page 2 button was clicked more recently and at least once
-    if page2_clicks > 0 and page2_clicks >= page1_clicks:
+    # Show architecture content if architecture button was clicked more recently and at least once
+    if architecture_clicks > 0 and architecture_clicks >= pages_overview_clicks:
         return (
-            general_tab_page2,
-            "page-nav-btn page-nav-btn-inactive",  # page 1 inactive
-            "page-nav-btn page-nav-btn-active",  # page 2 active
-            True,  # page 1 outline (inactive)
-            False,  # page 2 solid (active)
+            architecture_tab_layout,
+            "page-nav-btn page-nav-btn-inactive",  # pages overview inactive
+            "page-nav-btn page-nav-btn-active",  # architecture active
+            True,  # pages overview outline (inactive)
+            False,  # architecture solid (active)
         )
     else:
         return (
             general_tab_page1,
-            "page-nav-btn page-nav-btn-active",  # page 1 active
-            "page-nav-btn page-nav-btn-inactive",  # page 2 inactive
-            False,  # page 1 solid (active)
-            True,  # page 2 outline (inactive)
+            "page-nav-btn page-nav-btn-active",  # pages overview active
+            "page-nav-btn page-nav-btn-inactive",  # architecture inactive
+            False,  # pages overview solid (active)
+            True,  # architecture outline (inactive)
         )
 
 
@@ -181,9 +181,9 @@ def update_page_content(page1_clicks, page2_clicks):
     Input("welcome-tabs", "active_tab"),
     prevent_initial_call=False,
 )
-def update_tab_content(active_tab):
-    """Update the main content and side navigation title based on the selected DBC tab."""
-    tab_content_map = {
+def update_main_tab_content(selected_tab_id):
+    """Update the main content and navigation title based on the selected landing page tab."""
+    landing_tab_content_mapping = {
         "plotlyfiguretools": (plotly_tab_contents, "Using 8Knot Visualizations"),
         "general": (general_tab_contents, "8Knot Pages"),
         "how8knotworks": (how_8knot_works_tab_contents, "How 8Knot Works"),
@@ -192,5 +192,7 @@ def update_tab_content(active_tab):
         # "usergroup": (group_tab_contents, "Creating Group Projects"),
     }
 
-    content, title = tab_content_map.get(active_tab, (plotly_tab_contents, "Using 8Knot Visualizations"))
-    return content, title
+    tab_content, tab_title = landing_tab_content_mapping.get(
+        selected_tab_id, (plotly_tab_contents, "Using 8Knot Visualizations")
+    )
+    return tab_content, tab_title
