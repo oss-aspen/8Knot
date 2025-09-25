@@ -267,12 +267,7 @@ search_bar = html.Div(
                     size="sm",
                     color="outline-secondary",
                     title="Help",
-                    style={
-                        "backgroundColor": "transparent",
-                        "border": "none",
-                        "padding": "4px 8px",
-                        "fontSize": "14px",
-                    },
+                    className="search-extra-button"
                 ),
                 dbc.Button(
                     html.I(className="fas fa-list"),
@@ -281,19 +276,14 @@ search_bar = html.Div(
                     size="sm",
                     color="outline-secondary",
                     title="Repo List",
-                    style={
-                        "backgroundColor": "transparent",
-                        "border": "none",
-                        "padding": "4px 8px",
-                        "fontSize": "14px",
-                    },
+                    className="search-extra-button"
+
                 ),
                 dbc.Switch(
                     id="bot-switch",
                     label="GitHub Bot Filter",
                     value=True,
                     input_class_name="botlist-filter-switch",
-                    style={"fontSize": 12, "marginTop": "8px", "marginLeft": "10px"},
                 ),
             ],
             direction="horizontal",

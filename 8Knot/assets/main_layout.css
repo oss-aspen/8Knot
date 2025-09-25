@@ -327,23 +327,16 @@
     z-index: 2;
 }
 
-.search-help-button {
+button.search-extra-button {
     background-color: transparent;
     border: none;
-    padding: 4px var(--spacing-xs);
+    padding: 4px 8px;
     font-size: 14px;
 }
 
-.search-list-button {
-    background-color: transparent;
-    border: none;
-    padding: 4px var(--spacing-xs);
-    font-size: 14px;
-}
-
-.bot-filter-switch {
+#bot-switch {
     font-size: 12px;
-    margin-top: var(--spacing-xs);
+    margin-top: 8px;
     margin-left: 10px;
 }
 
