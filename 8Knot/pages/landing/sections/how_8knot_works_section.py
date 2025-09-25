@@ -59,7 +59,7 @@ layout = dbc.Container(
                         )
                     ],
                     width=6,
-                )
+                ),
             ],
         ),
         # Centered image display
