@@ -9,7 +9,6 @@ try:
     from .sections.definitions_section import layout as definitions_tab_contents
 
     # Keeping for future use
-    from .sections.how_8knot_works_architecture import layout as architecture_tab_layout
 
     # from .sections.augur_login_section import layout as augur_tab_contents
     # from .sections.user_group_section import layout as group_tab_contents
@@ -19,78 +18,8 @@ except ImportError:
     plotly_tab_contents = html.Div("Plotly section not available")
     how_8knot_works_tab_contents = html.Div("How 8knot works section not available")
     definitions_tab_contents = html.Div("Definitions section not available")
-    architecture_tab_layout = html.Div("Architecture section not available")
     # augur_tab_contents = html.Div("Augur section not available")
     # group_tab_contents = html.Div("User group section not available")
-
-# Create the How 8Knot Works tab with two pages
-def create_how_8knot_works_content():
-    """Create the How 8Knot Works tab with left sidebar navigation using DBC components."""
-    return dbc.Container(
-        [
-            dbc.Row(
-                [
-                    # Left sidebar with vertical navigation
-                    dbc.Col(
-                        [
-                            dbc.Card(
-                                [
-                                    dbc.CardBody(
-                                        [
-                                            dbc.Stack(
-                                                [
-                                                    dbc.Button(
-                                                        "8Knot Pages",
-                                                        id="pages-overview-nav-btn",
-                                                        className="page-nav-btn page-nav-btn-active",
-                                                        n_clicks=0,
-                                                        outline=False,
-                                                        color="secondary",
-                                                        size="sm",
-                                                    ),
-                                                    dbc.Button(
-                                                        "How 8Knot Works",
-                                                        id="architecture-nav-btn",
-                                                        className="page-nav-btn page-nav-btn-inactive",
-                                                        n_clicks=0,
-                                                        outline=True,
-                                                        color="secondary",
-                                                        size="sm",
-                                                    ),
-                                                ],
-                                                direction="vertical",
-                                                gap=3,
-                                            )
-                                        ],
-                                        className="p-3",
-                                    )
-                                ],
-                                className="sidebar-navigation h-100",
-                            )
-                        ],
-                        width=12,
-                        lg=3,
-                        className="mb-3 mb-lg-0",
-                    ),
-                    # Main content area
-                    dbc.Col(
-                        [
-                            html.Div(
-                                id="how-8knot-works-content-area",
-                                className="page-content",
-                                children=[general_tab_page1],  # Default to pages overview
-                            ),
-                        ],
-                        width=12,
-                        lg=9,
-                    ),
-                ],
-                className="g-3",
-            )
-        ],
-        fluid=True,
-        className="two-page-container",
-    )
 
 
 # Landing Page Callbacks
@@ -128,48 +57,6 @@ def toggle_welcome_content(n_clicks):
         "fas fa-chevron-down landing-button-icon",
         {"expanded": False},
     )
-
-
-# Callback to handle page navigation within How 8Knot Works tab
-@callback(
-    [
-        Output("how-8knot-works-content-area", "children"),
-        Output("pages-overview-nav-btn", "className"),
-        Output("architecture-nav-btn", "className"),
-        Output("pages-overview-nav-btn", "outline"),
-        Output("architecture-nav-btn", "outline"),
-    ],
-    [
-        Input("pages-overview-nav-btn", "n_clicks"),
-        Input("architecture-nav-btn", "n_clicks"),
-    ],
-    prevent_initial_call=False,
-)
-def update_how_8knot_works_content(pages_overview_clicks, architecture_clicks):
-    """Update the content area within How 8Knot Works tab based on navigation button clicks."""
-    # Determine which button was clicked most recently
-    if pages_overview_clicks is None:
-        pages_overview_clicks = 0
-    if architecture_clicks is None:
-        architecture_clicks = 0
-
-    # Show architecture content if architecture button was clicked more recently and at least once
-    if architecture_clicks > 0 and architecture_clicks >= pages_overview_clicks:
-        return (
-            architecture_tab_layout,
-            "page-nav-btn page-nav-btn-inactive",  # pages overview inactive
-            "page-nav-btn page-nav-btn-active",  # architecture active
-            True,  # pages overview outline (inactive)
-            False,  # architecture solid (active)
-        )
-    else:
-        return (
-            general_tab_page1,
-            "page-nav-btn page-nav-btn-active",  # pages overview active
-            "page-nav-btn page-nav-btn-inactive",  # architecture inactive
-            False,  # pages overview solid (active)
-            True,  # architecture outline (inactive)
-        )
 
 
 # Callback to handle DBC tab switching and update content
