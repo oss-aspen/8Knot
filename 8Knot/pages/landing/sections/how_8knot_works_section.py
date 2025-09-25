@@ -6,7 +6,6 @@ import plotly.express as px
 # How 8knot Works section - showing the architecture image
 layout = dbc.Container(
     [
-        # Centered image display
         dbc.Row(
             [
                 dbc.Col(
@@ -22,6 +21,48 @@ layout = dbc.Container(
             ],
             className="mb-4",
         ),
+        # Text
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        dbc.Card(
+                            [
+                                dbc.CardBody(
+                                    [
+                                        html.H3("Cloud-native architecture", className="section-title"),
+                                        html.P(
+                                            "We designed 8Knot to be easily deployable locally but to also scale well in the cloud. On a laptop its a multi-container application. On a container orchestration platform (Openshift, Kubernetes) it's multi-service.",
+                                            className="feature-body",
+                                        ),
+                                    ],
+                                )
+                            ],
+                        )
+                    ],
+                    width=6,
+                ),
+                dbc.Col(
+                    [
+                        dbc.Card(
+                            [
+                                dbc.CardBody(
+                                    [
+                                        html.H3("Data science first", className="section-title"),
+                                        html.P(
+                                            "All analytical processing is done with Python data science packages. If a workload is sufficiently complex, we can use distributed computing to handle it. Machine learning and modeling are first-priority workloads.",
+                                            className="feature-body",
+                                        ),
+                                    ],
+                                )
+                            ],
+                        )
+                    ],
+                    width=6,
+                )
+            ],
+        ),
+        # Centered image display
         dbc.Row(
             [
                 dbc.Col(
