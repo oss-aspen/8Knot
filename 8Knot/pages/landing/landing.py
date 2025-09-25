@@ -4,16 +4,21 @@ import dash_bootstrap_components as dbc
 
 # Import welcome sections for tabs
 try:
-    from .sections.general_section import layout as general_tab_contents
+    from .sections.pages_overview_section import layout as general_tab_contents
     from .sections.plotly_section import layout as plotly_tab_contents
-    from .sections.augur_login_section import layout as augur_tab_contents
-    from .sections.user_group_section import layout as group_tab_contents
+    from .sections.how_8knot_works_section import layout as how_8knot_works_tab_contents
+    from .sections.definitions_section import layout as definitions_tab_contents
+
+    # from .sections.augur_login_section import layout as augur_tab_contents
+    # from .sections.user_group_section import layout as group_tab_contents
 except ImportError:
     # Fallback if sections don't exist
     general_tab_contents = html.Div("General section not available")
     plotly_tab_contents = html.Div("Plotly section not available")
-    augur_tab_contents = html.Div("Augur section not available")
-    group_tab_contents = html.Div("User group section not available")
+    how_8knot_works_tab_contents = html.Div("How 8knot works section not available")
+    definitions_tab_contents = html.Div("Definitions section not available")
+    # augur_tab_contents = html.Div("Augur section not available")
+    # group_tab_contents = html.Div("User group section not available")
 
 # Register this as the main landing page
 dash.register_page(__name__, path="/", order=1, title="Welcome")
@@ -70,56 +75,93 @@ def create_landing_hero():
 
 
 def create_welcome_content():
-    """Create the expandable welcome content section with tabs."""
+    """Create the expandable welcome content section with DBC tabs in cards."""
     return html.Div(
         id="welcome-content",
-        className="landing-welcome-content",
+        className="landing-welcome-content how-8knot-works-section",
         children=[
-            dbc.Container(
+            html.Div(
+                className="section-title-container",
+                children=[
+                    html.H1("8Knot Documentation", className="section-title"),
+                ],
+                style={"display": "none"},  # Hidden as per Figma design
+            ),
+            # DBC Card with Tabs Container
+            dbc.Card(
                 [
-                    html.H2(
-                        "Welcome to 8Knot",
-                        className="landing-welcome-title",
+                    # Card Header with Tabs
+                    dbc.CardHeader(
+                        dbc.Tabs(
+                            id="welcome-tabs",
+                            active_tab="plotlyfiguretools",
+                            className="landing-tabs-redesigned",
+                            children=[
+                                dbc.Tab(
+                                    label="Using 8Knot Visualizations",
+                                    tab_id="plotlyfiguretools",
+                                    label_class_name="landing-tab-redesigned tab01",
+                                    active_label_class_name="landing-tab-redesigned landing-tab-redesigned--selected tab01",
+                                ),
+                                dbc.Tab(
+                                    label="8Knot Pages",
+                                    tab_id="general",
+                                    label_class_name="landing-tab-redesigned tab02",
+                                    active_label_class_name="landing-tab-redesigned landing-tab-redesigned--selected tab02",
+                                ),
+                                dbc.Tab(
+                                    label="How 8Knot Works",
+                                    tab_id="how8knotworks",
+                                    label_class_name="landing-tab-redesigned tab03",
+                                    active_label_class_name="landing-tab-redesigned landing-tab-redesigned--selected tab03",
+                                ),
+                                dbc.Tab(
+                                    label="Definitions",
+                                    tab_id="definitions",
+                                    label_class_name="landing-tab-redesigned tab04",
+                                    active_label_class_name="landing-tab-redesigned landing-tab-redesigned--selected tab04",
+                                ),
+                            ],
+                        ),
+                        className="tabs-header",
                     ),
-                    dcc.Tabs(
-                        id="welcome-tabs",
-                        value="plotlyfiguretools",
-                        className="landing-tabs",
+                    # Card Body with Content Container
+                    dbc.CardBody(
+                        className="tab-content-container",
                         children=[
-                            dcc.Tab(
-                                label="Using 8Knot Visualizations",
-                                value="plotlyfiguretools",
-                                children=[plotly_tab_contents],
-                                className="landing-tab",
-                                selected_className="landing-tab landing-tab--selected",
+                            # Side Navigation
+                            html.Div(
+                                className="side-nav",
+                                children=[
+                                    html.Div(
+                                        className="tab-title",
+                                        children=[
+                                            html.Div(
+                                                className="content",
+                                                children=[
+                                                    html.Span(
+                                                        "Using 8Knot Visualizations",
+                                                        id="current-tab-title",
+                                                        className="tab-title-text",
+                                                    ),
+                                                    html.Div(className="arrow"),
+                                                ],
+                                            ),
+                                        ],
+                                    ),
+                                ],
                             ),
-                            dcc.Tab(
-                                label="How 8Knot Works",
-                                value="general",
-                                children=[general_tab_contents],
-                                className="landing-tab",
-                                selected_className="landing-tab landing-tab--selected",
-                            ),
-                            dcc.Tab(
-                                label="Logging into Augur",
-                                value="auguraccount",
-                                children=[augur_tab_contents],
-                                className="landing-tab",
-                                selected_className="landing-tab landing-tab--selected",
-                            ),
-                            dcc.Tab(
-                                label="Creating Project Groups",
-                                value="usergroup",
-                                children=[group_tab_contents],
-                                className="landing-tab",
-                                selected_className="landing-tab landing-tab--selected",
+                            # Main Content Area
+                            html.Div(
+                                id="tab-content-main",
+                                className="tab-content-main",
+                                children=[plotly_tab_contents],  # Default content
                             ),
                         ],
                     ),
                 ],
-                fluid=True,
-                className="landing-tab-content",
-            )
+                className="card-container",
+            ),
         ],
     )
 
