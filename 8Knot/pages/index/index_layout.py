@@ -216,32 +216,6 @@ search_bar = html.Div(
                             data=[augur.initial_multiselect_option()],
                             value=[augur.initial_multiselect_option()["value"]],
                             className="searchbar-dropdown",
-                            styles={
-                                "input": {
-                                    "fontSize": "16px",
-                                    "minHeight": "48px",
-                                    "height": "auto",
-                                    "padding": "12px 16px 12px 44px",
-                                    "borderRadius": "20px",
-                                    "display": "flex",
-                                    "flexWrap": "wrap",
-                                    "alignItems": "flex-start",
-                                    "backgroundColor": "#1D1D1D",
-                                    "borderColor": "#404040",
-                                    "position": "relative",
-                                    "zIndex": 1,
-                                },
-                                "dropdown": {
-                                    "borderRadius": "12px",
-                                    "backgroundColor": "#1D1D1D",
-                                    "border": "1px solid #444",
-                                },
-                                "item": {
-                                    "borderRadius": "8px",
-                                    "margin": "2px 4px",
-                                    "color": "white",
-                                },
-                            },
                         ),
                         dbc.Button(
                             html.I(className="fas fa-search"),
@@ -250,22 +224,11 @@ search_bar = html.Div(
                             size="sm",
                             color="outline-secondary",
                             title="Search",
-                            style={
-                                "backgroundColor": "transparent",
-                                "border": "none",
-                                "fontSize": "16px",
-                                "width": "16px",
-                                "height": "16px",
-                                "position": "absolute",
-                                "left": "10px",
-                                "top": "50%",
-                                "transform": "translateY(-100%)",
-                                "fontWeight": "bold",
-                                "zIndex": 2,
-                            },
+                            className="search-controls"
                         ),
                     ],
                     style={"position": "relative"},
+                    className="search-bar"
                 ),
                 dbc.Alert(
                     children='Please ensure that your spelling is correct. \
