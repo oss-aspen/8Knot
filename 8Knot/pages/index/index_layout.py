@@ -219,11 +219,13 @@ search_bar = html.Div(
                             styles={
                                 "input": {
                                     "fontSize": "16px",
-                                    "height": "48px",
-                                    "padding": "0 16px 0 44px",
+                                    "minHeight": "48px",
+                                    "height": "auto",
+                                    "padding": "12px 16px 12px 44px",
                                     "borderRadius": "20px",
                                     "display": "flex",
-                                    "alignItems": "center",
+                                    "flexWrap": "wrap",
+                                    "alignItems": "flex-start",
                                     "backgroundColor": "#1D1D1D",
                                     "borderColor": "#404040",
                                     "position": "relative",
