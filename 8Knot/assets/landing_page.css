@@ -322,14 +322,14 @@
 
 .section-title h3 {
     color: var(--color-secondary) !important;
-    font-size: 1.8rem !important;
+    font-size: 20px !important;
     font-weight: 600 !important;
     margin-bottom: var(--spacing-sm) !important;
 }
 
 .feature-body p {
     color: var(--text-secondary) !important;
-    font-size: 1.8rem !important;
+    font-size: 16px !important;
     font-weight: 400 !important;
     line-height: 1.6 !important;
     margin-bottom: var(--spacing-sm) !important;
@@ -619,13 +619,13 @@
 
 .card_section_description h1 {
     color: var(--primary-color);
-    font-size: 2.5rem;
+    font-size: 2.3rem;
     margin-bottom: 1rem;
     font-weight: 600;
 }
 
 .card_section_description p {
-    font-size: 1.2rem;
+    font-size: 1.0rem;
     line-height: 1.6;
     color: var(--text-secondary);
     max-width: 800px;
@@ -660,7 +660,7 @@
 
 .info_card h2 {
     color: var(--primary-color);
-    font-size: 1.4rem;
+    font-size: 1.0rem;
     margin-bottom: 0.5rem;
 }
 
@@ -690,7 +690,7 @@
 
 .instruction_card h2 {
     color: var(--primary-color);
-    font-size: 1.3rem;
+    font-size: 1.1rem;
     margin-bottom: 1rem;
 }
 
@@ -750,13 +750,13 @@
 
 .architecture_description h1 {
     color: var(--primary-color);
-    font-size: 2.2rem;
+    font-size: 2.0rem;
     margin-bottom: 1rem;
 }
 
 .architecture_description h2 {
     color: var(--primary-color);
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     margin: 2rem 0 0.5rem 0;
 }
 
@@ -880,7 +880,7 @@
 .feature-title,
 .step-title {
     color: var(--text-primary) !important;
-    font-size: 1.8rem !important;
+    font-size: 20px !important;
     font-weight: 600 !important;
     margin-bottom: var(--spacing-sm) !important;
 }
@@ -889,22 +889,22 @@
 .feature-description,
 .step-description {
     color: var(--text-secondary) !important;
-    font-size: 1.8rem !important;
+    font-size: 16px !important;
     font-weight: 400 !important;
     line-height: 1.6 !important;
     margin-bottom: 0 !important;
 }
 
 .feature-image {
-    max-width: 50% !important;
-    /* Optimized size for better layout */
+    max-width: 95% !important;
+    /* Even larger size for better visibility */
     height: auto;
     border-radius: var(--border-radius-sm);
     margin: var(--spacing-sm) 0;
 }
 
 .image-caption {
-    font-size: 0.8rem !important;
+    font-size: 0.9rem !important;
     color: var(--text-secondary) !important;
     text-align: center;
     margin-top: var(--spacing-xs) !important;
@@ -925,14 +925,14 @@
 
 .main-title {
     color: var(--text-primary) !important;
-    font-size: 2.6rem !important;
+    font-size: 32px !important;
     font-weight: 700 !important;
     margin-bottom: var(--spacing-md) !important;
 }
 
 .body-text {
     color: var(--text-secondary) !important;
-    font-size: 1.8rem !important;
+    font-size: 16px !important;
     font-weight: 400 !important;
     line-height: 1.6 !important;
 }
@@ -953,7 +953,7 @@
 .about-body,
 .feature-body {
     color: var(--text-secondary) !important;
-    font-size: 1.8rem !important;
+    font-size: 16px !important;
     font-weight: 400 !important;
     line-height: 1.6 !important;
     margin-bottom: var(--spacing-sm) !important;
@@ -1029,5 +1029,79 @@
     }
     .page-item .section-description p {
         font-size: 0.85rem;
+    }
+}
+
+
+/* Before/After Image Containers */
+
+.before-after-container {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin: 20px 0 !important;
+    gap: 20px !important;
+    flex-wrap: nowrap !important;
+}
+
+.before-image-container,
+.after-image-container {
+    flex: 1 !important;
+    text-align: center !important;
+    max-width: 45% !important;
+}
+
+.image-arrow {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 20px !important;
+    min-width: 60px !important;
+    flex-shrink: 0 !important;
+    align-self: center !important;
+}
+
+.arrow-image {
+    width: 80px !important;
+    height: auto !important;
+    opacity: 0.8 !important;
+}
+
+
+/* Large caption text for before/after images */
+
+.before-image-container .image-caption,
+.after-image-container .image-caption {
+    font-size: 0.9rem !important;
+    color: var(--text-secondary) !important;
+    margin-top: var(--spacing-sm) !important;
+    font-weight: 500 !important;
+    line-height: 1.4 !important;
+}
+
+
+/* Responsive design for before/after images */
+
+@media (max-width: 992px) {
+    .before-after-container {
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 30px !important;
+    }
+    .before-image-container,
+    .after-image-container {
+        max-width: 80% !important;
+    }
+    .image-arrow {
+        padding: 10px 0 !important;
+        min-width: auto !important;
+    }
+    .arrow-image {
+        transform: rotate(90deg) !important;
+        width: 60px !important;
+    }
+    .before-image-container .image-caption,
+    .after-image-container .image-caption {
+        font-size: 0.8rem !important;
     }
 }

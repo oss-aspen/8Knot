@@ -3,6 +3,66 @@ import dash
 import dash_bootstrap_components as dbc
 import plotly.express as px
 
+
+def create_before_after_images(before_src, after_src, before_caption, after_caption):
+    """
+    Create a before/after image pair with an arrow between them.
+
+    Args:
+        before_src (str): Path to the "before" image
+        after_src (str): Path to the "after" image
+        before_caption (str): Caption for the before image
+        after_caption (str): Caption for the after image
+
+    Returns:
+        html.Div: Container with before image, arrow, and after image
+    """
+    return html.Div(
+        [
+            # Before image
+            html.Div(
+                [
+                    html.Img(
+                        src=f"assets/{before_src}",
+                        className="feature-image img-fluid",
+                        alt=before_caption,
+                    ),
+                    html.P(
+                        before_caption,
+                        className="image-caption text-muted small",
+                    ),
+                ],
+                className="before-image-container",
+            ),
+            # Arrow
+            html.Div(
+                html.Img(
+                    src="assets/rightarrow.png",
+                    className="arrow-image",
+                    alt="Arrow pointing right",
+                ),
+                className="image-arrow",
+            ),
+            # After image
+            html.Div(
+                [
+                    html.Img(
+                        src=f"assets/{after_src}",
+                        className="feature-image img-fluid",
+                        alt=after_caption,
+                    ),
+                    html.P(
+                        after_caption,
+                        className="image-caption text-muted small",
+                    ),
+                ],
+                className="after-image-container",
+            ),
+        ],
+        className="before-after-container",
+    )
+
+
 layout = dbc.Container(
     [
         dbc.Row(
@@ -65,19 +125,11 @@ layout = dbc.Container(
                                             ],
                                             className="feature-title",
                                         ),
-                                        html.Div(
-                                            [
-                                                html.Img(
-                                                    src="assets/focus_group.png",
-                                                    className="feature-image img-fluid",
-                                                    alt="Focus Areas Example",
-                                                ),
-                                                html.P(
-                                                    "Click data points to focus on specific areas",
-                                                    className="image-caption text-muted small",
-                                                ),
-                                            ],
-                                            className="image-container",
+                                        create_before_after_images(
+                                            "focus_area.png",
+                                            "zoomed.png",
+                                            "Click and drag middle of the graph to focus on specific areas",
+                                            "Focused view shows detailed analysis of selected data",
                                         ),
                                     ],
                                     width=12,
@@ -103,19 +155,11 @@ layout = dbc.Container(
                                             ],
                                             className="feature-title",
                                         ),
-                                        html.Div(
-                                            [
-                                                html.Img(
-                                                    src="assets/focus_group.png",
-                                                    className="feature-image img-fluid",
-                                                    alt="Exit Focus Example",
-                                                ),
-                                                html.P(
-                                                    "Double-click to return to normal view",
-                                                    className="image-caption text-muted small",
-                                                ),
-                                            ],
-                                            className="image-container",
+                                        create_before_after_images(
+                                            "zoomed.png",
+                                            "zoomed_out.png",
+                                            "Focused view with detailed data",
+                                            "Double-click to return to normal view",
                                         ),
                                     ],
                                     width=12,
@@ -141,19 +185,11 @@ layout = dbc.Container(
                                             ],
                                             className="feature-title",
                                         ),
-                                        html.Div(
-                                            [
-                                                html.Img(
-                                                    src="assets/focus_group.png",
-                                                    className="feature-image img-fluid",
-                                                    alt="Legend Filter Example",
-                                                ),
-                                                html.P(
-                                                    "Click legend items to filter data",
-                                                    className="image-caption text-muted small",
-                                                ),
-                                            ],
-                                            className="image-container",
+                                        create_before_after_images(
+                                            "legend.png",
+                                            "legend_sel.png",
+                                            "Click on legend items to remove them from the graph",
+                                            "Selected items are hidden; axes reset if necessary",
                                         ),
                                     ],
                                     width=12,
@@ -182,7 +218,7 @@ layout = dbc.Container(
                                         html.Div(
                                             [
                                                 html.Img(
-                                                    src="assets/focus_group.png",
+                                                    src="assets/toolbar.png",
                                                     className="feature-image img-fluid",
                                                     alt="Plotly Toolbar Example",
                                                 ),
