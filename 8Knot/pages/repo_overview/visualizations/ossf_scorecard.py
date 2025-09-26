@@ -98,8 +98,12 @@ def toggle_popover(n, is_open):
     background=True,
 )
 def ossf_scorecard(repo: str):
+
+    if repo is not None:
+        repo = int(repo)
+
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=osq.__name__, repolist=[int(repo)]):
+    while not_cached := cf.get_uncached(func_name=osq.__name__, repolist=[repo]):
         logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 
@@ -109,7 +113,7 @@ def ossf_scorecard(repo: str):
     # GET ALL DATA FROM POSTGRES CACHE
     df = cf.retrieve_from_cache(
         tablename=osq.__name__,
-        repolist=[int(repo)],
+        repolist=[repo],
     )
 
     # test if there is data

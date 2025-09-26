@@ -80,11 +80,14 @@ def toggle_popover(n, is_open):
 )
 def repo_general_info(repo):
 
+    if repo is not None:
+        repo = int(repo)
+
     logging.warning(f"{VIZ_ID} - START")
     start = time.perf_counter()
 
     # get dataframes of data from cache
-    df_repo_files, df_repo_info, df_releases = multi_query_helper([int(repo)])
+    df_repo_files, df_repo_info, df_releases = multi_query_helper([repo])
 
     # test if there is data
     if df_repo_files.empty and df_repo_info.empty and df_releases.empty:
