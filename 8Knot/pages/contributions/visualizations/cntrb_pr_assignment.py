@@ -139,7 +139,7 @@ gc_cntrib_pr_assignment = dbc.Card(
                                         clearable=True,
                                         className="dark-date-picker",
                                     ),
-                                    width=5,
+                                    width=7,
                                 ),
                             ],
                             align="center",

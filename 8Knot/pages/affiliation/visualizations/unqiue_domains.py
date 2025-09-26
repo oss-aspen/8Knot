@@ -98,7 +98,7 @@ gc_unique_domains = dbc.Card(
                                         clearable=True,
                                         className="dark-date-picker",
                                     ),
-                                    width=5,
+                                    width=7,
                                 ),
                             ],
                             align="center",

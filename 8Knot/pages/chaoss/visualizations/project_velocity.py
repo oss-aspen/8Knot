@@ -215,7 +215,7 @@ gc_project_velocity = dbc.Card(
                                         clearable=True,
                                         className="dark-date-picker",
                                     ),
-                                    width=5,
+                                    width=7,
                                 ),
                             ],
                         ),

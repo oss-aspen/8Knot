@@ -126,7 +126,7 @@ gc_org_core_contributors = dbc.Card(
                                         className="dark-date-picker",
                                     ),
                                     # style={"marginTop": "1.7rem"},
-                                    width=5,
+                                    width=7,
                                 ),
                                 dbc.Col(
                                     dbc.Checklist(

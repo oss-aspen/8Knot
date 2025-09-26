@@ -100,18 +100,21 @@ gc_issues_over_time = dbc.Card(
                             justify="start",
                         ),
                         dbc.Row(
-                            dcc.DatePickerRange(
-                                id=f"date-picker-range-{PAGE}-{VIZ_ID}",
-                                min_date_allowed=dt.date(2005, 1, 1),
-                                max_date_allowed=dt.date.today(),
-                                initial_visible_month=dt.date(dt.date.today().year, 1, 1),
-                                clearable=True,
-                                start_date=dt.date(
-                                    dt.date.today().year - 2,
-                                    dt.date.today().month,
-                                    dt.date.today().day,
+                            dbc.Col(
+                                dcc.DatePickerRange(
+                                    id=f"date-picker-range-{PAGE}-{VIZ_ID}",
+                                    min_date_allowed=dt.date(2005, 1, 1),
+                                    max_date_allowed=dt.date.today(),
+                                    initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                                    clearable=True,
+                                    start_date=dt.date(
+                                        dt.date.today().year - 2,
+                                        dt.date.today().month,
+                                        dt.date.today().day,
+                                    ),
+                                    className="dark-date-picker",
                                 ),
-                                className="dark-date-picker",
+                                width=7,
                             ),
                         ),
                     ]
