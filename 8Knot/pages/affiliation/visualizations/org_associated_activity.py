@@ -133,7 +133,7 @@ gc_org_associated_activity = dbc.Card(
                                         clearable=True,
                                         className="dark-date-picker",
                                     ),
-                                    width=5,
+                                    width=7,
                                 ),
                             ],
                             justify="start",

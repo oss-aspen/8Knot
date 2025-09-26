@@ -99,7 +99,7 @@ gc_gh_org_affiliation = dbc.Card(
                                         clearable=True,
                                         className="dark-date-picker",
                                     ),
-                                    width=5,
+                                    width=7,
                                 ),
                             ],
                             align="center",
