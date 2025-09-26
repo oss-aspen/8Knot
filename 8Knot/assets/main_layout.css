@@ -279,6 +279,18 @@
 
 /* Search Bar Styles */
 
+
+/* fix for input background color */
+/* we need to override dash bootstrap components here. this selector should be more specific than
+.dbc input:not([type="radio"]):not([type="checkbox"]) */
+
+.searchbar-dropdown input#projects.mantine-MultiSelect-inputField::placeholder {
+    background-color: transparent !important;
+}
+.searchbar-dropdown input#projects.mantine-MultiSelect-inputField {
+    background-color: transparent !important;
+}
+
 .search-bar {
     padding-top: 16px;
 }
