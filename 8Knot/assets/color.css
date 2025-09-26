@@ -117,12 +117,6 @@ div.glace_headers {
   background-color: var(--color-secondary);
 }
 
-/* ==== DASH MANTINE COMPONENTS ==== */
-/* DMC multiselect custom styling */
-.dmc-multiselect-custom {
-  background-color: var(--color-card-bg);
-}
-
 /* ==== FORM COMPONENTS ==== */
 /* Switch styling with higher specificity */
 .filter-container .botlist-filter-switch:checked,
@@ -145,47 +139,6 @@ input.botlist-filter-switch:checked {
 .popover > .popover-header {
   background-color: #E5E5E5;
   color: #404040;
-}
-
-/* ==== MULTISELECT DROPDOWN STYLING ==== */
-/* Override Mantine MultiSelect hover state */
-.mantine-MultiSelect-item[data-hovered] {
-  background-color: var(--multiselect-hover-bg);
-}
-
-.dbc .searchbar-dropdown input:not([type=radio]):not([type=checkbox]) {
-  color: var(--bs-body-color);
-  background-color: var(--placeholder-bg-color)!important;
-}
-
-/* Override placeholder text background color */
-.searchbar-dropdown input::placeholder {
-  background-color: var(--placeholder-bg-color)!important;
-  color: var(--placeholder-text-color);
-  font-size: var(--placeholder-font-size);
-  line-height: var(--placeholder-line-height);
-  position: relative;
-  top: var(--placeholder-top-offset);
-}
-
-/* Ensure the placeholder background matches when focused */
-.searchbar-dropdown input:focus::placeholder {
-  background-color: var(--placeholder-bg-color)!important;
-  color: var(--placeholder-text-color);
-  font-size: var(--placeholder-font-size);
-  line-height: var(--placeholder-line-height);
-  position: relative;
-  top: var(--placeholder-top-offset);
-}
-
-/* Override any Mantine-specific placeholder styling */
-.mantine-MultiSelect-input::placeholder {
-  background-color: var(--placeholder-bg-color);
-  color: var(--placeholder-text-color);
-  font-size: var(--placeholder-font-size);
-  line-height: var(--placeholder-line-height);
-  position: relative;
-  top: var(--placeholder-top-offset);
 }
 
 /* Remove underline for button-as-link in sidebar */
