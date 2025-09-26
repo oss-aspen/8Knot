@@ -9,7 +9,7 @@ import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
-from pages.utils.graph_utils import get_graph_time_values, color_seq
+from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from queries.contributors_query import contributors_query as ctq
 from pages.utils.job_utils import nodata_graph
 import time
@@ -25,10 +25,23 @@ gc_contrib_importance_pie = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    id=f"graph-title-{PAGE}-{VIZ_ID}",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(html.H3(id=f"graph-title-{PAGE}-{VIZ_ID}", className="card-title")),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                color="outline-secondary",
+                                size="sm",
+                                className="about-graph-button",
+                            ),
+                            width="auto",
+                        ),
+                    ],
+                    align="center",
+                    justify="between",
+                    className="mb-3",
                 ),
                 dbc.Popover(
                     [
@@ -52,7 +65,9 @@ gc_contrib_importance_pie = dbc.Card(
                 ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
+                    style={"marginBottom": "1rem"},
                 ),
+                html.Hr(className="card-split"),  # Divider between graph and controls
                 dbc.Form(
                     [
                         dbc.Row(
@@ -60,112 +75,102 @@ gc_contrib_importance_pie = dbc.Card(
                                 dbc.Label(
                                     "Action Type:",
                                     html_for=f"action-type-{PAGE}-{VIZ_ID}",
-                                    width="auto",
+                                    width={"size": "auto"},
                                 ),
                                 dbc.Col(
-                                    [
-                                        dcc.Dropdown(
-                                            id=f"action-type-{PAGE}-{VIZ_ID}",
-                                            options=[
-                                                {"label": "Commit", "value": "Commit"},
-                                                {
-                                                    "label": "Issue Opened",
-                                                    "value": "Issue Opened",
-                                                },
-                                                {
-                                                    "label": "Issue Comment",
-                                                    "value": "Issue Comment",
-                                                },
-                                                {
-                                                    "label": "Issue Closed",
-                                                    "value": "Issue Closed",
-                                                },
-                                                {
-                                                    "label": "PR Open",
-                                                    "value": "PR Open",
-                                                },
-                                                {
-                                                    "label": "PR Review",
-                                                    "value": "PR Review",
-                                                },
-                                                {
-                                                    "label": "PR Comment",
-                                                    "value": "PR Comment",
-                                                },
-                                            ],
-                                            value="Commit",
-                                            clearable=False,
-                                        ),
-                                        dbc.Alert(
-                                            children="""No contributions of this type have been made.\n
-                                            Please select a different contribution type.""",
-                                            id=f"check-alert-{PAGE}-{VIZ_ID}",
-                                            dismissable=True,
-                                            fade=False,
-                                            is_open=False,
-                                            color="warning",
-                                        ),
-                                    ],
+                                    dcc.Dropdown(
+                                        id=f"action-type-{PAGE}-{VIZ_ID}",
+                                        options=[
+                                            {"label": "Commit", "value": "Commit"},
+                                            {
+                                                "label": "Issue Opened",
+                                                "value": "Issue Opened",
+                                            },
+                                            {
+                                                "label": "Issue Comment",
+                                                "value": "Issue Comment",
+                                            },
+                                            {
+                                                "label": "Issue Closed",
+                                                "value": "Issue Closed",
+                                            },
+                                            {
+                                                "label": "PR Open",
+                                                "value": "PR Open",
+                                            },
+                                            {
+                                                "label": "PR Review",
+                                                "value": "PR Review",
+                                            },
+                                            {
+                                                "label": "PR Comment",
+                                                "value": "PR Comment",
+                                            },
+                                        ],
+                                        value="Commit",
+                                        clearable=False,
+                                        className="dark-dropdown",
+                                    ),
                                     className="me-2",
                                     width=3,
+                                ),
+                                dbc.Alert(
+                                    children="""No contributions of this type have been made.\n
+                                Please select a different contribution type.""",
+                                    id=f"check-alert-{PAGE}-{VIZ_ID}",
+                                    dismissable=True,
+                                    fade=False,
+                                    is_open=False,
+                                    color="warning",
                                 ),
                                 dbc.Label(
                                     "Top K Contributors:",
                                     html_for=f"top-k-contributors-{PAGE}-{VIZ_ID}",
-                                    width="auto",
+                                    width={"size": "auto"},
                                 ),
                                 dbc.Col(
-                                    [
-                                        dbc.Input(
-                                            id=f"top-k-contributors-{PAGE}-{VIZ_ID}",
-                                            type="number",
-                                            min=2,
-                                            max=100,
-                                            step=1,
-                                            value=10,
-                                            size="sm",
-                                        ),
-                                    ],
+                                    dbc.Input(
+                                        id=f"top-k-contributors-{PAGE}-{VIZ_ID}",
+                                        type="number",
+                                        min=2,
+                                        max=100,
+                                        step=1,
+                                        value=10,
+                                        size="sm",
+                                        className="dark-input",
+                                    ),
                                     className="me-2",
                                     width=2,
                                 ),
                             ],
                             align="center",
+                            justify="start",
                         ),
                         dbc.Row(
-                            [
-                                dbc.Col(
-                                    [
-                                        dcc.DatePickerRange(
-                                            id=f"date-picker-range-{PAGE}-{VIZ_ID}",
-                                            min_date_allowed=dt.date(2005, 1, 1),
-                                            max_date_allowed=dt.date.today(),
-                                            initial_visible_month=dt.date(dt.date.today().year, 1, 1),
-                                            clearable=True,
-                                        ),
-                                    ],
+                            dbc.Col(
+                                dcc.DatePickerRange(
+                                    id=f"date-picker-range-{PAGE}-{VIZ_ID}",
+                                    min_date_allowed=dt.date(2005, 1, 1),
+                                    max_date_allowed=dt.date.today(),
+                                    initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                                    clearable=True,
+                                    start_date=dt.date(
+                                        dt.date.today().year - 2,
+                                        dt.date.today().month,
+                                        dt.date.today().day,
+                                    ),
+                                    className="dark-date-picker",
                                 ),
-                                dbc.Col(
-                                    [
-                                        dbc.Button(
-                                            "About Graph",
-                                            id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                            color="secondary",
-                                            size="sm",
-                                        ),
-                                    ],
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
-                                ),
-                            ],
-                            align="center",
-                            justify="between",
+                                width=7,
+                            )
                         ),
                     ]
                 ),
-            ]
-        )
+            ],
+            style={"padding": "1.5rem"},
+        ),
     ],
+    className="dark-card",
 )
 
 
@@ -300,7 +305,7 @@ def create_figure(df: pd.DataFrame, action_type):
         df,
         names="cntrb_id",  # can be replaced with login to unanonymize
         values=action_type,
-        color_discrete_sequence=color_seq,
+        color_discrete_sequence=baby_blue,
     )
 
     # display percent contributions and cntrb_id in each wedge
@@ -310,8 +315,5 @@ def create_figure(df: pd.DataFrame, action_type):
         textposition="inside",
         hovertemplate="Contributor ID: %{label} <br>Contributions: %{value}<br><extra></extra>",
     )
-
-    # add legend title
-    fig.update_layout(legend_title_text="Contributor ID")
 
     return fig

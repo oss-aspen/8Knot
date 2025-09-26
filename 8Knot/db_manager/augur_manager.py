@@ -9,6 +9,7 @@ import logging
 import sys
 import requests
 from sqlalchemy.exc import SQLAlchemyError
+from models import SearchItem
 
 
 class AugurManager:
@@ -181,6 +182,7 @@ class AugurManager:
         # Output is of the form: [{"label": repo_url, "value": repo_id}, ...]
         multiselect_repos = (
             df_search_bar[["repo_git", "repo_id"]]
+            .astype({"repo_id": str})
             .rename(columns={"repo_git": "label", "repo_id": "value"})
             .to_dict("records")
         )
@@ -281,11 +283,9 @@ class AugurManager:
                         if default_label == opt["label"]:
                             # Create a copy of the option with the "repo:" prefix
                             self.initial_search_option = opt.copy()
-                            # Add "repo:" prefix if it's a repo (integer value)
-                            if isinstance(opt["value"], int):
-                                self.initial_search_option["label"] = f"repo: {opt['label']}"
-                            else:
-                                self.initial_search_option["label"] = f"org: {opt['label']}"
+                            # Add "repo" or "org" prefix based on what type of search item this is
+                            search_item = SearchItem.from_id(opt["value"])
+                            self.initial_search_option["label"] = search_item.prefix(opt["label"])
 
                             logging.warning(f"INITIAL SEARCHBAR OPTION: NEW DEFAULT: {self.initial_search_option}")
                             found_option = True
@@ -295,7 +295,7 @@ class AugurManager:
         except Exception as e:
             logging.error(f"Error in initial_multiselect_option: {str(e)}")
             # Return a fallback option in case of any error
-            return {"label": "repo: Fallback Option", "value": -1}
+            return {"label": "repo: Fallback Option", "value": "-1"}
 
     def get_multiselect_options(self):
         """Getter method on all entries in repo+orgs options

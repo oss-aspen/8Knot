@@ -7,7 +7,7 @@ import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
-from pages.utils.graph_utils import color_seq
+from pages.utils.graph_utils import baby_blue
 from queries.repo_languages_query import repo_languages_query as rlq
 from pages.utils.job_utils import nodata_graph
 import time
@@ -21,10 +21,23 @@ gc_code_language = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    id=f"graph-title-{PAGE}-{VIZ_ID}",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(html.H3(id=f"graph-title-{PAGE}-{VIZ_ID}", className="card-title")),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                color="outline-secondary",
+                                size="sm",
+                                className="about-graph-button",
+                            ),
+                            width="auto",
+                        ),
+                    ],
+                    align="center",
+                    justify="between",
+                    className="mb-3",
                 ),
                 dbc.Popover(
                     [
@@ -42,7 +55,9 @@ gc_code_language = dbc.Card(
                 ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
+                    style={"marginBottom": "1rem"},
                 ),
+                html.Hr(className="card-split"),  # Divider between graph and controls
                 dbc.Form(
                     [
                         dbc.Row(
@@ -50,7 +65,7 @@ gc_code_language = dbc.Card(
                                 dbc.Label(
                                     "Graph View:",
                                     html_for=f"graph-view-{PAGE}-{VIZ_ID}",
-                                    width="auto",
+                                    width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     dbc.RadioItems(
@@ -67,27 +82,22 @@ gc_code_language = dbc.Card(
                                         ],
                                         value="file",
                                         inline=True,
+                                        className="custom-radio-buttons",
                                     ),
                                     className="me-2",
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
+                                    width=4,
                                 ),
                             ],
                             align="center",
+                            justify="start",
                         ),
                     ]
                 ),
-            ]
+            ],
+            style={"padding": "1.5rem"},  # Padding between main content and the card border
         )
     ],
+    className="dark-card",
 )
 
 
@@ -160,25 +170,20 @@ def process_data(df: pd.DataFrame):
     # SVG files give one line of code per file
     df.loc[df["programming_language"] == "SVG", "code_lines"] = df["files"]
 
-    # group files by their programing language and sum code lines and files
-    df_lang = df[["programming_language", "code_lines", "files"]].groupby("programming_language").sum().reset_index()
-
-    # require a language to have atleast .1 % of total files to be shown, if not grouped into other
-    min_files = df_lang["files"].sum() / 1000
-    df_lang.loc[df_lang.files <= min_files, "programming_language"] = "Other"
-    df_lang = (
-        df_lang[["programming_language", "code_lines", "files"]].groupby("programming_language").sum().reset_index()
-    )
+    # require a language to have atleast .1 % of total lines to be shown, if not grouped into other
+    min_lines = df["code_lines"].sum() / 1000
+    df.loc[df.code_lines <= min_lines, "programming_language"] = "Other"
+    df = df[["programming_language", "code_lines", "files"]].groupby("programming_language").sum().reset_index()
 
     # order by descending file number and reset format
-    df_lang = df_lang.sort_values(by="files", axis=0, ascending=False).reset_index()
-    df_lang.drop("index", axis=1, inplace=True)
+    df = df.sort_values(by="files", axis=0, ascending=False).reset_index()
+    df.drop("index", axis=1, inplace=True)
 
     # calculate percentages
-    df_lang["Code %"] = (df_lang["code_lines"] / df_lang["code_lines"].sum()) * 100
-    df_lang["Files %"] = (df_lang["files"] / df_lang["files"].sum()) * 100
+    df["Code %"] = (df["code_lines"] / df["code_lines"].sum()) * 100
+    df["Files %"] = (df["files"] / df["files"].sum()) * 100
 
-    return df_lang
+    return df
 
 
 def create_figure(df: pd.DataFrame, view):
@@ -188,14 +193,11 @@ def create_figure(df: pd.DataFrame, view):
         value = "code_lines"
 
     # graph generation
-    fig = px.pie(df, names="programming_language", values=value, color_discrete_sequence=color_seq)
+    fig = px.pie(df, names="programming_language", values=value, color_discrete_sequence=baby_blue)
     fig.update_traces(
         textposition="inside",
         textinfo="percent+label",
         hovertemplate="%{label} <br>Amount: %{value}<br><extra></extra>",
     )
-
-    # add legend title
-    fig.update_layout(legend_title_text="Languages")
 
     return fig

@@ -7,7 +7,7 @@ import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
-from pages.utils.graph_utils import get_graph_time_values, color_seq
+from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from queries.contributors_query import contributors_query as ctq
 from pages.utils.job_utils import nodata_graph
 import time
@@ -23,10 +23,28 @@ gc_contribs_by_action = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "Contributors by Action Type",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "Contributors by Action Type",
+                                className="card-title",
+                            ),
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                color="outline-secondary",
+                                size="sm",
+                                className="about-graph-button",
+                            ),
+                            width="auto",
+                        ),
+                    ],
+                    align="center",
+                    justify="between",
+                    className="mb-3",
                 ),
                 dbc.Popover(
                     [
@@ -45,7 +63,9 @@ gc_contribs_by_action = dbc.Card(
                 ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
+                    style={"marginBottom": "1rem"},
                 ),
+                html.Hr(className="card-split"),  # Divider between graph and controls
                 dbc.Form(
                     [
                         dbc.Row(
@@ -53,7 +73,7 @@ gc_contribs_by_action = dbc.Card(
                                 dbc.Label(
                                     "Action Type:",
                                     html_for=f"action-dropdown-{PAGE}-{VIZ_ID}",
-                                    width="auto",
+                                    width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     [
@@ -84,6 +104,7 @@ gc_contribs_by_action = dbc.Card(
                                             ],
                                             value="PR Opened",
                                             clearable=False,
+                                            className="dark-dropdown",
                                         ),
                                         dbc.Alert(
                                             children="""No contributions of this type have been made.\n
@@ -119,27 +140,19 @@ gc_contribs_by_action = dbc.Card(
                                         ],
                                         value="M1",
                                         inline=True,
+                                        className="custom-radio-buttons",
                                     ),
-                                    className="me-2",
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
                             align="center",
                         ),
                     ]
                 ),
-            ]
+            ],
+            style={"padding": "1.5rem"},
         )
     ],
+    className="dark-card",
 )
 
 
@@ -216,6 +229,22 @@ def process_data(df: pd.DataFrame, interval, action):
     # drop all contributions that are not the selected action
     df = df[df["Action"].str.contains(action)]
 
+    # For distinct contributors per interval: keep one row per (cntrb_id, interval)
+    """df["_period"] = df["created_at"].dt.to_period(interval)
+    df = df.drop_duplicates(subset=["cntrb_id", "_period"], keep="first")
+    # Use the start of the interval for plotting consistency
+    df["created_at"] = df["_period"].dt.start_time
+    df = df.drop(columns=["_period"])  # cleanup"""
+
+    freq_map = {"M1": "M", "M3": "Q", "M6": "2Q", "M12": "Y"}
+    pandas_freq = freq_map.get(interval, interval)
+
+    df["_period"] = df["created_at"].dt.to_period(pandas_freq)
+    df = df.drop_duplicates(subset=["cntrb_id", "_period"], keep="first")
+    df["created_at"] = df["_period"].dt.start_time
+    df = df.drop(columns=["_period"])
+    print(df)
+
     return df
 
 
@@ -224,7 +253,7 @@ def create_figure(df: pd.DataFrame, interval, action):
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
     # create plotly express histogram
-    fig = px.histogram(df, x="created_at", color_discrete_sequence=[color_seq[3]])
+    fig = px.histogram(df, x="created_at", color_discrete_sequence=[baby_blue[3]])
 
     # creates bins with interval size and customizes the hover value for the bars
     fig.update_traces(

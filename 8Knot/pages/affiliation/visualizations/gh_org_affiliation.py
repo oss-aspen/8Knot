@@ -7,12 +7,12 @@ import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
-from pages.utils.graph_utils import color_seq
+from pages.utils.graph_utils import baby_blue
 from queries.affiliation_query import affiliation_query as aq
 from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
-from fuzzywuzzy import fuzz
+from rapidfuzz import fuzz
 import app
 import cache_manager.cache_facade as cf
 
@@ -23,10 +23,28 @@ gc_gh_org_affiliation = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "Organization Affiliation by GitHub Account Info",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "Organization Affiliation by GitHub Account Info",
+                                className="card-title",
+                            ),
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                color="outline-secondary",
+                                size="sm",
+                                className="about-graph-button",
+                            ),
+                            width="auto",
+                        ),
+                    ],
+                    align="center",
+                    justify="between",
+                    className="mb-3",
                 ),
                 dbc.Popover(
                     [
@@ -46,7 +64,9 @@ gc_gh_org_affiliation = dbc.Card(
                 ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
+                    style={"marginBottom": "1rem"},
                 ),
+                html.Hr(className="card-split"),  # Divider between graph and controls
                 dbc.Form(
                     [
                         dbc.Row(
@@ -65,15 +85,11 @@ gc_gh_org_affiliation = dbc.Card(
                                         step=1,
                                         value=5,
                                         size="sm",
+                                        className="dark-input",
                                     ),
                                     className="me-2",
                                     width=2,
                                 ),
-                            ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
                                 dbc.Col(
                                     dcc.DatePickerRange(
                                         id=f"date-picker-range-{PAGE}-{VIZ_ID}",
@@ -81,28 +97,21 @@ gc_gh_org_affiliation = dbc.Card(
                                         max_date_allowed=dt.date.today(),
                                         initial_visible_month=dt.date(dt.date.today().year, 1, 1),
                                         clearable=True,
+                                        className="dark-date-picker",
                                     ),
-                                    width="auto",
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
+                                    width=7,
                                 ),
                             ],
                             align="center",
-                            justify="between",
+                            justify="start",
                         ),
                     ]
                 ),
-            ]
-        )
+            ],
+            style={"padding": "1.5rem"},
+        ),
     ],
+    className="dark-card",
 )
 
 
@@ -233,7 +242,7 @@ def fuzzy_match(df, name):
     necessary for the loop to change the company name if there is a match. 70 is the match value
     threshold for the partial ratio to be considered a match
     """
-    matches = df.apply(lambda row: (fuzz.partial_ratio(row["company_name"], name) >= 70), axis=1)
+    matches = df.apply(lambda row: (fuzz.partial_ratio(row["company_name"], name, score_cutoff=70) >= 70), axis=1)
     return [i for i, x in enumerate(matches) if x]
 
 
@@ -243,7 +252,7 @@ def create_figure(df: pd.DataFrame):
         df,
         names="company_name",
         values="contribution_count",
-        color_discrete_sequence=color_seq,
+        color_discrete_sequence=baby_blue,
     )
     fig.update_traces(
         textposition="inside",

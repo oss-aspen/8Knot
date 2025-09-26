@@ -10,6 +10,21 @@ color_seq = [
     "#C7A5A5",  # rosy brown
 ]
 
+# Baby Blue color scale for graph gradients
+baby_blue = [
+    "#DFF0FB",  # Baby Blue 100 - very light
+    "#A8D9F5",  # Baby Blue 200 - light
+    "#76C5EF",  # Baby Blue 300 - medium light
+    "#3FB0E9",  # Baby Blue 400 - light blue
+    "#199AD6",  # Baby Blue 500 - main baby blue
+    "#147AAE",  # Baby Blue 600 - medium dark
+    "#0F5880",  # Baby Blue 700 - dark
+    "#0369A1",  # Baby Blue 800 - very dark
+    "#F7B009",  # Yellow 500 - main yellow
+    "#FEDF89",  # Yellow 200 - light yellow
+    "#B54708",  # Yellow 700 - dark yellow
+]
+
 
 def get_graph_time_values(interval):
     """

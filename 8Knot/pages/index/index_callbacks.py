@@ -7,8 +7,8 @@ import json
 from celery.result import AsyncResult
 import dash_bootstrap_components as dbc
 import dash
-from dash import callback
-from dash.dependencies import Input, Output, State
+from dash import callback, html
+from dash.dependencies import Input, Output, State, MATCH
 from app import augur
 from flask_login import current_user
 from cache_manager.cache_manager import CacheManager as cm
@@ -31,6 +31,7 @@ from queries.package_version_query import package_version_query as pvq
 from queries.repo_releases_query import repo_releases_query as rrq
 from queries.ossf_score_query import ossf_score_query as osq
 from queries.repo_info_query import repo_info_query as riq
+from models import SearchItem
 import redis
 import flask
 from .search_utils import fuzzy_search
@@ -306,10 +307,10 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
 
         # Filter by prefix type if specified
         if prefix_type == "repo":
-            matched_options = [opt for opt in matched_options if isinstance(opt["value"], int)]
+            matched_options = [opt for opt in matched_options if SearchItem.from_id(opt["value"]) == SearchItem.REPO]
             logging.info(f"Filtered to {len(matched_options)} repos")
         elif prefix_type == "org":
-            matched_options = [opt for opt in matched_options if isinstance(opt["value"], str)]
+            matched_options = [opt for opt in matched_options if SearchItem.from_id(opt["value"]) == SearchItem.ORG]
             logging.info(f"Filtered to {len(matched_options)} orgs")
 
         # Format options with prefixes based on their type
@@ -323,17 +324,13 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
 
             seen_values.add(opt["value"])
             formatted_opt = opt.copy()
-            if isinstance(opt["value"], str):
-                # It's an org
-                formatted_opt["label"] = f"org: {opt['label']}"
-            else:
-                # It's a repo
-                formatted_opt["label"] = f"repo: {opt['label']}"
+            search_item = SearchItem.from_id(opt["value"])
+            formatted_opt["label"] = search_item.prefix(opt["label"])
             formatted_opts.append(formatted_opt)
 
         # Simple reordering: put organizations first, then repositories
-        orgs_first = [opt for opt in formatted_opts if isinstance(opt["value"], str)]
-        repos_after = [opt for opt in formatted_opts if isinstance(opt["value"], int)]
+        orgs_first = [opt for opt in formatted_opts if SearchItem.from_id(opt["value"]) == SearchItem.ORG]
+        repos_after = [opt for opt in formatted_opts if SearchItem.from_id(opt["value"]) == SearchItem.REPO]
         formatted_opts = orgs_first + repos_after
 
         # Always include the previous selections
@@ -354,10 +351,10 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
                 matched_opts = [opt for opt in all_options if opt["value"] == v]
                 if matched_opts:
                     formatted_v = matched_opts[0].copy()
-                    if isinstance(v, str):
+                    if SearchItem.from_id(v) == SearchItem.ORG:
                         # It's an org
                         formatted_v["label"] = f"org: {formatted_v['label']}"
-                    else:
+                    elif SearchItem.from_id(v) == SearchItem.REPO:
                         # It's a repo
                         formatted_v["label"] = f"repo: {formatted_v['label']}"
                     selected_options.append(formatted_v)
@@ -368,12 +365,8 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
                 for opt in all_current_options:
                     if opt["value"] == v:
                         formatted_v = opt.copy()
-                        if isinstance(v, str):
-                            # It's an org
-                            formatted_v["label"] = f"org: {opt['label']}"
-                        else:
-                            # It's a repo
-                            formatted_v["label"] = f"repo: {opt['label']}"
+                        search_item = SearchItem.from_id(v)
+                        formatted_v["label"] = search_item.prefix(opt["label"])
                         selected_options.append(formatted_v)
                         break
 
@@ -410,9 +403,10 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
                 for v in options:
                     if v["value"] in selections:
                         formatted_v = v.copy()
-                        if isinstance(v["value"], str):
+                        search_item = SearchItem.from_id(v)
+                        if search_item == SearchItem.ORG:
                             formatted_v["label"] = f"org: {v['label']}"
-                        else:
+                        elif search_item == SearchItem.REPO:
                             formatted_v["label"] = f"repo: {v['label']}"
                         default_options.append(formatted_v)
             except:
@@ -438,11 +432,11 @@ def multiselect_values_to_repo_ids(n_clicks, user_vals):
         raise dash.exceptions.PreventUpdate
 
     # individual repo numbers
-    repos = [r for r in user_vals if isinstance(r, int)]
+    repos = [int(r) for r in user_vals if SearchItem.from_id(r) == SearchItem.REPO]
     logging.warning(f"REPOS: {repos}")
 
     # names of augur groups or orgs
-    names = [n for n in user_vals if isinstance(n, str)]
+    names = [n for n in user_vals if SearchItem.from_id(n) == SearchItem.ORG]
 
     org_repos = [augur.org_to_repos(o) for o in names if augur.is_org(o)]
     # flatten list repo_ids in orgs to 1D
@@ -512,9 +506,9 @@ def show_help_alert(n_clicks, openness):
 @callback(
     [Output("repo-list-alert", "is_open"), Output("repo-list-alert", "children")],
     [Input("repo-list-button", "n_clicks")],
-    [State("help-alert", "is_open"), State("repo-choices", "data")],
+    [State("repo-list-alert", "is_open"), State("repo-choices", "data")],
 )
-def show_help_alert(n_clicks, openness, repo_ids):
+def show_repolist_alert(n_clicks, openness, repo_ids):
     """Sets the 'open' state of a help message
     for the search bar to encourage users to check
     their spelling and to ask for data to be loaded
@@ -528,11 +522,17 @@ def show_help_alert(n_clicks, openness, repo_ids):
     print(repo_ids)
     url_list = [augur.repo_id_to_git(i) for i in repo_ids]
 
+    url_list = [l[8:] if l.startswith("https://") else l for l in url_list]
+
+    element_list = [html.Li(l) for l in url_list]
+
+    elements = [html.Strong("Included Repositories:"), html.Ul(element_list)]
+
     if n_clicks == 0:
-        return dash.no_update, str(url_list)
+        return dash.no_update, elements
     # switch the openness parameter, allows button to also
     # dismiss the Alert.
-    return not openness, str(url_list)
+    return not openness, elements
 
 
 @callback(
@@ -568,7 +568,7 @@ def wait_queries(job_ids):
         if all(j.successful() for j in jobs):
             logging.warning([(j.name, j.status) for j in jobs])
             jobs = [j.forget() for j in jobs]
-            return "Data Ready", "#b5b683"
+            return "Data Ready", "#0F5880"
 
         # or one of them has failed
         if any(j.failed() for j in jobs):
@@ -682,10 +682,10 @@ def initialize_cache(_):
             options.sort(key=lambda x: x.get("label", "").lower())
 
         # For repos, keep the configured maximum number
-        repos = [opt for opt in options if isinstance(opt.get("value"), int)][:max_repos]
+        repos = [opt for opt in options if SearchItem.from_id(opt.get("value")) == SearchItem.REPO][:max_repos]
 
         # For orgs, keep all (there are usually only a few hundred)
-        orgs = [opt for opt in options if isinstance(opt.get("value"), str)]
+        orgs = [opt for opt in options if SearchItem.from_id(opt.get("value")) == SearchItem.ORG]
 
         # Combine and prepare for storage, limiting to max_total_results
         minimal_options = (repos + orgs)[:max_total_results]
@@ -718,6 +718,29 @@ def update_search_status(search_value):
 def hide_search_status_when_loaded(_):
     """Hide the search status indicator when results are loaded."""
     return [{"display": "none"}]
+
+
+@callback(
+    [
+        Output({"type": "sidebar-dropdown-content", "index": MATCH}, "style"),
+        Output({"type": "sidebar-dropdown-container", "index": MATCH}, "style"),
+    ],
+    Input({"type": "sidebar-dropdown-toggle", "index": MATCH}, "n_clicks"),
+    State({"type": "sidebar-dropdown-content", "index": MATCH}, "style"),
+    prevent_initial_call=True,
+)
+def toggle_sidebar_dropdown(n_clicks, current_dropdown_style):
+    """Pattern-matching callback to toggle any sidebar dropdown."""
+    if n_clicks:
+        is_visible = current_dropdown_style and current_dropdown_style.get("display") == "block"
+        if is_visible:
+            dropdown_style = {"display": "none", "padding": "8px 0", "borderRadius": "0 0 8px 8px"}
+            container_style = {"borderRadius": "8px", "marginBottom": "8px"}
+        else:
+            dropdown_style = {"display": "block", "padding": "8px 0", "borderRadius": "0 0 8px 8px"}
+            container_style = {"borderRadius": "8px", "marginBottom": "8px", "backgroundColor": "#292929"}
+        return dropdown_style, container_style
+    return dash.no_update
 
 
 # =============================================================================
@@ -760,3 +783,89 @@ else:
         [Output("nav-login-container", "children")],
         Input("url", "href"),
     )(_login_username_button_disabled)
+
+
+# Callback to handle sidebar collapse/expand functionality using dbc.Collapse
+@callback(
+    Output("sidebar-collapse", "is_open"),
+    [Input("sidebar-toggle", "n_clicks"), Input("url", "pathname")],
+    State("sidebar-collapse", "is_open"),
+    prevent_initial_call=True,
+)
+def toggle_sidebar_collapse(n_clicks, pathname, is_open):
+    """Toggle the sidebar using dbc.Collapse component and auto-open for visualization pages."""
+    ctx = dash.callback_context
+
+    # Check which input triggered the callback
+    if ctx.triggered_id == "sidebar-toggle" and n_clicks:
+        # Manual toggle - simply toggle the collapse state
+        return not is_open
+    elif ctx.triggered_id == "url":
+        # URL change - check if we should auto-open for visualization pages
+        visualization_paths = [
+            "/repo_overview",
+            "/contributions",
+            "/contributors/behavior",
+            "/contributors/contribution_types",
+            "/affiliation",
+            "/chaoss",
+        ]
+
+        # Check if current path starts with any visualization path
+        should_open = any(pathname.startswith(path) for path in visualization_paths if pathname)
+
+        if should_open and not is_open:
+            return True
+
+    return dash.no_update
+
+
+# Callback to adjust main content area when sidebar state changes
+@callback(
+    Output("page-container", "style"),
+    Input("sidebar-collapse", "is_open"),
+    prevent_initial_call=True,
+)
+def adjust_content_area_collapse(is_open):
+    """Adjust the main content area styling based on sidebar collapse state."""
+    # Base styling that doesn't change
+    base_style = {
+        "background-color": "#1D1D1D",
+        "padding": "1rem",  # Restore normal padding
+        "overflow-y": "auto",
+        "height": "100%",
+        "flex": "1",
+        "transition": "border-radius 0.3s ease",
+    }
+
+    # Only modify the border-radius based on sidebar state
+    if not is_open:
+        # When sidebar is collapsed, content area takes full width with rounded corners
+        base_style["border-radius"] = "12px"
+    else:
+        # When sidebar is expanded, content area has right-side border radius only
+        base_style["border-radius"] = "0 12px 12px 0"
+
+    return base_style
+
+
+# Callback to hide loading components on landing page
+@callback(
+    [
+        Output("results-output-container", "style"),
+        Output("data-badge", "style"),
+    ],
+    Input("url", "pathname"),
+    prevent_initial_call=False,
+)
+def hide_loading_on_landing(pathname):
+    """Hide loading components when on landing page."""
+    if pathname == "/" or pathname is None:
+        # Hide loading components on landing page
+        return {"display": "none"}, {"display": "none"}
+    else:
+        # Show loading components on other pages
+        return {"display": "block"}, {"marginBottom": ".5%", "display": "inline-block"}
+
+
+# Note: Landing page callbacks moved to pages/landing/landing_callbacks.py

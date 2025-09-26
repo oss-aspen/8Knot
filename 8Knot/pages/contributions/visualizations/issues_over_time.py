@@ -6,7 +6,7 @@ from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
 import logging
-from pages.utils.graph_utils import get_graph_time_values, color_seq
+from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from pages.utils.job_utils import nodata_graph
 from queries.issues_query import issues_query as iq
 import time
@@ -21,10 +21,28 @@ gc_issues_over_time = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "Issues Over Time",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "Issues Over Time",
+                                className="card-title",
+                            ),
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                color="outline-secondary",
+                                size="sm",
+                                className="about-graph-button",
+                            ),
+                            width="auto",
+                        ),
+                    ],
+                    align="center",
+                    justify="between",
+                    className="mb-3",
                 ),
                 dbc.Popover(
                     [
@@ -43,7 +61,9 @@ gc_issues_over_time = dbc.Card(
                 ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
+                    style={"marginBottom": "1rem"},
                 ),
+                html.Hr(className="card-split"),  # Divider between graph and controls
                 dbc.Form(
                     [
                         dbc.Row(
@@ -51,7 +71,7 @@ gc_issues_over_time = dbc.Card(
                                 dbc.Label(
                                     "Date Interval:",
                                     html_for=f"date-interval-{PAGE}-{VIZ_ID}",
-                                    width="auto",
+                                    width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     dbc.RadioItems(
@@ -70,48 +90,40 @@ gc_issues_over_time = dbc.Card(
                                         ],
                                         value="M",
                                         inline=True,
+                                        className="custom-radio-buttons",
                                     ),
                                     className="me-2",
+                                    width=4,
                                 ),
                             ],
                             align="center",
+                            justify="start",
                         ),
                         dbc.Row(
-                            [
-                                dbc.Col(
-                                    dcc.DatePickerRange(
-                                        id=f"date-picker-range-{PAGE}-{VIZ_ID}",
-                                        min_date_allowed=dt.date(2005, 1, 1),
-                                        max_date_allowed=dt.date.today(),
-                                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
-                                        start_date=dt.date(
-                                            dt.date.today().year - 2,
-                                            dt.date.today().month,
-                                            dt.date.today().day,
-                                        ),
-                                        clearable=True,
+                            dbc.Col(
+                                dcc.DatePickerRange(
+                                    id=f"date-picker-range-{PAGE}-{VIZ_ID}",
+                                    min_date_allowed=dt.date(2005, 1, 1),
+                                    max_date_allowed=dt.date.today(),
+                                    initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                                    clearable=True,
+                                    start_date=dt.date(
+                                        dt.date.today().year - 2,
+                                        dt.date.today().month,
+                                        dt.date.today().day,
                                     ),
-                                    width="auto",
+                                    className="dark-date-picker",
                                 ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
-                                ),
-                            ],
-                            align="center",
-                            justify="between",
+                                width=7,
+                            ),
                         ),
                     ]
                 ),
-            ]
+            ],
+            style={"padding": "1.5rem"},
         ),
     ],
+    className="dark-card",
 )
 
 
@@ -250,7 +262,7 @@ def create_figure(df_created: pd.DataFrame, df_closed: pd.DataFrame, df_open: pd
         opacity=0.9,
         hovertemplate=hover + "<br>Created: %{y}<br>" + "<extra></extra>",
         offsetgroup=0,
-        marker=dict(color=color_seq[2]),
+        marker=dict(color=baby_blue[6]),
         name="Created",
     )
     fig.add_bar(
@@ -259,16 +271,9 @@ def create_figure(df_created: pd.DataFrame, df_closed: pd.DataFrame, df_open: pd
         opacity=0.9,
         hovertemplate=hover + "<br>Closed: %{y}<br>" + "<extra></extra>",
         offsetgroup=1,
-        marker=dict(color=color_seq[4]),
+        marker=dict(color=baby_blue[2]),
         name="Closed",
     )
-    """fig.update_xaxes(
-        showgrid=True,
-        ticklabelmode="period",
-        dtick=period,
-        rangeslider_yaxis_rangemode="match",
-        range=x_r,
-    )"""
     fig.update_layout(
         xaxis_title=x_name,
         yaxis_title="Number of Issues",
@@ -281,7 +286,7 @@ def create_figure(df_created: pd.DataFrame, df_closed: pd.DataFrame, df_open: pd
             x=df_open["Date"],
             y=df_open["Open"],
             mode="lines",
-            marker=dict(color=color_seq[5]),
+            marker=dict(color=baby_blue[8]),
             name="Open",
             hovertemplate="Issues Open: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
         )

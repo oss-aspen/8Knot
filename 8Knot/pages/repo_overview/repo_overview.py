@@ -34,16 +34,16 @@ layout = dbc.Container(
                     [
                         html.H1("Per Repo Analysis:"),
                     ],
-                    width=2,
+                    width=3,
                 ),
                 dbc.Col(
                     [
                         dmc.Select(
                             id="repo-info-selection",
                             placeholder="Repo for info section",
-                            classNames={"values": "dmc-multiselect-custom"},
                             searchable=True,
                             clearable=True,
+                            className="dark-dropdown",
                         ),
                     ],
                     width=3,
@@ -77,6 +77,6 @@ def repo_dropdown(repo_ids):
     # array to hold repo_id and git url pairing for dropdown
     data_array = []
     for repo_id in repo_ids:
-        entry = {"value": repo_id, "label": augur.repo_id_to_git(repo_id)}
+        entry = {"value": str(repo_id), "label": augur.repo_id_to_git(int(repo_id))}
         data_array.append(entry)
-    return data_array, repo_ids[0]
+    return data_array, str(repo_ids[0])

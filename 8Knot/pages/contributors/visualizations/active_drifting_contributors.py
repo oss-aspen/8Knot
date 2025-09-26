@@ -7,7 +7,7 @@ import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
-from pages.utils.graph_utils import get_graph_time_values, color_seq
+from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from pages.utils.job_utils import nodata_graph
 import time
 import app
@@ -22,10 +22,28 @@ gc_active_drifting_contributors = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "Contributor Growth by Engagement",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "Contributor Growth by Engagement",
+                                className="card-title",
+                            ),
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                color="outline-secondary",
+                                size="sm",
+                                className="about-graph-button",
+                            ),
+                            width="auto",
+                        ),
+                    ],
+                    align="center",
+                    justify="between",
+                    className="mb-3",
                 ),
                 dbc.Popover(
                     [
@@ -45,7 +63,9 @@ gc_active_drifting_contributors = dbc.Card(
                 ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
+                    style={"marginBottom": "1rem"},
                 ),
+                html.Hr(className="card-split"),  # Divider between graph and controls
                 dbc.Form(
                     [
                         dbc.Row(
@@ -64,6 +84,8 @@ gc_active_drifting_contributors = dbc.Card(
                                         step=1,
                                         value=6,
                                         size="sm",
+                                        style={"width": "80px"},
+                                        className="dark-input",
                                     ),
                                     className="me-2",
                                     width=2,
@@ -82,6 +104,8 @@ gc_active_drifting_contributors = dbc.Card(
                                         step=1,
                                         value=12,
                                         size="sm",
+                                        style={"width": "80px"},
+                                        className="dark-input",
                                     ),
                                     className="me-2",
                                     width=2,
@@ -102,7 +126,7 @@ gc_active_drifting_contributors = dbc.Card(
                                 dbc.Label(
                                     "Date Interval:",
                                     html_for=f"date-interval-{PAGE}-{VIZ_ID}",
-                                    width="auto",
+                                    width={"size": "auto"},
                                 ),
                                 dbc.Col(
                                     [
@@ -115,27 +139,20 @@ gc_active_drifting_contributors = dbc.Card(
                                             ],
                                             value="M",
                                             inline=True,
+                                            className="custom-radio-buttons",
                                         ),
                                     ]
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
                                 ),
                             ],
                             align="center",
                         ),
                     ]
                 ),
-            ]
+            ],
+            style={"padding": "1.5rem"},
         )
     ],
+    className="dark-card",
 )
 
 
@@ -255,7 +272,7 @@ def create_figure(df_status: pd.DataFrame, interval):
                     mode="lines",
                     showlegend=True,
                     hovertemplate="Contributors Active: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
-                    marker=dict(color=color_seq[1]),
+                    marker=dict(color=baby_blue[6]),
                 ),
                 go.Scatter(
                     name="Drifting",
@@ -264,7 +281,7 @@ def create_figure(df_status: pd.DataFrame, interval):
                     mode="lines",
                     showlegend=True,
                     hovertemplate="Contributors Drifting: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
-                    marker=dict(color=color_seq[5]),
+                    marker=dict(color=baby_blue[2]),
                 ),
                 go.Scatter(
                     name="Away",
@@ -273,7 +290,7 @@ def create_figure(df_status: pd.DataFrame, interval):
                     mode="lines",
                     showlegend=True,
                     hovertemplate="Contributors Away: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
-                    marker=dict(color=color_seq[2]),
+                    marker=dict(color=baby_blue[0]),
                 ),
             ]
         )
@@ -282,7 +299,7 @@ def create_figure(df_status: pd.DataFrame, interval):
             df_status,
             x="Date",
             y=["Active", "Drifting", "Away"],
-            color_discrete_sequence=[color_seq[1], color_seq[5], color_seq[2]],
+            color_discrete_sequence=[baby_blue[6], baby_blue[2], baby_blue[0]],
         )
 
         # edit hover values

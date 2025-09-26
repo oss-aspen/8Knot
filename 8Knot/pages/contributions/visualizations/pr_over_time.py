@@ -6,7 +6,7 @@ from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
 import logging
-from pages.utils.graph_utils import get_graph_time_values, color_seq
+from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from pages.utils.job_utils import nodata_graph
 from queries.prs_query import prs_query as prq
 import time
@@ -19,10 +19,28 @@ gc_pr_over_time = dbc.Card(
     [
         dbc.CardBody(
             [
-                html.H3(
-                    "Pull Requests Over Time",
-                    className="card-title",
-                    style={"textAlign": "center"},
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H3(
+                                "Pull Requests Over Time",
+                                className="card-title",
+                            ),
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "About Graph",
+                                id=f"popover-target-{PAGE}-{VIZ_ID}",
+                                color="outline-secondary",
+                                size="sm",
+                                className="about-graph-button",
+                            ),
+                            width="auto",
+                        ),
+                    ],
+                    align="center",
+                    justify="between",
+                    className="mb-3",
                 ),
                 dbc.Popover(
                     [
@@ -41,7 +59,9 @@ gc_pr_over_time = dbc.Card(
                 ),
                 dcc.Loading(
                     dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
+                    style={"marginBottom": "1rem"},
                 ),
+                html.Hr(className="card-split"),  # Divider between graph and controls
                 dbc.Form(
                     [
                         dbc.Row(
@@ -68,27 +88,21 @@ gc_pr_over_time = dbc.Card(
                                         ],
                                         value="M",
                                         inline=True,
+                                        className="custom-radio-buttons",
                                     ),
                                     className="me-2",
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
+                                    width=4,
                                 ),
                             ],
                             align="center",
                         ),
                     ]
                 ),
-            ]
+            ],
+            style={"padding": "1.5rem"},
         ),
     ],
+    className="dark-card",
 )
 
 
@@ -232,7 +246,7 @@ def create_figure(
         opacity=0.9,
         hovertemplate=hover + "<br>Created: %{y}<br>" + "<extra></extra>",
         offsetgroup=0,
-        marker=dict(color=color_seq[2]),
+        marker=dict(color=baby_blue[6]),
         name="Opened",
     )
     fig.add_bar(
@@ -241,7 +255,7 @@ def create_figure(
         opacity=0.9,
         hovertemplate=hover + "<br>Merged: %{y}<br>" + "<extra></extra>",
         offsetgroup=1,
-        marker=dict(color=color_seq[4]),
+        marker=dict(color=baby_blue[0]),
         name="Merged",
     )
     fig.add_bar(
@@ -251,7 +265,7 @@ def create_figure(
         hovertemplate=[f"{hover}<br>Closed: {val}<br><extra></extra>" for val in df_closed_merged["closed_at"]],
         offsetgroup=1,
         base=df_closed_merged["merged_at"],
-        marker=dict(color=color_seq[3]),
+        marker=dict(color=baby_blue[2]),
         name="Closed",
     )
     fig.update_xaxes(
@@ -273,7 +287,7 @@ def create_figure(
             x=df_open["Date"],
             y=df_open["Open"],
             mode="lines",
-            marker=dict(color=color_seq[5]),
+            marker=dict(color=baby_blue[8]),
             name="Open",
             hovertemplate="PRs Open: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
         )

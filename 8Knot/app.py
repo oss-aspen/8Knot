@@ -50,6 +50,7 @@ augur.multiselect_startup()
 
 """IMPORT AFTER GLOBAL VARIABLES SET"""
 import pages.index.index_callbacks as index_callbacks
+import pages.landing.landing_callbacks as landing_callbacks
 
 # Import testing utilities for enhanced error detection in CI
 if os.getenv("DEBUG_8KNOT", "False") == "True":
@@ -67,13 +68,46 @@ dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.mi
 # making custom plotly template with custom colors on top of the slate design template
 plt_io.templates["custom_dark"] = plt_io.templates["slate"]
 plt_io.templates["custom_dark"]["layout"]["colorway"] = [
-    "#B5B682",  # sage
-    "#c0bc5d",  # citron (yellow-ish)
-    "#6C8975",  # reseda green
-    "#D9AE8E",  # buff (pale pink)
-    "#FFBF51",  # xanthous (orange-ish)
-    "#C7A5A5",  # rosy brown
+    "#F0F9FF",  # Baby Blue 100 - very light
+    "#A8D9F5",  # Baby Blue 200 - light
+    "#76C5EF",  # Baby Blue 300 - medium light
+    "#3FB0E9",  # Baby Blue 400 - light blue
+    "#199AD6",  # Baby Blue 500 - main baby blue
+    "#147AAE",  # Baby Blue 600 - medium dark
+    "#0F5880",  # Baby Blue 700 - dark
+    "#0369A1",  # Baby Blue 800 - very dark
+    "#F7B009",  # Yellow 500 - main yellow
+    "#FEDF89",  # Yellow 200 - light yellow
+    "#B54708",  # Yellow 700 - dark yellow
 ]
+
+# Match plot backgrounds, fonts, and legend styling to the dark shell/card theme
+_tpl = plt_io.templates["custom_dark"]
+_tpl["layout"].update(
+    {
+        "paper_bgcolor": "#292929",  # matches card background
+        "plot_bgcolor": "#292929",
+        "font": {"color": "white"},
+        "title": {"x": 0, "font": {"color": "white"}},
+        "legend": {"font": {"color": "white"}, "bgcolor": "rgba(0,0,0,0)"},
+        "hoverlabel": {"bgcolor": "#404040", "font": {"color": "white"}},
+        "xaxis": {
+            "gridcolor": "#404040",
+            "zerolinecolor": "#404040",
+            "linecolor": "#606060",
+            "tickfont": {"color": "white"},
+            "title": {"font": {"color": "white"}},
+        },
+        "yaxis": {
+            "gridcolor": "#404040",
+            "zerolinecolor": "#404040",
+            "linecolor": "#606060",
+            "tickfont": {"color": "white"},
+            "title": {"font": {"color": "white"}},
+        },
+        "margin": {"l": 40, "r": 20, "t": 40, "b": 40},
+    }
+)
 
 plt_io.templates.default = "custom_dark"
 
@@ -111,13 +145,17 @@ def health_check():
 """DASH PAGES LAYOUT"""
 # layout of the app stored in the app_layout file, must be imported after the app is initiated
 from pages.index.index_layout import layout
+import dash_mantine_components as dmc
 
-app.layout = layout
+app.layout = dmc.MantineProvider(
+    layout,
+    forceColorScheme="dark",
+)
 
 """DASH STARTUP PARAMETERS"""
 
 if os.getenv("DEBUG_8KNOT", "False") == "True":
-    app.enable_dev_tools(dev_tools_ui=True, dev_tools_hot_reload=True)
+    app.enable_dev_tools(dev_tools_ui=True, dev_tools_hot_reload=True, debug=True)
 
 """GITHUB BOTS LIST"""
 bots_list = bots.get_bots_list()
