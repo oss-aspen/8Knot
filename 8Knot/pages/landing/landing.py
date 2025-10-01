@@ -39,7 +39,7 @@ def create_landing_hero():
                         className="landing-logo",
                     ),
                     html.H1(
-                        "Advanced open-source project analysis by Augur",
+                        "Advanced open-source project analysis",
                         className="landing-title",
                     ),
                     html.P(
