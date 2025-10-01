@@ -1,4 +1,4 @@
-from dash import html, dcc, Input, State, Output, callback
+from dash import html, dcc, Input, State, Output, callback, MATCH
 import dash_bootstrap_components as dbc
 
 
@@ -32,7 +32,7 @@ class VisualizationAIO(dbc.Card):
                                 dbc.Col(
                                     dbc.Button(
                                         "About Graph",
-                                        id=f"popover-target-{page}-{viz_id}",
+                                        id={"type": "popover-target", "index": f"{page}-{viz_id}"},
                                         color="outline-secondary",
                                         size="sm",
                                         className="about-graph-button",
@@ -49,8 +49,8 @@ class VisualizationAIO(dbc.Card):
                                 dbc.PopoverHeader("Graph Info:"),
                                 dbc.PopoverBody(graph_info),
                             ],
-                            id=f"popover-{page}-{viz_id}",
-                            target=f"popover-target-{page}-{viz_id}",
+                            id={"type": "popover", "index": f"{page}-{viz_id}"},
+                            target={"type": "popover-target", "index": f"{page}-{viz_id}"},
                             placement="top",
                             is_open=False,
                         ),
@@ -77,9 +77,9 @@ class VisualizationAIO(dbc.Card):
 
     # callback for graph info popover
     @callback(
-        Output(f"popover-{self.page}-{self.viz_id}", "is_open"),
-        [Input(f"popover-target-{self.page}-{self.viz_id}", "n_clicks")],
-        [State(f"popover-{self.page}-{self.viz_id}", "is_open")],
+        Output({"type": "popover", "index": MATCH}, "is_open"),
+        [Input({"type": "popover-target", "index": MATCH}, "n_clicks")],
+        [State({"type": "popover", "index": MATCH}, "is_open")],
     )
     def toggle_popover(n, is_open):
         if n:
