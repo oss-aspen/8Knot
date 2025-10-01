@@ -39,11 +39,11 @@ def create_landing_hero():
                         className="landing-logo",
                     ),
                     html.H1(
-                        "Advanced open-source project analysis",
+                        "Advanced open source project analysis",
                         className="landing-title",
                     ),
                     html.P(
-                        "8Knot hosts advanced analysis of open source projects, enriching the study of communities for community architects, developers, and Business Intelligence experts alike.",
+                        "8Knot visualizes the rich dataset collected by Augur. The duo enriches the study of communities for community architects, developers, and business intelligence experts alike.",
                         className="landing-subtitle",
                     ),
                 ],
