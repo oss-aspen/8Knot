@@ -720,29 +720,6 @@ def hide_search_status_when_loaded(_):
     return [{"display": "none"}]
 
 
-@callback(
-    [
-        Output({"type": "sidebar-dropdown-content", "index": MATCH}, "style"),
-        Output({"type": "sidebar-dropdown-container", "index": MATCH}, "style"),
-    ],
-    Input({"type": "sidebar-dropdown-toggle", "index": MATCH}, "n_clicks"),
-    State({"type": "sidebar-dropdown-content", "index": MATCH}, "style"),
-    prevent_initial_call=True,
-)
-def toggle_sidebar_dropdown(n_clicks, current_dropdown_style):
-    """Pattern-matching callback to toggle any sidebar dropdown."""
-    if n_clicks:
-        is_visible = current_dropdown_style and current_dropdown_style.get("display") == "block"
-        if is_visible:
-            dropdown_style = {"display": "none", "padding": "8px 0", "borderRadius": "0 0 8px 8px"}
-            container_style = {"borderRadius": "8px", "marginBottom": "8px"}
-        else:
-            dropdown_style = {"display": "block", "padding": "8px 0", "borderRadius": "0 0 8px 8px"}
-            container_style = {"borderRadius": "8px", "marginBottom": "8px", "backgroundColor": "#292929"}
-        return dropdown_style, container_style
-    return dash.no_update
-
-
 # =============================================================================
 # CONDITIONAL CALLBACK REGISTRATION
 # =============================================================================

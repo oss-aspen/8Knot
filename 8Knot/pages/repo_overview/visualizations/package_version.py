@@ -62,6 +62,7 @@ gc_package_version = dbc.Card(
         )
     ],
     className="dark-card",
+    id="package-version",
 )
 
 

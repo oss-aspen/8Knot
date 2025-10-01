@@ -8,70 +8,11 @@ including the sidebar, main content area, and navigation elements.
 from dash import html, dcc
 import dash
 import dash_bootstrap_components as dbc
+from components.dropdown_nav_item import DropdownNavItemAIO
+from components.nav_item import NavItemAIO
 
 # This will be imported from the main layout file
 search_bar = None
-
-
-def sidebar_section(icon_src=None, text="Hello", page_link="/", horizontal_padding=12, vertical_padding=16):
-    """
-    Creates a clickable section in the sidebar, which allows navigation to different pages
-
-    Args:
-        icon_src: Optionally label the section with an icon
-        text: The text that will be displayed in the sidebar section
-        page_link: The page to navigate to
-        horizontal_padding and vertical_padding: Fine-tune the spacing (kept for compatibility)
-    """
-    if icon_src:
-        return dbc.NavLink(
-            [
-                html.Img(src=icon_src, alt=text, className="sidebar-section-icon"),
-                html.Span(text, className="sidebar-section-text"),
-            ],
-            href=page_link,
-            className="sidebar-section",
-        )
-    else:
-        return dbc.NavLink(
-            text,
-            href=page_link,
-            className="sidebar-section-text-no-icon",
-        )
-
-
-def sidebar_dropdown(
-    icon_src, text, dropdown_links, dropdown_id="dropdown", horizontal_padding=12, vertical_padding=16
-):
-    """Create a dropdown navigation with main item and dropdown content
-
-    Args:
-        icon_src (str): Source path for the icon image
-        text (str): Text to display next to the icon
-        dropdown_links (list): List of dropdown link components
-        dropdown_id (str): Unique identifier for this dropdown (default: "dropdown")
-        horizontal_padding (int): Horizontal padding for the toggle button (kept for compatibility)
-        vertical_padding (int): Vertical padding for the toggle button (kept for compatibility)
-    """
-    return html.Div(
-        [
-            html.Div(
-                [
-                    html.Img(src=icon_src, alt=text, className="sidebar-section-icon"),
-                    html.Span(text, className="sidebar-section-text"),
-                ],
-                className="sidebar-dropdown-toggle",
-                id={"type": "sidebar-dropdown-toggle", "index": dropdown_id},
-            ),
-            html.Div(
-                dropdown_links,
-                id={"type": "sidebar-dropdown-content", "index": dropdown_id},
-                className="sidebar-dropdown-content",
-            ),
-        ],
-        id={"type": "sidebar-dropdown-container", "index": dropdown_id},
-        className="sidebar-dropdown-container",
-    )
 
 
 def create_main_content_area():
@@ -99,43 +40,59 @@ def create_main_content_area():
 
 
 def create_sidebar_navigation():
-    """Create the sidebar navigation menu."""
-    return html.Div(
-        className="sidebar-navigation",
+    return dbc.Nav(
         children=[
-            sidebar_section(
+            DropdownNavItemAIO(
+                [
+                    NavItemAIO(
+                        "Code Languages",
+                        "/repo_overview#code-languages",
+                    ),
+                    NavItemAIO(
+                        "Package Version",
+                        "/repo_overview#package-version",
+                    ),
+                    NavItemAIO(
+                        "Per-Repo Analysis",
+                        "/repo_overview#per-repo-analysis",
+                    ),
+                ],
                 "/assets/repo_overview.svg",
                 "Repo Overview",
                 "/repo_overview",
             ),
-            sidebar_section(
+            DropdownNavItemAIO(
+                [],
                 "/assets/contributions.svg",
                 "Contributions",
                 "/contributions",
             ),
-            sidebar_dropdown(
+            DropdownNavItemAIO(
+                [],
                 "/assets/contributors.svg",
-                "Contributors",
-                [
-                    sidebar_section(
-                        icon_src=None,
-                        text="Behavior",
-                        page_link="/contributors/behavior",
-                    ),
-                    sidebar_section(
-                        text="Contribution Types",
-                        page_link="/contributors/contribution_types",
-                    ),
-                ],
-                dropdown_id="contributors-dropdown",
+                "Contributor Behavior",
+                "/contributors/behavior",
             ),
-            sidebar_section(
+            DropdownNavItemAIO(
+                [],
+                "/assets/contributors.svg",
+                "Contributor Types",
+                "/contributors/contribution_types",
+            ),
+            DropdownNavItemAIO(
+                [],
                 "/assets/affiliation.svg",
                 "Affiliation",
                 "/affiliation",
             ),
-            sidebar_section("/assets/chaoss_small.svg", "CHAOSS", "/chaoss"),
+            DropdownNavItemAIO(
+                [],
+                "/assets/chaoss_small.svg",
+                "CHAOSS",
+                "/chaoss",
+            ),
         ],
+        vertical=True,
     )
 
 

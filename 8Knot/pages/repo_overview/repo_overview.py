@@ -20,10 +20,13 @@ layout = dbc.Container(
     [
         html.H1("Search Bar Populated Analysis", style={"text-align": "center", "marginBottom": "1%"}),
         dbc.Row(
-            [
-                dbc.Col(gc_code_language, width=5),
-                dbc.Col(gc_package_version, width=5),
-            ],
+            dbc.Col(gc_code_language, xl=10),
+            align="center",
+            justify="evenly",
+            style={"marginBottom": "1%"},
+        ),
+        dbc.Row(
+            dbc.Col(gc_package_version, xl=10),
             align="center",
             justify="evenly",
             style={"marginBottom": "1%"},
@@ -35,6 +38,7 @@ layout = dbc.Container(
                         html.H1("Per Repo Analysis:"),
                     ],
                     width=3,
+                    id="per-repo-analysis",
                 ),
                 dbc.Col(
                     [

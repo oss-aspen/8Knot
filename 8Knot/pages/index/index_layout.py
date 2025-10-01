@@ -8,8 +8,6 @@ import logging
 
 # Import layout components
 from .index_components import (
-    sidebar_section,
-    sidebar_dropdown,
     create_main_content_area,
     create_sidebar_navigation,
     create_sidebar,
