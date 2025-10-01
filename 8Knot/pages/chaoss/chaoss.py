@@ -15,13 +15,11 @@ layout = dbc.Container(
     [
         dbc.Row(
             dbc.Col(gc_contrib_importance_pie, xl=10),
-            align="center",
-            style={"marginBottom": ".5%"},
+            className="visualization-row",
         ),
         dbc.Row(
             dbc.Col(gc_project_velocity, xl=10),
-            align="center",
-            style={"marginBottom": ".5%"},
+            className="visualization-row",
         ),
     ],
     fluid=True,

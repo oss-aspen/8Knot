@@ -18,28 +18,23 @@ layout = dbc.Container(
     [
         dbc.Row(
             dbc.Col(gc_contrib_drive_repeat, xl=10),
-            align="center",
-            style={"marginBottom": ".5%"},
+            className="visualization-row",
         ),
         dbc.Row(
             dbc.Col(gc_first_time_contributions, xl=10),
-            align="center",
-            style={"marginBottom": ".5%"},
+            className="visualization-row",
         ),
         dbc.Row(
             dbc.Col(gc_active_drifting_contributors, xl=10),
-            align="center",
-            style={"marginBottom": ".5%"},
+            className="visualization-row",
         ),
         dbc.Row(
             dbc.Col(gc_new_contributor, xl=10),
-            align="center",
-            style={"marginBottom": ".5%"},
+            className="visualization-row",
         ),
         dbc.Row(
             dbc.Col(gc_contributors_over_time, xl=10),
-            align="center",
-            style={"marginBottom": ".5%"},
+            className="visualization-row",
         ),
     ],
     fluid=True,

@@ -18,28 +18,23 @@ layout = dbc.Container(
     [
         dbc.Row(
             dbc.Col(gc_commit_domains, xl=10),
-            align="center",
-            style={"marginBottom": ".5%"},
+            className="visualization-row",
         ),
         dbc.Row(
             dbc.Col(gc_unique_domains, xl=10),
-            align="center",
-            style={"marginBottom": ".5%"},
+            className="visualization-row",
         ),
         dbc.Row(
             dbc.Col(gc_org_associated_activity, xl=10),
-            align="center",
-            style={"marginBottom": ".5%"},
+            className="visualization-row",
         ),
         dbc.Row(
             dbc.Col(gc_org_core_contributors, xl=10),
-            align="center",
-            style={"marginBottom": ".5%"},
+            className="visualization-row",
         ),
         dbc.Row(
             dbc.Col(gc_gh_org_affiliation, xl=10),
-            align="center",
-            style={"marginBottom": ".5%"},
+            className="visualization-row",
         ),
     ],
     fluid=True,

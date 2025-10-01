@@ -17,23 +17,19 @@ layout = dbc.Container(
     [
         dbc.Row(
             dbc.Col(gc_contribs_by_action, xl=10),
-            align="center",
-            style={"marginBottom": ".5%"},
+            className="visualization-row",
         ),
         dbc.Row(
             dbc.Col(gc_contrib_activity_cycle, xl=10),
-            align="center",
-            style={"marginBottom": ".5%"},
+            className="visualization-row",
         ),
         dbc.Row(
             dbc.Col(gc_contrib_importance_pie, xl=10),
-            align="center",
-            style={"marginBottom": ".5%"},
+            className="visualization-row",
         ),
         dbc.Row(
             dbc.Col(gc_lottery_factor_over_time, xl=10),
-            align="center",
-            style={"marginBottom": ".5%"},
+            className="visualization-row",
         ),
     ],
     fluid=True,
