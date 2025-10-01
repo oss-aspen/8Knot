@@ -330,9 +330,16 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
             # Clean repository names by removing URL prefixes
             label = opt["label"]
             if search_item == SearchItem.REPO:
-                label = clean_repo_name(label)
-
-            formatted_opt["label"] = search_item.prefix(label)
+                cleaned_name, platform = clean_repo_name(label)
+                # Apply platform-specific prefix
+                if platform == "github":
+                    formatted_opt["label"] = f"GH Repo: {cleaned_name}"
+                elif platform == "gitlab":
+                    formatted_opt["label"] = f"GL Repo: {cleaned_name}"
+                else:
+                    formatted_opt["label"] = f"Repo: {cleaned_name}"
+            else:
+                formatted_opt["label"] = search_item.prefix(label)
             formatted_opts.append(formatted_opt)
 
         # Simple reordering: put organizations first, then repositories
