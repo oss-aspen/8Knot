@@ -20,13 +20,13 @@ layout = dbc.Container(
     [
         html.H1("Search Bar Populated Analysis", style={"text-align": "center", "marginBottom": "1%"}),
         dbc.Row(
-            gc_code_language,
+            dbc.Col(gc_code_language, xl=10),
             align="center",
             justify="evenly",
             style={"marginBottom": "1%"},
         ),
         dbc.Row(
-            gc_package_version,
+            dbc.Col(gc_package_version, xl=10),
             align="center",
             justify="evenly",
             style={"marginBottom": "1%"},
