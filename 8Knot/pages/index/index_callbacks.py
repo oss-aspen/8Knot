@@ -35,6 +35,7 @@ from models import SearchItem
 import redis
 import flask
 from .search_utils import fuzzy_search
+from .search_utils import clean_repo_name
 
 # list of queries to be run
 # QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq] - codebase page disabled
@@ -325,7 +326,13 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
             seen_values.add(opt["value"])
             formatted_opt = opt.copy()
             search_item = SearchItem.from_id(opt["value"])
-            formatted_opt["label"] = search_item.prefix(opt["label"])
+
+            # Clean repository names by removing URL prefixes
+            label = opt["label"]
+            if search_item == SearchItem.REPO:
+                label = clean_repo_name(label)
+
+            formatted_opt["label"] = search_item.prefix(label)
             formatted_opts.append(formatted_opt)
 
         # Simple reordering: put organizations first, then repositories

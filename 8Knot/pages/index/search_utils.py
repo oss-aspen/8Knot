@@ -190,3 +190,36 @@ def token_match_score(tokens: List[str], label: str) -> float:
     if match_scores:
         return sum(match_scores) / len(match_scores)
     return 0.0
+
+
+def clean_repo_name(repo_name: str) -> str:
+    """
+    Clean repository names by removing GitHub URL prefixes.
+
+    Args:
+        repo_name: The original repository name/URL
+
+    Returns:
+        Cleaned repository name without URL prefixes
+    """
+    if not repo_name:
+        return repo_name
+
+    # Remove common GitHub URL prefixes
+    prefixes_to_remove = [
+        "https://github.com/",
+        "http://github.com/",
+        "github.com/",
+        "https://www.github.com/",
+        "http://www.github.com/",
+        "www.github.com/",
+    ]
+
+    cleaned_name = repo_name
+
+    for prefix in prefixes_to_remove:
+        if repo_name.lower().startswith(prefix):
+            cleaned_name = cleaned_name[len(prefix) :]
+            break
+
+    return cleaned_name
