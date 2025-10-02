@@ -263,7 +263,7 @@ div.dark-card {
 
 
 /* Fix for the vertical bar issue */
-.dbc input:not([type=radio]):not([type=checkbox]).DateInput_input {
+.dbc input:not([type=radio]):not([type=checkbox]) {
   color: var(--bs-body-color) !important;
   background-color: #404040 !important;
 }
