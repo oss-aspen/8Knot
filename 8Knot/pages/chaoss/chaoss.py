@@ -6,6 +6,7 @@ import warnings
 # import visualization cards
 from .visualizations.project_velocity import gc_project_velocity
 from .visualizations.contrib_importance_pie import gc_contrib_importance_pie
+from .visualizations.contributor_radar import gc_contributor_radar
 
 warnings.filterwarnings("ignore")
 
@@ -17,6 +18,13 @@ layout = dbc.Container(
             [
                 dbc.Col(gc_contrib_importance_pie, width=6),
                 dbc.Col(gc_project_velocity, width=6),
+            ],
+            align="center",
+            style={"marginBottom": ".5%"},
+        ),
+        dbc.Row(
+            [
+                dbc.Col(gc_contributor_radar, width=6),
             ],
             align="center",
             style={"marginBottom": ".5%"},
