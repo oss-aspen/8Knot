@@ -49,7 +49,9 @@ layout = dbc.Container(
                     width=3,
                 ),
             ],
-            className="visualization-row",
+            justify="center",
+            align="center",
+            style={"marginBottom": "1%"},
         ),
         dbc.Row(
             [
