@@ -158,6 +158,7 @@ gc_org_core_contributors = dbc.Card(
         )
     ],
     className="dark-card",
+    id="org-core-contributors",
 )
 
 

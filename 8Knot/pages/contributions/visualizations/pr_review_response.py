@@ -99,6 +99,7 @@ gc_pr_review_response = dbc.Card(
         )
     ],
     className="dark-card",
+    id="pr-review-response",
 )
 
 

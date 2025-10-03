@@ -153,6 +153,7 @@ gc_active_drifting_contributors = dbc.Card(
         )
     ],
     className="dark-card",
+    id="engagement-growth",
 )
 
 

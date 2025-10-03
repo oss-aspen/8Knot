@@ -27,7 +27,7 @@ gc_issue_staleness = dbc.Card(
                     [
                         dbc.Col(
                             html.H3(
-                                "Issue Activity- Staleness",
+                                "Issue Activity - Staleness",
                                 className="card-title",
                             ),
                         ),
@@ -154,6 +154,7 @@ gc_issue_staleness = dbc.Card(
         )
     ],
     className="dark-card",
+    id="issue-staleness",
 )
 
 

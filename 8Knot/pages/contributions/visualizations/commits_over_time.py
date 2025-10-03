@@ -104,6 +104,7 @@ gc_commits_over_time = dbc.Card(
         )
     ],
     className="dark-card",
+    id="commits-over-time",
 )
 
 

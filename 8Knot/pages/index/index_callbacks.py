@@ -35,6 +35,7 @@ from models import SearchItem
 import redis
 import flask
 from .search_utils import fuzzy_search
+from .search_utils import clean_repo_name
 
 # list of queries to be run
 # QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq] - codebase page disabled
@@ -325,7 +326,20 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
             seen_values.add(opt["value"])
             formatted_opt = opt.copy()
             search_item = SearchItem.from_id(opt["value"])
-            formatted_opt["label"] = search_item.prefix(opt["label"])
+
+            # Clean repository names by removing URL prefixes
+            label = opt["label"]
+            if search_item == SearchItem.REPO:
+                cleaned_name, platform = clean_repo_name(label)
+                # Apply platform-specific prefix
+                if platform == "github":
+                    formatted_opt["label"] = f"GH Repo: {cleaned_name}"
+                elif platform == "gitlab":
+                    formatted_opt["label"] = f"GL Repo: {cleaned_name}"
+                else:
+                    formatted_opt["label"] = f"Repo: {cleaned_name}"
+            else:
+                formatted_opt["label"] = search_item.prefix(label)
             formatted_opts.append(formatted_opt)
 
         # Simple reordering: put organizations first, then repositories
@@ -718,29 +732,6 @@ def update_search_status(search_value):
 def hide_search_status_when_loaded(_):
     """Hide the search status indicator when results are loaded."""
     return [{"display": "none"}]
-
-
-@callback(
-    [
-        Output({"type": "sidebar-dropdown-content", "index": MATCH}, "style"),
-        Output({"type": "sidebar-dropdown-container", "index": MATCH}, "style"),
-    ],
-    Input({"type": "sidebar-dropdown-toggle", "index": MATCH}, "n_clicks"),
-    State({"type": "sidebar-dropdown-content", "index": MATCH}, "style"),
-    prevent_initial_call=True,
-)
-def toggle_sidebar_dropdown(n_clicks, current_dropdown_style):
-    """Pattern-matching callback to toggle any sidebar dropdown."""
-    if n_clicks:
-        is_visible = current_dropdown_style and current_dropdown_style.get("display") == "block"
-        if is_visible:
-            dropdown_style = {"display": "none", "padding": "8px 0", "borderRadius": "0 0 8px 8px"}
-            container_style = {"borderRadius": "8px", "marginBottom": "8px"}
-        else:
-            dropdown_style = {"display": "block", "padding": "8px 0", "borderRadius": "0 0 8px 8px"}
-            container_style = {"borderRadius": "8px", "marginBottom": "8px", "backgroundColor": "#292929"}
-        return dropdown_style, container_style
-    return dash.no_update
 
 
 # =============================================================================

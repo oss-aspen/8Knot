@@ -15,25 +15,16 @@ dash.register_page(__name__, path="/codebase")
 layout = dbc.Container(
     [
         dbc.Row(
-            [
-                dbc.Col(gc_contribution_file_heatmap, width=12),
-            ],
-            align="center",
-            style={"marginBottom": ".5%"},
+            dbc.Col(gc_contribution_file_heatmap, xl=10),
+            className="visualization-row",
         ),
         dbc.Row(
-            [
-                dbc.Col(gc_cntrb_file_heatmap, width=12),
-            ],
-            align="center",
-            style={"marginBottom": ".5%"},
+            dbc.Col(gc_cntrb_file_heatmap, xl=10),
+            className="visualization-row",
         ),
         dbc.Row(
-            [
-                dbc.Col(gc_reviewer_file_heatmap, width=12),
-            ],
-            align="center",
-            style={"marginBottom": ".5%"},
+            dbc.Col(gc_reviewer_file_heatmap, xl=10),
+            className="visualization-row",
         ),
     ],
     fluid=True,

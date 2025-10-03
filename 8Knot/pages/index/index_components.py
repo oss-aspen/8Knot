@@ -8,70 +8,11 @@ including the sidebar, main content area, and navigation elements.
 from dash import html, dcc
 import dash
 import dash_bootstrap_components as dbc
+from components.dropdown_nav_item import DropdownNavItemAIO
+from components.nav_item import NavItemAIO
 
 # This will be imported from the main layout file
 search_bar = None
-
-
-def sidebar_section(icon_src=None, text="Hello", page_link="/", horizontal_padding=12, vertical_padding=16):
-    """
-    Creates a clickable section in the sidebar, which allows navigation to different pages
-
-    Args:
-        icon_src: Optionally label the section with an icon
-        text: The text that will be displayed in the sidebar section
-        page_link: The page to navigate to
-        horizontal_padding and vertical_padding: Fine-tune the spacing (kept for compatibility)
-    """
-    if icon_src:
-        return dbc.NavLink(
-            [
-                html.Img(src=icon_src, alt=text, className="sidebar-section-icon"),
-                html.Span(text, className="sidebar-section-text"),
-            ],
-            href=page_link,
-            className="sidebar-section",
-        )
-    else:
-        return dbc.NavLink(
-            text,
-            href=page_link,
-            className="sidebar-section-text-no-icon",
-        )
-
-
-def sidebar_dropdown(
-    icon_src, text, dropdown_links, dropdown_id="dropdown", horizontal_padding=12, vertical_padding=16
-):
-    """Create a dropdown navigation with main item and dropdown content
-
-    Args:
-        icon_src (str): Source path for the icon image
-        text (str): Text to display next to the icon
-        dropdown_links (list): List of dropdown link components
-        dropdown_id (str): Unique identifier for this dropdown (default: "dropdown")
-        horizontal_padding (int): Horizontal padding for the toggle button (kept for compatibility)
-        vertical_padding (int): Vertical padding for the toggle button (kept for compatibility)
-    """
-    return html.Div(
-        [
-            html.Div(
-                [
-                    html.Img(src=icon_src, alt=text, className="sidebar-section-icon"),
-                    html.Span(text, className="sidebar-section-text"),
-                ],
-                className="sidebar-dropdown-toggle",
-                id={"type": "sidebar-dropdown-toggle", "index": dropdown_id},
-            ),
-            html.Div(
-                dropdown_links,
-                id={"type": "sidebar-dropdown-content", "index": dropdown_id},
-                className="sidebar-dropdown-content",
-            ),
-        ],
-        id={"type": "sidebar-dropdown-container", "index": dropdown_id},
-        className="sidebar-dropdown-container",
-    )
 
 
 def create_main_content_area():
@@ -99,43 +40,172 @@ def create_main_content_area():
 
 
 def create_sidebar_navigation():
-    """Create the sidebar navigation menu."""
-    return html.Div(
-        className="sidebar-navigation",
+    return dbc.Nav(
         children=[
-            sidebar_section(
+            DropdownNavItemAIO(
+                [
+                    NavItemAIO(
+                        "Code Languages",
+                        "/repo_overview#code-languages",
+                    ),
+                    NavItemAIO(
+                        "Package Version",
+                        "/repo_overview#package-version",
+                    ),
+                    NavItemAIO(
+                        "Per-Repo Analysis",
+                        "/repo_overview#per-repo-analysis",
+                    ),
+                ],
                 "/assets/repo_overview.svg",
                 "Repo Overview",
                 "/repo_overview",
             ),
-            sidebar_section(
+            DropdownNavItemAIO(
+                [
+                    NavItemAIO(
+                        "Commits Over Time",
+                        "/contributions#commits-over-time",
+                    ),
+                    NavItemAIO(
+                        "PRs Over Time",
+                        "/contributions#prs-over-time",
+                    ),
+                    NavItemAIO(
+                        "PR Activity - Staleness",
+                        "/contributions#pr-staleness",
+                    ),
+                    NavItemAIO(
+                        "PR Time to First Response",
+                        "/contributions#pr-first-response",
+                    ),
+                    NavItemAIO(
+                        "PR Conversation Engagement",
+                        "/contributions#pr-review-response",
+                    ),
+                    NavItemAIO(
+                        "PR Review Status Counts",
+                        "/contributions#pr_assignment",
+                    ),
+                    NavItemAIO(
+                        "Contributor PR Review Assignment",
+                        "/contributions#cntrib-pr-assignment",
+                    ),
+                    NavItemAIO(
+                        "Issues Over Time",
+                        "/contributions#issues-over-time",
+                    ),
+                    NavItemAIO(
+                        "Issue Activity - Staleness",
+                        "/contributions#issue-staleness",
+                    ),
+                    NavItemAIO(
+                        "Issue Assignment Status Counts",
+                        "/contributions#issue_assignment",
+                    ),
+                    NavItemAIO(
+                        "Contributor Issue Assignment",
+                        "/contributions#cntrib-issue-assignment",
+                    ),
+                ],
                 "/assets/contributions.svg",
                 "Contributions",
                 "/contributions",
             ),
-            sidebar_dropdown(
-                "/assets/contributors.svg",
-                "Contributors",
+            DropdownNavItemAIO(
                 [
-                    sidebar_section(
-                        icon_src=None,
-                        text="Behavior",
-                        page_link="/contributors/behavior",
+                    NavItemAIO(
+                        "Drive-Through Contributors",
+                        "/contributors/behavior#drive-throughs",
                     ),
-                    sidebar_section(
-                        text="Contribution Types",
-                        page_link="/contributors/contribution_types",
+                    NavItemAIO(
+                        "First-Time Contributors",
+                        "/contributors/behavior#first-time-contributors",
+                    ),
+                    NavItemAIO(
+                        "Engagement Growth",
+                        "/contributors/behavior#engagement-growth",
+                    ),
+                    NavItemAIO(
+                        "New Contributors",
+                        "/contributors/behavior#new-contributors",
+                    ),
+                    NavItemAIO(
+                        "Contributor Types",
+                        "/contributors/behavior#contributor-types",
                     ),
                 ],
-                dropdown_id="contributors-dropdown",
+                "/assets/contributors.svg",
+                "Contributor Behavior",
+                "/contributors/behavior",
             ),
-            sidebar_section(
+            DropdownNavItemAIO(
+                [
+                    NavItemAIO(
+                        "Contributor Actions",
+                        "/contributors/contribution_types#contributor-actions",
+                    ),
+                    NavItemAIO(
+                        "Contributor Activity Cycle",
+                        "/contributors/contribution_types#contributor-activity-cycle",
+                    ),
+                    NavItemAIO(
+                        "Bus Factor Snapshot",
+                        "/contributors/contribution_types#bus-factor-snapshot",
+                    ),
+                    NavItemAIO(
+                        "Bus Factor over Time",
+                        "/contributors/contribution_types#bus-factor-time",
+                    ),
+                ],
+                "/assets/contributors.svg",
+                "Contributor Types",
+                "/contributors/contribution_types",
+            ),
+            DropdownNavItemAIO(
+                [
+                    NavItemAIO(
+                        "Commits by Domain",
+                        "/affiliation#commits-by-domain",
+                    ),
+                    NavItemAIO(
+                        "Unique Domains",
+                        "/affiliation#unique-domains",
+                    ),
+                    NavItemAIO(
+                        "Org Activity",
+                        "/affiliation#org-activity",
+                    ),
+                    NavItemAIO(
+                        "Org Core Contributors",
+                        "/affiliation#org-core-contributors",
+                    ),
+                    NavItemAIO(
+                        "GitHub Org Affiliation",
+                        "/affiliation#gh-org-affiliation",
+                    ),
+                ],
                 "/assets/affiliation.svg",
                 "Affiliation",
                 "/affiliation",
             ),
-            sidebar_section("/assets/chaoss_small.svg", "CHAOSS", "/chaoss"),
+            DropdownNavItemAIO(
+                [
+                    NavItemAIO(
+                        "Bus Factor",
+                        "/chaoss#bus-factor",
+                    ),
+                    NavItemAIO(
+                        "Project Velocity",
+                        "/chaoss#project-velocity",
+                    ),
+                ],
+                "/assets/chaoss_small.svg",
+                "CHAOSS",
+                "/chaoss",
+            ),
         ],
+        vertical=True,
     )
 
 

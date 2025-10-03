@@ -109,6 +109,7 @@ gc_issue_assignment = dbc.Card(
         )
     ],
     className="dark-card",
+    id="issue_assignment",
 )
 
 

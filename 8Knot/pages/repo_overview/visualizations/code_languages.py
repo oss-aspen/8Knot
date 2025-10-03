@@ -98,6 +98,7 @@ gc_code_language = dbc.Card(
         )
     ],
     className="dark-card",
+    id="code-languages",
 )
 
 

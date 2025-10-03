@@ -100,6 +100,7 @@ gc_pr_first_response = dbc.Card(
         )
     ],
     className="dark-card",
+    id="pr-first-response",
 )
 
 

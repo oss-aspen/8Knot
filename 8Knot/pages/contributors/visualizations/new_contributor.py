@@ -97,6 +97,7 @@ gc_new_contributor = dbc.Card(
         ),
     ],
     className="dark-card",
+    id="new-contributors",
 )
 
 
