@@ -127,6 +127,7 @@ gc_contributors_over_time = dbc.Card(
         )
     ],
     className="dark-card",
+    id="contributor-types",
 )
 
 

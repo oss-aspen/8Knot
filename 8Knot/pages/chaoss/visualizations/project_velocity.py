@@ -226,6 +226,7 @@ gc_project_velocity = dbc.Card(
         )
     ],
     className="dark-card",
+    id="project-velocity",
 )
 
 

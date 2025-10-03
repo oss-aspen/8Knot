@@ -23,51 +23,48 @@ dash.register_page(__name__, path="/contributions")
 layout = dbc.Container(
     [
         dbc.Row(
-            [
-                dbc.Col(gc_pr_staleness, width=6),
-                dbc.Col(gc_pr_over_time, width=6),
-            ],
-            align="center",
-            style={"marginBottom": ".5%"},
+            dbc.Col(gc_commits_over_time, xl=10),
+            className="visualization-row",
         ),
         dbc.Row(
-            [
-                dbc.Col(gc_cntrib_pr_assignment, width=6),
-                dbc.Col(gc_pr_assignment, width=6),
-            ],
-            align="center",
-            style={"marginBottom": ".5%"},
+            dbc.Col(gc_pr_over_time, xl=10),
+            className="visualization-row",
         ),
         dbc.Row(
-            [
-                dbc.Col(gc_issue_staleness, width=6),
-                dbc.Col(gc_issues_over_time, width=6),
-            ],
-            align="center",
-            style={"marginBottom": ".5%"},
+            dbc.Col(gc_pr_staleness, xl=10),
+            className="visualization-row",
         ),
         dbc.Row(
-            [
-                dbc.Col(gc_cntrib_issue_assignment, width=6),
-                dbc.Col(gc_issue_assignment, width=6),
-            ],
-            align="center",
-            style={"marginBottom": ".5%"},
+            dbc.Col(gc_pr_first_response, xl=10),
+            className="visualization-row",
         ),
         dbc.Row(
-            [
-                dbc.Col(gc_commits_over_time, width=6),
-                dbc.Col(gc_pr_first_response, width=6),
-            ],
-            align="center",
-            style={"marginBottom": ".5%"},
+            dbc.Col(gc_pr_review_response, xl=10),
+            className="visualization-row",
         ),
         dbc.Row(
-            [
-                dbc.Col(gc_pr_review_response, width=6),
-            ],
-            align="center",
-            style={"marginBottom": ".5%"},
+            dbc.Col(gc_pr_assignment, xl=10),
+            className="visualization-row",
+        ),
+        dbc.Row(
+            dbc.Col(gc_cntrib_pr_assignment, xl=10),
+            className="visualization-row",
+        ),
+        dbc.Row(
+            dbc.Col(gc_issues_over_time, xl=10),
+            className="visualization-row",
+        ),
+        dbc.Row(
+            dbc.Col(gc_issue_staleness, xl=10),
+            className="visualization-row",
+        ),
+        dbc.Row(
+            dbc.Col(gc_issue_assignment, xl=10),
+            className="visualization-row",
+        ),
+        dbc.Row(
+            dbc.Col(gc_cntrib_issue_assignment, xl=10),
+            className="visualization-row",
         ),
     ],
     fluid=True,

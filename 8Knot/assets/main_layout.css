@@ -351,6 +351,17 @@ a.sidebar-section-text {
 }
 
 
+/* visualization adjustments */
+
+.visualization-row {
+    margin-bottom: 5rem;
+    /* Centers the cards */
+    justify-content: space-evenly;
+    /* Vertically align child text elements */
+    align-items: center;
+}
+
+
 /* Storage Quota Warning */
 
 .storage-quota-warning {

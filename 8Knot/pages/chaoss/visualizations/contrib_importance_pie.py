@@ -164,6 +164,7 @@ gc_contrib_importance_pie = dbc.Card(
         ),
     ],
     className="dark-card",
+    id="bus-factor",
 )
 
 

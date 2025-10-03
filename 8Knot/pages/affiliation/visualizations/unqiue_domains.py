@@ -111,6 +111,7 @@ gc_unique_domains = dbc.Card(
         ),
     ],
     className="dark-card",
+    id="unique-domains",
 )
 
 

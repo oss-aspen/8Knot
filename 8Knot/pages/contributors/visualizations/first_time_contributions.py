@@ -67,6 +67,7 @@ gc_first_time_contributions = dbc.Card(
         ),
     ],
     className="dark-card",
+    id="first-time-contributors",
 )
 
 

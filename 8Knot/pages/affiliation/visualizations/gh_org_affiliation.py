@@ -112,6 +112,7 @@ gc_gh_org_affiliation = dbc.Card(
         ),
     ],
     className="dark-card",
+    id="gh-org-affiliation",
 )
 
 

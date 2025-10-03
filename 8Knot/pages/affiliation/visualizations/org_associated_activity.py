@@ -145,6 +145,7 @@ gc_org_associated_activity = dbc.Card(
         )
     ],
     className="dark-card",
+    id="org-activity",
 )
 
 
