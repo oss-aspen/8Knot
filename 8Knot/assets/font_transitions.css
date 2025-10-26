@@ -1,0 +1,589 @@
+/*
+    Dynamic Hover Transitions
+
+    This file contains smooth hover transitions for interactive elements
+    inspired by modern web design
+
+    Features:
+    - Smooth scale transitions on hover
+    - Dynamic transform effects
+    - Letter spacing animations
+    - Shadow and glow effects
+*/
+
+
+/* ==== GLOBAL TRANSITION VARIABLES ==== */
+
+:root {
+    /* Timing Functions */
+    --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-ease: 0.3s ease-in-out;
+    /* Scale Values */
+    --hover-scale: 1.05;
+    --hover-scale-small: 1.03;
+    --hover-scale-medium: 1.02;
+    --hover-scale-tiny: 1.01;
+    --hover-scale-large: 1.08;
+    --hover-scale-press: 0.98;
+    /* Transform Values */
+    --hover-lift: -2px;
+    --hover-lift-small: -1px;
+    --hover-lift-large: -4px;
+    --hover-slide-small: 2px;
+    --hover-slide-medium: 4px;
+    --hover-slide-large: 6px;
+    /* Font Size Multipliers (Modern Dynamic Transition) */
+    --hover-font-scale: 1.15;
+    --hover-font-scale-small: 1.08;
+    --hover-font-scale-medium: 1.05;
+    --hover-font-scale-large: 1.2;
+    /* Letter Spacing Values */
+    --letter-spacing-tiny: 0.2px;
+    --letter-spacing-small: 0.3px;
+    --letter-spacing-medium: 0.4px;
+    --letter-spacing-base: 0.5px;
+    --letter-spacing-large: 0.8px;
+    --letter-spacing-xlarge: 1px;
+    --letter-spacing-xxlarge: 1.5px;
+    --letter-spacing-em-tiny: 0.02em;
+    --letter-spacing-em-small: 0.03em;
+    --letter-spacing-em-medium: 0.05em;
+    --letter-spacing-em-large: 0.08em;
+    /* Shadow Values */
+    --shadow-small: 0 2px 4px rgba(0, 0, 0, 0.2);
+    --shadow-medium: 0 2px 8px rgba(64, 64, 64, 0.2);
+    --shadow-large: 0 4px 12px rgba(0, 0, 0, 0.2);
+    --shadow-xlarge: 0 6px 16px rgba(0, 0, 0, 0.2);
+    --shadow-xxlarge: 0 8px 16px rgba(0, 0, 0, 0.2);
+    --shadow-huge: 0 8px 20px rgba(0, 0, 0, 0.3);
+    --shadow-button: 0 4px 12px rgba(64, 64, 64, 0.3);
+    --shadow-button-large: 0 8px 16px rgba(0, 0, 0, 0.3);
+    --shadow-tab: 0 4px 12px rgba(25, 154, 214, 0.3);
+    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.15);
+    --shadow-page-item: 0 6px 16px rgba(0, 0, 0, 0.2);
+    --shadow-hover-lift: 0 4px 10px rgba(0, 0, 0, 0.2);
+    /* Rotation Values */
+    --rotate-small: 2deg;
+    --rotate-full: 180deg;
+    /* Outline Values */
+    --outline-width: 2px;
+    --outline-offset: 2px;
+}
+
+
+/* ==== TAB TRANSITIONS ==== */
+
+
+/* Landing page tabs with dynamic font-size (Lando Norris style) */
+
+.tabs-header .nav-tabs .nav-link {
+    transition: all var(--transition-ease), font-size var(--transition-ease), letter-spacing var(--transition-ease), transform var(--transition-fast) !important;
+    transform-origin: center;
+    will-change: transform;
+}
+
+.tabs-header .nav-tabs .nav-link:hover {
+    transform: translateY(var(--hover-lift)) !important;
+    font-size: calc(1em * var(--hover-font-scale-medium));
+    letter-spacing: var(--letter-spacing-em-medium);
+    box-shadow: var(--shadow-tab) !important;
+}
+
+.tabs-header .nav-tabs .nav-link.active {
+    transform: translateY(0) !important;
+}
+
+
+/* Landing tab transitions */
+
+.landing-tab {
+    transition: all var(--transition-ease), font-size var(--transition-ease), letter-spacing var(--transition-ease), transform var(--transition-fast) !important;
+    transform-origin: center;
+    will-change: transform;
+}
+
+.landing-tab:hover {
+    font-size: calc(1em * var(--hover-font-scale-medium));
+    letter-spacing: var(--letter-spacing-em-medium);
+}
+
+
+/* ==== NAVIGATION ITEM TRANSITIONS ==== */
+
+
+/* Main navigation links - Modern font-size transition */
+
+.nav-link {
+    transition: all var(--transition-ease), font-size var(--transition-ease), letter-spacing var(--transition-ease), transform var(--transition-fast) !important;
+    transform-origin: left center;
+    will-change: transform;
+}
+
+.nav-link:hover {
+    font-size: calc(1em * var(--hover-font-scale-small));
+    letter-spacing: var(--letter-spacing-em-small);
+    box-shadow: var(--shadow-medium);
+}
+
+
+/* Sidebar navigation items - Modern font-size transition (Lando Norris style) */
+
+.sidebar-section {
+    transition: all var(--transition-ease), transform var(--transition-fast) !important;
+    transform-origin: left center;
+    will-change: transform;
+}
+
+.sidebar-section:hover {
+    transform: translateX(var(--hover-slide-medium)) !important;
+    box-shadow: var(--shadow-card);
+}
+
+.sidebar-section-text {
+    transition: font-size var(--transition-ease), letter-spacing var(--transition-ease), color var(--transition-fast) !important;
+    display: inline-block;
+}
+
+.sidebar-section:hover .sidebar-section-text {
+    font-size: calc(1em * var(--hover-font-scale-small));
+    letter-spacing: var(--letter-spacing-em-small);
+}
+
+
+/* Sidebar dropdown items - Modern font-size transition */
+
+.sidebar-dropdown-container .collapse a {
+    transition: all var(--transition-ease), font-size var(--transition-ease), letter-spacing var(--transition-ease), transform var(--transition-fast) !important;
+    transform-origin: left center;
+    will-change: transform;
+    display: inline-block;
+}
+
+.sidebar-dropdown-container .collapse a:hover {
+    transform: translateX(var(--hover-slide-large)) !important;
+    font-size: calc(1em * var(--hover-font-scale-small));
+    letter-spacing: var(--letter-spacing-em-small);
+}
+
+
+/* ==== BUTTON TRANSITIONS ==== */
+
+
+/* Landing learn button */
+
+.landing-learn-button {
+    transition: all var(--transition-smooth), transform var(--transition-fast), letter-spacing var(--transition-smooth) !important;
+    transform-origin: center;
+    will-change: transform;
+}
+
+.landing-learn-button:hover {
+    transform: scale(var(--hover-scale)) translateY(var(--hover-lift-large)) !important;
+    letter-spacing: var(--letter-spacing-xlarge);
+    box-shadow: var(--shadow-button-large) !important;
+}
+
+.landing-learn-button:active {
+    transform: scale(var(--hover-scale-press)) translateY(0) !important;
+}
+
+
+/* About graph button */
+
+.about-graph-button {
+    transition: all var(--transition-smooth), transform var(--transition-fast), letter-spacing var(--transition-smooth) !important;
+    transform-origin: center;
+    will-change: transform;
+}
+
+.about-graph-button:hover {
+    transform: scale(var(--hover-scale)) !important;
+    letter-spacing: var(--letter-spacing-base);
+    box-shadow: var(--shadow-button) !important;
+}
+
+
+/* Page navigation buttons */
+
+.page-nav-btn {
+    transition: all var(--transition-smooth), transform var(--transition-fast), letter-spacing var(--transition-smooth) !important;
+    transform-origin: center;
+    will-change: transform;
+}
+
+.page-nav-btn:hover {
+    transform: scale(var(--hover-scale-small)) translateY(var(--hover-lift)) !important;
+    letter-spacing: var(--letter-spacing-medium);
+    box-shadow: var(--shadow-hover-lift) !important;
+}
+
+.page-nav-btn:active {
+    transform: scale(var(--hover-scale-press)) translateY(0) !important;
+}
+
+
+/* ==== TITLE TRANSITIONS ==== */
+
+
+/* Welcome title */
+
+.landing-welcome-title {
+    transition: letter-spacing var(--transition-smooth), transform var(--transition-smooth) !important;
+    transform-origin: center;
+    cursor: default;
+}
+
+.landing-welcome-title:hover {
+    letter-spacing: var(--letter-spacing-xlarge);
+    transform: scale(var(--hover-scale-tiny));
+}
+
+
+/* Main title */
+
+.main-title h1 {
+    transition: letter-spacing var(--transition-smooth), transform var(--transition-smooth) !important;
+    transform-origin: left center;
+    cursor: default;
+}
+
+.main-title h1:hover {
+    letter-spacing: var(--letter-spacing-xlarge);
+    transform: scale(var(--hover-scale-tiny));
+}
+
+
+/* Section titles */
+
+.section-title h3 {
+    transition: letter-spacing var(--transition-smooth), transform var(--transition-smooth), color var(--transition-fast) !important;
+    transform-origin: left center;
+    cursor: default;
+}
+
+.section-title h3:hover {
+    letter-spacing: var(--letter-spacing-large);
+    transform: scale(var(--hover-scale-medium));
+}
+
+
+/* Card titles */
+
+.card h3.card-title {
+    transition: letter-spacing var(--transition-smooth), transform var(--transition-smooth), color var(--transition-fast) !important;
+    transform-origin: left center;
+    cursor: default;
+}
+
+.card h3.card-title:hover {
+    letter-spacing: var(--letter-spacing-large);
+    transform: scale(var(--hover-scale-tiny));
+}
+
+
+/* ==== CARD TRANSITIONS ==== */
+
+
+/* Info cards */
+
+.info_card {
+    transition: all var(--transition-smooth), transform var(--transition-fast) !important;
+    transform-origin: center;
+    will-change: transform;
+}
+
+.info_card:hover {
+    transform: scale(var(--hover-scale-small)) translateY(var(--hover-lift-large)) !important;
+    box-shadow: var(--shadow-xxlarge) !important;
+}
+
+
+/* Page items */
+
+.page-item {
+    transition: all var(--transition-smooth), transform var(--transition-fast) !important;
+    transform-origin: center;
+    will-change: transform;
+}
+
+.page-item:hover {
+    transform: scale(var(--hover-scale-small)) translateY(var(--hover-lift-large)) !important;
+    box-shadow: var(--shadow-page-item) !important;
+}
+
+
+/* Instruction cards */
+
+.instruction_card {
+    transition: all var(--transition-smooth), transform var(--transition-fast) !important;
+    transform-origin: center;
+    will-change: transform;
+}
+
+.instruction_card:hover {
+    transform: scale(var(--hover-scale-tiny)) !important;
+    box-shadow: var(--shadow-card) !important;
+}
+
+
+/* ==== DROPDOWN AND OPTION TRANSITIONS ==== */
+
+
+/* Multiselect items */
+
+.mantine-MultiSelect-item {
+    transition: all var(--transition-fast), transform var(--transition-fast), letter-spacing var(--transition-smooth) !important;
+    transform-origin: left center;
+    will-change: transform;
+}
+
+.mantine-MultiSelect-item[data-hovered] {
+    transform: scale(var(--hover-scale-medium)) translateX(var(--hover-slide-medium)) !important;
+    letter-spacing: var(--letter-spacing-tiny);
+}
+
+
+/* Search bar items */
+
+.search-bar-item {
+    transition: all var(--transition-fast), transform var(--transition-fast) !important;
+    transform-origin: left center;
+    will-change: transform;
+}
+
+.search-bar-item:hover {
+    transform: scale(var(--hover-scale-medium)) translateX(var(--hover-slide-medium)) !important;
+}
+
+
+/* Radio buttons */
+
+.custom-radio-buttons .form-check-label {
+    transition: all var(--transition-smooth), transform var(--transition-fast), letter-spacing var(--transition-smooth) !important;
+    transform-origin: left center;
+    will-change: transform;
+}
+
+.custom-radio-buttons .form-check:hover .form-check-label {
+    transform: scale(var(--hover-scale-small)) !important;
+    letter-spacing: var(--letter-spacing-small);
+}
+
+
+/* ==== LOGO TRANSITIONS ==== */
+
+
+/* Note: Logo transitions disabled for 8knot logo per requirements */
+
+
+/* ==== IMAGE TRANSITIONS ==== */
+
+
+/* Feature images */
+
+.feature-image {
+    transition: all var(--transition-smooth), transform var(--transition-fast) !important;
+    transform-origin: center;
+    will-change: transform;
+    cursor: pointer;
+}
+
+.feature-image:hover {
+    transform: scale(var(--hover-scale)) !important;
+    box-shadow: var(--shadow-huge) !important;
+}
+
+
+/* Instruction images */
+
+.instruction_image {
+    transition: all var(--transition-smooth), transform var(--transition-fast) !important;
+    transform-origin: center;
+    will-change: transform;
+    cursor: pointer;
+}
+
+.instruction_image:hover {
+    transform: scale(var(--hover-scale)) !important;
+    box-shadow: var(--shadow-xlarge) !important;
+}
+
+
+/* ==== TABLE TRANSITIONS ==== */
+
+
+/* Table rows */
+
+.dbc .table tbody tr {
+    transition: all var(--transition-fast), transform var(--transition-fast) !important;
+    transform-origin: left center;
+    will-change: transform;
+}
+
+.dbc .table-hover tbody tr:hover {
+    transform: scale(var(--hover-scale-tiny)) !important;
+}
+
+
+/* ==== SEARCH CONTROLS TRANSITIONS ==== */
+
+
+/* Search buttons */
+
+.search-help-button,
+.search-list-button {
+    transition: all var(--transition-smooth), transform var(--transition-fast), letter-spacing var(--transition-smooth) !important;
+    transform-origin: center;
+    will-change: transform;
+}
+
+.search-help-button:hover,
+.search-list-button:hover {
+    transform: scale(var(--hover-scale)) !important;
+    letter-spacing: var(--letter-spacing-small);
+}
+
+
+/* ==== SIDEBAR TOGGLE TRANSITIONS ==== */
+
+.sidebar-toggle {
+    transition: all var(--transition-smooth), transform var(--transition-fast) !important;
+    transform-origin: center;
+    will-change: transform;
+}
+
+.sidebar-toggle:hover {
+    transform: scale(1.15) rotate(var(--rotate-full)) !important;
+}
+
+
+/* ==== INPUT TRANSITIONS ==== */
+
+
+/* Dark inputs */
+
+.dark-input {
+    transition: all var(--transition-smooth), transform var(--transition-fast) !important;
+    transform-origin: center;
+    will-change: transform;
+}
+
+.dark-input:focus {
+    transform: scale(var(--hover-scale-medium)) !important;
+}
+
+
+/* ==== RESPONSIVE ADJUSTMENTS ==== */
+
+
+/* Reduce transitions on mobile for better performance */
+
+@media (max-width: 768px) {
+     :root {
+        --hover-scale: 1.03;
+        --hover-scale-small: 1.02;
+        --hover-scale-medium: 1.015;
+        --hover-scale-tiny: 1.01;
+        --hover-scale-large: 1.05;
+        --hover-lift: -1px;
+        --hover-slide-small: 2px;
+        --letter-spacing-small: 0.2px;
+        --letter-spacing-base: 0.3px;
+    }
+    /* Disable some intensive transitions on mobile */
+    .sidebar-section:hover {
+        transform: scale(var(--hover-scale-tiny)) translateX(var(--hover-slide-small)) !important;
+    }
+    .tabs-header .nav-tabs .nav-link:hover {
+        transform: scale(var(--hover-scale-medium)) !important;
+        letter-spacing: var(--letter-spacing-tiny);
+    }
+}
+
+
+/* ==== ACCESSIBILITY ==== */
+
+
+/* Respect reduced motion preference */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition: none !important;
+        animation: none !important;
+        transform: none !important;
+        letter-spacing: initial !important;
+    }
+    /* Keep minimal hover feedback for usability */
+    .nav-link:hover,
+    .sidebar-section:hover,
+    .landing-learn-button:hover,
+    .tabs-header .nav-tabs .nav-link:hover {
+        opacity: 0.9;
+    }
+}
+
+
+/* ==== TOUCH DEVICE ADJUSTMENTS ==== */
+
+
+/* Disable hover effects on touch devices to prevent sticky states */
+
+@media (hover: none) and (pointer: coarse) {
+    /* Reset transforms but keep background/color changes */
+    .nav-link:hover,
+    .sidebar-section:hover,
+    .landing-learn-button:hover,
+    .tabs-header .nav-tabs .nav-link:hover,
+    .page-nav-btn:hover,
+    .about-graph-button:hover,
+    .info_card:hover,
+    .page-item:hover,
+    .feature-image:hover,
+    .instruction_image:hover {
+        transform: none !important;
+        letter-spacing: initial !important;
+    }
+}
+
+
+/* ==== FOCUS STATES ==== */
+
+
+/* Ensure focus states have similar visual feedback to hover */
+
+.nav-link:focus,
+.sidebar-section:focus,
+.landing-learn-button:focus,
+.tabs-header .nav-tabs .nav-link:focus,
+.page-nav-btn:focus,
+.about-graph-button:focus {
+    transform: scale(var(--hover-scale-small)) !important;
+    outline: var(--outline-width) solid var(--baby-blue-500);
+    outline-offset: var(--outline-offset);
+}
+
+
+/* ==== ANIMATION PERFORMANCE ==== */
+
+
+/* Use GPU acceleration for smoother animations */
+
+.nav-link,
+.sidebar-section,
+.landing-learn-button,
+.tabs-header .nav-tabs .nav-link,
+.page-nav-btn,
+.about-graph-button,
+.info_card,
+.page-item,
+.feature-image,
+.instruction_image {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    perspective: 1000px;
+    -webkit-perspective: 1000px;
+}
