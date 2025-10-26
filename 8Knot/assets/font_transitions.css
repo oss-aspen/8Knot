@@ -70,8 +70,6 @@
     /* Outline Values */
     --outline-width: 2px;
     --outline-offset: 2px;
-    /* Colors */
-    --baby-blue-500: #199AD6;
 }
 
 
@@ -484,15 +482,37 @@
 
 @media (max-width: 768px) {
      :root {
+        /* Scale Values - Reduced for mobile */
         --hover-scale: 1.03;
         --hover-scale-small: 1.02;
         --hover-scale-medium: 1.015;
         --hover-scale-tiny: 1.01;
         --hover-scale-large: 1.05;
+        --hover-scale-press: 0.99;
+        /* Transform Values - Reduced for mobile */
         --hover-lift: -1px;
+        --hover-lift-small: -0.5px;
+        --hover-lift-large: -2px;
         --hover-slide-small: 2px;
+        --hover-slide-medium: 3px;
+        --hover-slide-large: 4px;
+        /* Font Scale Values - Reduced for mobile */
+        --hover-font-scale: 1.08;
+        --hover-font-scale-small: 1.05;
+        --hover-font-scale-medium: 1.03;
+        --hover-font-scale-large: 1.1;
+        /* Letter Spacing Values - Reduced for mobile */
+        --letter-spacing-tiny: 0.1px;
         --letter-spacing-small: 0.2px;
+        --letter-spacing-medium: 0.25px;
         --letter-spacing-base: 0.3px;
+        --letter-spacing-large: 0.4px;
+        --letter-spacing-xlarge: 0.5px;
+        --letter-spacing-xxlarge: 0.8px;
+        --letter-spacing-em-tiny: 0.01em;
+        --letter-spacing-em-small: 0.02em;
+        --letter-spacing-em-medium: 0.03em;
+        --letter-spacing-em-large: 0.05em;
     }
     /* Disable some intensive transitions on mobile */
     .sidebar-section:hover {
