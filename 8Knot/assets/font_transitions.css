@@ -76,30 +76,30 @@
 /* ==== TAB TRANSITIONS ==== */
 
 
-/* Landing page tabs with dynamic font-size (Lando Norris style) */
+/* Landing page tabs with dynamic font-size */
 
 .tabs-header .nav-tabs .nav-link {
-    transition: all var(--transition-ease), font-size var(--transition-ease), letter-spacing var(--transition-ease), transform var(--transition-fast) !important;
+    transition: all var(--transition-ease), font-size var(--transition-ease), letter-spacing var(--transition-ease), transform var(--transition-fast);
     transform-origin: center;
     will-change: transform;
 }
 
 .tabs-header .nav-tabs .nav-link:hover {
-    transform: translateY(var(--hover-lift)) !important;
+    transform: translateY(var(--hover-lift));
     font-size: calc(1em * var(--hover-font-scale-medium));
     letter-spacing: var(--letter-spacing-em-medium);
-    box-shadow: var(--shadow-tab) !important;
+    box-shadow: var(--shadow-tab);
 }
 
 .tabs-header .nav-tabs .nav-link.active {
-    transform: translateY(0) !important;
+    transform: translateY(0);
 }
 
 
 /* Landing tab transitions */
 
 .landing-tab {
-    transition: all var(--transition-ease), font-size var(--transition-ease), letter-spacing var(--transition-ease), transform var(--transition-fast) !important;
+    transition: all var(--transition-ease), font-size var(--transition-ease), letter-spacing var(--transition-ease), transform var(--transition-fast);
     transform-origin: center;
     will-change: transform;
 }
@@ -116,7 +116,7 @@
 /* Main navigation links - Modern font-size transition */
 
 .nav-link {
-    transition: all var(--transition-ease), font-size var(--transition-ease), letter-spacing var(--transition-ease), transform var(--transition-fast) !important;
+    transition: all var(--transition-ease), font-size var(--transition-ease), letter-spacing var(--transition-ease), transform var(--transition-fast);
     transform-origin: left center;
     will-change: transform;
 }
@@ -131,18 +131,18 @@
 /* Sidebar navigation items - Modern font-size transition (Lando Norris style) */
 
 .sidebar-section {
-    transition: all var(--transition-ease), transform var(--transition-fast) !important;
+    transition: all var(--transition-ease), transform var(--transition-fast);
     transform-origin: left center;
     will-change: transform;
 }
 
 .sidebar-section:hover {
-    transform: translateX(var(--hover-slide-medium)) !important;
+    transform: translateX(var(--hover-slide-medium));
     box-shadow: var(--shadow-card);
 }
 
 .sidebar-section-text {
-    transition: font-size var(--transition-ease), letter-spacing var(--transition-ease), color var(--transition-fast) !important;
+    transition: font-size var(--transition-ease), letter-spacing var(--transition-ease), color var(--transition-fast);
     display: inline-block;
 }
 
@@ -155,14 +155,14 @@
 /* Sidebar dropdown items - Modern font-size transition */
 
 .sidebar-dropdown-container .collapse a {
-    transition: all var(--transition-ease), font-size var(--transition-ease), letter-spacing var(--transition-ease), transform var(--transition-fast) !important;
+    transition: all var(--transition-ease), font-size var(--transition-ease), letter-spacing var(--transition-ease), transform var(--transition-fast);
     transform-origin: left center;
     will-change: transform;
     display: inline-block;
 }
 
 .sidebar-dropdown-container .collapse a:hover {
-    transform: translateX(var(--hover-slide-large)) !important;
+    transform: translateX(var(--hover-slide-large));
     font-size: calc(1em * var(--hover-font-scale-small));
     letter-spacing: var(--letter-spacing-em-small);
 }
@@ -174,53 +174,53 @@
 /* Landing learn button */
 
 .landing-learn-button {
-    transition: all var(--transition-smooth), transform var(--transition-fast), letter-spacing var(--transition-smooth) !important;
+    transition: all var(--transition-smooth), transform var(--transition-fast), letter-spacing var(--transition-smooth);
     transform-origin: center;
     will-change: transform;
 }
 
 .landing-learn-button:hover {
-    transform: scale(var(--hover-scale)) translateY(var(--hover-lift-large)) !important;
+    transform: scale(var(--hover-scale)) translateY(var(--hover-lift-large));
     letter-spacing: var(--letter-spacing-xlarge);
-    box-shadow: var(--shadow-button-large) !important;
+    box-shadow: var(--shadow-button-large);
 }
 
 .landing-learn-button:active {
-    transform: scale(var(--hover-scale-press)) translateY(0) !important;
+    transform: scale(var(--hover-scale-press)) translateY(0);
 }
 
 
 /* About graph button */
 
 .about-graph-button {
-    transition: all var(--transition-smooth), transform var(--transition-fast), letter-spacing var(--transition-smooth) !important;
+    transition: all var(--transition-smooth), transform var(--transition-fast), letter-spacing var(--transition-smooth);
     transform-origin: center;
     will-change: transform;
 }
 
 .about-graph-button:hover {
-    transform: scale(var(--hover-scale)) !important;
+    transform: scale(var(--hover-scale));
     letter-spacing: var(--letter-spacing-base);
-    box-shadow: var(--shadow-button) !important;
+    box-shadow: var(--shadow-button);
 }
 
 
 /* Page navigation buttons */
 
 .page-nav-btn {
-    transition: all var(--transition-smooth), transform var(--transition-fast), letter-spacing var(--transition-smooth) !important;
+    transition: all var(--transition-smooth), transform var(--transition-fast), letter-spacing var(--transition-smooth);
     transform-origin: center;
     will-change: transform;
 }
 
 .page-nav-btn:hover {
-    transform: scale(var(--hover-scale-small)) translateY(var(--hover-lift)) !important;
+    transform: scale(var(--hover-scale-small)) translateY(var(--hover-lift));
     letter-spacing: var(--letter-spacing-medium);
-    box-shadow: var(--shadow-hover-lift) !important;
+    box-shadow: var(--shadow-hover-lift);
 }
 
 .page-nav-btn:active {
-    transform: scale(var(--hover-scale-press)) translateY(0) !important;
+    transform: scale(var(--hover-scale-press)) translateY(0);
 }
 
 
@@ -230,7 +230,7 @@
 /* Welcome title */
 
 .landing-welcome-title {
-    transition: letter-spacing var(--transition-smooth), transform var(--transition-smooth) !important;
+    transition: letter-spacing var(--transition-smooth), transform var(--transition-smooth);
     transform-origin: center;
     cursor: default;
 }
@@ -244,7 +244,7 @@
 /* Main title */
 
 .main-title h1 {
-    transition: letter-spacing var(--transition-smooth), transform var(--transition-smooth) !important;
+    transition: letter-spacing var(--transition-smooth), transform var(--transition-smooth);
     transform-origin: left center;
     cursor: default;
 }
@@ -258,7 +258,7 @@
 /* Section titles */
 
 .section-title h3 {
-    transition: letter-spacing var(--transition-smooth), transform var(--transition-smooth), color var(--transition-fast) !important;
+    transition: letter-spacing var(--transition-smooth), transform var(--transition-smooth), color var(--transition-fast);
     transform-origin: left center;
     cursor: default;
 }
@@ -272,7 +272,7 @@
 /* Card titles */
 
 .card h3.card-title {
-    transition: letter-spacing var(--transition-smooth), transform var(--transition-smooth), color var(--transition-fast) !important;
+    transition: letter-spacing var(--transition-smooth), transform var(--transition-smooth), color var(--transition-fast);
     transform-origin: left center;
     cursor: default;
 }
@@ -289,42 +289,42 @@
 /* Info cards */
 
 .info_card {
-    transition: all var(--transition-smooth), transform var(--transition-fast) !important;
+    transition: all var(--transition-smooth), transform var(--transition-fast);
     transform-origin: center;
     will-change: transform;
 }
 
 .info_card:hover {
-    transform: scale(var(--hover-scale-small)) translateY(var(--hover-lift-large)) !important;
-    box-shadow: var(--shadow-xxlarge) !important;
+    transform: scale(var(--hover-scale-small)) translateY(var(--hover-lift-large));
+    box-shadow: var(--shadow-xxlarge);
 }
 
 
 /* Page items */
 
 .page-item {
-    transition: all var(--transition-smooth), transform var(--transition-fast) !important;
+    transition: all var(--transition-smooth), transform var(--transition-fast);
     transform-origin: center;
     will-change: transform;
 }
 
 .page-item:hover {
-    transform: scale(var(--hover-scale-small)) translateY(var(--hover-lift-large)) !important;
-    box-shadow: var(--shadow-page-item) !important;
+    transform: scale(var(--hover-scale-small)) translateY(var(--hover-lift-large));
+    box-shadow: var(--shadow-page-item);
 }
 
 
 /* Instruction cards */
 
 .instruction_card {
-    transition: all var(--transition-smooth), transform var(--transition-fast) !important;
+    transition: all var(--transition-smooth), transform var(--transition-fast);
     transform-origin: center;
     will-change: transform;
 }
 
 .instruction_card:hover {
-    transform: scale(var(--hover-scale-tiny)) !important;
-    box-shadow: var(--shadow-card) !important;
+    transform: scale(var(--hover-scale-tiny));
+    box-shadow: var(--shadow-card);
 }
 
 
@@ -334,13 +334,13 @@
 /* Multiselect items */
 
 .mantine-MultiSelect-item {
-    transition: all var(--transition-fast), transform var(--transition-fast), letter-spacing var(--transition-smooth) !important;
+    transition: all var(--transition-fast), transform var(--transition-fast), letter-spacing var(--transition-smooth);
     transform-origin: left center;
     will-change: transform;
 }
 
 .mantine-MultiSelect-item[data-hovered] {
-    transform: scale(var(--hover-scale-medium)) translateX(var(--hover-slide-medium)) !important;
+    transform: scale(var(--hover-scale-medium)) translateX(var(--hover-slide-medium));
     letter-spacing: var(--letter-spacing-tiny);
 }
 
@@ -348,26 +348,26 @@
 /* Search bar items */
 
 .search-bar-item {
-    transition: all var(--transition-fast), transform var(--transition-fast) !important;
+    transition: all var(--transition-fast), transform var(--transition-fast);
     transform-origin: left center;
     will-change: transform;
 }
 
 .search-bar-item:hover {
-    transform: scale(var(--hover-scale-medium)) translateX(var(--hover-slide-medium)) !important;
+    transform: scale(var(--hover-scale-medium)) translateX(var(--hover-slide-medium));
 }
 
 
 /* Radio buttons */
 
 .custom-radio-buttons .form-check-label {
-    transition: all var(--transition-smooth), transform var(--transition-fast), letter-spacing var(--transition-smooth) !important;
+    transition: all var(--transition-smooth), transform var(--transition-fast), letter-spacing var(--transition-smooth);
     transform-origin: left center;
     will-change: transform;
 }
 
 .custom-radio-buttons .form-check:hover .form-check-label {
-    transform: scale(var(--hover-scale-small)) !important;
+    transform: scale(var(--hover-scale-small));
     letter-spacing: var(--letter-spacing-small);
 }
 
@@ -384,30 +384,30 @@
 /* Feature images */
 
 .feature-image {
-    transition: all var(--transition-smooth), transform var(--transition-fast) !important;
+    transition: all var(--transition-smooth), transform var(--transition-fast);
     transform-origin: center;
     will-change: transform;
     cursor: pointer;
 }
 
 .feature-image:hover {
-    transform: scale(var(--hover-scale)) !important;
-    box-shadow: var(--shadow-huge) !important;
+    transform: scale(var(--hover-scale));
+    box-shadow: var(--shadow-huge);
 }
 
 
 /* Instruction images */
 
 .instruction_image {
-    transition: all var(--transition-smooth), transform var(--transition-fast) !important;
+    transition: all var(--transition-smooth), transform var(--transition-fast);
     transform-origin: center;
     will-change: transform;
     cursor: pointer;
 }
 
 .instruction_image:hover {
-    transform: scale(var(--hover-scale)) !important;
-    box-shadow: var(--shadow-xlarge) !important;
+    transform: scale(var(--hover-scale));
+    box-shadow: var(--shadow-xlarge);
 }
 
 
@@ -417,13 +417,13 @@
 /* Table rows */
 
 .dbc .table tbody tr {
-    transition: all var(--transition-fast), transform var(--transition-fast) !important;
+    transition: all var(--transition-fast), transform var(--transition-fast);
     transform-origin: left center;
     will-change: transform;
 }
 
 .dbc .table-hover tbody tr:hover {
-    transform: scale(var(--hover-scale-tiny)) !important;
+    transform: scale(var(--hover-scale-tiny));
 }
 
 
@@ -434,14 +434,14 @@
 
 .search-help-button,
 .search-list-button {
-    transition: all var(--transition-smooth), transform var(--transition-fast), letter-spacing var(--transition-smooth) !important;
+    transition: all var(--transition-smooth), transform var(--transition-fast), letter-spacing var(--transition-smooth);
     transform-origin: center;
     will-change: transform;
 }
 
 .search-help-button:hover,
 .search-list-button:hover {
-    transform: scale(var(--hover-scale)) !important;
+    transform: scale(var(--hover-scale));
     letter-spacing: var(--letter-spacing-small);
 }
 
@@ -449,13 +449,13 @@
 /* ==== SIDEBAR TOGGLE TRANSITIONS ==== */
 
 .sidebar-toggle {
-    transition: all var(--transition-smooth), transform var(--transition-fast) !important;
+    transition: all var(--transition-smooth), transform var(--transition-fast);
     transform-origin: center;
     will-change: transform;
 }
 
 .sidebar-toggle:hover {
-    transform: scale(1.15) rotate(var(--rotate-full)) !important;
+    transform: scale(1.15) rotate(var(--rotate-full));
 }
 
 
@@ -465,13 +465,13 @@
 /* Dark inputs */
 
 .dark-input {
-    transition: all var(--transition-smooth), transform var(--transition-fast) !important;
+    transition: all var(--transition-smooth), transform var(--transition-fast);
     transform-origin: center;
     will-change: transform;
 }
 
 .dark-input:focus {
-    transform: scale(var(--hover-scale-medium)) !important;
+    transform: scale(var(--hover-scale-medium));
 }
 
 
@@ -516,10 +516,10 @@
     }
     /* Disable some intensive transitions on mobile */
     .sidebar-section:hover {
-        transform: scale(var(--hover-scale-tiny)) translateX(var(--hover-slide-small)) !important;
+        transform: scale(var(--hover-scale-tiny)) translateX(var(--hover-slide-small));
     }
     .tabs-header .nav-tabs .nav-link:hover {
-        transform: scale(var(--hover-scale-medium)) !important;
+        transform: scale(var(--hover-scale-medium));
         letter-spacing: var(--letter-spacing-tiny);
     }
 }
@@ -534,10 +534,10 @@
     *,
     *::before,
     *::after {
-        transition: none !important;
-        animation: none !important;
-        transform: none !important;
-        letter-spacing: initial !important;
+        transition: none;
+        animation: none;
+        transform: none;
+        letter-spacing: initial;
     }
     /* Keep minimal hover feedback for usability */
     .nav-link:hover,
@@ -566,8 +566,8 @@
     .page-item:hover,
     .feature-image:hover,
     .instruction_image:hover {
-        transform: none !important;
-        letter-spacing: initial !important;
+        transform: none;
+        letter-spacing: initial;
     }
 }
 
@@ -583,7 +583,7 @@
 .tabs-header .nav-tabs .nav-link:focus,
 .page-nav-btn:focus,
 .about-graph-button:focus {
-    transform: scale(var(--hover-scale-small)) !important;
+    transform: scale(var(--hover-scale-small));
     outline: var(--outline-width) solid var(--baby-blue-500);
     outline-offset: var(--outline-offset);
 }
