@@ -48,17 +48,15 @@ jobs:
       - name: Check Bandit results
         run: |
           if [ -f bandit-report.json ]; then
-            # Count high severity issues
-            HIGH_SEVERITY=$(cat bandit-report.json | python3 -c "import sys, json; data = json.load(sys.stdin); print(len([r for r in data.get('results', []) if r.get('issue_severity') == 'HIGH']))")
-            MEDIUM_SEVERITY=$(cat bandit-report.json | python3 -c "import sys, json; data = json.load(sys.stdin); print(len([r for r in data.get('results', []) if r.get('issue_severity') == 'MEDIUM']))")
-            LOW_SEVERITY=$(cat bandit-report.json | python3 -c "import sys, json; data = json.load(sys.stdin); print(len([r for r in data.get('results', []) if r.get('issue_severity') == 'LOW']))")
+            # Parse Bandit report using shared script
+            eval $(python3 .github/scripts/parse-security-reports.py bandit bandit-report.json)
 
-            echo "Found $HIGH_SEVERITY HIGH severity issues"
-            echo "Found $MEDIUM_SEVERITY MEDIUM severity issues"
-            echo "Found $LOW_SEVERITY LOW severity issues"
+            echo "Found $HIGH HIGH severity issues"
+            echo "Found $MEDIUM MEDIUM severity issues"
+            echo "Found $LOW LOW severity issues"
 
             # Fail if high severity issues are found
-            if [ "$HIGH_SEVERITY" -gt 0 ]; then
+            if [ "$HIGH" -gt 0 ]; then
               echo "❌ HIGH severity security issues detected!"
               exit 1
             fi
@@ -129,7 +127,8 @@ jobs:
       - name: Check pip-audit results
         run: |
           if [ -f pip-audit-report.json ]; then
-            VULNS=$(cat pip-audit-report.json | python3 -c "import sys, json; data = json.load(sys.stdin); print(len(data.get('dependencies', [])))" 2>/dev/null || echo "0")
+            # Parse pip-audit report using shared script
+            eval $(python3 .github/scripts/parse-security-reports.py pip-audit pip-audit-report.json)
 
             echo "Found $VULNS vulnerable dependencies"
 
@@ -155,6 +154,9 @@ jobs:
     if: always()
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Download Bandit report
         uses: actions/download-artifact@v4
         with:
@@ -175,9 +177,7 @@ jobs:
           # Bandit summary
           if [ -f bandit-report.json ]; then
             echo "## 🐍 Bandit - Python Code Security" >> $GITHUB_STEP_SUMMARY
-            HIGH=$(cat bandit-report.json | python3 -c "import sys, json; data = json.load(sys.stdin); print(len([r for r in data.get('results', []) if r.get('issue_severity') == 'HIGH']))" 2>/dev/null || echo "0")
-            MEDIUM=$(cat bandit-report.json | python3 -c "import sys, json; data = json.load(sys.stdin); print(len([r for r in data.get('results', []) if r.get('issue_severity') == 'MEDIUM']))" 2>/dev/null || echo "0")
-            LOW=$(cat bandit-report.json | python3 -c "import sys, json; data = json.load(sys.stdin); print(len([r for r in data.get('results', []) if r.get('issue_severity') == 'LOW']))" 2>/dev/null || echo "0")
+            eval $(python3 .github/scripts/parse-security-reports.py bandit bandit-report.json)
 
             echo "- 🔴 **HIGH severity issues**: $HIGH" >> $GITHUB_STEP_SUMMARY
             echo "- 🟡 **MEDIUM severity issues**: $MEDIUM" >> $GITHUB_STEP_SUMMARY
@@ -192,7 +192,7 @@ jobs:
           # pip-audit summary
           if [ -f pip-audit-report.json ]; then
             echo "## 📦 pip-audit - Dependency Vulnerabilities" >> $GITHUB_STEP_SUMMARY
-            VULNS=$(cat pip-audit-report.json | python3 -c "import sys, json; data = json.load(sys.stdin); print(len(data.get('dependencies', [])))" 2>/dev/null || echo "0")
+            eval $(python3 .github/scripts/parse-security-reports.py pip-audit pip-audit-report.json)
 
             if [ "$VULNS" -eq 0 ]; then
               echo "✅ **No vulnerable dependencies detected**" >> $GITHUB_STEP_SUMMARY
