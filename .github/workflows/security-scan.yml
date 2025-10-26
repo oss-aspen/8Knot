@@ -1,0 +1,209 @@
+name: Security Scanning
+
+on:
+  push:
+    branches:
+      - "*"
+  pull_request:
+    branches:
+      - "*"
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  bandit-scan:
+    name: Bandit Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install UV
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          source $HOME/.cargo/env
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install Bandit
+        run: |
+          uv pip install --system bandit[toml]
+
+      - name: Run Bandit security scan
+        run: |
+          echo "Running Bandit security scan on Python code..."
+          bandit -r 8Knot/ -f json -o bandit-report.json || true
+
+          # Also generate readable output
+          echo ""
+          echo "=========================================="
+          echo "Bandit Security Scan Results"
+          echo "=========================================="
+          bandit -r 8Knot/ -f screen || true
+
+      - name: Check Bandit results
+        run: |
+          if [ -f bandit-report.json ]; then
+            # Parse Bandit report using shared script
+            eval $(python3 .github/scripts/parse-security-reports.py bandit bandit-report.json)
+
+            echo "Found $HIGH HIGH severity issues"
+            echo "Found $MEDIUM MEDIUM severity issues"
+            echo "Found $LOW LOW severity issues"
+
+            # Fail if high severity issues are found
+            if [ "$HIGH" -gt 0 ]; then
+              echo "❌ HIGH severity security issues detected!"
+              exit 1
+            fi
+          fi
+
+      - name: Upload Bandit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-security-report
+          path: bandit-report.json
+          retention-days: 30
+
+  dependency-audit:
+    name: Dependency Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install UV
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          source $HOME/.cargo/env
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Generate lock file if not present
+        run: |
+          if [ ! -f uv.lock ]; then
+            echo "Generating uv.lock from pyproject.toml..."
+            uv lock
+          fi
+
+      - name: Install dependencies
+        run: |
+          uv sync --frozen
+
+      - name: Run UV dependency check
+        id: uv_check
+        run: |
+          echo "Running UV dependency conflict check..."
+          uv pip check || echo "UV_CHECK_FAILED=true" >> $GITHUB_OUTPUT
+
+      - name: Install pip-audit as fallback
+        run: |
+          uv pip install --system pip-audit
+
+      - name: Run pip-audit vulnerability scan
+        run: |
+          echo "Running pip-audit vulnerability scan..."
+          echo ""
+          echo "=========================================="
+          echo "Dependency Vulnerability Scan Results"
+          echo "=========================================="
+
+          # Run pip-audit and save output
+          pip-audit --format json --output pip-audit-report.json || true
+
+          # Display readable output
+          pip-audit || true
+
+      - name: Check pip-audit results
+        run: |
+          if [ -f pip-audit-report.json ]; then
+            # Parse pip-audit report using shared script
+            eval $(python3 .github/scripts/parse-security-reports.py pip-audit pip-audit-report.json)
+
+            echo "Found $VULNS vulnerable dependencies"
+
+            # Fail if vulnerabilities are found
+            if [ "$VULNS" -gt 0 ]; then
+              echo "❌ Vulnerable dependencies detected! Please update or fix these dependencies."
+              exit 1
+            fi
+          fi
+
+      - name: Upload pip-audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pip-audit-report
+          path: pip-audit-report.json
+          retention-days: 30
+
+  security-summary:
+    name: Security Scan Summary
+    runs-on: ubuntu-latest
+    needs: [bandit-scan, dependency-audit]
+    if: always()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Bandit report
+        uses: actions/download-artifact@v4
+        with:
+          name: bandit-security-report
+        continue-on-error: true
+
+      - name: Download pip-audit report
+        uses: actions/download-artifact@v4
+        with:
+          name: pip-audit-report
+        continue-on-error: true
+
+      - name: Generate security summary
+        run: |
+          echo "# 🔒 Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Bandit summary
+          if [ -f bandit-report.json ]; then
+            echo "## 🐍 Bandit - Python Code Security" >> $GITHUB_STEP_SUMMARY
+            eval $(python3 .github/scripts/parse-security-reports.py bandit bandit-report.json)
+
+            echo "- 🔴 **HIGH severity issues**: $HIGH" >> $GITHUB_STEP_SUMMARY
+            echo "- 🟡 **MEDIUM severity issues**: $MEDIUM" >> $GITHUB_STEP_SUMMARY
+            echo "- 🟢 **LOW severity issues**: $LOW" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## 🐍 Bandit - Python Code Security" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️  Report not available" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # pip-audit summary
+          if [ -f pip-audit-report.json ]; then
+            echo "## 📦 pip-audit - Dependency Vulnerabilities" >> $GITHUB_STEP_SUMMARY
+            eval $(python3 .github/scripts/parse-security-reports.py pip-audit pip-audit-report.json)
+
+            if [ "$VULNS" -eq 0 ]; then
+              echo "✅ **No vulnerable dependencies detected**" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "⚠️  **Vulnerable dependencies found**: $VULNS" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "## 📦 pip-audit - Dependency Vulnerabilities" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️  Report not available" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*Reports are available as artifacts for 30 days*" >> $GITHUB_STEP_SUMMARY
