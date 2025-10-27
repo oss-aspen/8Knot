@@ -26,7 +26,9 @@
     --spacing-md: 1rem;
     --spacing-lg: 1.5rem;
     --spacing-xl: 2rem;
+    --border-radius-sm: 6px;
     --border-radius: 8px;
+    --border-radius-md: 10px;
     --border-radius-lg: 12px;
     --border-radius-xl: 20px;
     --transition: all 0.3s ease;
@@ -89,14 +91,18 @@
     margin-right: 12px;
 }
 
+
 /* if this class is on a span, its been placed next to an icon */
+
 span.sidebar-section-text {
     color: var(--text-secondary);
     font-size: 16px;
     font-weight: 400;
 }
 
+
 /* if this class is directly on the link, it has no icon */
+
 a.sidebar-section-text {
     color: var(--text-secondary);
     font-size: 14px;
@@ -113,7 +119,9 @@ a.sidebar-section-text {
     margin-bottom: var(--spacing-xs);
 }
 
+
 /* apply indent for nested items */
+
 .sidebar-dropdown-container .collapse a {
     margin-left: 2em;
 }
@@ -268,12 +276,15 @@ a.sidebar-section-text {
 
 
 /* fix for input background color */
+
+
 /* we need to override dash bootstrap components here. this selector should be more specific than
 .dbc input:not([type="radio"]):not([type="checkbox"]) */
 
 .searchbar-dropdown input#projects.mantine-MultiSelect-inputField::placeholder {
     background-color: transparent !important;
 }
+
 .searchbar-dropdown input#projects.mantine-MultiSelect-inputField {
     background-color: transparent !important;
 }
