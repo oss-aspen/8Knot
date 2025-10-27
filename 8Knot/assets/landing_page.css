@@ -10,6 +10,14 @@
     Uses global CSS variables from color.css and main_layout.css for consistency
 */
 
+:root {
+    --landing-spacing-xs: 8px;
+    --landing-spacing-sm: 16px;
+    --landing-spacing-md: 20px;
+    --landing-spacing-lg: 24px;
+    --landing-spacing-xl: 40px;
+}
+
 
 /* Main Landing Page Container */
 
@@ -29,12 +37,12 @@
 
 .landing-hero {
     text-align: center;
-    padding: 60px var(--spacing-lg) 40px var(--spacing-lg);
+    padding: 60px var(--spacing-lg) var(--landing-spacing-xl) var(--spacing-lg);
     color: var(--text-primary);
 }
 
 .landing-logo-section {
-    margin-bottom: 40px;
+    margin-bottom: var(--landing-spacing-xl);
 }
 
 .landing-logo {
@@ -56,11 +64,11 @@
 }
 
 .landing-subtitle {
-    font-size: 16px;
+    font-size: var(--landing-spacing-sm);
     color: var(--text-muted);
     line-height: 1.5;
     max-width: 600px;
-    margin: 0 auto 40px auto;
+    margin: 0 auto var(--landing-spacing-xl) auto;
 }
 
 
@@ -71,7 +79,7 @@
 }
 
 .landing-cta-text {
-    font-size: 16px;
+    font-size: var(--landing-spacing-sm);
     margin-bottom: var(--spacing-lg);
     color: var(--text-secondary);
     margin-top: 0;
@@ -80,7 +88,7 @@
 .landing-learn-button {
     background-color: #f8f9fa;
     color: #000000;
-    padding: 12px 24px;
+    padding: 12px var(--landing-spacing-lg);
     border-radius: var(--border-radius-xl);
     font-weight: 500;
     border: 1px solid #666666;
@@ -89,7 +97,7 @@
     text-decoration: none;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--landing-spacing-xs);
 }
 
 .landing-learn-button:hover {
@@ -109,7 +117,7 @@
 }
 
 .landing-button-icon {
-    margin-left: 8px;
+    margin-left: var(--landing-spacing-xs);
     transition: transform 0.3s ease;
     font-size: 14px;
 }
@@ -123,7 +131,7 @@
 
 .landing-welcome-content {
     background: var(--bg-primary);
-    padding: 40px var(--spacing-lg);
+    padding: var(--landing-spacing-xl) var(--spacing-lg);
     display: none;
     border-top: 1px solid var(--border-color);
     margin-top: var(--spacing-lg);
@@ -141,7 +149,7 @@
 
 .landing-welcome-title {
     color: var(--text-primary);
-    font-size: 24px;
+    font-size: var(--landing-spacing-lg);
     font-weight: 600;
     margin-bottom: 30px;
     text-align: center;
@@ -200,14 +208,14 @@
     flex-direction: row;
     justify-content: center;
     align-items: center;
-    padding: 8px 20px;
+    padding: var(--landing-spacing-xs) var(--landing-spacing-md);
     gap: 4px;
     height: 45px;
     background: var(--baby-blue-700);
     border-width: 1px 1px 0px 1px;
     border-style: solid;
     border-color: var(--baby-blue-500);
-    border-radius: 8px 8px 0px 0px;
+    border-radius: var(--landing-spacing-xs) var(--landing-spacing-xs) 0px 0px;
     font-family: 'Inter', sans-serif;
     font-style: normal;
     font-weight: 600;
@@ -267,14 +275,14 @@
 
 .landing-page .main-title h1 {
     color: var(--color-primary);
-    font-size: 24px;
+    font-size: var(--landing-spacing-lg);
     font-weight: 700;
     margin-bottom: var(--spacing-md);
 }
 
 .landing-page .body-text p {
     color: var(--text-secondary);
-    font-size: 16px;
+    font-size: var(--landing-spacing-sm);
     line-height: 1.5;
     margin-bottom: var(--spacing-md);
 }
@@ -302,14 +310,14 @@
 
 .landing-page .section-title h3 {
     color: var(--color-secondary);
-    font-size: 20px;
+    font-size: var(--landing-spacing-md);
     font-weight: 600;
     margin-bottom: var(--spacing-sm);
 }
 
 .landing-page .feature-body p {
     color: var(--text-secondary);
-    font-size: 16px;
+    font-size: var(--landing-spacing-sm);
     font-weight: 400;
     line-height: 1.6;
     margin-bottom: var(--spacing-sm);
@@ -410,7 +418,7 @@
     color: var(--text-primary);
     border: none;
     padding: var(--spacing-lg);
-    border-radius: 8px;
+    border-radius: var(--landing-spacing-xs);
 }
 
 
@@ -455,7 +463,7 @@
 
 @media (max-width: 768px) {
     .landing-hero {
-        padding: 40px var(--spacing-md) 24px var(--spacing-md);
+        padding: var(--landing-spacing-xl) var(--spacing-md) var(--landing-spacing-lg) var(--spacing-md);
     }
     .landing-title {
         font-size: 28px;
@@ -472,16 +480,16 @@
         font-size: 14px;
     }
     .landing-welcome-content {
-        padding: 24px var(--spacing-md);
+        padding: var(--landing-spacing-lg) var(--spacing-md);
     }
 }
 
 @media (max-width: 480px) {
     .landing-hero {
-        padding: 24px 8px var(--spacing-lg) 8px;
+        padding: var(--landing-spacing-lg) var(--landing-spacing-xs) var(--spacing-lg) var(--landing-spacing-xs);
     }
     .landing-title {
-        font-size: 24px;
+        font-size: var(--landing-spacing-lg);
         line-height: 1.3;
     }
     .landing-subtitle {
@@ -493,7 +501,7 @@
         margin-bottom: var(--spacing-md);
     }
     .landing-welcome-title {
-        font-size: 24px;
+        font-size: var(--landing-spacing-lg);
     }
     .landing-page .landing-tab {
         font-size: 12px;
@@ -554,7 +562,7 @@
         margin: 0;
     }
     .landing-hero {
-        padding: 20px;
+        padding: var(--landing-spacing-md);
     }
     .landing-learn-button {
         display: none;
@@ -589,11 +597,11 @@
     text-align: center;
     font-size: 0.85rem;
     font-weight: 500;
-    border-radius: 20px;
+    border-radius: var(--landing-spacing-md);
     /* Rounded like main tabs */
     transition: all 0.3s ease;
     border: 1px solid var(--color-border);
-    padding: 10px 16px;
+    padding: 10px var(--landing-spacing-sm);
 }
 
 .landing-page .page-nav-btn-active {
@@ -673,7 +681,7 @@
 .landing-page .feature-title,
 .landing-page .step-title {
     color: var(--text-primary);
-    font-size: 20px;
+    font-size: var(--landing-spacing-md);
     font-weight: 600;
     margin-bottom: var(--spacing-sm);
 }
@@ -682,7 +690,7 @@
 .landing-page .feature-description,
 .landing-page .step-description {
     color: var(--text-secondary);
-    font-size: 16px;
+    font-size: var(--landing-spacing-sm);
     font-weight: 400;
     line-height: 1.6;
     margin-bottom: 0;
@@ -725,7 +733,7 @@
 
 .landing-page .body-text {
     color: var(--text-secondary);
-    font-size: 16px;
+    font-size: var(--landing-spacing-sm);
     font-weight: 400;
     line-height: 1.6;
 }
@@ -746,7 +754,7 @@
 .landing-page .about-body,
 .landing-page .feature-body {
     color: var(--text-secondary);
-    font-size: 16px;
+    font-size: var(--landing-spacing-sm);
     font-weight: 400;
     line-height: 1.6;
     margin-bottom: var(--spacing-sm);
@@ -776,8 +784,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin: 20px 0;
-    gap: 20px;
+    margin: var(--landing-spacing-md) 0;
+    gap: var(--landing-spacing-md);
     flex-wrap: nowrap;
 }
 
@@ -792,7 +800,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 20px;
+    padding: 0 var(--landing-spacing-md);
     min-width: 60px;
     flex-shrink: 0;
     align-self: center;
