@@ -28,6 +28,12 @@
     /* Border radius tokens - for rounded corners */
     --landing-radius-xs: 8px;
     --landing-radius-md: 20px;
+    /* Global border radius variables for consistency */
+    --border-radius-sm: 6px;
+    --border-radius: 8px;
+    --border-radius-md: 10px;
+    --border-radius-lg: 12px;
+    --border-radius-xl: 20px;
 }
 
 
@@ -303,7 +309,7 @@
     background: transparent;
     border: none;
     color: var(--color-topbar-bg);
-    border-radius: var(--border-radius);
+    border-radius: var(--landing-radius-md);
     padding: var(--spacing-lg);
     margin-top: var(--spacing-lg);
 }
@@ -422,7 +428,7 @@
 .landing-page .landing-tab--selected {
     color: var(--text-primary);
     background-color: var(--border-color);
-    border-bottom: 2px solid #667eea;
+    border-bottom: 2px solid var(--color-primary);
 }
 
 .landing-page .landing-tab-content {
@@ -556,7 +562,7 @@
 
 @media (prefers-contrast: high) {
     .landing-learn-button {
-        border: 2px solid #000000;
+        border: 2px solid var(--text-primary);
     }
     .landing-welcome-content {
         border: 1px solid var(--text-secondary);
@@ -712,7 +718,7 @@
     max-width: 95%;
     /* Even larger size for better visibility */
     height: auto;
-    border-radius: var(--border-radius-sm);
+    border-radius: var(--landing-radius-xs);
     margin: var(--spacing-sm) 0;
 }
 
@@ -785,7 +791,7 @@
 @media (max-width: 768px) {
     .landing-page .feature-section {
         flex-direction: column;
-        gap: 1rem;
+        gap: var(--landing-spacing-md);
     }
 }
 
@@ -843,7 +849,7 @@
     .landing-page .before-after-container {
         flex-direction: column;
         align-items: center;
-        gap: 30px;
+        gap: var(--landing-spacing-lg);
     }
     .landing-page .before-image-container,
     .landing-page .after-image-container {
