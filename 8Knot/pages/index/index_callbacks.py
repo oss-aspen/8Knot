@@ -433,11 +433,12 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
 
 
 # callback for repo selections to feed into visualization call backs
+# Modified to trigger on EITHER dropdown selection OR search button click
 @callback(
     [Output("results-output-container", "children"), Output("repo-choices", "data")],
     [
         Input("search", "n_clicks"),
-        State("projects", "value"),
+        Input("projects", "value"),
     ],
 )
 def multiselect_values_to_repo_ids(n_clicks, user_vals):
