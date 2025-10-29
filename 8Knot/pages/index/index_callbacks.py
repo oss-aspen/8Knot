@@ -448,21 +448,19 @@ def multiselect_values_to_repo_ids(n_clicks, user_vals):
         logging.warning("NOTHING SELECTED IN SEARCH BAR")
         raise dash.exceptions.PreventUpdate
 
-    # Validate that all selections are valid repo IDs (numeric) or known orgs/groups
-    # This prevents triggering during typing when partial/invalid values might be present
+    # Validate that all selections are valid org names or repo IDs
+    # Repo IDs are always numeric (already validated by SearchItem.from_id)
+    # Org names must exist in Augur database
     try:
         for val in user_vals:
             search_type = SearchItem.from_id(val)
-            if search_type == SearchItem.REPO:
-                # Must be convertible to int
-                int(val)
-            elif search_type == SearchItem.ORG:
-                # Must be a known org or user group
-                if not (augur.is_org(val) or (current_user.is_authenticated)):
-                    # If not a known org and no user is logged in (so no groups), invalid
+            if search_type == SearchItem.ORG:
+                # Verify org exists in Augur (or user has groups)
+                if not (augur.is_org(val) or current_user.is_authenticated):
                     raise ValueError(f"Unknown org: {val}")
+            # REPO type: Already validated as numeric by from_id(), will convert on line 470
     except (ValueError, TypeError) as e:
-        # Invalid selection (partial typing, malformed data, etc.)
+        # Invalid selection (unknown org, malformed data, etc.)
         logging.warning(f"INVALID SELECTION - PREVENTING AUTO-TRIGGER: {e}")
         raise dash.exceptions.PreventUpdate
 
