@@ -434,6 +434,7 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
 
 # callback for repo selections to feed into visualization call backs
 # Modified to trigger on EITHER dropdown selection OR search button click
+# Only triggers when valid org/repo IDs are selected (not during typing)
 @callback(
     [Output("results-output-container", "children"), Output("repo-choices", "data")],
     [
@@ -442,8 +443,27 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
     ],
 )
 def multiselect_values_to_repo_ids(n_clicks, user_vals):
+    # Prevent update if nothing selected
     if not user_vals:
         logging.warning("NOTHING SELECTED IN SEARCH BAR")
+        raise dash.exceptions.PreventUpdate
+
+    # Validate that all selections are valid repo IDs (numeric) or known orgs/groups
+    # This prevents triggering during typing when partial/invalid values might be present
+    try:
+        for val in user_vals:
+            search_type = SearchItem.from_id(val)
+            if search_type == SearchItem.REPO:
+                # Must be convertible to int
+                int(val)
+            elif search_type == SearchItem.ORG:
+                # Must be a known org or user group
+                if not (augur.is_org(val) or (current_user.is_authenticated)):
+                    # If not a known org and no user is logged in (so no groups), invalid
+                    raise ValueError(f"Unknown org: {val}")
+    except (ValueError, TypeError) as e:
+        # Invalid selection (partial typing, malformed data, etc.)
+        logging.warning(f"INVALID SELECTION - PREVENTING AUTO-TRIGGER: {e}")
         raise dash.exceptions.PreventUpdate
 
     # individual repo numbers
