@@ -12,6 +12,7 @@ from queries.QUERY_NAME import QUERY_NAME as QUERY_INITIALS
 import io
 import cache_manager.cache_facade as cf
 from pages.utils.job_utils import nodata_graph
+from components.visualization import VisualizationAIO
 import time
 import app
 
@@ -23,13 +24,14 @@ NOTE: VARIABLES TO CHANGE:
 (3) gc_VISUALIZATION
 (4) TITLE OF VISUALIZATION
 (5) CONTEXT OF GRAPH
-(6) IDs of Dash components
-(6) NAME_OF_VISUALIZATION_graph
-(7) COLUMN_WITH_DATETIME
-(8) COLUMN_WITH_DATETIME
-(9) COLUMN_TO_SORT_BY
-(10) Comments before callbacks
-(11) QUERY_USED, QUERY_NAME, QUERY_INITIALS
+(6) URL-FRIENDLY-IDENTIFIER
+(7) IDs of Dash components
+(8) NAME_OF_VISUALIZATION_graph
+(9) COLUMN_WITH_DATETIME
+(10) COLUMN_WITH_DATETIME
+(11) COLUMN_TO_SORT_BY
+(12) Comments before callbacks
+(13) QUERY_USED, QUERY_NAME, QUERY_INITIALS
 
 NOTE: Data queried from Augur is a Postgres->Postgres transaction. If the data that resides in cache requires a pre-processing
         step before it can be used in analysis, it will likely reside in 8Knot/8Knot/pages/utils/preprocessing_utils.py, but "your mileage my vary".
@@ -37,7 +39,7 @@ NOTE: Data queried from Augur is a Postgres->Postgres transaction. If the data t
 NOTE: IMPORTING A VISUALIZATION INTO A PAGE
 (1) Include the visualization file in the visualization folder for the respective page
 (2) Import the visualization into the page_name.py file using "from .visualizations.visualization_file_name import gc_visualization_name"
-(3) Add the card into a column in a row on the page
+(3) Add the card into new row on the page
 
 NOTE: ADDITIONAL DASH COMPONENTS FOR USER GRAPH CUSTOMIZATIONS
 
@@ -58,129 +60,93 @@ For more information, check out the new_vis_guidance.md
 PAGE = "page-name"  # EDIT FOR CURRENT PAGE
 VIZ_ID = "shortname-of-viz"  # UNIQUE IDENTIFIER FOR VIZUALIZATION
 
-gc_VISUALIZATION = dbc.Card(
-    [
-        dbc.CardBody(
-            [
-                html.H3(
-                    "TITLE OF VISUALIZATION",
-                    className="card-title",
-                    style={"textAlign": "center"},
-                ),
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody("INSERT CONTEXT OF GRAPH HERE"),
-                    ],
-                    id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",
-                    placement="top",
-                    is_open=False,
-                ),
-                dcc.Loading(
-                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-                ),
-                dbc.Form(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Date Interval:",
-                                    html_for=f"date-radio-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
-                                dbc.Col(
-                                    [
-                                        dbc.RadioItems(
-                                            id=f"date-radio-{PAGE}-{VIZ_ID}",
-                                            options=[
-                                                {
-                                                    "label": "Trend",
-                                                    "value": "D",
-                                                },  # TREND IF LINE, DAY IF NOT
-                                                # {"label": "Week","value": "W",}, UNCOMMENT IF APPLICABLE
-                                                {"label": "Month", "value": "M"},
-                                                {"label": "Year", "value": "Y"},
-                                            ],
-                                            value="M",
-                                            inline=True,
-                                        ),
-                                    ]
-                                ),
-                                dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                        color="secondary",
-                                        size="sm",
-                                    ),
-                                    width="auto",
-                                    style={"paddingTop": ".5em"},
-                                ),
-                            ],
-                            align="center",
-                        ),
-                        # TODO: ADD IN IF ADDITIONAL PARAMETERS FOR GRAPH, REMOVE IF NOT
-                        """ format dbc.Inputs, including dbc.Alert if needed
-                                dbc.Label(
-                                    "TITLE_OF_ADDITIONAL_PARAMETER:",
-                                    html_for=f"component-identifier-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id=f"component-identifier-{PAGE}-{VIZ_ID}",,
-                                        type="number",
-                                        min=1,
-                                        max=120,
-                                        step=1,
-                                        value=7,
-                                    ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                                dbc.Alert(
-                                    children="Please ensure that 'PARAMETER' is less than 'PARAMETER'",
-                                    id=f"component-identifier-{PAGE}-{VIZ_ID}",
-                                    dismissable=True,
-                                    fade=False,
-                                    is_open=False,
-                                    color="warning",
-                                ),
-                        """
-                        """ format for dcc.DatePickerRange:
-                                dbc.Col(
-                                    dcc.DatePickerRange(
-                                        id=f"component-identifier-{PAGE}-{VIZ_ID}",
-                                        min_date_allowed=dt.date(2005, 1, 1),
-                                        max_date_allowed=dt.date.today(),
-                                        clearable=True,
-                                    ),
-                                    width="auto",
-                                ),
 
-                        """,
+gc_VISUALIZATION = VisualizationAIO(
+    PAGE,
+    VIZ_ID,
+    title="TITLE OF VISUALIZATION",
+    graph_info="""
+        CONTEXT OF GRAPH
+    """,
+    controls=[
+        dbc.Row(
+            [
+                dbc.Label(
+                    "Date Interval:",
+                    html_for=f"date-radio-{PAGE}-{VIZ_ID}",
+                    width="auto",
+                ),
+                dbc.Col(
+                    [
+                        dbc.RadioItems(
+                            id=f"date-radio-{PAGE}-{VIZ_ID}",
+                            options=[
+                                {
+                                    "label": "Trend",
+                                    "value": "D",
+                                },  # TREND IF LINE, DAY IF NOT
+                                # {"label": "Week","value": "W",}, UNCOMMENT IF APPLICABLE
+                                {"label": "Month", "value": "M"},
+                                {"label": "Year", "value": "Y"},
+                            ],
+                            value="M",
+                            inline=True,
+                        ),
                     ]
                 ),
-            ]
-        )
+            ],
+            align="center",
+        ),
+        # TODO: ADD IN IF ADDITIONAL PARAMETERS FOR GRAPH, REMOVE IF NOT
+        """ format dbc.Inputs, including dbc.Alert if needed
+                dbc.Label(
+                    "TITLE_OF_ADDITIONAL_PARAMETER:",
+                    html_for=f"component-identifier-{PAGE}-{VIZ_ID}",
+                    width={"size": "auto"},
+                ),
+                dbc.Col(
+                    dbc.Input(
+                        id=f"component-identifier-{PAGE}-{VIZ_ID}",
+                        type="number",
+                        min=1,
+                        max=120,
+                        step=1,
+                        value=7,
+                    ),
+                    className="me-2",
+                    width=2,
+                ),
+                dbc.Alert(
+                    children="Please ensure that 'PARAMETER' is less than 'PARAMETER'",
+                    id=f"component-identifier-{PAGE}-{VIZ_ID}",
+                    dismissable=True,
+                    fade=False,
+                    is_open=False,
+                    color="warning",
+                ),
+        """
+        """ format for dcc.DatePickerRange:
+                dbc.Col(
+                    dcc.DatePickerRange(
+                        id=f"component-identifier-{PAGE}-{VIZ_ID}",
+                        min_date_allowed=dt.date(2005, 1, 1),
+                        max_date_allowed=dt.date.today(),
+                        clearable=True,
+                    ),
+                    width="auto",
+                ),
+
+        """,
     ],
+    class_name="dark-card",
+    id="URL-FRIENDLY-IDENTIFIER",
 )
 
 
-# callback for graph info popover
-@callback(
-    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
-    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
-    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
-)
-def toggle_popover(n, is_open):
-    if n:
-        return not is_open
-    return is_open
-
-
-# callback for VIZ TITLE graph
+# callback for VIZ TITLE graph.
+# This is helpful if you want a dynamic title that includes parameters about the current graph configuration
+# for example "Number of contributors in the past N months" (where N is a value the user can set)
+# This will take precedence over any static title set above
 @callback(
     Output(f"{PAGE}-{VIZ_ID}", "figure"),
     # Output(f"check-alert-{PAGE}-{VIZ_ID}", "is_open"), USE WITH ADDITIONAL PARAMETERS
