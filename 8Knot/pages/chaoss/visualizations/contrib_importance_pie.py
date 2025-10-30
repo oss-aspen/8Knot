@@ -30,7 +30,7 @@ gc_contrib_importance_pie = VisualizationAIO(
         opens the most PRs of all contributors, accounting for 1/5 of all PRs. If k = 1,
         then the chart will have one slice for Contributor A accounting for 1/5 of the area,
         with the remaining 4/5 representing all other contributors. Note: Some commits may have a
-        Contributor ID of 'None' if there is no GitHub account is associated with the email that
+        Contributor ID of 'None' if no GitHub account is associated with the email that
         the contributor committed as.
         """,
     controls=[
