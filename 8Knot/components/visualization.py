@@ -4,7 +4,7 @@ import dash_bootstrap_components as dbc
 
 # All-in-One Components should be suffixed with 'AIO'
 class VisualizationAIO(dbc.Card):
-    def __init__(self, page: str, viz_id: str, graph_info="", class_name="", controls=None):
+    def __init__(self, page: str, viz_id: str, graph_info="", class_name="", controls=None, title:str=""):
         """
         Common visualization shell to be shared by all visualizations
 
@@ -14,6 +14,7 @@ class VisualizationAIO(dbc.Card):
             graph_info (str): The description of this graph giving more information on what it describes and where its data came from. Displayed in a popover.
             class_name (str): Any custom class names to associate with this card
             controls (list): A list of form elements to display within the lower form Row at the bottom of the graph
+            title (Optional[str]): a static title. If none, the title will be fetched from a callback with the id "graph-title-{page}-{viz_id}". Defaults to none.
         """
         self.page = page
         self.viz_id = viz_id
@@ -28,7 +29,7 @@ class VisualizationAIO(dbc.Card):
                     [
                         dbc.Row(
                             [
-                                dbc.Col(html.H3(id=f"graph-title-{page}-{viz_id}", className="card-title")),
+                                dbc.Col(html.H3(title, id=f"graph-title-{page}-{viz_id}", className="card-title")),
                                 dbc.Col(
                                     dbc.Button(
                                         "About Graph",
