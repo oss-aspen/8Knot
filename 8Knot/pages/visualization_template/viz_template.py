@@ -94,16 +94,6 @@ gc_VISUALIZATION = VisualizationAIO(
                         ),
                     ]
                 ),
-                dbc.Col(
-                    dbc.Button(
-                        "About Graph",
-                        id=f"popover-target-{PAGE}-{VIZ_ID}",
-                        color="secondary",
-                        size="sm",
-                    ),
-                    width="auto",
-                    style={"paddingTop": ".5em"},
-                ),
             ],
             align="center",
         ),
@@ -116,7 +106,7 @@ gc_VISUALIZATION = VisualizationAIO(
                 ),
                 dbc.Col(
                     dbc.Input(
-                        id=f"component-identifier-{PAGE}-{VIZ_ID}",,
+                        id=f"component-identifier-{PAGE}-{VIZ_ID}",
                         type="number",
                         min=1,
                         max=120,

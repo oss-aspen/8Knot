@@ -4,7 +4,16 @@ import dash_bootstrap_components as dbc
 
 # All-in-One Components should be suffixed with 'AIO'
 class VisualizationAIO(dbc.Card):
-    def __init__(self, page: str, viz_id: str, graph_info="", class_name="", controls=None, title:str=""):
+    def __init__(
+        self,
+        page: str,
+        viz_id: str,
+        graph_info="",
+        class_name="",
+        controls=None,
+        title: str = "",
+        id: Optional[str] = None,
+    ):
         """
         Common visualization shell to be shared by all visualizations
 
@@ -15,9 +24,11 @@ class VisualizationAIO(dbc.Card):
             class_name (str): Any custom class names to associate with this card
             controls (list): A list of form elements to display within the lower form Row at the bottom of the graph
             title (Optional[str]): a static title. If none, the title will be fetched from a callback with the id "graph-title-{page}-{viz_id}". Defaults to none.
+            id (Optional[str]): an identifier to use to jump to the card. Primarily intended for navigation, not for styling. Defaults to none, which causes {page}-{viz_id} to be used
         """
         self.page = page
         self.viz_id = viz_id
+        self.nav_id = id
 
         if controls is None:
             controls = []
@@ -59,7 +70,7 @@ class VisualizationAIO(dbc.Card):
                             dcc.Graph(id=f"{page}-{viz_id}"),
                             style={"marginBottom": "1rem"},
                         ),
-                        html.Hr(className="card-split"),  # Divider between graph and controls
+                        html.Hr(className="card-split") if controls else None,  # Divider between graph and controls
                         dbc.Form(
                             [
                                 dbc.Row(
@@ -68,12 +79,15 @@ class VisualizationAIO(dbc.Card):
                                     justify="start",
                                 ),
                             ]
-                        ),
+                        )
+                        if controls
+                        else None,
                     ],
                     style={"padding": "1.5rem"},
                 ),
             ],
             className=class_name,
+            id=(self.nav_id if self.nav_id is not None else f"{self.page}-{self.viz_id}"),
         )
 
     # callback for graph info popover
