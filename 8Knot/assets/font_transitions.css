@@ -35,10 +35,10 @@
     --hover-slide-medium: 4px;
     --hover-slide-large: 6px;
     /* Font Size Multipliers (Modern Dynamic Transition) */
-    --hover-font-scale: 1.15;
-    --hover-font-scale-small: 1.08;
-    --hover-font-scale-medium: 1.05;
-    --hover-font-scale-large: 1.2;
+    --hover-font-scale: 1.1;
+    --hover-font-scale-small: 1.05;
+    --hover-font-scale-medium: 1.03;
+    --hover-font-scale-large: 1.12;
     /* Letter Spacing Values */
     --letter-spacing-tiny: 0.2px;
     --letter-spacing-small: 0.3px;
@@ -271,7 +271,8 @@
 
 /* Card titles */
 
-.card h3.card-title {
+
+/* .card h3.card-title {
     transition: letter-spacing var(--transition-smooth), transform var(--transition-smooth), color var(--transition-fast);
     transform-origin: left center;
     cursor: default;
@@ -280,15 +281,16 @@
 .card h3.card-title:hover {
     letter-spacing: var(--letter-spacing-large);
     transform: scale(var(--hover-scale-tiny));
-}
+} */
 
 
 /* ==== CARD TRANSITIONS ==== */
 
 
-/* Info cards */
+/* Info cards - hover effects disabled for graphs */
 
-.info_card {
+
+/* .info_card {
     transition: all var(--transition-smooth), transform var(--transition-fast);
     transform-origin: center;
     will-change: transform;
@@ -300,9 +302,10 @@
 }
 
 
-/* Page items */
+/* Page items - hover effects disabled for graphs */
 
-.page-item {
+
+/* .page-item {
     transition: all var(--transition-smooth), transform var(--transition-fast);
     transform-origin: center;
     will-change: transform;
@@ -311,12 +314,13 @@
 .page-item:hover {
     transform: scale(var(--hover-scale-small)) translateY(var(--hover-lift-large));
     box-shadow: var(--shadow-page-item);
-}
+} */
 
 
-/* Instruction cards */
+/* Instruction cards - hover effects disabled for graphs */
 
-.instruction_card {
+
+/* .instruction_card {
     transition: all var(--transition-smooth), transform var(--transition-fast);
     transform-origin: center;
     will-change: transform;
@@ -325,7 +329,7 @@
 .instruction_card:hover {
     transform: scale(var(--hover-scale-tiny));
     box-shadow: var(--shadow-card);
-}
+} */
 
 
 /* ==== DROPDOWN AND OPTION TRANSITIONS ==== */
@@ -377,7 +381,8 @@
 
 /* Feature images */
 
-.feature-image {
+
+/* .feature-image {
     transition: all var(--transition-smooth), transform var(--transition-fast);
     transform-origin: center;
     will-change: transform;
@@ -390,9 +395,10 @@
 }
 
 
-/* Instruction images */
+/* Instruction images - hover effects disabled for graphs */
 
-.instruction_image {
+
+/* .instruction_image {
     transition: all var(--transition-smooth), transform var(--transition-fast);
     transform-origin: center;
     will-change: transform;
@@ -402,7 +408,7 @@
 .instruction_image:hover {
     transform: scale(var(--hover-scale));
     box-shadow: var(--shadow-xlarge);
-}
+} */
 
 
 /* ==== TABLE TRANSITIONS ==== */
@@ -491,10 +497,10 @@
         --hover-slide-medium: 3px;
         --hover-slide-large: 4px;
         /* Font Scale Values - Reduced for mobile */
-        --hover-font-scale: 1.08;
-        --hover-font-scale-small: 1.05;
-        --hover-font-scale-medium: 1.03;
-        --hover-font-scale-large: 1.1;
+        --hover-font-scale: 1.05;
+        --hover-font-scale-small: 1.03;
+        --hover-font-scale-medium: 1.02;
+        --hover-font-scale-large: 1.08;
         /* Letter Spacing Values - Reduced for mobile */
         --letter-spacing-tiny: 0.1px;
         --letter-spacing-small: 0.2px;
@@ -555,11 +561,7 @@
     .landing-learn-button:hover,
     .tabs-header .nav-tabs .nav-link:hover,
     .page-nav-btn:hover,
-    .about-graph-button:hover,
-    .info_card:hover,
-    .page-item:hover,
-    .feature-image:hover,
-    .instruction_image:hover {
+    .about-graph-button:hover {
         transform: none;
         letter-spacing: initial;
     }
@@ -593,11 +595,7 @@
 .landing-learn-button,
 .tabs-header .nav-tabs .nav-link,
 .page-nav-btn,
-.about-graph-button,
-.info_card,
-.page-item,
-.feature-image,
-.instruction_image {
+.about-graph-button {
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
     perspective: 1000px;
