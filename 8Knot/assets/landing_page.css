@@ -241,9 +241,12 @@
     white-space: nowrap !important;
 }
 
+
+/* font_transition: Updated hover color to baby-blue-300 for better UX */
+
 .tabs-header .nav-tabs .nav-link:hover {
-    background: var(--multiselect-hover-bg) !important;
-    color: var(--text-primary) !important;
+    background: var(--baby-blue-300) !important;
+    color: var(--color-white) !important;
     border-color: var(--baby-blue-500) !important;
 }
 
