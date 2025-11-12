@@ -1,5 +1,5 @@
 name: File Linting
-on:  # yamllint disable-line rule:truthy
+on: # yamllint disable-line rule:truthy
   push:
     branches:
       - "*"
@@ -8,7 +8,6 @@ on:  # yamllint disable-line rule:truthy
       - "*"
 
 jobs:
-
   yaml-lint:
     runs-on: ubuntu-latest
     steps:
@@ -37,3 +36,17 @@ jobs:
         uses: jbergstroem/hadolint-gh-action@v1
         with:
           dockerfile: "./docker/Dockerfile*"
+
+  run-python-lint:
+    name: python-lint
+    permissions: write-all
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: dciborow/action-pylint@0.1.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review
+          level: warning
+          glob_pattern: "**/*.py"
+          filter_mode: "file"
