@@ -1,6 +1,6 @@
 from dash import html, dcc, Input, State, Output, callback, MATCH
 import dash_bootstrap_components as dbc
-
+from typing import Optional
 
 # All-in-One Components should be suffixed with 'AIO'
 class VisualizationAIO(dbc.Card):

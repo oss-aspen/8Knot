@@ -9,12 +9,11 @@ from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, color_seq
 from queries.QUERY_NAME import QUERY_NAME as QUERY_INITIALS
-import io
 import cache_manager.cache_facade as cf
 from pages.utils.job_utils import nodata_graph
 from components.visualization import VisualizationAIO
 import time
-import app
+import app # pylint: disable=unused-import
 
 """
 NOTE: VARIABLES TO CHANGE:
