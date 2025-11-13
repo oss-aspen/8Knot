@@ -213,7 +213,8 @@ search_bar = html.Div(
                             debounce=100,  # debounce time for the search input, since we're implementing client-side caching, we can use a faster debounce
                             data=[augur.initial_multiselect_option()],
                             value=[augur.initial_multiselect_option()["value"]],
-                            className="searchbar-dropdown",
+                            # UI-fixez: Start with "searching" class so default selection (chaoss) shows as blue
+                            className="searchbar-dropdown searching",
                             styles={
                                 "input": {
                                     "fontSize": "16px",
@@ -237,6 +238,15 @@ search_bar = html.Div(
                                 "item": {
                                     "borderRadius": "8px",
                                     "margin": "2px 4px",
+                                    "color": "white",
+                                },
+                                # UI-fixez: Inline styles for grey pill default color
+                                "value": {
+                                    "backgroundColor": "#555555",
+                                    "color": "white",
+                                },
+                                "pill": {
+                                    "backgroundColor": "#555555",
                                     "color": "white",
                                 },
                             },
@@ -266,10 +276,12 @@ search_bar = html.Div(
                     style={"position": "relative"},
                 ),
                 dbc.Alert(
+                    # UI-fixez: Updated help text to explain pill color behavior
                     children='Please ensure that your spelling is correct. \
                         If your selection definitely isn\'t present, please request that \
                         it be loaded using the help button "REPO/ORG Request" \
-                        in the bottom right corner of the screen.',
+                        in the bottom right corner of the screen.  \
+                        The search is only confirmed when you click the search icon and the pill turns blue.',
                     id="help-alert",
                     dismissable=True,
                     fade=True,

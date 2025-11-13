@@ -362,6 +362,44 @@ a.sidebar-section-text {
 }
 
 
+/* ============================================================================
+   UI-fixez: Filter Pill Styles for Active Search State
+
+   This section implements dynamic pill coloring:
+   - Grey pills by default when repos/orgs are selected
+   - Blue pills (like Data Ready badge) when search is executing
+
+   The .searching class is toggled by a callback in index_callbacks.py
+============================================================================ */
+
+
+/* Style for filter pills (grey by default when selected) */
+
+.mantine-MultiSelect-pill,
+.mantine-MultiSelect-value {
+    background-color: var(--gray-medium);
+    color: var(--color-white);
+}
+
+.searchbar-dropdown .mantine-MultiSelect-pill,
+.searchbar-dropdown .mantine-MultiSelect-value {
+    background-color: var(--gray-medium);
+    color: var(--color-white);
+}
+
+
+/* Style for filter pills when search is active */
+
+.searchbar-dropdown.searching .mantine-MultiSelect-pill,
+.searchbar-dropdown.searching .mantine-MultiSelect-value {
+    background-color: var(--baby-blue-700);
+    color: var(--color-white);
+}
+
+
+/* End UI-fixez pill styles */
+
+
 /* visualization adjustments */
 
 .visualization-row {
