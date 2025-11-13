@@ -390,10 +390,13 @@ a.sidebar-section-text {
 
 /* Style for filter pills when search is active */
 
+
+/* !important needed to override inline styles from Mantine components */
+
 .searchbar-dropdown.searching .mantine-MultiSelect-pill,
 .searchbar-dropdown.searching .mantine-MultiSelect-value {
-    background-color: var(--baby-blue-700);
-    color: var(--color-white);
+    background-color: var(--baby-blue-700) !important;
+    color: var(--color-white) !important;
 }
 
 
