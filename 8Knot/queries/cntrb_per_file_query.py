@@ -28,21 +28,21 @@ def cntrb_per_file_query(self, repos):
     if len(repos) == 0:
         return None
 
+    # NOTE: This query now uses the explorer_cntrb_per_file materialized view
+    # which pre-computes contributor and reviewer aggregations per file.
+    # This significantly improves performance by avoiding expensive
+    # string_agg operations and joins at query time.
+
     query_string = """
                 SELECT
-                    pr.repo_id as repo_id,
-                    prf.pr_file_path as file_path,
-                    string_agg(DISTINCT CAST(pr.pr_augur_contributor_id AS varchar(15)), ',') AS cntrb_ids,
-                    string_agg(DISTINCT CAST(prr.cntrb_id AS varchar(15)), ',') AS reviewer_ids
+                    repo_id,
+                    file_path,
+                    cntrb_ids,
+                    reviewer_ids
                 FROM
-                    pull_requests pr,
-                    pull_request_files prf,
-                    pull_request_reviews prr
+                    augur_data.explorer_cntrb_per_file
                 WHERE
-                    pr.pull_request_id = prf.pull_request_id AND
-                    pr.pull_request_id = prr.pull_request_id AND
-                    pr.repo_id in %s
-                GROUP BY prf.pr_file_path, pr.repo_id
+                    repo_id IN %s
                 """
 
     func_name = cntrb_per_file_query.__name__

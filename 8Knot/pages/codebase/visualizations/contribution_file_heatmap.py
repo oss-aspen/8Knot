@@ -354,6 +354,14 @@ def create_figure(df: pd.DataFrame, graph_view):
     fig["layout"]["coloraxis_colorbar_x"] = -0.15
     fig["layout"]["yaxis"]["side"] = "right"
 
+    # Custom hover template to replace NaN with "No data"
+    fig.for_each_trace(
+        lambda trace: trace.update(
+            customdata=df.applymap(lambda x: "No data" if pd.isna(x) else x),
+            hovertemplate="<b>%{y}</b><br>" + "Time: %{x}<br>" + legend_title + ": %{customdata}<extra></extra>",
+        )
+    )
+
     return fig
 
 

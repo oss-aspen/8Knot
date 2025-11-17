@@ -28,17 +28,19 @@ def pr_file_query(self, repos):
     if len(repos) == 0:
         return None
 
+    # NOTE: This query now uses the explorer_pr_files materialized view
+    # which pre-computes the pull request to file mappings.
+    # This significantly improves performance by avoiding joins at query time.
+
     query_string = """
                     SELECT
-                        prf.pr_file_path as file_path,
-                        pr.pull_request_id AS pull_request,
-                        pr.repo_id as id
+                        file_path,
+                        pull_request_id AS pull_request,
+                        repo_id as id
                     FROM
-                        pull_requests pr,
-                        pull_request_files prf
+                        augur_data.explorer_pr_files
                     WHERE
-                        pr.pull_request_id = prf.pull_request_id AND
-                        pr.repo_id in %s
+                        repo_id IN %s
                 """
 
     func_name = pr_file_query.__name__
