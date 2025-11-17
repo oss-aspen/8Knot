@@ -246,7 +246,7 @@
 }
 
 
-/* font_transition: */
+/* Updated tab hover color to baby-blue-300 for better UX */
 
 .landing-page .tabs-header .nav-tabs .nav-link:hover {
     background: var(--baby-blue-300);
@@ -306,9 +306,6 @@
     margin-bottom: var(--spacing-md);
 }
 
-
-/* UI-fixez: use background-color instead of color property */
-
 .landing-page .section-bordered {
     border: none;
     background-color: var(--color-topbar-bg);
@@ -348,9 +345,6 @@
     flex: 1;
     text-align: center;
 }
-
-
-/* UI-fixez: use defined token --border-radius-md */
 
 .landing-page .feature-image {
     max-width: 100%;
@@ -831,7 +825,7 @@
 }
 
 
-/* UI-fixez: Changed arrow to solid white using CSS filter */
+/* Changed arrow to solid white using CSS filter */
 
 .landing-page .arrow-image {
     width: 80px;
@@ -869,7 +863,7 @@
         padding: var(--landing-spacing-s-10) 0;
         min-width: auto;
     }
-    /* UI-fixez: Mobile arrow also solid white */
+    /* Mobile arrow also solid white */
     .landing-page .arrow-image {
         transform: rotate(90deg);
         width: 60px;

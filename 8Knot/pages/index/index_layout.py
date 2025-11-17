@@ -213,7 +213,7 @@ search_bar = html.Div(
                             debounce=100,  # debounce time for the search input, since we're implementing client-side caching, we can use a faster debounce
                             data=[augur.initial_multiselect_option()],
                             value=[augur.initial_multiselect_option()["value"]],
-                            # UI-fixez: Start with "searching" class so default selection (chaoss) shows as blue
+                            # Start with "searching" class so default selection (chaoss) shows as blue
                             className="searchbar-dropdown searching",
                             styles={
                                 "input": {
@@ -240,7 +240,7 @@ search_bar = html.Div(
                                     "margin": "2px 4px",
                                     "color": "white",
                                 },
-                                # UI-fixez: Inline styles for grey pill default color
+                                # Inline styles for grey pill default color
                                 "value": {
                                     "backgroundColor": "#555555",
                                     "color": "white",
@@ -276,7 +276,7 @@ search_bar = html.Div(
                     style={"position": "relative"},
                 ),
                 dbc.Alert(
-                    # UI-fixez: Updated help text to explain pill color behavior
+                    # Updated help text to explain pill color behavior
                     children='Please ensure that your spelling is correct. \
                         If your selection definitely isn\'t present, please request that \
                         it be loaded using the help button "REPO/ORG Request" \

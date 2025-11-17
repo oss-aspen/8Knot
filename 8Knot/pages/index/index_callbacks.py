@@ -863,7 +863,7 @@ def hide_loading_on_landing(pathname):
 
 
 # ============================================================================
-# UI-fixez: Callback to change pill color when search is clicked
+# Callback to change pill color when search is clicked
 #
 # This callback implements dynamic pill coloring:
 # - When user selects repos/orgs: pills are grey (pending)
@@ -877,7 +877,7 @@ def hide_loading_on_landing(pathname):
     [Input("search", "n_clicks"), Input("projects", "value")],
     prevent_initial_call=True,
 )
-def update_pill_color_on_search(search_clicks, selected_values):
+def update_pill_color_on_search(search_button_clicks, selected_repos_orgs):
     """Update pill color based on search action.
 
     When search icon is clicked, add 'searching' class to turn pills blue.
@@ -894,7 +894,7 @@ def update_pill_color_on_search(search_clicks, selected_values):
         return "searchbar-dropdown searching"
     if triggered_id == "projects":
         # Values changed (user selecting) - remove 'searching' class to keep pills grey
-        logging.info(f"PILL COLOR: Values changed - turning pills GREY. Selected: {selected_values}")
+        logging.info(f"PILL COLOR: Values changed - turning pills GREY. Selected: {selected_repos_orgs}")
         return "searchbar-dropdown"
 
     return dash.no_update
