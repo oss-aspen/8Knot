@@ -68,3 +68,38 @@
     --shadow-focus: rgba(64, 64, 64, 0.25);
     --shadow-subtle: rgba(199, 199, 199, 0.25);
 }
+
+
+/* ============================================================================
+   This section implements dynamic pill coloring:
+   - Grey pills by default when repos/orgs are selected
+   - Blue pills (like Data Ready badge) when search is executing
+
+   The .searching class is toggled by a callback in index_callbacks.py
+
+
+/* Style for filter pills (grey by default when selected) */
+
+.mantine-MultiSelect-pill,
+.mantine-MultiSelect-value {
+    background-color: var(--gray-medium);
+    color: var(--color-white);
+}
+
+.searchbar-dropdown .mantine-MultiSelect-pill,
+.searchbar-dropdown .mantine-MultiSelect-value {
+    background-color: var(--gray-medium);
+    color: var(--color-white);
+}
+
+
+/* Style for filter pills when search is active */
+
+
+/* !important needed to override inline styles from Mantine components */
+
+.searchbar-dropdown.searching .mantine-MultiSelect-pill,
+.searchbar-dropdown.searching .mantine-MultiSelect-value {
+    background-color: var(--baby-blue-700) !important;
+    color: var(--color-white) !important;
+}
