@@ -76,8 +76,3 @@ SELECT
 FROM pg_matviews
 WHERE matviewname LIKE 'explorer_%'
 ORDER BY matviewname;
-
--- Quick test queries (replace 25430 with a repo_id from your database)
--- SELECT COUNT(*) FROM augur_data.explorer_repo_files WHERE repo_id = 25430;
--- SELECT COUNT(*) FROM augur_data.explorer_cntrb_per_file WHERE repo_id = 25430;
--- SELECT COUNT(*) FROM augur_data.explorer_pr_files WHERE repo_id = 25430;
