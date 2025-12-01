@@ -13,7 +13,7 @@ import cache_manager.cache_facade as cf
 from pages.utils.job_utils import nodata_graph
 from components.visualization import VisualizationAIO
 import time
-import app # pylint: disable=unused-import
+import app  # pylint: disable=unused-import
 
 """
 NOTE: VARIABLES TO CHANGE:
