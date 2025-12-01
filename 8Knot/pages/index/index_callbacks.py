@@ -77,6 +77,7 @@ class AdaptiveDebounceManager:
         self._query_first_seen: dict[str, float] = {}  # Map query -> first time seen
         self._last_processed_query: Optional[str] = None
         self._last_processed_time: float = 0.0
+        self._last_results: list = []  # Store last results to return during debouncing
 
     def should_process_query(self, query: str) -> bool:
         """
@@ -124,6 +125,16 @@ class AdaptiveDebounceManager:
                 return True
 
             return False
+
+    def set_last_results(self, results: list) -> None:
+        """Store the last results to return during debouncing."""
+        with self._lock:
+            self._last_results = results
+
+    def get_last_results(self) -> list:
+        """Get the last results to return during debouncing."""
+        with self._lock:
+            return self._last_results.copy() if self._last_results else []
 
     def _cleanup_old_queries(self, current_time: float) -> None:
         """
@@ -306,7 +317,10 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
         logging.debug(
             f"Query '{user_in[:50]}...' debounced " f"(adaptive debounce: {debounce_ms}ms, length: {len(user_in)})"
         )
-        return dash.no_update
+        # Return last results instead of no_update to prevent dropdown from showing "no matching"
+        # This maintains the dropdown state while debouncing
+        last_results = _adaptive_debounce_manager.get_last_results()
+        return [last_results] if last_results else dash.no_update
 
     try:
         start_time = time.time()
@@ -514,6 +528,9 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
         end_time = time.time()
         logging.info(f"Search completed in {end_time - start_time:.2f} seconds")
         logging.info(f"Returning {len(result)} options to dropdown (fallback used: {use_server_fallback})")
+
+        # Store results for potential return during debouncing
+        _adaptive_debounce_manager.set_last_results(result)
 
         return [result]
 
