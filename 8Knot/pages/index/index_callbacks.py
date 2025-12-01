@@ -4,6 +4,8 @@ import os
 import time
 import logging
 import json
+import threading
+from typing import Optional
 from celery.result import AsyncResult
 import dash_bootstrap_components as dbc
 import dash
@@ -36,6 +38,7 @@ import redis
 import flask
 from .search_utils import fuzzy_search
 from .search_utils import clean_repo_name
+from .search_utils import get_adaptive_debounce_time
 
 # list of queries to be run
 # QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq] - codebase page disabled
@@ -44,6 +47,104 @@ QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, rlq, pvq, rrq, osq, riq]
 
 # check if login has been enabled in config
 login_enabled = os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True"
+
+
+# Adaptive debounce state manager
+class AdaptiveDebounceManager:
+    """
+    Manages adaptive debouncing for search queries.
+
+    The component-level debounce (100ms) provides frequent check-ins.
+    This manager applies adaptive debouncing based on query length:
+    - Short queries (1-3 chars): Longer debounce (800-400ms) - user likely still typing
+    - Medium queries (4-5 chars): Medium debounce (250ms) - user may be finishing
+    - Long queries (6+ chars): Shorter debounce (150ms) - user likely finished
+
+    Strategy: Track when each unique query was first seen. Only process queries
+    that have been stable (unchanged) for the required adaptive debounce time.
+
+    Note: Dash Mantine Components' debounce prop is static, so we implement
+    adaptive debouncing in the callback logic rather than changing the component prop.
+    """
+
+    # Constants
+    COMPONENT_DEBOUNCE_SECONDS = 0.1  # 100ms from component
+    MIN_REPROCESS_INTERVAL_SECONDS = 0.1  # Don't reprocess same query within 100ms
+    CLEANUP_AGE_SECONDS = 5.0  # Remove queries older than 5 seconds
+
+    def __init__(self):
+        self._lock = threading.Lock()  # Thread safety for concurrent Dash callbacks
+        self._query_first_seen: dict[str, float] = {}  # Map query -> first time seen
+        self._last_processed_query: Optional[str] = None
+        self._last_processed_time: float = 0.0
+
+    def should_process_query(self, query: str) -> bool:
+        """
+        Determine if a query should be processed based on adaptive debounce logic.
+
+        Thread-safe: Uses locking to prevent race conditions in multi-threaded Dash environments.
+
+        Args:
+            query: The current search query
+
+        Returns:
+            True if query should be processed, False if it should be debounced
+        """
+        with self._lock:
+            current_time = time.time()
+
+            # Track when this query was first seen (reset timer if query changed)
+            if query not in self._query_first_seen:
+                self._query_first_seen[query] = current_time
+
+            # Prevent immediate reprocessing of the same query
+            if query == self._last_processed_query:
+                if current_time - self._last_processed_time < self.MIN_REPROCESS_INTERVAL_SECONDS:
+                    return False
+
+            # Calculate required debounce time for this query length
+            debounce_seconds = get_adaptive_debounce_time(query) / 1000.0
+            effective_debounce = max(self.COMPONENT_DEBOUNCE_SECONDS, debounce_seconds)
+
+            # Check if query has been stable long enough
+            query_stable_time = current_time - self._query_first_seen[query]
+
+            if query_stable_time >= effective_debounce:
+                # Query is ready to process
+                self._last_processed_query = query
+                self._last_processed_time = current_time
+                self._cleanup_old_queries(current_time)
+
+                # Log metrics for observability and tuning
+                logging.info(
+                    f"Query '{query[:50]}...' processed after {query_stable_time:.3f}s "
+                    f"stable time (debounce: {debounce_seconds*1000:.0f}ms, "
+                    f"length: {len(query)})"
+                )
+                return True
+
+            return False
+
+    def _cleanup_old_queries(self, current_time: float) -> None:
+        """
+        Remove queries older than CLEANUP_AGE_SECONDS to prevent memory growth.
+
+        Note: This method should only be called from within should_process_query()
+        which already holds the lock, so no additional locking is needed here.
+        """
+        cutoff_time = current_time - self.CLEANUP_AGE_SECONDS
+        # Efficient single-pass cleanup
+        queries_to_remove = [
+            q
+            for q, first_seen in self._query_first_seen.items()
+            if first_seen < cutoff_time and q != self._last_processed_query
+        ]
+        for q in queries_to_remove:
+            del self._query_first_seen[q]
+
+
+# Global instance of adaptive debounce manager
+_adaptive_debounce_manager = AdaptiveDebounceManager()
 
 # Note: Login-related callbacks are conditionally registered based on login_enabled
 # because when login is disabled, the UI elements (refresh-button, logout-button, etc.)
@@ -189,6 +290,7 @@ def _login_username_button_disabled(url):
 def dynamic_multiselect_options(user_in: str, selections, cached_options):
     """
     Enhanced search using fuzzy matching and client-side cache with server fallback.
+    Implements adaptive debouncing based on query length.
 
     Args:
         user_in: User's search input
@@ -198,9 +300,18 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
     if not user_in:
         return dash.no_update
 
+    # Apply adaptive debouncing
+    if not _adaptive_debounce_manager.should_process_query(user_in):
+        debounce_ms = get_adaptive_debounce_time(user_in)
+        logging.debug(
+            f"Query '{user_in[:50]}...' debounced " f"(adaptive debounce: {debounce_ms}ms, length: {len(user_in)})"
+        )
+        return dash.no_update
+
     try:
         start_time = time.time()
-        logging.info(f"Search query: '{user_in}'")
+        debounce_ms = get_adaptive_debounce_time(user_in)
+        logging.info(f"Search query: '{user_in}' (adaptive debounce: {debounce_ms}ms)")
 
         # Start with cached options if available
         if cached_options:

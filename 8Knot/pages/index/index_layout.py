@@ -210,7 +210,7 @@ search_bar = html.Div(
                             nothingFoundMessage="No matching repos/orgs.",
                             placeholder="Search",
                             variant="filled",
-                            debounce=100,  # debounce time for the search input, since we're implementing client-side caching, we can use a faster debounce
+                            debounce=100,  # Lower base debounce - adaptive debouncing in callback handles query-length-based delays
                             data=[augur.initial_multiselect_option()],
                             value=[augur.initial_multiselect_option()["value"]],
                             # Start with "searching" class so default selection (chaoss) shows as blue
