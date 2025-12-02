@@ -1,18 +1,31 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
 # CodeRabbit Configuration for 8Knot
 # Manual review mode - CodeRabbit will only review when explicitly requested via PR comments
-# Default profile: "chill" for balanced feedback, "assertive" for thorough reviews
-profile: chill
 
-# Disable automatic reviews - reviews must be triggered manually via PR comments
-auto_review: false
+language: en-US
 
-# Enable inline comments and summaries
-inline: true
-summary: true
+reviews:
+  # Profile: "chill" for balanced feedback, "assertive" for thorough reviews
+  profile: chill
+
+  # Disable automatic reviews - reviews must be triggered manually via PR comments
+  auto_review:
+    enabled: false
+
+  # High-level summary settings
+  high_level_summary: true
+
+  # Review and walkthrough settings
+  review_status: true
+
+  # Poem generation (optional, can be disabled)
+  poem: false
+
 
 # Manual Review Commands (use in PR comments):
 # - @coderabbitai full review          : Complete thorough review of all files
-# - @coderabbitai review               : Standard review (uses profile setting "chill" for balanced feedback, "assertive" for thorough reviews)
+# - @coderabbitai review               : Standard review (uses profile "chill" for balanced feedback "assertive" for thorough reviews)
 # - @coderabbitai summary              : Generate/regenerate PR summary
 # - @coderabbitai pause                : Temporarily stop reviews
 # - @coderabbitai resume               : Resume reviews
