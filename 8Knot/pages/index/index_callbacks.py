@@ -77,7 +77,7 @@ class AdaptiveDebounceManager:
         self._query_first_seen: dict[str, float] = {}  # Map query -> first time seen
         self._last_processed_query: Optional[str] = None
         self._last_processed_time: float = 0.0
-        self._last_results: list = []  # Store last results to return during debouncing
+        self._last_results: Optional[list] = None  # Store last results to return during debouncing (None = no cache)
 
     def should_process_query(self, query: str) -> bool:
         """
@@ -127,14 +127,27 @@ class AdaptiveDebounceManager:
             return False
 
     def set_last_results(self, results: list) -> None:
-        """Store the last results to return during debouncing."""
-        with self._lock:
-            self._last_results = results
+        """
+        Store the last results to return during debouncing.
 
-    def get_last_results(self) -> list:
-        """Get the last results to return during debouncing."""
+        Args:
+            results: The search results list (can be empty [] for zero matches)
+        """
         with self._lock:
-            return self._last_results.copy() if self._last_results else []
+            # Store results even if empty - empty list is a valid search result
+            self._last_results = results.copy() if results else []
+
+    def get_last_results(self) -> Optional[list]:
+        """
+        Get the last results to return during debouncing.
+
+        Returns:
+            The cached results list, or None if no results have been cached yet.
+            Note: Returns [] (empty list) if a previous search legitimately returned zero matches.
+        """
+        with self._lock:
+            # Return None if no results cached, otherwise return the cached results (even if empty)
+            return self._last_results.copy() if self._last_results is not None else None
 
     def _cleanup_old_queries(self, current_time: float) -> None:
         """
@@ -319,8 +332,9 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
         )
         # Return last results instead of no_update to prevent dropdown from showing "no matching"
         # This maintains the dropdown state while debouncing
+        # Return cached results even if empty (empty is a valid search result)
         last_results = _adaptive_debounce_manager.get_last_results()
-        return [last_results] if last_results else dash.no_update
+        return [last_results] if last_results is not None else dash.no_update
 
     try:
         start_time = time.time()
