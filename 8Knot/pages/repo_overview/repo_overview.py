@@ -43,7 +43,6 @@ layout = dbc.Container(
                             placeholder="Repo for info section",
                             searchable=True,
                             clearable=True,
-                            className="dark-dropdown",
                         ),
                     ],
                     width=3,
