@@ -32,6 +32,10 @@
     --placeholder-font-size: 16px;
     --placeholder-line-height: 20px;
     --placeholder-top-offset: 1px;
+    /* MultiSelect specific sizing */
+    --multiselect-min-height: 48px;
+    --multiselect-padding: 12px 16px 12px 44px;
+    --multiselect-item-margin: 2px 4px;
 }
 
 
@@ -389,6 +393,99 @@ a.sidebar-section-text {
     display: none;
     margin-top: var(--spacing-sm);
     margin-bottom: 0;
+}
+
+
+/* ==== UTILITY COMPONENT CLASSES ==== */
+
+
+/* Generic transparent icon button */
+
+button.icon-button.btn,
+.btn.icon-button {
+    background-color: transparent;
+    border: none;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 14px;
+    box-shadow: none;
+}
+
+button.icon-button.btn:hover,
+button.icon-button.btn:focus,
+button.icon-button.btn:active,
+.btn.icon-button:hover,
+.btn.icon-button:focus,
+.btn.icon-button:active {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    color: inherit;
+}
+
+
+/* Login disabled banner positioning */
+
+.login-banner-container {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.login-banner-alert {
+    background-color: var(--baby-blue-100);
+    border-color: var(--baby-blue-700);
+    border: 1px solid var(--baby-blue-700);
+    border-left: 5px solid var(--baby-blue-700);
+    box-shadow: 0 2px 8px var(--shadow-color-md);
+    max-width: 400px;
+    padding: 15px;
+    z-index: 1000;
+}
+
+.login-banner-heading {
+    color: var(--color-black);
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    text-shadow: none;
+}
+
+.login-banner-text {
+    color: #333333;
+    margin: 0 0 10px 0;
+}
+
+.login-banner-link {
+    font-weight: 500;
+    color: #1565C0;
+}
+
+
+/* Search component specific classes */
+
+.search-input-wrapper {
+    position: relative;
+}
+
+.search-input-section {
+    width: 100%;
+    margin-bottom: var(--spacing-md);
+    padding: 0 6px;
+}
+
+.search-controls-stack {
+    width: 100%;
+    justify-content: center;
+    margin-top: var(--spacing-md);
+}
+
+.search-bar-wrapper {
+    padding-top: var(--spacing-md);
+}
+
+.repo-list-alert {
+    overflow-y: scroll;
+    max-height: 440px;
 }
 
 
