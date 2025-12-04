@@ -116,7 +116,7 @@ gc_contrib_importance_pie = VisualizationAIO(
         ),
     ],
     class_name="dark-card",
-    id="bus-factor",
+    id="lottery-factor",
 )
 
 
