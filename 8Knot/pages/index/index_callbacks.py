@@ -72,12 +72,17 @@ class AdaptiveDebounceManager:
     MIN_REPROCESS_INTERVAL_SECONDS = 0.1  # Don't reprocess same query within 100ms
     CLEANUP_AGE_SECONDS = 5.0  # Remove queries older than 5 seconds
 
+    # Immediate processing thresholds (for detecting active typing)
+    SIGNIFICANT_LENGTH_INCREASE = 3  # Process immediately if query is 3+ chars longer
+    PREFIX_EXTENSION_THRESHOLD = 2  # Process immediately if prefix extension is 2+ chars longer
+
     def __init__(self):
         self._lock = threading.Lock()  # Thread safety for concurrent Dash callbacks
         self._query_first_seen: dict[str, float] = {}  # Map query -> first time seen
         self._last_processed_query: Optional[str] = None
         self._last_processed_time: float = 0.0
-        self._last_results: Optional[list] = None  # Store last results to return during debouncing (None = no cache)
+        self._last_results: list = []  # Store last results to return during debouncing (empty = no cache yet)
+        self._has_processed_any_query: bool = False  # Track if we've ever processed a query
 
     def should_process_query(self, query: str) -> bool:
         """
@@ -103,6 +108,26 @@ class AdaptiveDebounceManager:
                 if current_time - self._last_processed_time < self.MIN_REPROCESS_INTERVAL_SECONDS:
                     return False
 
+            # IMPORTANT: If query is significantly longer than last processed, process immediately
+            # This handles the case where user types quickly (e.g., "k" -> "kubernetes")
+            # The user is actively building up the query, so we should process it
+            if self._last_processed_query is not None:
+                length_diff = len(query) - len(self._last_processed_query)
+                # If query is significantly longer OR is a prefix extension (user actively typing), process immediately
+                is_prefix_extension = query.startswith(self._last_processed_query) and length_diff > 0
+                if length_diff >= self.SIGNIFICANT_LENGTH_INCREASE or (
+                    is_prefix_extension and length_diff >= self.PREFIX_EXTENSION_THRESHOLD
+                ):
+                    logging.info(
+                        f"Query '{query[:50]}...' processed immediately (length increased by {length_diff} chars, "
+                        f"user actively typing: '{self._last_processed_query}' -> '{query}', "
+                        f"is_prefix={is_prefix_extension})"
+                    )
+                    self._last_processed_query = query
+                    self._last_processed_time = current_time
+                    self._cleanup_old_queries(current_time)
+                    return True
+
             # Calculate required debounce time for this query length
             debounce_seconds = get_adaptive_debounce_time(query) / 1000.0
             effective_debounce = max(self.COMPONENT_DEBOUNCE_SECONDS, debounce_seconds)
@@ -126,6 +151,23 @@ class AdaptiveDebounceManager:
 
             return False
 
+    def mark_query_processed(self, query: str) -> None:
+        """
+        Mark a query as processed without checking debounce time.
+        Used when bypassing debounce (e.g., for first query with no cached results).
+
+        Args:
+            query: The query to mark as processed
+        """
+        with self._lock:
+            current_time = time.time()
+            self._last_processed_query = query
+            self._last_processed_time = current_time
+            # Ensure query is tracked
+            if query not in self._query_first_seen:
+                self._query_first_seen[query] = current_time
+            self._cleanup_old_queries(current_time)
+
     def set_last_results(self, results: list) -> None:
         """
         Store the last results to return during debouncing.
@@ -136,18 +178,30 @@ class AdaptiveDebounceManager:
         with self._lock:
             # Store results even if empty - empty list is a valid search result
             self._last_results = results.copy() if results else []
+            self._has_processed_any_query = True
 
-    def get_last_results(self) -> Optional[list]:
+    def get_last_results(self) -> list:
         """
         Get the last results to return during debouncing.
 
         Returns:
-            The cached results list, or None if no results have been cached yet.
-            Note: Returns [] (empty list) if a previous search legitimately returned zero matches.
+            The cached results list (empty list if no results cached yet or if previous search returned zero matches).
         """
         with self._lock:
-            # Return None if no results cached, otherwise return the cached results (even if empty)
-            return self._last_results.copy() if self._last_results is not None else None
+            return self._last_results.copy()
+
+    def has_processed_any_query(self) -> bool:
+        """
+        Check if we have processed any query yet (for debounce state tracking).
+
+        This is used to determine if we should bypass debounce for the first query.
+        It tracks whether we've ever processed a query, not whether we have cached results.
+
+        Returns:
+            True if we've processed at least one query (even if it returned empty results).
+        """
+        with self._lock:
+            return self._has_processed_any_query
 
     def _cleanup_old_queries(self, current_time: float) -> None:
         """
@@ -324,8 +378,12 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
     if not user_in:
         return dash.no_update
 
-    # Apply adaptive debouncing
-    if not _adaptive_debounce_manager.should_process_query(user_in):
+    # Check if we have processed any query yet (for debounce state tracking)
+    # This determines if we should bypass debounce for the first query
+    has_processed_any_query = _adaptive_debounce_manager.has_processed_any_query()
+
+    # Apply adaptive debouncing (but bypass if no queries processed yet to ensure first query works)
+    if has_processed_any_query and not _adaptive_debounce_manager.should_process_query(user_in):
         debounce_ms = get_adaptive_debounce_time(user_in)
         logging.debug(
             f"Query '{user_in[:50]}...' debounced " f"(adaptive debounce: {debounce_ms}ms, length: {len(user_in)})"
@@ -334,12 +392,47 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
         # This maintains the dropdown state while debouncing
         # Return cached results even if empty (empty is a valid search result)
         last_results = _adaptive_debounce_manager.get_last_results()
-        return [last_results] if last_results is not None else dash.no_update
+        return [last_results]
+
+    # If no queries processed yet, we bypass debounce and process immediately
+    # This ensures the first query always processes and shows results
+    if not has_processed_any_query:
+        logging.info(
+            f"Processing first query '{user_in[:50]}...' immediately (no queries processed yet, bypassing debounce)"
+        )
+        # Don't mark as processed yet - let the search complete first, then mark it
+        # This ensures the search actually happens
 
     try:
         start_time = time.time()
         debounce_ms = get_adaptive_debounce_time(user_in)
         logging.info(f"Search query: '{user_in}' (adaptive debounce: {debounce_ms}ms)")
+
+        # Cache server options to avoid redundant fetches (used in multiple places)
+        _server_options_cache = None
+
+        def _get_server_options():
+            """Helper to fetch server options once per request."""
+            nonlocal _server_options_cache
+            if _server_options_cache is None:
+                _server_options_cache = augur.get_multiselect_options().copy()
+                logging.info(f"Fetched {len(_server_options_cache)} options from server")
+                if current_user.is_authenticated:
+                    try:
+                        users_cache = redis.StrictRedis(
+                            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
+                            port=6379,
+                            password=os.getenv("REDIS_PASSWORD", ""),
+                            decode_responses=True,
+                        )
+                        users_cache.ping()
+                        if users_cache.exists(f"{current_user.get_id()}_group_options"):
+                            user_options = json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
+                            _server_options_cache = _server_options_cache + user_options
+                            logging.info(f"Added {len(user_options)} user options from Redis")
+                    except redis.exceptions.ConnectionError as e:
+                        logging.error(f"MULTISELECT: Could not connect to users-cache. Error: {str(e)}")
+            return _server_options_cache
 
         # Start with cached options if available
         if cached_options:
@@ -347,23 +440,7 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
             options = cached_options
         else:
             logging.info("Client-side cache empty, fetching from server")
-            options = augur.get_multiselect_options().copy()
-            logging.info(f"Fetched {len(options)} options from server")
-            if current_user.is_authenticated:
-                try:
-                    users_cache = redis.StrictRedis(
-                        host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
-                        port=6379,
-                        password=os.getenv("REDIS_PASSWORD", ""),
-                        decode_responses=True,
-                    )
-                    users_cache.ping()
-                    if users_cache.exists(f"{current_user.get_id()}_group_options"):
-                        user_options = json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
-                        options = options + user_options
-                        logging.info(f"Added {len(user_options)} user options from Redis")
-                except redis.exceptions.ConnectionError as e:
-                    logging.error(f"MULTISELECT: Could not connect to users-cache. Error: {str(e)}")
+            options = _get_server_options()
 
         if selections is None:
             selections = []
@@ -381,7 +458,13 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
             prefix_type = "org"
             logging.info(f"Org prefix detected, searching for: '{search_query}'")
 
-        # SEARCH STRATEGY: searching both cache and server for best results. The client-side cache is still prioritized if available.
+        # SEARCH STRATEGY: searching both cache and server for best results
+        #
+        # IMPORTANT: Separation of concerns
+        # - Adaptive debounce (has_processed_any_query): Controls WHEN to process (timing concern)
+        # - Client-side cache (cached_options): Controls WHAT data source to use (data concern)
+        # - Server search condition: Based only on query length
+
         cache_matches = []
         server_matches = []
 
@@ -396,34 +479,34 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
             cache_matches = fuzzy_search(search_query, cached_options, threshold=search_threshold)
             logging.info(f"Cache search found {len(cache_matches)} matches (threshold={search_threshold})")
 
-        # Always also search server for comprehensive results (especially for longer queries)
-        if len(search_query) >= 3:
+        # Always also search server for comprehensive results
+        # Strategy: Always search server for queries >= 3 chars
+        # Note: This condition is independent of adaptive debounce state
+        should_search_server = len(search_query) >= 3
+        logging.info(
+            f"Server search decision for '{search_query}': should_search={should_search_server}, length={len(search_query)}, has_processed_any_query={has_processed_any_query}"
+        )
+        if should_search_server:
+            logging.info(
+                f"Searching server for query '{search_query}' (length: {len(search_query)}, has_client_cache: {cached_options is not None})"
+            )
             try:
-                server_options = augur.get_multiselect_options().copy()
-                if current_user.is_authenticated:
-                    try:
-                        users_cache = redis.StrictRedis(
-                            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
-                            port=6379,
-                            password=os.getenv("REDIS_PASSWORD", ""),
-                            decode_responses=True,
-                        )
-                        users_cache.ping()
-                        if users_cache.exists(f"{current_user.get_id()}_group_options"):
-                            user_options = json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
-                            server_options = server_options + user_options
-                    except redis.exceptions.ConnectionError as e:
-                        logging.error(f"SERVER SEARCH: Could not connect to users-cache. Error: {str(e)}")
-
+                # Use cached server options to avoid redundant fetch
+                server_options = _get_server_options()
                 server_matches = fuzzy_search(search_query, server_options, threshold=search_threshold)
                 logging.info(f"Server search found {len(server_matches)} matches (threshold={search_threshold})")
 
             except Exception as e:
-                logging.error(f"Server search failed: {str(e)}")
+                logging.error(f"Server search failed: {str(e)}", exc_info=True)
                 server_matches = []
+        else:
+            logging.debug(
+                f"Skipping server search for query '{search_query}' (length: {len(search_query)} < 3, using cache only)"
+            )
 
-        # If no cache available, fetch from server
+        # Combine cache and server results (same logic as DEV)
         if not cached_options:
+            # No cache available, use server results only
             matched_options = server_matches
             use_server_fallback = True
             logging.info(f"No cache available, using {len(server_matches)} server matches")
@@ -444,6 +527,14 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
             logging.info(
                 f"Combined results: {len(cache_matches)} from cache + {len(additional_from_server)} from server = {len(matched_options)} total"
             )
+
+            # Explicit verification for debugging
+            if should_search_server and len(server_matches) == 0 and len(cache_matches) > 0:
+                logging.warning(
+                    f"WARNING: Server search was requested but returned 0 matches. "
+                    f"Query: '{search_query}', Cache matches: {len(cache_matches)}, "
+                    f"Server search executed: {should_search_server}"
+                )
 
         # Filter by prefix type if specified
         if prefix_type == "repo":
@@ -481,9 +572,14 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
                 formatted_opt["label"] = search_item.prefix(label)
             formatted_opts.append(formatted_opt)
 
-        # Simple reordering: put organizations first, then repositories
-        orgs_first = [opt for opt in formatted_opts if SearchItem.from_id(opt["value"]) == SearchItem.ORG]
-        repos_after = [opt for opt in formatted_opts if SearchItem.from_id(opt["value"]) == SearchItem.REPO]
+        # organizations first, then repositories (single-pass optimization)
+        orgs_first = []
+        repos_after = []
+        for opt in formatted_opts:
+            if SearchItem.from_id(opt["value"]) == SearchItem.ORG:
+                orgs_first.append(opt)
+            else:  # Must be REPO (we filtered earlier)
+                repos_after.append(opt)
         formatted_opts = orgs_first + repos_after
 
         # Always include the previous selections
@@ -499,7 +595,7 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
         # If any selections aren't in our current options, fetch them from the server
         if missing_selections:
             logging.info(f"Fetching {len(missing_selections)} missing selections from server")
-            all_options = augur.get_multiselect_options().copy()
+            all_options = _get_server_options()  # Use cached server options
             for v in selections:
                 matched_opts = [opt for opt in all_options if opt["value"] == v]
                 if matched_opts:
@@ -546,32 +642,65 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
         # Store results for potential return during debouncing
         _adaptive_debounce_manager.set_last_results(result)
 
+        # Mark query as processed AFTER search completes (for first query that bypassed debounce)
+        # This ensures the search actually happened before we mark it as processed
+        if not has_processed_any_query:
+            _adaptive_debounce_manager.mark_query_processed(user_in)
+            logging.debug(
+                f"Marked first query '{user_in[:50]}...' as processed after search completed with {len(result)} results"
+            )
+
         return [result]
 
-    except Exception as e:
-        logging.error(f"Error in dynamic_multiselect_options: {str(e)}")
-        # Return at least the current selections as a fallback
+    except (redis.exceptions.ConnectionError, redis.exceptions.TimeoutError) as e:
+        # Transient network/connection errors - log and return fallback
+        logging.error(f"Redis connection error in dynamic_multiselect_options: {str(e)}")
         if selections:
-            default_options = []
-            try:
-                # Try to get the labels for the current selections
-                options = augur.get_multiselect_options()
-                for v in options:
-                    if v["value"] in selections:
-                        formatted_v = v.copy()
-                        search_item = SearchItem.from_id(v)
-                        if search_item == SearchItem.ORG:
-                            formatted_v["label"] = f"org: {v['label']}"
-                        elif search_item == SearchItem.REPO:
-                            formatted_v["label"] = f"repo: {v['label']}"
-                        default_options.append(formatted_v)
-            except:
-                # If that fails, just return the raw selection values
-                default_options = [{"value": v, "label": f"ID: {v}"} for v in selections]
-
-            return [default_options]
-
+            return _get_fallback_selections(selections)
         return dash.no_update
+    except (AttributeError, KeyError, TypeError) as e:
+        # Programming errors - should be fixed, but don't crash the app
+        logging.error(f"Programming error in dynamic_multiselect_options: {str(e)}", exc_info=True)
+        if selections:
+            return _get_fallback_selections(selections)
+        return dash.no_update
+    except Exception as e:
+        # Catch-all for unexpected errors
+        logging.error(f"Unexpected error in dynamic_multiselect_options: {str(e)}", exc_info=True)
+        if selections:
+            return _get_fallback_selections(selections)
+        return dash.no_update
+
+
+def _get_fallback_selections(selections: list) -> list:
+    """
+    Helper function to return fallback options when search fails.
+
+    Args:
+        selections: List of selected option values
+
+    Returns:
+        List of formatted option dictionaries with basic labels
+    """
+    default_options = []
+    try:
+        # Try to get the labels for the current selections
+        options = augur.get_multiselect_options()
+        for v in selections:
+            matched_opts = [opt for opt in options if opt["value"] == v]
+            if matched_opts:
+                formatted_v = matched_opts[0].copy()
+                search_item = SearchItem.from_id(v)
+                if search_item == SearchItem.ORG:
+                    formatted_v["label"] = f"org: {formatted_v['label']}"
+                elif search_item == SearchItem.REPO:
+                    formatted_v["label"] = f"repo: {formatted_v['label']}"
+                default_options.append(formatted_v)
+    except Exception:
+        # If that fails, just return the raw selection values
+        default_options = [{"value": v, "label": f"ID: {v}"} for v in selections]
+
+    return [default_options]
 
 
 # callback for repo selections to feed into visualization call backs
