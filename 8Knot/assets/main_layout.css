@@ -318,6 +318,16 @@ a.sidebar-section-text {
     color: var(--color-white);
 }
 
+
+/* Truncate long names in search bar pills (selected items) */
+
+.searchbar-dropdown .mantine-Pill-label {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .search-icon {
     background-color: transparent;
     border: none;
