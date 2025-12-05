@@ -18,6 +18,7 @@ import time
 from dash.exceptions import PreventUpdate
 import app
 import cache_manager.cache_facade as cf
+from .heatmap_utils import create_repo_dropdown, create_directory_dropdown
 
 PAGE = "codebase"
 VIZ_ID = "contribution-file-heatmap"
@@ -158,12 +159,8 @@ def toggle_popover(n, is_open):
     [Input("repo-choices", "data")],
 )
 def repo_dropdown(repo_ids):
-    # array to hold repo_id and git url pairing for dropdown
-    data_array = []
-    for repo_id in repo_ids:
-        entry = {"value": repo_id, "label": augur.repo_id_to_git(repo_id)}
-        data_array.append(entry)
-    return data_array, repo_ids[0]
+    """Create repository dropdown using shared utility function."""
+    return create_repo_dropdown(repo_ids, VIZ_ID)
 
 
 # callback for populating directory drop down
@@ -176,61 +173,8 @@ def repo_dropdown(repo_ids):
     background=True,
 )
 def directory_dropdown(repo_id):
-    # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=[repo_id]):
-        logging.warning(f"DIRECTORY DROPDOWN - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
-
-    logging.warning(f"DIRECTORY DROPDOWN - RETRIEVING FROM CACHE")
-    df = cf.retrieve_from_cache(
-        tablename=rfq.__name__,
-        repolist=[repo_id],
-    )
-
-    logging.warning(f"DIRECTORY DROPDOWN - CACHE READ")
-
-    # test if there is data
-    if df.empty:
-        logging.warning(f"{VIZ_ID} DROPDOWN- NO DATA AVAILABLE")
-        return ["Top Level Directory"], "Top Level Directory"
-
-    # strings to hold the values for each column (always the same for every row of this query)
-    repo_name = df["repo_name"].iloc[0]
-    repo_path = df["repo_path"].iloc[0]
-    repo_id = str(df["repo_id"].iloc[0])
-
-    # pattern found in each file path, used to slice to get only the root file path
-    path_slice = repo_id + "-" + repo_path + "/" + repo_name + "/"
-    df["file_path"] = df["file_path"].str.rsplit(path_slice, n=1).str[1]
-
-    # drop unneccessary columns not needed after preprocessing steps
-    df = df.reset_index()
-    df.drop(
-        ["index", "repo_id", "repo_name", "repo_path", "rl_analysis_date"],
-        axis=1,
-        inplace=True,
-    )
-
-    # split file path by directory
-    df = df.join(df["file_path"].str.split("/", expand=True))
-
-    # take all of the files, split on the last instance of a / to get directories and top level files
-    directories = df["file_path"].str.rsplit("/", n=1).str[0].tolist()
-    directories = list(set(directories))
-
-    # get all of the file names to filter out of the directory set
-    top_level_files = df["file_name"][df[1].isnull()].tolist()
-    # applies another rsplit to make sure directories that only have folders are included
-    folder_only_directories = [x.rsplit("/", 1)[0] for x in directories]
-    directories = list(set(directories + folder_only_directories))
-
-    # sort alphabetically
-    directories = sorted(directories)
-
-    # add top level directory to the list of directories
-    directories.insert(0, "Top Level Directory")
-
-    return directories, "Top Level Directory"
+    """Create directory dropdown using shared utility function."""
+    return create_directory_dropdown(repo_id, VIZ_ID)
 
 
 # callback for contributor file heatmap graph
@@ -392,14 +336,14 @@ def df_file_clean(df_file: pd.DataFrame, df_file_pr: pd.DataFrame):
 
     # drop unneccessary columns not needed after preprocessing steps
     df_file = df_file.reset_index()
-    df_file.drop(["index", "repo_name", "repo_path", "rl_analysis_date"], axis=1, inplace=True)
+    df_file = df_file.drop(["index", "repo_name", "repo_path", "rl_analysis_date"], axis=1)
 
     # split file path by directory
     df_file = df_file.join(df_file["file_path"].str.split("/", expand=True))
 
     # drop unnecessary columns
-    df_file.drop(["repo_id"], axis=1, inplace=True)
-    df_file_pr.drop(["repo_id"], axis=1, inplace=True)
+    df_file = df_file.drop(["repo_id"], axis=1)
+    df_file_pr = df_file_pr.drop(["repo_id"], axis=1)
 
     # create column with list of prs per file path
     df_file_pr = df_file_pr.groupby("file_path")["pull_request_id"].apply(list)
@@ -488,10 +432,9 @@ def pr_to_dates(df_pr: pd.DataFrame, df_dynamic_directory: pd.DataFrame, graph_v
     df_pr["merged_at"] = pd.to_datetime(df_pr["merged_at"], utc=True)
 
     # drop unneccessary columns not needed after preprocessing steps
-    df_pr.drop(
+    df_pr = df_pr.drop(
         ["repo_id", "repo_name", "pr_src_number", "cntrb_id", "closed_at"],
         axis=1,
-        inplace=True,
     )
 
     # dictionaries of pull_requests and their open and merge dates
@@ -556,7 +499,7 @@ def file_pr_activity_by_month(df_dynamic_directory: pd.DataFrame, df_pr: pd.Data
 
     # removing the None row that was used for column formating if exists
     if "nan" in final.index:
-        final.drop("nan", inplace=True)
+        final = final.drop("nan")
 
     # add back the files that had no pull requests
     for files in no_contribs:

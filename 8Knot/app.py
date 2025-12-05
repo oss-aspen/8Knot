@@ -121,6 +121,11 @@ app = dash.Dash(
     background_callback_manager=celery_manager,
 )
 
+# Force import of codebase visualizations to register callbacks at startup
+# This ensures all callbacks are registered before the server begins handling requests
+# The imports in pages.codebase.__init__.py will trigger the @callback decorators
+import pages.codebase  # noqa: F401
+
 """CONFIGURE FLASK-LOGIN"""
 server = app.server
 server = _login.configure_server_login(server)

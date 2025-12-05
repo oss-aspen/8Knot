@@ -256,43 +256,43 @@ def _create_application_tables() -> None:
         )
         logging.warning("CREATED pr_assignments TABLE")
 
-        # Commented out tables - not currently needed
-        # cur.execute(
-        #     """
-        #     CREATE UNLOGGED TABLE IF NOT EXISTS cntrb_per_file_query(
-        #         repo_id int,
-        #         file_path text,
-        #         cntrb_ids text,
-        #         reviewer_ids text
-        #     )
-        #     """
-        # )
-        # logging.warning("CREATED cntrb_per_file_query TABLE")
+        # Heatmap tables - required for codebase visualizations
+        cur.execute(
+            """
+            CREATE UNLOGGED TABLE IF NOT EXISTS cntrb_per_file_query(
+                repo_id int,
+                file_path text,
+                cntrb_ids text,
+                reviewer_ids text
+            )
+            """
+        )
+        logging.warning("CREATED cntrb_per_file_query TABLE")
 
-        # cur.execute(
-        #     """
-        #     CREATE UNLOGGED TABLE IF NOT EXISTS pr_file_query(
-        #         file_path text,
-        #         pull_request_id int,
-        #         repo_id int
-        #     )
-        #     """
-        # )
-        # logging.warning("CREATED pr_file_query TABLE")
+        cur.execute(
+            """
+            CREATE UNLOGGED TABLE IF NOT EXISTS pr_file_query(
+                file_path text,
+                pull_request_id int,
+                repo_id int
+            )
+            """
+        )
+        logging.warning("CREATED pr_file_query TABLE")
 
-        # cur.execute(
-        #     """
-        #     CREATE UNLOGGED TABLE IF NOT EXISTS repo_files_query(
-        #         repo_id int,
-        #         repo_name text,
-        #         repo_path text,
-        #         rl_analysis_date text,
-        #         file_path text,
-        #         file_name text
-        #     )
-        #     """
-        # )
-        # logging.warning("CREATED repo_files_query TABLE")
+        cur.execute(
+            """
+            CREATE UNLOGGED TABLE IF NOT EXISTS repo_files_query(
+                repo_id int,
+                repo_name text,
+                repo_path text,
+                rl_analysis_date text,
+                file_path text,
+                file_name text
+            )
+            """
+        )
+        logging.warning("CREATED repo_files_query TABLE")
 
         cur.execute(
             """
@@ -389,10 +389,167 @@ def _create_application_tables() -> None:
         )
         logging.warning("CREATED cache_bookkeeping TABLE")
 
+        # Create schema versioning table
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS schema_version(
+                version int PRIMARY KEY,
+                description text,
+                applied_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        logging.warning("CREATED schema_version TABLE")
+
         # commit changes, all-or-nothing.
         conn.commit()
 
+        # Create indexes and primary keys for performance
+        _create_indexes_and_keys(conn)
+
     logging.warning("ALL TABLES COMMITTED SUCCESSFULLY")
+
+
+def _create_indexes_and_keys(conn) -> None:
+    """
+    Create indexes and primary keys for cache tables to improve query performance.
+    """
+    with conn.cursor() as cur:
+        # Indexes for heatmap tables (most critical for performance)
+        logging.warning("CREATING INDEXES FOR HEATMAP TABLES")
+
+        # repo_files_query indexes
+        cur.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_repo_files_repo_id
+            ON repo_files_query(repo_id)
+            """
+        )
+        cur.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_repo_files_file_path
+            ON repo_files_query(file_path)
+            """
+        )
+
+        # cntrb_per_file_query indexes
+        cur.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_cntrb_per_file_repo_id
+            ON cntrb_per_file_query(repo_id)
+            """
+        )
+        cur.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_cntrb_per_file_file_path
+            ON cntrb_per_file_query(file_path)
+            """
+        )
+
+        # pr_file_query indexes
+        cur.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_pr_file_repo_id
+            ON pr_file_query(repo_id)
+            """
+        )
+        cur.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_pr_file_file_path
+            ON pr_file_query(file_path)
+            """
+        )
+        cur.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_pr_file_pull_request_id
+            ON pr_file_query(pull_request_id)
+            """
+        )
+
+        # Indexes for other frequently queried tables
+        logging.warning("CREATING INDEXES FOR OTHER TABLES")
+
+        cur.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_commits_repo_id
+            ON commits_query(repo_id)
+            """
+        )
+
+        cur.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_issues_repo_id
+            ON issues_query(repo_id)
+            """
+        )
+
+        cur.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_prs_repo_id
+            ON prs_query(repo_id)
+            """
+        )
+
+        cur.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_contributors_repo_id
+            ON contributors_query(repo_id)
+            """
+        )
+
+        # Primary key for cache_bookkeeping (composite key)
+        cur.execute(
+            """
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_constraint
+                    WHERE conname = 'cache_bookkeeping_pkey'
+                ) THEN
+                    ALTER TABLE cache_bookkeeping
+                    ADD PRIMARY KEY (cache_func, repo_id);
+                END IF;
+            END $$;
+            """
+        )
+
+        # Index on cache_bookkeeping for faster lookups
+        cur.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_cache_bookkeeping_func
+            ON cache_bookkeeping(cache_func)
+            """
+        )
+        cur.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_cache_bookkeeping_ts
+            ON cache_bookkeeping(ts_cached)
+            """
+        )
+
+        conn.commit()
+        logging.warning("ALL INDEXES CREATED SUCCESSFULLY")
+
+
+def _update_schema_version(conn, version, description):
+    """
+    Update schema version tracking.
+
+    Args:
+        conn: Database connection
+        version: Schema version number
+        description: Description of the schema change
+    """
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO schema_version (version, description)
+            VALUES (%s, %s)
+            ON CONFLICT (version) DO NOTHING
+            """,
+            (version, description),
+        )
+        conn.commit()
 
 
 def db_init() -> int:
@@ -405,6 +562,11 @@ def db_init() -> int:
 
         # add tables to augur_cache db if they don't already exist.
         _create_application_tables()
+
+        # Update schema version
+        conn = _connect_with_retry(cache_cx_string)
+        _update_schema_version(conn, 1, "Initial schema with heatmap tables, indexes, and versioning")
+        conn.close()
 
         logging.warning("db_init: POSTGRES CACHE SUCCESSFULLY INITIALIZED")
 

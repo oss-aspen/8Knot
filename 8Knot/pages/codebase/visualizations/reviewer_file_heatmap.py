@@ -19,6 +19,7 @@ import time
 from dash.exceptions import PreventUpdate
 import app
 import cache_manager.cache_facade as cf
+from .heatmap_utils import create_repo_dropdown, create_directory_dropdown
 
 PAGE = "codebase"
 VIZ_ID = "reviewer-file-heatmap"
@@ -142,12 +143,8 @@ def toggle_popover(n, is_open):
     [Input("repo-choices", "data")],
 )
 def repo_dropdown(repo_ids):
-    # array to hold repo_id and git url pairing for dropdown
-    data_array = []
-    for repo_id in repo_ids:
-        entry = {"value": repo_id, "label": augur.repo_id_to_git(repo_id)}
-        data_array.append(entry)
-    return data_array, repo_ids[0]
+    """Create repository dropdown using shared utility function."""
+    return create_repo_dropdown(repo_ids, VIZ_ID)
 
 
 # callback for populating directory drop down
@@ -160,65 +157,10 @@ def repo_dropdown(repo_ids):
     background=True,
 )
 def directory_dropdown(repo_id):
-    # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=[repo_id]):
-        logging.warning(f"DIRECTORY DROPDOWN - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
-
-    logging.warning(f"DIRECTORY DROPDOWN - RETRIEVING FROM CACHE")
-    df = cf.retrieve_from_cache(
-        tablename=rfq.__name__,
-        repolist=[repo_id],
-    )
-
-    logging.warning(f"DIRECTORY DROPDOWN - CACHE READ")
-
-    # test if there is data
-    if df.empty:
-        logging.warning(f"{VIZ_ID} DROPDOWN- NO DATA AVAILABLE")
-        return ["Top Level Directory"], "Top Level Directory"
-
-    # strings to hold the values for each column (always the same for every row of this query)
-    repo_name = df["repo_name"].iloc[0]
-    repo_path = df["repo_path"].iloc[0]
-    repo_id = str(df["repo_id"].iloc[0])
-
-    # pattern found in each file path, used to slice to get only the root file path
-    path_slice = repo_id + "-" + repo_path + "/" + repo_name + "/"
-    df["file_path"] = df["file_path"].str.rsplit(path_slice, n=1).str[1]
-
-    # drop columns not in the most recent collection
-    df = df[df["rl_analysis_date"] == df["rl_analysis_date"].max()]
-
-    # drop unneccessary columns not needed after preprocessing steps
-    df = df.reset_index()
-    df.drop(
-        ["index", "repo_id", "repo_name", "repo_path", "rl_analysis_date"],
-        axis=1,
-        inplace=True,
-    )
-
-    # split file path by directory
-    df = df.join(df["file_path"].str.split("/", expand=True))
-
-    # take all of the files, split on the last instance of a / to get directories and top level files
-    directories = df["file_path"].str.rsplit("/", n=1).str[0].tolist()
-    # applies another rsplit to make sure directories that only have folders are included
-    folder_only_directories = [x.rsplit("/", 1)[0] for x in directories]
-    directories = list(set(directories + folder_only_directories))
-
-    # get all of the file names to filter out of the directory set
-    top_level_files = df["file_name"][df[1].isnull()].tolist()
-    directories = [f for f in directories if f not in top_level_files]
-
-    # sort alphabetically
-    directories = sorted(directories)
-
-    # add top level directory to the list of directories
-    directories.insert(0, "Top Level Directory")
+    """Create directory dropdown using shared utility function."""
+    directories, default_value = create_directory_dropdown(repo_id, VIZ_ID)
     logging.warning(f"REVIEWER DIRECTORY DROPDOWN - FINISHED")
-
-    return directories, "Top Level Directory"
+    return directories, default_value
 
 
 # callback for reviewer file heatmap graph
@@ -384,20 +326,20 @@ def df_file_clean(df_file: pd.DataFrame, df_file_cntbs: pd.DataFrame, bot_switch
 
     # drop unneccessary columns not needed after preprocessing steps
     df_file = df_file.reset_index()
-    df_file.drop(["index", "repo_name", "repo_path", "rl_analysis_date"], axis=1, inplace=True)
+    df_file = df_file.drop(["index", "repo_name", "repo_path", "rl_analysis_date"], axis=1)
 
     # split file path by directory
     df_file = df_file.join(df_file["file_path"].str.split("/", expand=True))
 
     # drop unnecessary columns
-    df_file.drop(["repo_id"], axis=1, inplace=True)
-    df_file_cntbs.drop(["repo_id", "cntrb_ids"], axis=1, inplace=True)
+    df_file = df_file.drop(["repo_id"], axis=1)
+    df_file_cntbs = df_file_cntbs.drop(["repo_id", "cntrb_ids"], axis=1)
 
     # Left join on df_files to only get the files that are currently in the repository
     # and the contributors that have ever reviewed a pr that included edits on the file
     df_file = pd.merge(df_file, df_file_cntbs, on="file_path", how="left")
     # replace nan with empty string to avoid errors in list comprehension
-    df_file.reviewer_ids.fillna("", inplace=True)
+    df_file["reviewer_ids"] = df_file["reviewer_ids"].fillna("")
 
     # reformat reviewer_ids to list and remove bots if filter is on
     if bot_switch:
@@ -493,10 +435,9 @@ def cntrb_to_last_activity(df_actions: pd.DataFrame, df_dynamic_directory: pd.Da
 
     # drop unneccessary columns not needed after preprocessing steps
     df_actions = df_actions.reset_index()
-    df_actions.drop(
+    df_actions = df_actions.drop(
         ["index", "repo_id", "repo_name", "login", "Action", "rank"],
         axis=1,
-        inplace=True,
     )
 
     # dictionary of reviewer_ids and their most recent activity on repo
@@ -556,7 +497,8 @@ def file_cntrb_activity_by_month(df_dynamic_directory: pd.DataFrame, df_actions:
     final = final.groupby(pd.Grouper(key="dates", freq="1M"))["directory_value"].value_counts().unstack(0)
 
     # removing the None row that was used for column formating
-    final.drop("nan", inplace=True)
+    if "nan" in final.index:
+        final = final.drop("nan")
 
     # add back the files that had no contributors
     for files in no_contribs:
