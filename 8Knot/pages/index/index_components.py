@@ -150,12 +150,12 @@ def create_sidebar_navigation():
                         "/contributors/contribution_types#contributor-activity-cycle",
                     ),
                     NavItemAIO(
-                        "Bus Factor Snapshot",
-                        "/contributors/contribution_types#bus-factor-snapshot",
+                        "Lottery Factor Snapshot",
+                        "/contributors/contribution_types#lottery-factor-snapshot",
                     ),
                     NavItemAIO(
-                        "Bus Factor over Time",
-                        "/contributors/contribution_types#bus-factor-time",
+                        "Lottery Factor over Time",
+                        "/contributors/contribution_types#lottery-factor-time",
                     ),
                 ],
                 "/assets/contributors.svg",
@@ -192,8 +192,8 @@ def create_sidebar_navigation():
             DropdownNavItemAIO(
                 [
                     NavItemAIO(
-                        "Bus Factor",
-                        "/chaoss#bus-factor",
+                        "Lottery Factor",
+                        "/chaoss#lottery-factor",
                     ),
                     NavItemAIO(
                         "Project Velocity",
