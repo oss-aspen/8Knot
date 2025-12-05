@@ -52,11 +52,17 @@
     --gray-light: #787878;
     --gray-lighter: #E5E5E5;
     --border-divider: #909090;
+
     /* Component-specific colors */
     --placeholder-bg-color: #1D1D1D;
     --placeholder-text-color: #9c9c9c;
     --button-light-bg: #f8f9fa;
     --button-text-light: #fff9f9;
+
+    /* MultiSelect pill colors */
+    --pill-default-bg: #555555;
+    --pill-default-color: #ffffff;
+
     /* Table colors */
     --table-bg-dark: #222;
     --table-row-hover: #2e2e2e;
