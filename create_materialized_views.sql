@@ -28,6 +28,10 @@ WHERE
 -- Create index for performance
 CREATE INDEX idx_explorer_repo_files_repo_id ON augur_data.explorer_repo_files(repo_id);
 
+-- Create unique index for CONCURRENTLY refresh support
+CREATE UNIQUE INDEX idx_explorer_repo_files_unique
+ON augur_data.explorer_repo_files(repo_id, file_path);
+
 -- 2. Create explorer_cntrb_per_file materialized view
 DROP MATERIALIZED VIEW IF EXISTS augur_data.explorer_cntrb_per_file CASCADE;
 CREATE MATERIALIZED VIEW augur_data.explorer_cntrb_per_file AS
@@ -51,6 +55,10 @@ GROUP BY prf.pr_file_path, pr.repo_id;
 -- Create index for performance
 CREATE INDEX idx_explorer_cntrb_per_file_repo_id ON augur_data.explorer_cntrb_per_file(repo_id);
 
+-- Create unique index for CONCURRENTLY refresh support
+CREATE UNIQUE INDEX idx_explorer_cntrb_per_file_unique
+ON augur_data.explorer_cntrb_per_file(repo_id, file_path);
+
 -- 3. Create explorer_pr_files materialized view
 DROP MATERIALIZED VIEW IF EXISTS augur_data.explorer_pr_files CASCADE;
 CREATE MATERIALIZED VIEW augur_data.explorer_pr_files AS
@@ -67,6 +75,10 @@ ON
 
 -- Create index for performance
 CREATE INDEX idx_explorer_pr_files_repo_id ON augur_data.explorer_pr_files(repo_id);
+
+-- Create unique index for CONCURRENTLY refresh support
+CREATE UNIQUE INDEX idx_explorer_pr_files_unique
+ON augur_data.explorer_pr_files(pull_request_id, file_path);
 
 -- Verify views were created
 SELECT

@@ -301,7 +301,7 @@ def create_figure(df: pd.DataFrame, graph_view):
     # Custom hover template to replace NaN with "No data"
     fig.for_each_trace(
         lambda trace: trace.update(
-            customdata=df.applymap(lambda x: "No data" if pd.isna(x) else x),
+            customdata=df.map(lambda x: "No data" if pd.isna(x) else x),
             hovertemplate="<b>%{y}</b><br>" + "Time: %{x}<br>" + legend_title + ": %{customdata}<extra></extra>",
         )
     )
@@ -330,9 +330,17 @@ def df_file_clean(df_file: pd.DataFrame, df_file_pr: pd.DataFrame):
     repo_path = df_file["repo_path"].iloc[0]
     repo_id = str(df_file["repo_id"].iloc[0])
 
+    # Handle None values by using empty strings
+    repo_name = repo_name if repo_name is not None else ""
+    repo_path = repo_path if repo_path is not None else ""
+
     # pattern found in each file path, used to slice to get only the root file path
     path_slice = repo_id + "-" + repo_path + "/" + repo_name + "/"
+    # Save original file_path before splitting in case split fails
+    original_file_path = df_file["file_path"].copy()
     df_file["file_path"] = df_file["file_path"].str.rsplit(path_slice, n=1).str[1]
+    # Fill NaN values (from failed splits) with original file_path and ensure all values are strings
+    df_file["file_path"] = df_file["file_path"].fillna(original_file_path).astype(str)
 
     # drop unneccessary columns not needed after preprocessing steps
     df_file = df_file.reset_index()
@@ -372,11 +380,13 @@ def pr_per_directory_value(directory, df_file):
     --------
         df_dynamic_directory: df with the file and subdirectories and their prs pull_request_ids
     """
-    # determine directory level to use in later step
-    level = directory.count("/")
-    if directory == "Top Level Directory":
+    # Handle None directory by defaulting to top level
+    if directory is None or directory == "Top Level Directory":
         level = -1
         directory = ""
+    else:
+        # determine directory level to use in later step
+        level = directory.count("/")
 
     # get all of the files in the directory or nested in folders in the directory
     df_dynamic_directory = df_file[df_file["file_path"].str.startswith(directory)]

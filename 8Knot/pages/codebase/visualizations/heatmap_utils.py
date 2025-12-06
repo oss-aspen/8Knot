@@ -83,16 +83,16 @@ def create_directory_dropdown(repo_id, viz_id, max_wait_time=180):
             logging.error(f"{viz_id} DROPDOWN - TIMEOUT after {elapsed:.1f}s waiting for data. Repo ID: {repo_id}")
             return ["Top Level Directory"], "Top Level Directory"
 
-        logging.warning(f"DIRECTORY DROPDOWN - WAITING ON DATA TO BECOME AVAILABLE (elapsed: {elapsed:.1f}s)")
+        logging.info(f"DIRECTORY DROPDOWN - WAITING ON DATA TO BECOME AVAILABLE (elapsed: {elapsed:.1f}s)")
         time.sleep(0.5)
 
-    logging.warning(f"DIRECTORY DROPDOWN - RETRIEVING FROM CACHE")
+    logging.info(f"DIRECTORY DROPDOWN - RETRIEVING FROM CACHE")
     df = cf.retrieve_from_cache(
         tablename=rfq.__name__,
         repolist=[repo_id],
     )
 
-    logging.warning(f"DIRECTORY DROPDOWN - CACHE READ")
+    logging.info(f"DIRECTORY DROPDOWN - CACHE READ")
 
     # test if there is data
     if df.empty:
@@ -106,7 +106,10 @@ def create_directory_dropdown(repo_id, viz_id, max_wait_time=180):
 
     # pattern found in each file path, used to slice to get only the root file path
     path_slice = repo_id_str + "-" + repo_path + "/" + repo_name + "/"
-    df["file_path"] = df["file_path"].str.rsplit(path_slice, n=1).str[1]
+    # Use .str.get(1) instead of .str[1] to handle missing path_slice gracefully
+    df["file_path"] = df["file_path"].str.rsplit(path_slice, n=1).str.get(1)
+    # Drop rows where path_slice was not found (file_path is NaN)
+    df = df.dropna(subset=["file_path"])
 
     # drop columns not in the most recent collection
     df = df[df["rl_analysis_date"] == df["rl_analysis_date"].max()]

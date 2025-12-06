@@ -498,6 +498,15 @@ def _create_indexes_and_keys(conn) -> None:
         )
 
         # Primary key for cache_bookkeeping (composite key)
+        # Remove duplicates first, keeping the most recent entry
+        cur.execute(
+            """
+            DELETE FROM cache_bookkeeping a USING cache_bookkeeping b
+            WHERE a.ctid < b.ctid
+              AND a.cache_func = b.cache_func
+              AND a.repo_id = b.repo_id;
+            """
+        )
         cur.execute(
             """
             DO $$
@@ -565,8 +574,10 @@ def db_init() -> int:
 
         # Update schema version
         conn = _connect_with_retry(cache_cx_string)
-        _update_schema_version(conn, 1, "Initial schema with heatmap tables, indexes, and versioning")
-        conn.close()
+        try:
+            _update_schema_version(conn, 1, "Initial schema with heatmap tables, indexes, and versioning")
+        finally:
+            conn.close()
 
         logging.warning("db_init: POSTGRES CACHE SUCCESSFULLY INITIALIZED")
 

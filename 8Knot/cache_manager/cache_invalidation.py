@@ -27,32 +27,30 @@ def invalidate_cache_for_repos(repo_ids, cache_func=None):
         return 0
 
     try:
-        conn = pg.connect(cache_cx_string)
+        with pg.connect(cache_cx_string) as conn:
+            with conn.cursor() as cur:
+                if cache_func:
+                    # Invalidate specific cache function
+                    cur.execute(
+                        """
+                        DELETE FROM cache_bookkeeping
+                        WHERE repo_id = ANY(%s) AND cache_func = %s
+                        """,
+                        (repo_ids, cache_func),
+                    )
+                else:
+                    # Invalidate all caches for these repos
+                    cur.execute(
+                        """
+                        DELETE FROM cache_bookkeeping
+                        WHERE repo_id = ANY(%s)
+                        """,
+                        (repo_ids,),
+                    )
 
-        with conn.cursor() as cur:
-            if cache_func:
-                # Invalidate specific cache function
-                cur.execute(
-                    """
-                    DELETE FROM cache_bookkeeping
-                    WHERE repo_id = ANY(%s) AND cache_func = %s
-                    """,
-                    (repo_ids, cache_func),
-                )
-            else:
-                # Invalidate all caches for these repos
-                cur.execute(
-                    """
-                    DELETE FROM cache_bookkeeping
-                    WHERE repo_id = ANY(%s)
-                    """,
-                    (repo_ids,),
-                )
+                deleted_count = cur.rowcount
+                conn.commit()
 
-            deleted_count = cur.rowcount
-            conn.commit()
-
-        conn.close()
         logging.warning(f"Invalidated {deleted_count} cache entries for repos: {repo_ids}")
         return deleted_count
 
@@ -72,23 +70,21 @@ def invalidate_stale_cache(max_age_hours=24):
         int: Number of cache entries invalidated
     """
     try:
-        conn = pg.connect(cache_cx_string)
+        with pg.connect(cache_cx_string) as conn:
+            cutoff_time = datetime.now() - timedelta(hours=max_age_hours)
 
-        cutoff_time = datetime.now() - timedelta(hours=max_age_hours)
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    DELETE FROM cache_bookkeeping
+                    WHERE ts_cached < %s
+                    """,
+                    (cutoff_time,),
+                )
 
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                DELETE FROM cache_bookkeeping
-                WHERE ts_cached < %s
-                """,
-                (cutoff_time,),
-            )
+                deleted_count = cur.rowcount
+                conn.commit()
 
-            deleted_count = cur.rowcount
-            conn.commit()
-
-        conn.close()
         logging.warning(f"Invalidated {deleted_count} stale cache entries (older than {max_age_hours} hours)")
         return deleted_count
 
@@ -108,21 +104,19 @@ def invalidate_cache_for_func(cache_func):
         int: Number of cache entries invalidated
     """
     try:
-        conn = pg.connect(cache_cx_string)
+        with pg.connect(cache_cx_string) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    DELETE FROM cache_bookkeeping
+                    WHERE cache_func = %s
+                    """,
+                    (cache_func,),
+                )
 
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                DELETE FROM cache_bookkeeping
-                WHERE cache_func = %s
-                """,
-                (cache_func,),
-            )
+                deleted_count = cur.rowcount
+                conn.commit()
 
-            deleted_count = cur.rowcount
-            conn.commit()
-
-        conn.close()
         logging.warning(f"Invalidated {deleted_count} cache entries for function: {cache_func}")
         return deleted_count
 
@@ -142,40 +136,38 @@ def get_cache_status(repo_ids=None):
         dict: Cache status information
     """
     try:
-        conn = pg.connect(cache_cx_string)
+        with pg.connect(cache_cx_string) as conn:
+            with conn.cursor() as cur:
+                if repo_ids:
+                    cur.execute(
+                        """
+                        SELECT cache_func, COUNT(*) as count, MAX(ts_cached) as last_cached
+                        FROM cache_bookkeeping
+                        WHERE repo_id = ANY(%s)
+                        GROUP BY cache_func
+                        ORDER BY cache_func
+                        """,
+                        (repo_ids,),
+                    )
+                else:
+                    cur.execute(
+                        """
+                        SELECT cache_func, COUNT(*) as count, MAX(ts_cached) as last_cached
+                        FROM cache_bookkeeping
+                        GROUP BY cache_func
+                        ORDER BY cache_func
+                        """
+                    )
 
-        with conn.cursor() as cur:
-            if repo_ids:
-                cur.execute(
-                    """
-                    SELECT cache_func, COUNT(*) as count, MAX(ts_cached) as last_cached
-                    FROM cache_bookkeeping
-                    WHERE repo_id = ANY(%s)
-                    GROUP BY cache_func
-                    ORDER BY cache_func
-                    """,
-                    (repo_ids,),
-                )
-            else:
-                cur.execute(
-                    """
-                    SELECT cache_func, COUNT(*) as count, MAX(ts_cached) as last_cached
-                    FROM cache_bookkeeping
-                    GROUP BY cache_func
-                    ORDER BY cache_func
-                    """
-                )
-
-            results = cur.fetchall()
-            status = {
-                row[0]: {
-                    "count": row[1],
-                    "last_cached": row[2].isoformat() if row[2] else None,
+                results = cur.fetchall()
+                status = {
+                    row[0]: {
+                        "count": row[1],
+                        "last_cached": row[2].isoformat() if row[2] else None,
+                    }
+                    for row in results
                 }
-                for row in results
-            }
 
-        conn.close()
         return status
 
     except Exception as e:

@@ -36,7 +36,7 @@ def pr_file_query(self, repos):
                     SELECT
                         file_path,
                         pull_request_id AS pull_request,
-                        repo_id as id
+                        repo_id AS id
                     FROM
                         augur_data.explorer_pr_files
                     WHERE
