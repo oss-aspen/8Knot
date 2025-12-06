@@ -210,7 +210,7 @@ search_bar = html.Div(
                             nothingFoundMessage="No matching repos/orgs.",
                             placeholder="Search",
                             variant="filled",
-                            debounce=100,  # Lower base debounce - adaptive debouncing in callback handles query-length-based delays
+                            debounce=200,  # Increased to 200ms to reduce callback overhead - adaptive debouncing adds additional delay when needed
                             data=[augur.initial_multiselect_option()],
                             value=[augur.initial_multiselect_option()["value"]],
                             # Start with "searching" class so default selection (chaoss) shows as blue
@@ -270,6 +270,23 @@ search_bar = html.Div(
                                 "transform": "translateY(-100%)",
                                 "fontWeight": "bold",
                                 "zIndex": 2,
+                            },
+                        ),
+                        # Visual search progress indicator
+                        html.Div(
+                            id="search-progress-indicator",
+                            children="",
+                            style={
+                                "position": "absolute",
+                                "right": "16px",
+                                "top": "50%",
+                                "transform": "translateY(-50%)",
+                                "fontSize": "11px",
+                                "color": "#888",
+                                "fontWeight": "500",
+                                "display": "none",
+                                "zIndex": 2,
+                                "whiteSpace": "nowrap",
                             },
                         ),
                     ],

@@ -923,3 +923,36 @@ input.dark-input:focus,
 .dbc .table-bordered {
     border-color: var(--bs-table-border-color);
 }
+
+
+/* =============================================================================
+   SEARCH BAR ANIMATIONS
+============================================================================= */
+
+/* Pulse animation for search progress indicator */
+@keyframes pulse {
+    0% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.6;
+    }
+}
+
+/* Search progress indicator styles */
+#search-progress-indicator {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Fade-in animation for smoother appearance */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}

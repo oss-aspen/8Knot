@@ -89,6 +89,13 @@ class AdaptiveDebounceManager:
         Determine if a query should be processed based on adaptive debounce logic.
 
         Thread-safe: Uses locking to prevent race conditions in multi-threaded Dash environments.
+        Optimized with fast-path checks to minimize lock contention and reduce typing pauses.
+
+        Performance optimizations:
+        1. Fast-path lock-free check for duplicate queries (most common case)
+        2. Pre-compute expensive operations outside lock
+        3. Minimize time spent holding lock
+        4. Defer logging until after lock release
 
         Args:
             query: The current search query
@@ -96,29 +103,48 @@ class AdaptiveDebounceManager:
         Returns:
             True if query should be processed, False if it should be debounced
         """
+        current_time = time.time()
+
+        # FAST PATH: Lock-free check for same query reprocessing (most common case)
+        # Read-only access to these vars is safe without lock (they're only written with lock held)
+        if query == self._last_processed_query:
+            if current_time - self._last_processed_time < self.MIN_REPROCESS_INTERVAL_SECONDS:
+                return False  # Same query, too soon - no lock needed
+
+        # PRE-COMPUTE: Do expensive operations BEFORE acquiring lock
+        query_length = len(query)
+        debounce_seconds = get_adaptive_debounce_time(query) / 1000.0
+        effective_debounce = max(self.COMPONENT_DEBOUNCE_SECONDS, debounce_seconds)
+
+        # Variables for deferred logging (to minimize lock duration)
+        should_log = False
+        log_message = ""
+
+        # LOCK REQUIRED: For all state-mutating operations
+        # Keep lock scope as small as possible
         with self._lock:
-            current_time = time.time()
+            # Re-check time in case it changed while waiting for lock
+            if query == self._last_processed_query:
+                if current_time - self._last_processed_time < self.MIN_REPROCESS_INTERVAL_SECONDS:
+                    return False
 
             # Track when this query was first seen (reset timer if query changed)
             if query not in self._query_first_seen:
                 self._query_first_seen[query] = current_time
 
-            # Prevent immediate reprocessing of the same query
-            if query == self._last_processed_query:
-                if current_time - self._last_processed_time < self.MIN_REPROCESS_INTERVAL_SECONDS:
-                    return False
-
             # IMPORTANT: If query is significantly longer than last processed, process immediately
             # This handles the case where user types quickly (e.g., "k" -> "kubernetes")
             # The user is actively building up the query, so we should process it
             if self._last_processed_query is not None:
-                length_diff = len(query) - len(self._last_processed_query)
+                length_diff = query_length - len(self._last_processed_query)
                 # If query is significantly longer OR is a prefix extension (user actively typing), process immediately
                 is_prefix_extension = query.startswith(self._last_processed_query) and length_diff > 0
                 if length_diff >= self.SIGNIFICANT_LENGTH_INCREASE or (
                     is_prefix_extension and length_diff >= self.PREFIX_EXTENSION_THRESHOLD
                 ):
-                    logging.info(
+                    # Defer logging until after lock release
+                    should_log = True
+                    log_message = (
                         f"Query '{query[:50]}...' processed immediately (length increased by {length_diff} chars, "
                         f"user actively typing: '{self._last_processed_query}' -> '{query}', "
                         f"is_prefix={is_prefix_extension})"
@@ -126,30 +152,39 @@ class AdaptiveDebounceManager:
                     self._last_processed_query = query
                     self._last_processed_time = current_time
                     self._cleanup_old_queries(current_time)
-                    return True
 
-            # Calculate required debounce time for this query length
-            debounce_seconds = get_adaptive_debounce_time(query) / 1000.0
-            effective_debounce = max(self.COMPONENT_DEBOUNCE_SECONDS, debounce_seconds)
+                    # Release lock before logging
+                    result = True
+                    # Lock will be released here
+            else:
+                result = None
 
-            # Check if query has been stable long enough
-            query_stable_time = current_time - self._query_first_seen[query]
+            if result is None:  # Not early exit, continue normal flow
+                # Check if query has been stable long enough
+                query_stable_time = current_time - self._query_first_seen[query]
 
-            if query_stable_time >= effective_debounce:
-                # Query is ready to process
-                self._last_processed_query = query
-                self._last_processed_time = current_time
-                self._cleanup_old_queries(current_time)
+                if query_stable_time >= effective_debounce:
+                    # Query is ready to process
+                    self._last_processed_query = query
+                    self._last_processed_time = current_time
+                    self._cleanup_old_queries(current_time)
 
-                # Log metrics for observability and tuning
-                logging.info(
-                    f"Query '{query[:50]}...' processed after {query_stable_time:.3f}s "
-                    f"stable time (debounce: {debounce_seconds*1000:.0f}ms, "
-                    f"length: {len(query)})"
-                )
-                return True
+                    # Defer logging until after lock release
+                    should_log = True
+                    log_message = (
+                        f"Query '{query[:50]}...' processed after {query_stable_time:.3f}s "
+                        f"stable time (debounce: {debounce_seconds*1000:.0f}ms, "
+                        f"length: {query_length})"
+                    )
+                    result = True
+                else:
+                    result = False
 
-            return False
+        # DEFERRED LOGGING: Log AFTER releasing lock to minimize lock duration
+        if should_log:
+            logging.info(log_message)
+
+        return result
 
     def mark_query_processed(self, query: str) -> None:
         """
@@ -589,6 +624,9 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
         selections: Currently selected values
         cached_options: All available options from client-side cache
     """
+    # Performance monitoring: Track search start time
+    search_start_time = time.time()
+
     if not user_in:
         return dash.no_update
 
@@ -705,8 +743,24 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
                 result.append(opt)
 
         end_time = time.time()
-        logging.info(f"Search completed in {end_time - start_time:.2f} seconds")
+        search_duration = end_time - start_time
+        total_duration = end_time - search_start_time
+
+        # Performance monitoring: Log detailed metrics
+        logging.info(f"Search completed in {search_duration:.2f} seconds (total: {total_duration:.2f}s)")
         logging.info(f"Returning {len(result)} options to dropdown (fallback used: {use_server_fallback})")
+
+        # Performance monitoring: Log key metrics for analysis
+        debounce_ms = get_adaptive_debounce_time(user_in)
+        logging.info(
+            f"PERF_METRICS: query_len={len(user_in)}, "
+            f"search_time_ms={search_duration*1000:.1f}, "
+            f"total_time_ms={total_duration*1000:.1f}, "
+            f"debounce_ms={debounce_ms}, "
+            f"results={len(result)}, "
+            f"cache_hit={cached_options is not None}, "
+            f"server_fallback={use_server_fallback}"
+        )
 
         # Store results for potential return during debouncing
         _adaptive_debounce_manager.set_last_results(result)
@@ -1071,6 +1125,70 @@ def update_search_status(search_value):
 )
 def hide_search_status_when_loaded(_):
     """Hide the search status indicator when results are loaded."""
+    return [{"display": "none"}]
+
+
+# Enhanced search progress indicator with adaptive debounce feedback
+@callback(
+    [Output("search-progress-indicator", "children"), Output("search-progress-indicator", "style")],
+    [Input("projects", "searchValue")],
+    prevent_initial_call=True,
+)
+def update_search_progress_indicator(search_value):
+    """
+    Update the search progress indicator with adaptive debounce information.
+    This provides visual feedback to users about search state and expected wait time.
+    """
+    if not search_value:
+        return ["", {"display": "none"}]
+
+    # Get adaptive debounce time for this query
+    debounce_ms = get_adaptive_debounce_time(search_value)
+
+    # Determine message based on query characteristics
+    query_length = len(search_value)
+
+    if query_length <= 2:
+        # Very short queries - user still typing
+        message = "Refining..."
+        color = "#888"
+    elif query_length <= 5:
+        # Medium queries - user may be finishing
+        message = "Searching..."
+        color = "#0F5880"  # Brand blue
+    else:
+        # Long queries - likely complete, searching fast
+        message = "Searching..."
+        color = "#0F5880"
+
+    # Show indicator with appropriate styling
+    style = {
+        "position": "absolute",
+        "right": "16px",
+        "top": "50%",
+        "transform": "translateY(-50%)",
+        "fontSize": "11px",
+        "color": color,
+        "fontWeight": "500",
+        "display": "flex",
+        "alignItems": "center",
+        "gap": "6px",
+        "zIndex": 2,
+        "whiteSpace": "nowrap",
+        "animation": "pulse 1.5s ease-in-out infinite",
+    }
+
+    return [message, style]
+
+
+# Hide progress indicator when results are loaded
+@callback(
+    [Output("search-progress-indicator", "style", allow_duplicate=True)],
+    [Input("projects", "data")],
+    prevent_initial_call=True,
+)
+def hide_search_progress_when_loaded(_):
+    """Hide the search progress indicator when results are loaded."""
     return [{"display": "none"}]
 
 
