@@ -299,18 +299,18 @@ def _perform_search(
         logging.info(f"Cache search found {len(cache_matches)} matches (threshold={search_threshold}, limit={limit})")
 
     # Always also search server for comprehensive results
-    # Strategy: Always search server for queries >= 3 chars
+    # Strategy: Always search server for queries >= 3 chars with NO LIMIT
     should_search_server = len(search_query) >= 3
     if should_search_server:
         logging.info(
-            f"Searching server for query '{search_query}' (length: {len(search_query)}, has_client_cache: {cached_options is not None}, limit={limit})"
+            f"Searching server for query '{search_query}' (length: {len(search_query)}, has_client_cache: {cached_options is not None}, no limit - comprehensive)"
         )
         try:
             # Use cached server options to avoid redundant fetch
             server_options = get_server_options_func()
-            server_matches = fuzzy_search(search_query, server_options, threshold=search_threshold, limit=limit)
+            server_matches = fuzzy_search(search_query, server_options, threshold=search_threshold, limit=None)
             logging.info(
-                f"Server search found {len(server_matches)} matches (threshold={search_threshold}, limit={limit})"
+                f"Server search found {len(server_matches)} matches (threshold={search_threshold}, no limit - comprehensive)"
             )
 
         except Exception as e:
@@ -352,6 +352,13 @@ def _perform_search(
                 f"Query: '{search_query}', Cache matches: {len(cache_matches)}, "
                 f"Server search executed: {should_search_server}"
             )
+
+    # Apply limit to final combined results to prevent UI freeze
+    # Server search gets ALL matches, but we limit the final result
+    if limit is not None and len(matched_options) > limit:
+        original_count = len(matched_options)
+        matched_options = matched_options[:limit]
+        logging.info(f"Applied limit to combined results: trimmed from {original_count} to {limit}")
 
     return matched_options, use_server_fallback
 
@@ -719,19 +726,14 @@ def dynamic_multiselect_options_instant_preview(user_in: str, selections, cached
             prefix_type = "org"
             logging.info(f"Org prefix detected, searching for: '{search_query}'")
 
-        # Perform INSTANT PREVIEW search with result limit (Phase 1)
-        # limit=200 ensures <50ms response time (no main thread blocking)
-        # Phase 2 (background comprehensive) will get ALL results
-        # IMPORTANT: Separation of concerns
-        # - Adaptive debounce (has_processed_any_query): Controls WHEN to process (timing concern)
-        # - Client-side cache (cached_options): Controls WHAT data source to use (data concern)
-        # - Server search condition: Based only on query length
-        # - Result limit: Instant preview uses limit=200, background uses limit=None
+        # Perform comprehensive search with result limit (Phase 1)
+        # Server search gets ALL matches, final combined result limited to prevent UI freeze
+        # limit=1000 provides comprehensive results while avoiding UI blocking
         matched_options, use_server_fallback = _perform_search(
             search_query=search_query,
             cached_options=cached_options,
             get_server_options_func=_get_server_options,
-            limit=200,  # Instant preview limit - fast, no blocking
+            limit=1000,  # Combined result limit - comprehensive but prevents UI freeze
         )
 
         # Format and reorder search results (orgs first, then repos)
@@ -808,149 +810,10 @@ def dynamic_multiselect_options_instant_preview(user_in: str, selections, cached
         return dash.no_update
 
 
-# Phase 2: Background Comprehensive Search
-@callback(
-    Output("projects", "data", allow_duplicate=True),
-    Input("projects", "searchValue"),
-    State("projects", "value"),
-    State("cached-options", "data"),
-    background=True,  # 🔥 KEY: Runs in background thread - doesn't block UI!
-    running=[
-        (Output("search-progress-indicator", "children"), "Loading all results...", ""),
-    ],
-    cancel=[Input("projects", "searchValue")],  # Auto-cancel if user types again
-    prevent_initial_call=True,
-)
-def search_comprehensive_background(query: str, selections, cached_options):
-    """
-    Phase 2: Comprehensive background search (slow, background thread, ALL results).
-
-    This runs in a background thread while the cursor keeps blinking!
-    It searches the full 10,000-item cache AND all server results with NO limits,
-    then updates the dropdown when ready.
-
-    Auto-cancels if user keeps typing (via cancel parameter).
-
-    Args:
-        query: User's search input
-        selections: Currently selected values
-        cached_options: All available options from client-side cache (10,000 items)
-    """
-    if not query or len(query) < 2:
-        return dash.no_update
-
-    try:
-        from concurrent.futures import ThreadPoolExecutor
-        import time
-
-        start_time = time.time()
-        logging.info(f"Background comprehensive search started for query: '{query}'")
-
-        # Remove prefixes from the search query if present
-        search_query = query
-        prefix_type = None
-
-        if search_query.lower().startswith("repo:"):
-            search_query = search_query[5:].strip()
-            prefix_type = "repo"
-        elif search_query.lower().startswith("org:"):
-            search_query = search_query[4:].strip()
-            prefix_type = "org"
-
-        # Server options cache (fetch once per request)
-        _server_options_cache = None
-
-        def _get_server_options():
-            """Helper to fetch server options once per request."""
-            nonlocal _server_options_cache
-            if _server_options_cache is None:
-                _server_options_cache = augur.get_multiselect_options().copy()
-                if current_user.is_authenticated:
-                    try:
-                        users_cache = redis.StrictRedis(
-                            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
-                            port=6379,
-                            password=os.getenv("REDIS_PASSWORD", ""),
-                            decode_responses=True,
-                        )
-                        users_cache.ping()
-                        if users_cache.exists(f"{current_user.get_id()}_group_options"):
-                            user_options = json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
-                            _server_options_cache = _server_options_cache + user_options
-                    except redis.exceptions.ConnectionError:
-                        pass  # Continue without user options
-            return _server_options_cache
-
-        # Parallel execution: Search cache AND server simultaneously
-        cache_results = []
-        server_results = []
-
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            # Submit both searches in parallel
-            cache_future = executor.submit(
-                fuzzy_search,
-                search_query,
-                cached_options or [],
-                0.15 if len(search_query) >= 4 else 0.2,
-                None,  # No limit!
-            )
-
-            server_future = executor.submit(
-                lambda: fuzzy_search(
-                    search_query, _get_server_options(), 0.15 if len(search_query) >= 4 else 0.2, None  # No limit!
-                )
-            )
-
-            # Wait for both (they run in parallel!)
-            cache_results = cache_future.result()
-            server_results = server_future.result()
-
-        # Combine and dedupe results (same logic as instant preview)
-        matched_options = cache_results.copy()
-        seen_values = set(opt["value"] for opt in cache_results)
-
-        for server_match in server_results:
-            if server_match["value"] not in seen_values:
-                matched_options.append(server_match)
-                seen_values.add(server_match["value"])
-
-        # Format and reorder search results (orgs first, then repos)
-        orgs_first, repos_after = _format_search_results(matched_options, prefix_type=prefix_type)
-
-        # Handle selected options
-        if selections is None:
-            selections = []
-
-        selected_options = _handle_selected_options(
-            selections=selections,
-            cached_options=cached_options,
-            matched_options=matched_options,
-            use_server_fallback=True,  # We searched server
-            get_server_options_func=_get_server_options,
-        )
-
-        # Combine formatted results: orgs first, then repos
-        result = orgs_first + repos_after
-
-        # Add selected options that aren't already in the results
-        selected_values = [opt["value"] for opt in result]
-        for opt in selected_options:
-            if opt["value"] not in selected_values:
-                result.append(opt)
-
-        end_time = time.time()
-        duration = end_time - start_time
-
-        logging.info(
-            f"Background comprehensive search completed in {duration:.2f}s for query '{query}': "
-            f"{len(cache_results)} cache + {len(server_results)-len(cache_results)} server = {len(result)} total results"
-        )
-
-        return [result]
-
-    except Exception as e:
-        logging.error(f"Background comprehensive search failed: {str(e)}", exc_info=True)
-        return dash.no_update
+# Phase 2: Background Comprehensive Search - REMOVED
+# Removed because Phase 1 now handles all search functionality.
+# Simpler implementation with just Phase 1 provides better performance
+# and avoids UI blocking issues from large result sets.
 
 
 def _get_fallback_selections(selections: list) -> list:
