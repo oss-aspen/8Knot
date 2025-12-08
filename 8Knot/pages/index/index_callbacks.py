@@ -202,29 +202,41 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
         start_time = time.time()
         logging.info(f"Search query: '{user_in}'")
 
+        # Request-scoped cache for server options to avoid redundant fetches
+        # This cache persists only for this callback invocation, preventing multiple
+        # identical server queries within the same request
+        _server_options_cache = None
+
+        def _get_server_options():
+            """Helper to fetch server options once per request."""
+            nonlocal _server_options_cache
+            if _server_options_cache is None:
+                _server_options_cache = augur.get_multiselect_options().copy()
+                logging.info(f"Fetched {len(_server_options_cache)} options from server")
+                if current_user.is_authenticated:
+                    try:
+                        users_cache = redis.StrictRedis(
+                            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
+                            port=6379,
+                            password=os.getenv("REDIS_PASSWORD", ""),
+                            decode_responses=True,
+                        )
+                        users_cache.ping()
+                        if users_cache.exists(f"{current_user.get_id()}_group_options"):
+                            user_options = json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
+                            _server_options_cache = _server_options_cache + user_options
+                            logging.info(f"Added {len(user_options)} user options from Redis")
+                    except redis.exceptions.ConnectionError as e:
+                        logging.error(f"MULTISELECT: Could not connect to users-cache. Error: {str(e)}")
+            return _server_options_cache
+
         # Start with cached options if available
         if cached_options:
             logging.info(f"Using client-side cache with {len(cached_options)} options")
             options = cached_options
         else:
             logging.info("Client-side cache empty, fetching from server")
-            options = augur.get_multiselect_options().copy()
-            logging.info(f"Fetched {len(options)} options from server")
-            if current_user.is_authenticated:
-                try:
-                    users_cache = redis.StrictRedis(
-                        host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
-                        port=6379,
-                        password=os.getenv("REDIS_PASSWORD", ""),
-                        decode_responses=True,
-                    )
-                    users_cache.ping()
-                    if users_cache.exists(f"{current_user.get_id()}_group_options"):
-                        user_options = json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
-                        options = options + user_options
-                        logging.info(f"Added {len(user_options)} user options from Redis")
-                except redis.exceptions.ConnectionError as e:
-                    logging.error(f"MULTISELECT: Could not connect to users-cache. Error: {str(e)}")
+            options = _get_server_options()
 
         if selections is None:
             selections = []
@@ -260,22 +272,8 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
         # Always also search server for comprehensive results (especially for longer queries)
         if len(search_query) >= 3:
             try:
-                server_options = augur.get_multiselect_options().copy()
-                if current_user.is_authenticated:
-                    try:
-                        users_cache = redis.StrictRedis(
-                            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
-                            port=6379,
-                            password=os.getenv("REDIS_PASSWORD", ""),
-                            decode_responses=True,
-                        )
-                        users_cache.ping()
-                        if users_cache.exists(f"{current_user.get_id()}_group_options"):
-                            user_options = json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
-                            server_options = server_options + user_options
-                    except redis.exceptions.ConnectionError as e:
-                        logging.error(f"SERVER SEARCH: Could not connect to users-cache. Error: {str(e)}")
-
+                # Use cached server options to avoid redundant fetch
+                server_options = _get_server_options()
                 server_matches = fuzzy_search(search_query, server_options, threshold=search_threshold)
                 logging.info(f"Server search found {len(server_matches)} matches (threshold={search_threshold})")
 
@@ -360,7 +358,8 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
         # If any selections aren't in our current options, fetch them from the server
         if missing_selections:
             logging.info(f"Fetching {len(missing_selections)} missing selections from server")
-            all_options = augur.get_multiselect_options().copy()
+            # Use cached server options to avoid redundant fetch
+            all_options = _get_server_options()
             for v in selections:
                 matched_opts = [opt for opt in all_options if opt["value"] == v]
                 if matched_opts:
