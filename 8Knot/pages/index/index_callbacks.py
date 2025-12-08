@@ -116,6 +116,7 @@ class AdaptiveDebounceManager:
         # Variables for deferred logging (to minimize lock duration)
         should_log = False
         log_message = ""
+        result = None  # Initialize to avoid UnboundLocalError
 
         # LOCK REQUIRED: For all state-mutating operations
         # Keep lock scope as small as possible
@@ -396,6 +397,7 @@ def _perform_search(
     search_query: str,
     cached_options: list,
     get_server_options_func,
+    limit: Optional[int] = None,
 ) -> tuple[list, bool]:
     """
     Perform search across cache and server, combining results.
@@ -409,6 +411,7 @@ def _perform_search(
         search_query: The search query (without prefixes)
         cached_options: Client-side cache options (can be None)
         get_server_options_func: Function to get server options (cached per request)
+        limit: Maximum number of results to return (None = all results, 200 = instant preview)
 
     Returns:
         Tuple of (matched_options, use_server_fallback) where:
@@ -424,21 +427,23 @@ def _perform_search(
 
     # First, the search goes through the client-side cache if available
     if cached_options:
-        cache_matches = fuzzy_search(search_query, cached_options, threshold=search_threshold)
-        logging.info(f"Cache search found {len(cache_matches)} matches (threshold={search_threshold})")
+        cache_matches = fuzzy_search(search_query, cached_options, threshold=search_threshold, limit=limit)
+        logging.info(f"Cache search found {len(cache_matches)} matches (threshold={search_threshold}, limit={limit})")
 
     # Always also search server for comprehensive results
     # Strategy: Always search server for queries >= 3 chars
     should_search_server = len(search_query) >= 3
     if should_search_server:
         logging.info(
-            f"Searching server for query '{search_query}' (length: {len(search_query)}, has_client_cache: {cached_options is not None})"
+            f"Searching server for query '{search_query}' (length: {len(search_query)}, has_client_cache: {cached_options is not None}, limit={limit})"
         )
         try:
             # Use cached server options to avoid redundant fetch
             server_options = get_server_options_func()
-            server_matches = fuzzy_search(search_query, server_options, threshold=search_threshold)
-            logging.info(f"Server search found {len(server_matches)} matches (threshold={search_threshold})")
+            server_matches = fuzzy_search(search_query, server_options, threshold=search_threshold, limit=limit)
+            logging.info(
+                f"Server search found {len(server_matches)} matches (threshold={search_threshold}, limit={limit})"
+            )
 
         except Exception as e:
             logging.error(f"Server search failed: {str(e)}", exc_info=True)
@@ -734,6 +739,7 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
             search_query=search_query,
             cached_options=cached_options,
             get_server_options_func=_get_server_options,
+            limit=1000,  # Limit results for UI responsiveness
         )
 
         # Format and reorder search results (orgs first, then repos)
@@ -1041,9 +1047,10 @@ def initialize_cache(_):
                 logging.error(f"CACHE INIT: Could not connect to users-cache. Error: {str(e)}")
 
         # Get configuration from environment variables with defaults
+        # Larger cache = faster search results (browser sessionStorage handles 10,000+ items easily)
         sort_method = os.getenv("EIGHTKNOT_SEARCHBAR_OPTS_SORT", "shortest").lower()
-        max_total_results = int(os.getenv("EIGHTKNOT_SEARCHBAR_OPTS_MAX_RESULTS", "2000"))
-        max_repos = int(os.getenv("EIGHTKNOT_SEARCHBAR_OPTS_MAX_REPOS", "1500"))
+        max_total_results = int(os.getenv("EIGHTKNOT_SEARCHBAR_OPTS_MAX_RESULTS", "10000"))
+        max_repos = int(os.getenv("EIGHTKNOT_SEARCHBAR_OPTS_MAX_REPOS", "9500"))
 
         # Sort options based on configuration
         if sort_method == "shortest":
