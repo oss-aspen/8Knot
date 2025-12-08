@@ -536,12 +536,23 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
 
         return [result]
 
-    except Exception as e:
-        logging.error(f"Error in dynamic_multiselect_options: {str(e)}")
-        # Return at least the current selections as a fallback
+    except (redis.exceptions.ConnectionError, redis.exceptions.TimeoutError) as e:
+        # Transient network/connection errors - log and return fallback
+        logging.error(f"Redis connection error in dynamic_multiselect_options: {str(e)}")
         if selections:
             return _get_fallback_selections(selections)
-
+        return dash.no_update
+    except (AttributeError, KeyError, TypeError) as e:
+        # Programming errors - should be fixed, but don't crash the app
+        logging.error(f"Programming error in dynamic_multiselect_options: {str(e)}", exc_info=True)
+        if selections:
+            return _get_fallback_selections(selections)
+        return dash.no_update
+    except Exception as e:
+        # Catch-all for unexpected errors
+        logging.error(f"Unexpected error in dynamic_multiselect_options: {str(e)}", exc_info=True)
+        if selections:
+            return _get_fallback_selections(selections)
         return dash.no_update
 
 
