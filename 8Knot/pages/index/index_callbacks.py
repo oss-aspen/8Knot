@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Optional
+import threading
 import re
 import os
 import time
@@ -35,8 +36,7 @@ from queries.repo_info_query import repo_info_query as riq
 from models import SearchItem
 import redis
 import flask
-from .search_utils import fuzzy_search
-from .search_utils import clean_repo_name
+from .search_utils import fuzzy_search, clean_repo_name, get_adaptive_debounce_time
 
 # list of queries to be run
 # QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq] - codebase page disabled
@@ -45,6 +45,216 @@ QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, rlq, pvq, rrq, osq, riq]
 
 # check if login has been enabled in config
 login_enabled = os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True"
+
+
+class AdaptiveDebounceManager:
+    """
+    Manages adaptive debouncing for search queries.
+
+    The component-level debounce (100ms) provides frequent check-ins.
+    This manager applies adaptive debouncing based on query length:
+    - Short queries (1-3 chars): Longer debounce (800-400ms) - user likely still typing
+    - Medium queries (4-5 chars): Medium debounce (250ms) - user may be finishing
+    - Long queries (6+ chars): Shorter debounce (150ms) - user likely finished
+
+    Strategy: Track when each unique query was first seen. Only process queries
+    that have been stable (unchanged) for the required adaptive debounce time.
+
+    Note: Dash Mantine Components' debounce prop is static, so we implement
+    adaptive debouncing in the callback logic rather than changing the component prop.
+    """
+
+    # Constants
+    COMPONENT_DEBOUNCE_SECONDS = 0.1  # 100ms from component
+    MIN_REPROCESS_INTERVAL_SECONDS = 0.1  # Don't reprocess same query within 100ms
+    CLEANUP_AGE_SECONDS = 5.0  # Remove queries older than 5 seconds
+
+    # Immediate processing thresholds (for detecting active typing)
+    SIGNIFICANT_LENGTH_INCREASE = 3  # Process immediately if query is 3+ chars longer
+    PREFIX_EXTENSION_THRESHOLD = 2  # Process immediately if prefix extension is 2+ chars longer
+
+    def __init__(self):
+        self._lock = threading.Lock()  # Thread safety for concurrent Dash callbacks
+        self._query_first_seen: dict[str, float] = {}  # Map query -> first time seen
+        self._last_processed_query: Optional[str] = None
+        self._last_processed_time: float = 0.0
+        self._last_results: list = []  # Store last results to return during debouncing (empty = no cache yet)
+        self._has_processed_any_query: bool = False  # Track if we've ever processed a query
+
+    def should_process_query(self, query: str) -> bool:
+        """
+        Determine if a query should be processed based on adaptive debounce logic.
+
+        Thread-safe: Uses locking to prevent race conditions in multi-threaded Dash environments.
+        Optimized with fast-path checks to minimize lock contention and reduce typing pauses.
+
+        Performance optimizations:
+        1. Fast-path lock-free check for duplicate queries (most common case)
+        2. Pre-compute expensive operations outside lock
+        3. Minimize time spent holding lock
+        4. Defer logging until after lock release
+
+        Args:
+            query: The current search query
+
+        Returns:
+            True if query should be processed, False if it should be debounced
+        """
+        current_time = time.time()
+
+        # FAST PATH: Lock-free check for same query reprocessing (most common case)
+        # Read-only access to these vars is safe without lock (they're only written with lock held)
+        if query == self._last_processed_query:
+            if current_time - self._last_processed_time < self.MIN_REPROCESS_INTERVAL_SECONDS:
+                return False  # Same query, too soon - no lock needed
+
+        # PRE-COMPUTE: Do expensive operations BEFORE acquiring lock
+        query_length = len(query)
+        debounce_seconds = get_adaptive_debounce_time(query) / 1000.0
+        effective_debounce = max(self.COMPONENT_DEBOUNCE_SECONDS, debounce_seconds)
+
+        # Variables for deferred logging (to minimize lock duration)
+        should_log = False
+        log_message = ""
+
+        # LOCK REQUIRED: For all state-mutating operations
+        # Keep lock scope as small as possible
+        with self._lock:
+            # Re-check time in case it changed while waiting for lock
+            if query == self._last_processed_query:
+                if current_time - self._last_processed_time < self.MIN_REPROCESS_INTERVAL_SECONDS:
+                    return False
+
+            # Track when this query was first seen (reset timer if query changed)
+            if query not in self._query_first_seen:
+                self._query_first_seen[query] = current_time
+
+            # IMPORTANT: If query is significantly longer than last processed, process immediately
+            # This handles the case where user types quickly (e.g., "k" -> "kubernetes")
+            # The user is actively building up the query, so we should process it
+            if self._last_processed_query is not None:
+                length_diff = query_length - len(self._last_processed_query)
+                # If query is significantly longer OR is a prefix extension (user actively typing), process immediately
+                is_prefix_extension = query.startswith(self._last_processed_query) and length_diff > 0
+                if length_diff >= self.SIGNIFICANT_LENGTH_INCREASE or (
+                    is_prefix_extension and length_diff >= self.PREFIX_EXTENSION_THRESHOLD
+                ):
+                    # Defer logging until after lock release
+                    should_log = True
+                    log_message = (
+                        f"Query '{query[:50]}...' processed immediately (length increased by {length_diff} chars, "
+                        f"user actively typing: '{self._last_processed_query}' -> '{query}', "
+                        f"is_prefix={is_prefix_extension})"
+                    )
+                    self._last_processed_query = query
+                    self._last_processed_time = current_time
+                    self._cleanup_old_queries(current_time)
+
+                    # Release lock before logging
+                    result = True
+                    # Lock will be released here
+            else:
+                result = None
+
+            if result is None:  # Not early exit, continue normal flow
+                # Check if query has been stable long enough
+                query_stable_time = current_time - self._query_first_seen[query]
+
+                if query_stable_time >= effective_debounce:
+                    # Query is ready to process
+                    self._last_processed_query = query
+                    self._last_processed_time = current_time
+                    self._cleanup_old_queries(current_time)
+
+                    # Defer logging until after lock release
+                    should_log = True
+                    log_message = (
+                        f"Query '{query[:50]}...' processed after {query_stable_time:.3f}s "
+                        f"stable time (debounce: {debounce_seconds*1000:.0f}ms, "
+                        f"length: {query_length})"
+                    )
+                    result = True
+                else:
+                    result = False
+
+        # DEFERRED LOGGING: Log AFTER releasing lock to minimize lock duration
+        if should_log:
+            logging.info(log_message)
+
+        return result
+
+    def mark_query_processed(self, query: str) -> None:
+        """
+        Mark a query as processed without checking debounce time.
+        Used when bypassing debounce (e.g., for first query with no cached results).
+
+        Args:
+            query: The query to mark as processed
+        """
+        with self._lock:
+            current_time = time.time()
+            self._last_processed_query = query
+            self._last_processed_time = current_time
+            # Ensure query is tracked
+            if query not in self._query_first_seen:
+                self._query_first_seen[query] = current_time
+            self._cleanup_old_queries(current_time)
+
+    def set_last_results(self, results: list) -> None:
+        """
+        Store the last results to return during debouncing.
+
+        Args:
+            results: The search results list (can be empty [] for zero matches)
+        """
+        with self._lock:
+            # Store results even if empty - empty list is a valid search result
+            self._last_results = results.copy() if results else []
+            self._has_processed_any_query = True
+
+    def get_last_results(self) -> list:
+        """
+        Get the last results to return during debouncing.
+
+        Returns:
+            The cached results list (empty list if no results cached yet or if previous search returned zero matches).
+        """
+        with self._lock:
+            return self._last_results.copy()
+
+    def has_processed_any_query(self) -> bool:
+        """
+        Check if we have processed any query yet (for debounce state tracking).
+
+        This is used to determine if we should bypass debounce for the first query.
+        It tracks whether we've ever processed a query, not whether we have cached results.
+
+        Returns:
+            True if we've processed at least one query (even if it returned empty results).
+        """
+        with self._lock:
+            return self._has_processed_any_query
+
+    def _cleanup_old_queries(self, current_time: float) -> None:
+        """
+        Remove queries older than CLEANUP_AGE_SECONDS to prevent memory growth.
+
+        Note: This method should only be called from within should_process_query()
+        which already holds the lock, so no additional locking is needed here.
+        """
+        cutoff_time = current_time - self.CLEANUP_AGE_SECONDS
+        # Efficient single-pass cleanup
+        queries_to_remove = [
+            q
+            for q, first_seen in self._query_first_seen.items()
+            if first_seen < cutoff_time and q != self._last_processed_query
+        ]
+        for q in queries_to_remove:
+            del self._query_first_seen[q]
+
+
+# Global instance of adaptive debounce manager
+_adaptive_debounce_manager = AdaptiveDebounceManager()
 
 # Note: Login-related callbacks are conditionally registered based on login_enabled
 # because when login is disabled, the UI elements (refresh-button, logout-button, etc.)
