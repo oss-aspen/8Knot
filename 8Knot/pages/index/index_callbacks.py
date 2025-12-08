@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import Optional
 import re
 import os
 import time
@@ -181,6 +182,250 @@ def _login_username_button_disabled(url):
     return [navlink]
 
 
+def _perform_search(
+    search_query: str,
+    cached_options: list,
+    get_server_options_func,
+) -> tuple[list, bool]:
+    """
+    Perform search across cache and server, combining results.
+
+    This function encapsulates the search strategy:
+    - Search client-side cache if available
+    - Search server for queries >= 3 chars
+    - Combine results, prioritizing cache but adding server matches
+
+    Args:
+        search_query: The search query (without prefixes)
+        cached_options: Client-side cache options (can be None)
+        get_server_options_func: Function to get server options (cached per request)
+
+    Returns:
+        Tuple of (matched_options, use_server_fallback) where:
+        - matched_options: Combined search results
+        - use_server_fallback: True if server results were used/combined
+    """
+    cache_matches = []
+    server_matches = []
+    use_server_fallback = False
+
+    # Adjust threshold based on query length - more specific queries can use lower threshold
+    search_threshold = 0.15 if len(search_query) >= 4 else 0.2
+
+    # First, the search goes through the client-side cache if available
+    if cached_options:
+        cache_matches = fuzzy_search(search_query, cached_options, threshold=search_threshold)
+        logging.info(f"Cache search found {len(cache_matches)} matches (threshold={search_threshold})")
+
+    # Always also search server for comprehensive results
+    # Strategy: Always search server for queries >= 3 chars
+    should_search_server = len(search_query) >= 3
+    if should_search_server:
+        logging.info(
+            f"Searching server for query '{search_query}' (length: {len(search_query)}, has_client_cache: {cached_options is not None})"
+        )
+        try:
+            # Use cached server options to avoid redundant fetch
+            server_options = get_server_options_func()
+            server_matches = fuzzy_search(search_query, server_options, threshold=search_threshold)
+            logging.info(f"Server search found {len(server_matches)} matches (threshold={search_threshold})")
+
+        except Exception as e:
+            logging.error(f"Server search failed: {str(e)}", exc_info=True)
+            server_matches = []
+    else:
+        logging.debug(
+            f"Skipping server search for query '{search_query}' (length: {len(search_query)} < 3, using cache only)"
+        )
+
+    # Combine cache and server results (same logic as DEV)
+    if not cached_options:
+        # No cache available, use server results only
+        matched_options = server_matches
+        use_server_fallback = True
+        logging.info(f"No cache available, using {len(server_matches)} server matches")
+    else:
+        # Combine cache and server results, prioritizing cache but adding server matches
+        matched_options = cache_matches.copy()
+        seen_values = set(opt["value"] for opt in cache_matches)
+        additional_from_server = []
+
+        for server_match in server_matches:
+            if server_match["value"] not in seen_values:
+                additional_from_server.append(server_match)
+                seen_values.add(server_match["value"])
+
+        matched_options.extend(additional_from_server)
+        use_server_fallback = len(additional_from_server) > 0
+
+        logging.info(
+            f"Combined results: {len(cache_matches)} from cache + {len(additional_from_server)} from server = {len(matched_options)} total"
+        )
+
+        # Explicit verification for debugging
+        if should_search_server and len(server_matches) == 0 and len(cache_matches) > 0:
+            logging.warning(
+                f"WARNING: Server search was requested but returned 0 matches. "
+                f"Query: '{search_query}', Cache matches: {len(cache_matches)}, "
+                f"Server search executed: {should_search_server}"
+            )
+
+    return matched_options, use_server_fallback
+
+
+def _format_search_results(matched_options: list, prefix_type: Optional[str] = None) -> tuple[list, list]:
+    """
+    Format search results with prefixes and reorder (orgs first, then repos).
+
+    Args:
+        matched_options: Raw search results to format
+        prefix_type: Optional prefix filter ("repo" or "org")
+
+    Returns:
+        Tuple of (orgs_first, repos_after) - formatted and separated results
+    """
+    # Filter by prefix type if specified
+    if prefix_type == "repo":
+        matched_options = [opt for opt in matched_options if SearchItem.from_id(opt["value"]) == SearchItem.REPO]
+        logging.info(f"Filtered to {len(matched_options)} repos")
+    elif prefix_type == "org":
+        matched_options = [opt for opt in matched_options if SearchItem.from_id(opt["value"]) == SearchItem.ORG]
+        logging.info(f"Filtered to {len(matched_options)} orgs")
+
+    # Format options with prefixes based on their type
+    formatted_opts = []
+    seen_values = set()  # Track seen values to prevent duplicates
+
+    for opt in matched_options:
+        # Skip duplicates (based on value)
+        if opt["value"] in seen_values:
+            continue
+
+        seen_values.add(opt["value"])
+        formatted_opt = opt.copy()
+        search_item = SearchItem.from_id(opt["value"])
+
+        # Clean repository names by removing URL prefixes
+        label = opt["label"]
+        if search_item == SearchItem.REPO:
+            cleaned_name, platform = clean_repo_name(label)
+            # Apply platform-specific prefix
+            if platform == "github":
+                formatted_opt["label"] = f"GH Repo: {cleaned_name}"
+            elif platform == "gitlab":
+                formatted_opt["label"] = f"GL Repo: {cleaned_name}"
+            else:
+                formatted_opt["label"] = f"Repo: {cleaned_name}"
+        else:
+            formatted_opt["label"] = search_item.prefix(label)
+        formatted_opts.append(formatted_opt)
+
+    # Reorder: organizations first, then repositories (single-pass optimization)
+    orgs_first = []
+    repos_after = []
+    for opt in formatted_opts:
+        if SearchItem.from_id(opt["value"]) == SearchItem.ORG:
+            orgs_first.append(opt)
+        else:  # Must be REPO (we filtered earlier)
+            repos_after.append(opt)
+
+    logging.info(
+        f"Final results breakdown: {len(orgs_first)} orgs, {len(repos_after)} repos, {len(formatted_opts)} total"
+    )
+
+    return orgs_first, repos_after
+
+
+def _handle_selected_options(
+    selections: list,
+    cached_options: list,
+    matched_options: list,
+    use_server_fallback: bool,
+    get_server_options_func,
+) -> list:
+    """
+    Handle selected options, ensuring they're included in results with proper formatting.
+
+    Args:
+        selections: List of selected option values
+        cached_options: Client-side cache options
+        matched_options: Current matched search results
+        use_server_fallback: Whether server results were used
+        get_server_options_func: Function to get server options
+
+    Returns:
+        List of formatted selected options
+    """
+    if not selections:
+        return []
+
+    selected_options = []
+
+    # First check if selections are in our current options (cache + any server fallback)
+    current_selection_values = set(
+        opt["value"] for opt in (cached_options or []) + (matched_options if use_server_fallback else [])
+    )
+    missing_selections = [v for v in selections if v not in current_selection_values]
+
+    # If any selections aren't in our current options, fetch them from the server
+    if missing_selections:
+        logging.info(f"Fetching {len(missing_selections)} missing selections from server")
+        all_options = get_server_options_func()  # Use cached server options
+        for v in selections:
+            matched_opts = [opt for opt in all_options if opt["value"] == v]
+            if matched_opts:
+                formatted_v = matched_opts[0].copy()
+                if SearchItem.from_id(v) == SearchItem.ORG:
+                    formatted_v["label"] = f"org: {formatted_v['label']}"
+                elif SearchItem.from_id(v) == SearchItem.REPO:
+                    formatted_v["label"] = f"repo: {formatted_v['label']}"
+                selected_options.append(formatted_v)
+    else:
+        # All selections are in our current options
+        all_current_options = (cached_options or []) + matched_options
+        for v in selections:
+            for opt in all_current_options:
+                if opt["value"] == v:
+                    formatted_v = opt.copy()
+                    search_item = SearchItem.from_id(v)
+                    formatted_v["label"] = search_item.prefix(opt["label"])
+                    selected_options.append(formatted_v)
+                    break
+
+    return selected_options
+
+
+def _get_fallback_selections(selections: list) -> list:
+    """
+    Helper function to return fallback options when search fails.
+
+    Args:
+        selections: List of selected option values
+
+    Returns:
+        List of formatted option dictionaries with basic labels
+    """
+    default_options = []
+    try:
+        # Try to get the labels for the current selections
+        options = augur.get_multiselect_options()
+        for v in selections:
+            matched_opts = [opt for opt in options if opt["value"] == v]
+            if matched_opts:
+                formatted_v = matched_opts[0].copy()
+                search_item = SearchItem.from_id(v)
+                if search_item == SearchItem.ORG:
+                    formatted_v["label"] = f"org: {formatted_v['label']}"
+                elif search_item == SearchItem.REPO:
+                    formatted_v["label"] = f"repo: {formatted_v['label']}"
+                default_options.append(formatted_v)
+    except Exception:
+        # If that fails, just return the raw selection values
+        default_options = [{"value": v, "label": f"ID: {v}"} for v in selections]
+
+    return [default_options]
+
+
 @callback(
     [Output("projects", "data")],
     [Input("projects", "searchValue")],
@@ -254,143 +499,29 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
             prefix_type = "org"
             logging.info(f"Org prefix detected, searching for: '{search_query}'")
 
-        # SEARCH STRATEGY: searching both cache and server for best results. The client-side cache is still prioritized if available.
-        cache_matches = []
-        server_matches = []
-
-        # Initialize fallback flag
-        use_server_fallback = False
-
-        # Adjust threshold based on query length - more specific queries can use lower threshold
-        search_threshold = 0.15 if len(search_query) >= 4 else 0.2
-
-        # First, the search goes through the client-side cache if available
-        if cached_options:
-            cache_matches = fuzzy_search(search_query, cached_options, threshold=search_threshold)
-            logging.info(f"Cache search found {len(cache_matches)} matches (threshold={search_threshold})")
-
-        # Always also search server for comprehensive results (especially for longer queries)
-        if len(search_query) >= 3:
-            try:
-                # Use cached server options to avoid redundant fetch
-                server_options = _get_server_options()
-                server_matches = fuzzy_search(search_query, server_options, threshold=search_threshold)
-                logging.info(f"Server search found {len(server_matches)} matches (threshold={search_threshold})")
-
-            except Exception as e:
-                logging.error(f"Server search failed: {str(e)}")
-                server_matches = []
-
-        # If no cache available, fetch from server
-        if not cached_options:
-            matched_options = server_matches
-            use_server_fallback = True
-            logging.info(f"No cache available, using {len(server_matches)} server matches")
-        else:
-            # Combine cache and server results, prioritizing cache but adding server matches
-            matched_options = cache_matches.copy()
-            seen_values = set(opt["value"] for opt in cache_matches)
-            additional_from_server = []
-
-            for server_match in server_matches:
-                if server_match["value"] not in seen_values:
-                    additional_from_server.append(server_match)
-                    seen_values.add(server_match["value"])
-
-            matched_options.extend(additional_from_server)
-            use_server_fallback = len(additional_from_server) > 0
-
-            logging.info(
-                f"Combined results: {len(cache_matches)} from cache + {len(additional_from_server)} from server = {len(matched_options)} total"
-            )
-
-        # Filter by prefix type if specified
-        if prefix_type == "repo":
-            matched_options = [opt for opt in matched_options if SearchItem.from_id(opt["value"]) == SearchItem.REPO]
-            logging.info(f"Filtered to {len(matched_options)} repos")
-        elif prefix_type == "org":
-            matched_options = [opt for opt in matched_options if SearchItem.from_id(opt["value"]) == SearchItem.ORG]
-            logging.info(f"Filtered to {len(matched_options)} orgs")
-
-        # Format options with prefixes based on their type
-        formatted_opts = []
-        seen_values = set()  # Track seen values to prevent duplicates
-
-        for opt in matched_options:
-            # Skip duplicates (based on value)
-            if opt["value"] in seen_values:
-                continue
-
-            seen_values.add(opt["value"])
-            formatted_opt = opt.copy()
-            search_item = SearchItem.from_id(opt["value"])
-
-            # Clean repository names by removing URL prefixes
-            label = opt["label"]
-            if search_item == SearchItem.REPO:
-                cleaned_name, platform = clean_repo_name(label)
-                # Apply platform-specific prefix
-                if platform == "github":
-                    formatted_opt["label"] = f"GH Repo: {cleaned_name}"
-                elif platform == "gitlab":
-                    formatted_opt["label"] = f"GL Repo: {cleaned_name}"
-                else:
-                    formatted_opt["label"] = f"Repo: {cleaned_name}"
-            else:
-                formatted_opt["label"] = search_item.prefix(label)
-            formatted_opts.append(formatted_opt)
-
-        # Simple reordering: put organizations first, then repositories
-        orgs_first = [opt for opt in formatted_opts if SearchItem.from_id(opt["value"]) == SearchItem.ORG]
-        repos_after = [opt for opt in formatted_opts if SearchItem.from_id(opt["value"]) == SearchItem.REPO]
-        formatted_opts = orgs_first + repos_after
-
-        # Always include the previous selections
-        # Format selected options with prefixes
-        selected_options = []
-
-        # First check if selections are in our current options (cache + any server fallback)
-        current_selection_values = set(
-            opt["value"] for opt in (cached_options or []) + (matched_options if use_server_fallback else [])
+        # Perform search across cache and server
+        matched_options, use_server_fallback = _perform_search(
+            search_query=search_query,
+            cached_options=cached_options,
+            get_server_options_func=_get_server_options,
         )
-        missing_selections = [v for v in selections if v not in current_selection_values]
 
-        # If any selections aren't in our current options, fetch them from the server
-        if missing_selections:
-            logging.info(f"Fetching {len(missing_selections)} missing selections from server")
-            # Use cached server options to avoid redundant fetch
-            all_options = _get_server_options()
-            for v in selections:
-                matched_opts = [opt for opt in all_options if opt["value"] == v]
-                if matched_opts:
-                    formatted_v = matched_opts[0].copy()
-                    if SearchItem.from_id(v) == SearchItem.ORG:
-                        # It's an org
-                        formatted_v["label"] = f"org: {formatted_v['label']}"
-                    elif SearchItem.from_id(v) == SearchItem.REPO:
-                        # It's a repo
-                        formatted_v["label"] = f"repo: {formatted_v['label']}"
-                    selected_options.append(formatted_v)
-        else:
-            # All selections are in our current options
-            all_current_options = (cached_options or []) + matched_options
-            for v in selections:
-                for opt in all_current_options:
-                    if opt["value"] == v:
-                        formatted_v = opt.copy()
-                        search_item = SearchItem.from_id(v)
-                        formatted_v["label"] = search_item.prefix(opt["label"])
-                        selected_options.append(formatted_v)
-                        break
+        # Format and reorder search results (orgs first, then repos)
+        orgs_first, repos_after = _format_search_results(matched_options, prefix_type=prefix_type)
+
+        # Handle selected options, ensuring they're included with proper formatting
+        selected_options = _handle_selected_options(
+            selections=selections,
+            cached_options=cached_options,
+            matched_options=matched_options,
+            use_server_fallback=use_server_fallback,
+            get_server_options_func=_get_server_options,
+        )
 
         # NO LIMITS for now: Return all matches with orgs prioritized
         # Use the org/repo separation already done
 
-        logging.info(
-            f"Final results breakdown: {len(orgs_first)} orgs, {len(repos_after)} repos, {len(formatted_opts)} total"
-        )
-
-        # Always prioritize orgs first, then repos, but don't limit the total count
+        # Combine results: orgs first, then repos
         result = orgs_first + repos_after
 
         # Add selected options that aren't already in the results
@@ -409,24 +540,7 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
         logging.error(f"Error in dynamic_multiselect_options: {str(e)}")
         # Return at least the current selections as a fallback
         if selections:
-            default_options = []
-            try:
-                # Try to get the labels for the current selections
-                options = augur.get_multiselect_options()
-                for v in options:
-                    if v["value"] in selections:
-                        formatted_v = v.copy()
-                        search_item = SearchItem.from_id(v)
-                        if search_item == SearchItem.ORG:
-                            formatted_v["label"] = f"org: {v['label']}"
-                        elif search_item == SearchItem.REPO:
-                            formatted_v["label"] = f"repo: {v['label']}"
-                        default_options.append(formatted_v)
-            except:
-                # If that fails, just return the raw selection values
-                default_options = [{"value": v, "label": f"ID: {v}"} for v in selections]
-
-            return [default_options]
+            return _get_fallback_selections(selections)
 
         return dash.no_update
 
