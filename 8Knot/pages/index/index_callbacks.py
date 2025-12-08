@@ -298,18 +298,19 @@ def _perform_search(
         cache_matches = fuzzy_search(search_query, cached_options, threshold=search_threshold, limit=limit)
         logging.info(f"Cache search found {len(cache_matches)} matches (threshold={search_threshold}, limit={limit})")
 
-    # Search server for queries >= 3 chars (no limit for comprehensive results)
+    # Always also search server for comprehensive results
+    # Strategy: Always search server for queries >= 3 chars
     should_search_server = len(search_query) >= 3
     if should_search_server:
         logging.info(
-            f"Searching server for query '{search_query}' (length: {len(search_query)}, has_client_cache: {cached_options is not None}, no limit - comprehensive)"
+            f"Searching server for query '{search_query}' (length: {len(search_query)}, has_client_cache: {cached_options is not None}, limit={limit})"
         )
         try:
             # Use cached server options to avoid redundant fetch
             server_options = get_server_options_func()
-            server_matches = fuzzy_search(search_query, server_options, threshold=search_threshold, limit=None)
+            server_matches = fuzzy_search(search_query, server_options, threshold=search_threshold, limit=limit)
             logging.info(
-                f"Server search found {len(server_matches)} matches (threshold={search_threshold}, no limit - comprehensive)"
+                f"Server search found {len(server_matches)} matches (threshold={search_threshold}, limit={limit})"
             )
 
         except Exception as e:
@@ -344,20 +345,13 @@ def _perform_search(
             f"Combined results: {len(cache_matches)} from cache + {len(additional_from_server)} from server = {len(matched_options)} total"
         )
 
-        # Log warning if server search unexpectedly returns no matches
+        # Explicit verification for debugging
         if should_search_server and len(server_matches) == 0 and len(cache_matches) > 0:
             logging.warning(
                 f"WARNING: Server search was requested but returned 0 matches. "
                 f"Query: '{search_query}', Cache matches: {len(cache_matches)}, "
                 f"Server search executed: {should_search_server}"
             )
-
-    # Apply limit to final combined results to prevent UI freeze
-    # Server search gets ALL matches, but we limit the final result
-    if limit is not None and len(matched_options) > limit:
-        original_count = len(matched_options)
-        matched_options = matched_options[:limit]
-        logging.info(f"Applied limit to combined results: trimmed from {original_count} to {limit}")
 
     return matched_options, use_server_fallback
 
@@ -625,19 +619,15 @@ def _login_username_button_disabled(url):
     [Input("projects", "searchValue")],
     [State("projects", "value"), State("cached-options", "data")],
 )
-def dynamic_multiselect_options_instant_preview(user_in: str, selections, cached_options):
+def dynamic_multiselect_options(user_in: str, selections, cached_options):
     """
-    Phase 1: Instant preview search (fast, main thread, limited results).
-
-    This callback provides immediate user feedback by searching the large client-side
-    cache (10,000 items) with result limiting for speed. Shows results in <50ms.
-
-    Phase 2 (background comprehensive search) runs in parallel to get ALL results.
+    Enhanced search using fuzzy matching and client-side cache with server fallback.
+    Implements adaptive debouncing based on query length.
 
     Args:
         user_in: User's search input
         selections: Currently selected values
-        cached_options: All available options from client-side cache (10,000 items)
+        cached_options: All available options from client-side cache
     """
     # Performance monitoring: Track search start time
     search_start_time = time.time()
@@ -725,14 +715,12 @@ def dynamic_multiselect_options_instant_preview(user_in: str, selections, cached
             prefix_type = "org"
             logging.info(f"Org prefix detected, searching for: '{search_query}'")
 
-        # Perform comprehensive search with result limit (Phase 1)
-        # Server search gets ALL matches, final combined result limited to prevent UI freeze
-        # limit=1000 provides comprehensive results while avoiding UI blocking
+        # Perform search across cache and server
         matched_options, use_server_fallback = _perform_search(
             search_query=search_query,
             cached_options=cached_options,
             get_server_options_func=_get_server_options,
-            limit=1000,
+            limit=1000,  # Limit results for UI responsiveness
         )
 
         # Format and reorder search results (orgs first, then repos)
@@ -807,12 +795,6 @@ def dynamic_multiselect_options_instant_preview(user_in: str, selections, cached
         if selections:
             return _get_fallback_selections(selections)
         return dash.no_update
-
-
-# Phase 2: Background Comprehensive Search - REMOVED
-# Removed because Phase 1 now handles all search functionality.
-# Simpler implementation with just Phase 1 provides better performance
-# and avoids UI blocking issues from large result sets.
 
 
 def _get_fallback_selections(selections: list) -> list:
@@ -1094,10 +1076,7 @@ def initialize_cache(_):
                 logging.error(f"CACHE INIT: Could not connect to users-cache. Error: {str(e)}")
 
         # Get configuration from environment variables with defaults
-        # Increased cache limits for better instant search results:
-        # - Larger cache = more instant results from Phase 1 (fast preview)
-        # - Background Phase 2 still gets comprehensive server results
-        # - Browser sessionStorage easily handles 10,000+ items (~500KB-1MB)
+        # Larger cache = faster search results (browser sessionStorage handles 10,000+ items easily)
         sort_method = os.getenv("EIGHTKNOT_SEARCHBAR_OPTS_SORT", "shortest").lower()
         max_total_results = int(os.getenv("EIGHTKNOT_SEARCHBAR_OPTS_MAX_RESULTS", "10000"))
         max_repos = int(os.getenv("EIGHTKNOT_SEARCHBAR_OPTS_MAX_REPOS", "9500"))
