@@ -298,8 +298,7 @@ def _perform_search(
         cache_matches = fuzzy_search(search_query, cached_options, threshold=search_threshold, limit=limit)
         logging.info(f"Cache search found {len(cache_matches)} matches (threshold={search_threshold}, limit={limit})")
 
-    # Always also search server for comprehensive results
-    # Strategy: Always search server for queries >= 3 chars with NO LIMIT
+    # Search server for queries >= 3 chars (no limit for comprehensive results)
     should_search_server = len(search_query) >= 3
     if should_search_server:
         logging.info(
@@ -321,7 +320,7 @@ def _perform_search(
             f"Skipping server search for query '{search_query}' (length: {len(search_query)} < 3, using cache only)"
         )
 
-    # Combine cache and server results (same logic as DEV)
+    # Combine cache and server results
     if not cached_options:
         # No cache available, use server results only
         matched_options = server_matches
@@ -345,7 +344,7 @@ def _perform_search(
             f"Combined results: {len(cache_matches)} from cache + {len(additional_from_server)} from server = {len(matched_options)} total"
         )
 
-        # Explicit verification for debugging
+        # Log warning if server search unexpectedly returns no matches
         if should_search_server and len(server_matches) == 0 and len(cache_matches) > 0:
             logging.warning(
                 f"WARNING: Server search was requested but returned 0 matches. "
@@ -733,7 +732,7 @@ def dynamic_multiselect_options_instant_preview(user_in: str, selections, cached
             search_query=search_query,
             cached_options=cached_options,
             get_server_options_func=_get_server_options,
-            limit=1000,  # Combined result limit - comprehensive but prevents UI freeze
+            limit=1000,
         )
 
         # Format and reorder search results (orgs first, then repos)
