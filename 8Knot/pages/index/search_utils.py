@@ -4,6 +4,7 @@ Provides improved search algorithms for the searchbar.
 """
 from typing import List, Dict, Any
 import re
+import bisect
 
 # Going with rapidfuzz instead of fuzzywuzzy
 # as it's more performant and supports score_cutoff
@@ -190,6 +191,45 @@ def token_match_score(tokens: List[str], label: str) -> float:
     if match_scores:
         return sum(match_scores) / len(match_scores)
     return 0.0
+
+
+def get_adaptive_debounce_time(query: str) -> int:
+    """
+    Calculate adaptive debounce time based on query length.
+
+    Strategy inspired by Spotify and YouTube:
+    - Short queries (1-3 chars): Longer debounce (800-400ms) - user likely still typing
+    - Medium queries (4-5 chars): Medium debounce (250ms) - user may be finishing
+    - Long queries (6+ chars): Shorter debounce (150ms) - user likely finished
+
+    Args:
+        query: The search query string
+
+    Returns:
+        Debounce time in milliseconds
+    """
+    if not query:
+        return 200  # Default for empty query
+
+    query_length = len(query.strip())
+
+    # Debounce thresholds: sorted max_lengths for bisect lookup
+    # O(log n) lookup using binary search (though n=4, so effectively O(1))
+    _THRESHOLD_LENGTHS = [1, 2, 3, 5]  # Sorted for bisect
+    _DEBOUNCE_VALUES = [800, 600, 400, 250]  # Corresponding debounce times
+    _DEFAULT_DEBOUNCE = 150  # For queries longer than 5 chars
+
+    # Use bisect_left to find the smallest threshold >= query_length
+    # This finds the leftmost position where query_length could be inserted
+    # Example: query_length=4 → bisect_left returns 3 (first threshold >= 4, which is 5)
+    index = bisect.bisect_left(_THRESHOLD_LENGTHS, query_length)
+
+    # If index is within bounds, use the corresponding debounce value
+    if index < len(_DEBOUNCE_VALUES):
+        return _DEBOUNCE_VALUES[index]
+
+    # For queries longer than the max threshold (5), return default
+    return _DEFAULT_DEBOUNCE
 
 
 def clean_repo_name(repo_name: str) -> tuple[str, str]:
