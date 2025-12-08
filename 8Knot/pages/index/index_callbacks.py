@@ -644,6 +644,7 @@ def _get_fallback_selections(selections: list) -> list:
 def dynamic_multiselect_options(user_in: str, selections, cached_options):
     """
     Enhanced search using fuzzy matching and client-side cache with server fallback.
+    Implements adaptive debouncing based on query length.
 
     Args:
         user_in: User's search input
@@ -652,6 +653,25 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
     """
     if not user_in:
         return dash.no_update
+
+    # Check if we have processed any query yet (for debounce state tracking)
+    # This determines if we should bypass debounce for the first query
+    has_processed_any_query = _adaptive_debounce_manager.has_processed_any_query()
+
+    # Apply adaptive debouncing (but bypass if no queries processed yet to ensure first query works)
+    if has_processed_any_query and not _adaptive_debounce_manager.should_process_query(user_in):
+        debounce_ms = get_adaptive_debounce_time(user_in)
+        logging.debug(
+            f"Query '{user_in[:50]}...' debounced (adaptive debounce: {debounce_ms}ms, length: {len(user_in)})"
+        )
+        # Return last results instead of no_update to prevent dropdown from showing "no matching"
+        # This maintains the dropdown state while debouncing
+        last_results = _adaptive_debounce_manager.get_last_results()
+        return [last_results]
+
+    # If this is the first query, log it for debugging
+    if not has_processed_any_query:
+        logging.info(f"Processing first query immediately: '{user_in}'")
 
     try:
         start_time = time.time()
@@ -743,6 +763,13 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
         end_time = time.time()
         logging.info(f"Search completed in {end_time - start_time:.2f} seconds")
         logging.info(f"Returning {len(result)} options to dropdown (fallback used: {use_server_fallback})")
+
+        # Store results in adaptive debounce manager for potential reuse during debouncing
+        _adaptive_debounce_manager.set_last_results(result)
+
+        # Mark query as processed if this was the first query
+        if not has_processed_any_query:
+            _adaptive_debounce_manager.mark_query_processed(user_in)
 
         return [result]
 
