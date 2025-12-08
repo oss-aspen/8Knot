@@ -228,6 +228,8 @@ def get_adaptive_debounce_time(query: str) -> int:
         return 200  # Default for empty query
 
     query_length = len(query.strip())
+    if query_length == 0:
+        return 200  # Treat whitespace-only as empty query
 
     # Debounce thresholds: sorted max_lengths for bisect lookup
     # O(log n) lookup using binary search (though n=4, so effectively O(1))
