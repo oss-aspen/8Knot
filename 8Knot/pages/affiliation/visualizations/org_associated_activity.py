@@ -19,147 +19,90 @@ from components.visualization import VisualizationAIO
 PAGE = "affiliation"
 VIZ_ID = "organization-associated-activity"
 
-gc_org_associated_activity = dbc.Card(
-    [
-        dbc.CardBody(
+gc_org_associated_activity = VisualizationAIO(
+    PAGE,
+    VIZ_ID,
+    title="Organization Associated Activity",
+    graph_info="""
+    For non-commit contributions (see definition of Contribution on Info page)\n
+    we only know which contributor account contributed. We don't know which email,\n
+    and therefore which possible institution the contribution represented.\n
+    e.g. if we know that a PR comment was made by JaneDoe, and they have a '@redhat.com' and\n
+    an '@gmail.com' email, we don't know whether they contributed individually\n
+    or as a representative of an instituion. Therefore, we lower-bound the contribution\n
+    of representation by counting each contribution as being made by ALL of the contributors\n
+    linked email domains.\n
+    This graph can therefore be interpreted as 'The minimum number of individuals who have\n
+    been associated with each domain.'\n
+    e.g. If there are 100 contributions and 20 contributors, and each contributor has an '@redhat.com'\n
+    email associated with their account and one other random email, '@redhat.com' will be counted 100 times\n
+    and the other contributor emails will also total a count of 100.\n
+    """,
+    controls=[
+        dbc.Row(
             [
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            html.H3(
-                                "Organization Associated Activity",
-                                className="card-title",
-                            ),
-                        ),
-                        dbc.Col(
-                            dbc.Button(
-                                "About Graph",
-                                id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                color="outline-secondary",
-                                size="sm",
-                                className="about-graph-button",
-                            ),
-                            width="auto",
-                        ),
-                    ],
-                    align="center",
-                    justify="between",
-                    className="mb-3",
+                dbc.Label(
+                    "Contributions Required:",
+                    html_for=f"contributions-required-{PAGE}-{VIZ_ID}",
+                    width={"size": "auto"},
                 ),
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody(
-                            """
-                            For non-commit contributions (see definition of Contribution on Info page)\n
-                            we only know which contributor account contributed. We don't know which email,\n
-                            and therefore which possible institution the contribution represented.\n
-                            e.g. if we know that a PR comment was made by JaneDoe, and they have a '@redhat.com' and\n
-                            an '@gmail.com' email, we don't know whether they contributed individually\n
-                            or as a representative of an instituion. Therefore, we lower-bound the contribution\n
-                            of representation by counting each contribution as being made by ALL of the contributors\n
-                            linked email domains.\n
-                            This graph can therefore be interpreted as 'The minimum number of individuals who have\n
-                            been associated with each domain.'\n
-                            e.g. If there are 100 contributions and 20 contributors, and each contributor has an '@redhat.com'\n
-                            email associated with their account and one other random email, '@redhat.com' will be counted 100 times\n
-                            and the other contributor emails will also total a count of 100.\n
-                            """
-                        ),
-                    ],
-                    id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",  # needs to be the same as dbc.Button id
-                    placement="top",
-                    is_open=False,
+                dbc.Col(
+                    dbc.Input(
+                        id=f"contributions-required-{PAGE}-{VIZ_ID}",
+                        type="number",
+                        min=1,
+                        max=100,
+                        step=1,
+                        value=10,
+                        size="sm",
+                        className="dark-input",
+                    ),
+                    className="me-2",
+                    width=2,
                 ),
-                dcc.Loading(
-                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-                    style={"marginBottom": "1rem"},
-                ),
-                html.Hr(className="card-split"),  # Divider between graph and controls
-                dbc.Form(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Contributions Required:",
-                                    html_for=f"contributions-required-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id=f"contributions-required-{PAGE}-{VIZ_ID}",
-                                        type="number",
-                                        min=1,
-                                        max=100,
-                                        step=1,
-                                        value=10,
-                                        size="sm",
-                                        className="dark-input",
-                                    ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                                dbc.Col(
-                                    dbc.Checklist(
-                                        id=f"email-filter-{PAGE}-{VIZ_ID}",
-                                        options=[
-                                            {
-                                                "label": "Exclude Gmail",
-                                                "value": "gmail",
-                                            },
-                                            {
-                                                "label": "Exclude GitHub",
-                                                "value": "github",
-                                            },
-                                        ],
-                                        value=[""],
-                                        inline=True,
-                                        switch=True,
-                                    ),
-                                    width=6,
-                                ),
-                            ],
-                            align="center",
-                            justify="start",
-                        ),
-                        dbc.Row(
-                            [
-                                dbc.Col(
-                                    dcc.DatePickerRange(
-                                        id=f"date-picker-range-{PAGE}-{VIZ_ID}",
-                                        min_date_allowed=dt.date(2005, 1, 1),
-                                        max_date_allowed=dt.date.today(),
-                                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
-                                        clearable=True,
-                                        className="dark-date-picker",
-                                    ),
-                                    width=7,
-                                ),
-                            ],
-                            justify="start",
-                        ),
-                    ]
+                dbc.Col(
+                    dbc.Checklist(
+                        id=f"email-filter-{PAGE}-{VIZ_ID}",
+                        options=[
+                            {
+                                "label": "Exclude Gmail",
+                                "value": "gmail",
+                            },
+                            {
+                                "label": "Exclude GitHub",
+                                "value": "github",
+                            },
+                        ],
+                        value=[""],
+                        inline=True,
+                        switch=True,
+                    ),
+                    width=6,
                 ),
             ],
-            style={"padding": "1.5rem"},
-        )
+            align="center",
+            justify="start",
+        ),
+        dbc.Row(
+            [
+                dbc.Col(
+                    dcc.DatePickerRange(
+                        id=f"date-picker-range-{PAGE}-{VIZ_ID}",
+                        min_date_allowed=dt.date(2005, 1, 1),
+                        max_date_allowed=dt.date.today(),
+                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                        clearable=True,
+                        className="dark-date-picker",
+                    ),
+                    width=7,
+                ),
+            ],
+            justify="start",
+        ),
     ],
-    className="dark-card",
+    class_name="dark-card",
     id="org-activity",
 )
-
-
-# callback for graph info popover
-@callback(
-    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
-    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
-    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
-)
-def toggle_popover(n, is_open):
-    if n:
-        return not is_open
-    return is_open
 
 
 # callback for Organization Affiliation by Github Account Info graph
