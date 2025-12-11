@@ -20,113 +20,50 @@ from components.visualization import VisualizationAIO
 PAGE = "affiliation"
 VIZ_ID = "gh-org-affiliation"
 
-gc_gh_org_affiliation = dbc.Card(
-    [
-        dbc.CardBody(
-            [
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            html.H3(
-                                "Organization Affiliation by GitHub Account Info",
-                                className="card-title",
-                            ),
-                        ),
-                        dbc.Col(
-                            dbc.Button(
-                                "About Graph",
-                                id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                color="outline-secondary",
-                                size="sm",
-                                className="about-graph-button",
-                            ),
-                            width="auto",
-                        ),
-                    ],
-                    align="center",
-                    justify="between",
-                    className="mb-3",
-                ),
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody(
-                            """
-                            Visualizes GitHub account institution affiliation.\n
-                            Many individuals don't report an affiliated institution, but\n
-                            this count may be considered an absolute lower-bound on affiliation.
-                            """
-                        ),
-                    ],
-                    id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",  # needs to be the same as dbc.Button id
-                    placement="top",
-                    is_open=False,
-                ),
-                dcc.Loading(
-                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-                    style={"marginBottom": "1rem"},
-                ),
-                html.Hr(className="card-split"),  # Divider between graph and controls
-                dbc.Form(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Contributions Required:",
-                                    html_for=f"contributions-required-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id=f"contributions-required-{PAGE}-{VIZ_ID}",
-                                        type="number",
-                                        min=1,
-                                        max=50,
-                                        step=1,
-                                        value=5,
-                                        size="sm",
-                                        className="dark-input",
-                                    ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                                dbc.Col(
-                                    dcc.DatePickerRange(
-                                        id=f"date-picker-range-{PAGE}-{VIZ_ID}",
-                                        min_date_allowed=dt.date(2005, 1, 1),
-                                        max_date_allowed=dt.date.today(),
-                                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
-                                        clearable=True,
-                                        className="dark-date-picker",
-                                    ),
-                                    width=7,
-                                ),
-                            ],
-                            align="center",
-                            justify="start",
-                        ),
-                    ]
-                ),
-            ],
-            style={"padding": "1.5rem"},
+gc_gh_org_affiliation = VisualizationAIO(
+    PAGE,
+    VIZ_ID,
+    title="Organization Affiliation by GitHub Account Info",
+    graph_info="""
+        Visualizes GitHub account institution affiliation.\n
+        Many individuals don't report an affiliated institution, but\n
+        this count may be considered an absolute lower-bound on affiliation.
+    """,
+    controls=[
+        dbc.Label(
+            "Contributions Required:",
+            html_for=f"contributions-required-{PAGE}-{VIZ_ID}",
+            width={"size": "auto"},
+        ),
+        dbc.Col(
+            dbc.Input(
+                id=f"contributions-required-{PAGE}-{VIZ_ID}",
+                type="number",
+                min=1,
+                max=50,
+                step=1,
+                value=5,
+                size="sm",
+                className="dark-input",
+            ),
+            className="me-2",
+            width=2,
+        ),
+        dbc.Col(
+            dcc.DatePickerRange(
+                id=f"date-picker-range-{PAGE}-{VIZ_ID}",
+                min_date_allowed=dt.date(2005, 1, 1),
+                max_date_allowed=dt.date.today(),
+                initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                clearable=True,
+                className="dark-date-picker",
+            ),
+            width=7,
         ),
     ],
-    className="dark-card",
+    class_name="dark-card",
     id="gh-org-affiliation",
 )
-
-
-# callback for graph info popover
-@callback(
-    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
-    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
-    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
-)
-def toggle_popover(n, is_open):
-    if n:
-        return not is_open
-    return is_open
 
 
 # callback for Organization Affiliation by Github Account Info graph
