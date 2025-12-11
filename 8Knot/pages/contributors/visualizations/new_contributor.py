@@ -18,100 +18,39 @@ from components.visualization import VisualizationAIO
 PAGE = "contributors"
 VIZ_ID = "new-contributor"
 
-gc_new_contributor = dbc.Card(
-    [
-        dbc.CardBody(
-            [
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            html.H3(
-                                "New Contributors Over Time",
-                                className="card-title",
-                            ),
-                        ),
-                        dbc.Col(
-                            dbc.Button(
-                                "About Graph",
-                                id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                color="outline-secondary",
-                                size="sm",
-                                className="about-graph-button",
-                            ),
-                            width="auto",
-                        ),
-                    ],
-                    align="center",
-                    justify="between",
-                    className="mb-3",
-                ),
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody(
-                            "Visualizes the growth of contributor base by tracking the arrival of novel contributors over time."
-                        ),
-                    ],
-                    id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",
-                    placement="top",
-                    is_open=False,
-                ),
-                dcc.Loading(
-                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-                    style={"marginBottom": "1rem"},
-                ),
-                html.Hr(className="card-split"),  # Divider between graph and controls
-                dbc.Form(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Date Interval",
-                                    html_for=f"date-interval-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.RadioItems(
-                                        id=f"date-interval-{PAGE}-{VIZ_ID}",
-                                        options=[
-                                            {"label": "Day", "value": "D"},
-                                            {"label": "Week", "value": "W"},
-                                            {"label": "Month", "value": "M"},
-                                            {"label": "Year", "value": "Y"},
-                                        ],
-                                        value="M",
-                                        inline=True,
-                                        className="custom-radio-buttons",
-                                    ),
-                                    className="me-2",
-                                    width=4,
-                                ),
-                            ],
-                            align="center",
-                            justify="start",
-                        ),
-                    ]
-                ),
-            ],
-            style={"padding": "1.5rem"},
+gc_new_contributor = VisualizationAIO(
+    PAGE,
+    VIZ_ID,
+    title="New Contributors Over Time",
+    graph_info="""
+    Visualizes the growth of contributor base by tracking the arrival of novel contributors over time.
+    """,
+    controls=[
+        dbc.Label(
+            "Date Interval",
+            html_for=f"date-interval-{PAGE}-{VIZ_ID}",
+            width={"size": "auto"},
+        ),
+        dbc.Col(
+            dbc.RadioItems(
+                id=f"date-interval-{PAGE}-{VIZ_ID}",
+                options=[
+                    {"label": "Day", "value": "D"},
+                    {"label": "Week", "value": "W"},
+                    {"label": "Month", "value": "M"},
+                    {"label": "Year", "value": "Y"},
+                ],
+                value="M",
+                inline=True,
+                className="custom-radio-buttons",
+            ),
+            className="me-2",
+            width=4,
         ),
     ],
-    className="dark-card",
+    class_name="dark-card",
     id="new-contributors",
 )
-
-
-# callback for graph info popover
-@callback(
-    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
-    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
-    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
-)
-def toggle_popover_1(n, is_open):
-    if n:
-        return not is_open
-    return is_open
 
 
 @callback(
