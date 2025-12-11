@@ -112,6 +112,7 @@ gc_cntrib_issue_assignment = VisualizationAIO(
     id="cntrib-issue-assignment",
 )
 
+
 # callback for issue assignment graph
 @callback(
     Output(f"{PAGE}-{VIZ_ID}", "figure"),

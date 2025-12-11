@@ -57,6 +57,7 @@ gc_commits_over_time = VisualizationAIO(
     id="commits-over-time",
 )
 
+
 # callback for commits over time graph
 @callback(
     Output(f"{PAGE}-{VIZ_ID}", "figure"),

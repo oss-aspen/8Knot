@@ -11,7 +11,6 @@ from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from queries.pr_assignee_query import pr_assignee_query as praq
 from pages.utils.job_utils import nodata_graph
 import time
-import datetime as dt
 import app
 import cache_manager.cache_facade as cf
 from components.visualization import VisualizationAIO

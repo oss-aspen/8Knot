@@ -54,6 +54,7 @@ gc_pr_first_response = VisualizationAIO(
     id="pr-first-response",
 )
 
+
 # callback for pr first response graph
 @callback(
     Output(f"{PAGE}-{VIZ_ID}", "figure"),

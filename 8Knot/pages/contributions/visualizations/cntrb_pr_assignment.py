@@ -111,6 +111,7 @@ gc_cntrib_pr_assignment = VisualizationAIO(
     id="cntrib-pr-assignment",
 )
 
+
 # callback for pull request review assignment graph
 @callback(
     Output(f"{PAGE}-{VIZ_ID}", "figure"),

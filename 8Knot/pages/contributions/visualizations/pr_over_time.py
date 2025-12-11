@@ -57,6 +57,7 @@ gc_pr_over_time = VisualizationAIO(
     id="prs-over-time",
 )
 
+
 # callback for prs over time graph
 @callback(
     Output(f"{PAGE}-{VIZ_ID}", "figure"),

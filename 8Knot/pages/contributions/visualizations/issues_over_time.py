@@ -12,7 +12,6 @@ from queries.issues_query import issues_query as iq
 import time
 import cache_manager.cache_facade as cf
 import datetime as dt
-from dateutil.relativedelta import relativedelta
 from components.visualization import VisualizationAIO
 
 PAGE = "contributions"

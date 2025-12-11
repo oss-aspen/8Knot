@@ -11,9 +11,7 @@ from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from queries.issue_assignee_query import issue_assignee_query as iaq
 from pages.utils.job_utils import nodata_graph
 import time
-import datetime as dt
 import app
-import numpy as np
 import app
 import cache_manager.cache_facade as cf
 from components.visualization import VisualizationAIO
@@ -55,6 +53,7 @@ gc_issue_assignment = VisualizationAIO(
     class_name="dark-card",
     id="issue_assignment",
 )
+
 
 # callback for issue assignment graph
 @callback(
