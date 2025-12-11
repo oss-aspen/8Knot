@@ -15,6 +15,7 @@ import datetime as dt
 from rapidfuzz import fuzz
 import app
 import cache_manager.cache_facade as cf
+from components.visualization import VisualizationAIO
 
 PAGE = "affiliation"
 VIZ_ID = "gh-org-affiliation"

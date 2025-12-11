@@ -13,6 +13,7 @@ from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
 import cache_manager.cache_facade as cf
+from components.visualization import VisualizationAIO
 
 PAGE = "affiliation"
 VIZ_ID = "commit-domains"
