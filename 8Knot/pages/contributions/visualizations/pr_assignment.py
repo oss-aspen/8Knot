@@ -19,103 +19,40 @@ from components.visualization import VisualizationAIO
 PAGE = "contributions"
 VIZ_ID = "pr_assignment"
 
-gc_pr_assignment = dbc.Card(
-    [
-        dbc.CardBody(
-            [
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            html.H3(
-                                "Pull Request Review Status Counts",
-                                className="card-title",
-                            ),
-                        ),
-                        dbc.Col(
-                            dbc.Button(
-                                "About Graph",
-                                id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                color="outline-secondary",
-                                size="sm",
-                                className="about-graph-button",
-                            ),
-                            width="auto",
-                        ),
-                    ],
-                    align="center",
-                    justify="between",
-                    className="mb-3",
-                ),
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody(
-                            """
-                            Visualizes the number of assigned and unassigned pull requests in each \n
-                            time bucket.
-                            """
-                        ),
-                    ],
-                    id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",
-                    placement="top",
-                    is_open=False,
-                ),
-                dcc.Loading(
-                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-                    style={"marginBottom": "1rem"},
-                ),
-                html.Hr(className="card-split"),  # Divider between graph and controls
-                dbc.Form(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Date Interval:",
-                                    html_for=f"date-radio-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.RadioItems(
-                                        id=f"date-radio-{PAGE}-{VIZ_ID}",
-                                        options=[
-                                            {"label": "Trend", "value": "D"},
-                                            {"label": "Week", "value": "W"},
-                                            {"label": "Month", "value": "M"},
-                                            {"label": "Year", "value": "Y"},
-                                        ],
-                                        value="W",
-                                        inline=True,
-                                        className="custom-radio-buttons",
-                                    ),
-                                    className="me-2",
-                                    width=4,
-                                ),
-                            ],
-                            align="center",
-                            justify="start",
-                        ),
-                    ]
-                ),
-            ],
-            style={"padding": "1.5rem"},
-        )
+gc_pr_assignment = VisualizationAIO(
+    PAGE,
+    VIZ_ID,
+    title="Pull Request Review Status Counts",
+    graph_info="""
+    Visualizes the number of assigned and unassigned pull requests in each \n
+    time bucket.
+    """,
+    controls=[
+        dbc.Label(
+            "Date Interval:",
+            html_for=f"date-radio-{PAGE}-{VIZ_ID}",
+            width={"size": "auto"},
+        ),
+        dbc.Col(
+            dbc.RadioItems(
+                id=f"date-radio-{PAGE}-{VIZ_ID}",
+                options=[
+                    {"label": "Trend", "value": "D"},
+                    {"label": "Week", "value": "W"},
+                    {"label": "Month", "value": "M"},
+                    {"label": "Year", "value": "Y"},
+                ],
+                value="W",
+                inline=True,
+                className="custom-radio-buttons",
+            ),
+            className="me-2",
+            width=4,
+        ),
     ],
-    className="dark-card",
+    class_name="dark-card",
     id="pr_assignment",
 )
-
-
-# callback for graph info popover
-@callback(
-    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
-    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
-    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
-)
-def toggle_popover(n, is_open):
-    if n:
-        return not is_open
-    return is_open
 
 
 # callback for pull request review assignment graph
