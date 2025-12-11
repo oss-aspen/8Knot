@@ -16,109 +16,46 @@ from components.visualization import VisualizationAIO
 PAGE = "contributions"
 VIZ_ID = "prs-over-time"
 
-gc_pr_over_time = dbc.Card(
-    [
-        dbc.CardBody(
-            [
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            html.H3(
-                                "Pull Requests Over Time",
-                                className="card-title",
-                            ),
-                        ),
-                        dbc.Col(
-                            dbc.Button(
-                                "About Graph",
-                                id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                color="outline-secondary",
-                                size="sm",
-                                className="about-graph-button",
-                            ),
-                            width="auto",
-                        ),
-                    ],
-                    align="center",
-                    justify="between",
-                    className="mb-3",
-                ),
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody(
-                            """
-                            Visualizes PR behavior by tracking Created, Merged, and Closed-Not-Merged PRs over time.\n
-                            Also shows Created PR count as a trend over lifespan.
-                            """
-                        ),
-                    ],
-                    id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",
-                    placement="top",
-                    is_open=False,
-                ),
-                dcc.Loading(
-                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-                    style={"marginBottom": "1rem"},
-                ),
-                html.Hr(className="card-split"),  # Divider between graph and controls
-                dbc.Form(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Date Interval:",
-                                    html_for=f"date-interval-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
-                                dbc.Col(
-                                    dbc.RadioItems(
-                                        id=f"date-interval-{PAGE}-{VIZ_ID}",
-                                        options=[
-                                            {
-                                                "label": "Day",
-                                                "value": "D",
-                                            },
-                                            {
-                                                "label": "Week",
-                                                "value": "W",
-                                            },
-                                            {"label": "Month", "value": "M"},
-                                            {"label": "Year", "value": "Y"},
-                                        ],
-                                        value="M",
-                                        inline=True,
-                                        className="custom-radio-buttons",
-                                    ),
-                                    className="me-2",
-                                    width=4,
-                                ),
-                            ],
-                            align="center",
-                        ),
-                    ]
-                ),
-            ],
-            style={"padding": "1.5rem"},
+gc_pr_over_time = VisualizationAIO(
+    PAGE,
+    VIZ_ID,
+    title="Pull Requests Over Time",
+    graph_info="""
+    Visualizes PR behavior by tracking Created, Merged, and Closed-Not-Merged PRs over time.\n
+    Also shows Created PR count as a trend over lifespan.
+    """,
+    controls=[
+        dbc.Label(
+            "Date Interval:",
+            html_for=f"date-interval-{PAGE}-{VIZ_ID}",
+            width="auto",
+        ),
+        dbc.Col(
+            dbc.RadioItems(
+                id=f"date-interval-{PAGE}-{VIZ_ID}",
+                options=[
+                    {
+                        "label": "Day",
+                        "value": "D",
+                    },
+                    {
+                        "label": "Week",
+                        "value": "W",
+                    },
+                    {"label": "Month", "value": "M"},
+                    {"label": "Year", "value": "Y"},
+                ],
+                value="M",
+                inline=True,
+                className="custom-radio-buttons",
+            ),
+            className="me-2",
+            width=4,
         ),
     ],
-    className="dark-card",
+    class_name="dark-card",
     id="prs-over-time",
 )
-
-
-# formatting for graph generation
-@callback(
-    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
-    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
-    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
-)
-def toggle_popover(n, is_open):
-    if n:
-        return not is_open
-    return is_open
-
 
 # callback for prs over time graph
 @callback(
