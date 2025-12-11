@@ -20,154 +20,99 @@ from components.visualization import VisualizationAIO
 PAGE = "contributors"
 VIZ_ID = "contribs-by-action"
 
-gc_contribs_by_action = dbc.Card(
-    [
-        dbc.CardBody(
+gc_contribs_by_action = VisualizationAIO(
+    PAGE,
+    VIZ_ID,
+    title="Contributors by Action Type",
+    graph_info="""
+    Visualizes the number of contributors who have performed a specific action\n
+    (have opened a PR, for example) within a specified time-window. This is different\n
+    from counting the number of contributions (the number of PRs having been opened)-\n
+    the focus is on the activity of distinct contributors.
+    """,
+    controls=[
+        dbc.Row(
             [
-                dbc.Row(
+                dbc.Label(
+                    "Action Type:",
+                    html_for=f"action-dropdown-{PAGE}-{VIZ_ID}",
+                    width={"size": "auto"},
+                ),
+                dbc.Col(
                     [
-                        dbc.Col(
-                            html.H3(
-                                "Contributors by Action Type",
-                                className="card-title",
-                            ),
+                        dcc.Dropdown(
+                            id=f"action-dropdown-{PAGE}-{VIZ_ID}",
+                            options=[
+                                {
+                                    "label": "PR Open",
+                                    "value": "PR Opened",
+                                },
+                                {
+                                    "label": "Comment",
+                                    "value": "Comment",
+                                },
+                                {
+                                    "label": "PR Review",
+                                    "value": "PR Review",
+                                },
+                                {
+                                    "label": "Issue Opened",
+                                    "value": "Issue Opened",
+                                },
+                                {
+                                    "label": "Issue Closed",
+                                    "value": "Issue Closed",
+                                },
+                                {"label": "Commit", "value": "Commit"},
+                            ],
+                            value="PR Opened",
+                            clearable=False,
+                            className="dark-dropdown",
                         ),
-                        dbc.Col(
-                            dbc.Button(
-                                "About Graph",
-                                id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                color="outline-secondary",
-                                size="sm",
-                                className="about-graph-button",
-                            ),
-                            width="auto",
+                        dbc.Alert(
+                            children="""No contributions of this type have been made.\n
+                            Please select a different contribution type.""",
+                            id=f"check-alert-{PAGE}-{VIZ_ID}",
+                            dismissable=True,
+                            fade=False,
+                            is_open=False,
+                            color="warning",
                         ),
                     ],
-                    align="center",
-                    justify="between",
-                    className="mb-3",
-                ),
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody(
-                            """Visualizes the number of contributors who have performed a specific action\n
-                            (have opened a PR, for example) within a specified time-window. This is different\n
-                            from counting the number of contributions (the number of PRs having been opened)-\n
-                            the focus is on the activity of distinct contributors. """
-                        ),
-                    ],
-                    id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",
-                    placement="top",
-                    is_open=False,
-                ),
-                dcc.Loading(
-                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-                    style={"marginBottom": "1rem"},
-                ),
-                html.Hr(className="card-split"),  # Divider between graph and controls
-                dbc.Form(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Action Type:",
-                                    html_for=f"action-dropdown-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    [
-                                        dcc.Dropdown(
-                                            id=f"action-dropdown-{PAGE}-{VIZ_ID}",
-                                            options=[
-                                                {
-                                                    "label": "PR Open",
-                                                    "value": "PR Opened",
-                                                },
-                                                {
-                                                    "label": "Comment",
-                                                    "value": "Comment",
-                                                },
-                                                {
-                                                    "label": "PR Review",
-                                                    "value": "PR Review",
-                                                },
-                                                {
-                                                    "label": "Issue Opened",
-                                                    "value": "Issue Opened",
-                                                },
-                                                {
-                                                    "label": "Issue Closed",
-                                                    "value": "Issue Closed",
-                                                },
-                                                {"label": "Commit", "value": "Commit"},
-                                            ],
-                                            value="PR Opened",
-                                            clearable=False,
-                                            className="dark-dropdown",
-                                        ),
-                                        dbc.Alert(
-                                            children="""No contributions of this type have been made.\n
-                                            Please select a different contribution type.""",
-                                            id=f"check-alert-{PAGE}-{VIZ_ID}",
-                                            dismissable=True,
-                                            fade=False,
-                                            is_open=False,
-                                            color="warning",
-                                        ),
-                                    ],
-                                    className="me-2",
-                                    width=3,
-                                ),
-                            ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Date Interval:",
-                                    html_for=f"date-interval-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
-                                dbc.Col(
-                                    dbc.RadioItems(
-                                        id=f"date-interval-{PAGE}-{VIZ_ID}",
-                                        options=[
-                                            {"label": "Month", "value": "M1"},
-                                            {"label": "Quarter", "value": "M3"},
-                                            {"label": "6 Months", "value": "M6"},
-                                            {"label": "Year", "value": "M12"},
-                                        ],
-                                        value="M1",
-                                        inline=True,
-                                        className="custom-radio-buttons",
-                                    ),
-                                ),
-                            ],
-                            align="center",
-                        ),
-                    ]
+                    className="me-2",
+                    width=3,
                 ),
             ],
-            style={"padding": "1.5rem"},
-        )
+            align="center",
+        ),
+        dbc.Row(
+            [
+                dbc.Label(
+                    "Date Interval:",
+                    html_for=f"date-interval-{PAGE}-{VIZ_ID}",
+                    width="auto",
+                ),
+                dbc.Col(
+                    dbc.RadioItems(
+                        id=f"date-interval-{PAGE}-{VIZ_ID}",
+                        options=[
+                            {"label": "Month", "value": "M1"},
+                            {"label": "Quarter", "value": "M3"},
+                            {"label": "6 Months", "value": "M6"},
+                            {"label": "Year", "value": "M12"},
+                        ],
+                        value="M1",
+                        inline=True,
+                        className="custom-radio-buttons",
+                    ),
+                ),
+            ],
+            align="center",
+        ),
     ],
-    className="dark-card",
+    class_name="dark-card",
     id="contributor-actions",
 )
-
-
-# callback for graph info popover
-@callback(
-    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
-    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
-    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
-)
-def toggle_popover(n, is_open):
-    if n:
-        return not is_open
-    return is_open
 
 
 # callback for contributors by action graph
