@@ -20,128 +20,64 @@ from components.visualization import VisualizationAIO
 PAGE = "contributors"
 VIZ_ID = "contrib-drive-repeat"
 
-gc_contrib_drive_repeat = dbc.Card(
-    [
-        dbc.CardBody(
-            [
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            html.H3(
-                                id=f"graph-title-{PAGE}-{VIZ_ID}",
-                                className="card-title",
-                                style={"textAlign": "center"},
-                            ),
-                        ),
-                        dbc.Col(
-                            dbc.Button(
-                                "About Graph",
-                                id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                color="outline-secondary",
-                                size="sm",
-                                className="about-graph-button",
-                            ),
-                            width="auto",
-                        ),
-                    ],
-                    align="center",
-                    justify="between",
-                    className="mb-3",
-                ),
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody(
-                            """
-                            Visualizes the per-quarter consistency of contributors.\n
-                            A contributor is counted in an 'Action' category if they have made at least 'Contributions Required'\n
-                            contributions within the quarter. For example, if 'Contributions Required' is 2, then a contributor will\n
-                            be counted once in 'Open PR' and in 'PR Comment' if they made 2 or more PR's AND commented 2 or more times on PRs.\n
-                            Please read definition of 'Contributor Consistency' on Info page.
-                            """
-                        ),
-                    ],
-                    id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",
-                    placement="top",
-                    is_open=False,
-                ),
-                dcc.Loading(
-                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-                    style={"marginBottom": "1rem"},
-                ),
-                html.Hr(className="card-split"),  # Divider between graph and controls
-                dbc.Form(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Contributions Required:",
-                                    html_for=f"contributions-required-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id=f"contributions-required-{PAGE}-{VIZ_ID}",
-                                        type="number",
-                                        min=1,
-                                        max=15,
-                                        step=1,
-                                        value=4,
-                                        size="sm",
-                                        style={"width": "80px"},
-                                        className="dark-input",
-                                    ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                                dbc.Label(
-                                    "Graph View:",
-                                    html_for=f"graph-view-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.RadioItems(
-                                        id=f"graph-view-{PAGE}-{VIZ_ID}",
-                                        options=[
-                                            {
-                                                "label": "Repeat",
-                                                "value": "repeat",
-                                            },
-                                            {
-                                                "label": "Drive-Thru",
-                                                "value": "drive",
-                                            },
-                                        ],
-                                        value="drive",
-                                        inline=True,
-                                        className="custom-radio-buttons",
-                                    ),
-                                ),
-                            ],
-                            align="center",
-                        ),
-                    ]
-                ),
-            ],
-            style={"padding": "1.5rem"},
-        )
+gc_contrib_drive_repeat = VisualizationAIO(
+    PAGE,
+    VIZ_ID,
+    graph_info="""
+    Visualizes the per-quarter consistency of contributors.\n
+    A contributor is counted in an 'Action' category if they have made at least 'Contributions Required'\n
+    contributions within the quarter. For example, if 'Contributions Required' is 2, then a contributor will\n
+    be counted once in 'Open PR' and in 'PR Comment' if they made 2 or more PR's AND commented 2 or more times on PRs.\n
+    Please read definition of 'Contributor Consistency' on Info page.
+    """,
+    controls=[
+        dbc.Label(
+            "Contributions Required:",
+            html_for=f"contributions-required-{PAGE}-{VIZ_ID}",
+            width={"size": "auto"},
+        ),
+        dbc.Col(
+            dbc.Input(
+                id=f"contributions-required-{PAGE}-{VIZ_ID}",
+                type="number",
+                min=1,
+                max=15,
+                step=1,
+                value=4,
+                size="sm",
+                style={"width": "80px"},
+                className="dark-input",
+            ),
+            className="me-2",
+            width=2,
+        ),
+        dbc.Label(
+            "Graph View:",
+            html_for=f"graph-view-{PAGE}-{VIZ_ID}",
+            width={"size": "auto"},
+        ),
+        dbc.Col(
+            dbc.RadioItems(
+                id=f"graph-view-{PAGE}-{VIZ_ID}",
+                options=[
+                    {
+                        "label": "Repeat",
+                        "value": "repeat",
+                    },
+                    {
+                        "label": "Drive-Thru",
+                        "value": "drive",
+                    },
+                ],
+                value="drive",
+                inline=True,
+                className="custom-radio-buttons",
+            ),
+        ),
     ],
-    className="dark-card",
+    class_name="dark-card",
     id="drive-throughs",
 )
-
-
-# callback for graph info popover
-@callback(
-    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
-    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
-    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
-)
-def toggle_popover_1(n, is_open):
-    if n:
-        return not is_open
-    return is_open
 
 
 # callback for dynamically changing the graph title
