@@ -15,6 +15,7 @@ import cache_manager.cache_facade as cf
 from pages.utils.job_utils import nodata_graph
 import time
 import app
+from components.visualization import VisualizationAIO
 
 PAGE = "contributions"
 VIZ_ID = "pr-first-response"

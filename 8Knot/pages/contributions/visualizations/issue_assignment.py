@@ -16,6 +16,7 @@ import app
 import numpy as np
 import app
 import cache_manager.cache_facade as cf
+from components.visualization import VisualizationAIO
 
 PAGE = "contributions"
 VIZ_ID = "issue_assignment"

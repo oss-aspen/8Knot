@@ -14,6 +14,7 @@ import time
 import datetime as dt
 import app
 import cache_manager.cache_facade as cf
+from components.visualization import VisualizationAIO
 
 PAGE = "contributions"
 VIZ_ID = "cntrib_issue-assignment"

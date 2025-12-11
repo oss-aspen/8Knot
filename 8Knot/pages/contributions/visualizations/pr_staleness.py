@@ -13,6 +13,7 @@ from pages.utils.job_utils import nodata_graph
 from queries.prs_query import prs_query as prq
 import time
 import cache_manager.cache_facade as cf
+from components.visualization import VisualizationAIO
 
 PAGE = "contributions"
 VIZ_ID = "pr-staleness"

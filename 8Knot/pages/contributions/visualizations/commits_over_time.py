@@ -11,6 +11,7 @@ from queries.commits_query import commits_query as cmq
 from pages.utils.job_utils import nodata_graph
 import time
 import cache_manager.cache_facade as cf
+from components.visualization import VisualizationAIO
 
 PAGE = "contributions"
 VIZ_ID = "commits-over-time"

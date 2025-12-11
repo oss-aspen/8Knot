@@ -14,6 +14,7 @@ from queries.issues_query import issues_query as iq
 from pages.utils.job_utils import nodata_graph
 import time
 import cache_manager.cache_facade as cf
+from components.visualization import VisualizationAIO
 
 PAGE = "contributions"
 VIZ_ID = "issue-staleness"
