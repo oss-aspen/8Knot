@@ -20,155 +20,98 @@ PAGE = "contributions"
 VIZ_ID = "issue-staleness"
 
 
-gc_issue_staleness = dbc.Card(
-    [
-        dbc.CardBody(
+gc_issue_staleness = VisualizationAIO(
+    PAGE,
+    VIZ_ID,
+    title="Issue Activity - Staleness",
+    graph_info="""
+    Visualizes growth of Issue backlog. Differentiates sub-populations\n
+    of issues by their 'Staleness.'\n
+    Please see the definition of 'Staleness' on the Info page.
+    """,
+    controls=[
+        dbc.Row(
             [
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            html.H3(
-                                "Issue Activity - Staleness",
-                                className="card-title",
-                            ),
-                        ),
-                        dbc.Col(
-                            dbc.Button(
-                                "About Graph",
-                                id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                color="outline-secondary",
-                                size="sm",
-                                className="about-graph-button",
-                            ),
-                            width="auto",
-                        ),
-                    ],
-                    align="center",
-                    justify="between",
-                    className="mb-3",
+                dbc.Label(
+                    "Days Until Staling:",
+                    html_for=f"staling-days-{PAGE}-{VIZ_ID}",
+                    width={"size": "auto"},
                 ),
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody(
-                            """
-                            Visualizes growth of Issue backlog. Differentiates sub-populations\n
-                            of issues by their 'Staleness.'\n
-                            Please see the definition of 'Staleness' on the Info page.
-                            """
-                        ),
-                    ],
-                    id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",
-                    placement="top",
+                dbc.Col(
+                    dbc.Input(
+                        id=f"staling-days-{PAGE}-{VIZ_ID}",
+                        type="number",
+                        min=1,
+                        max=120,
+                        step=1,
+                        value=7,
+                        size="sm",
+                        style={"width": "80px"},
+                        className="dark-input",
+                    ),
+                    className="me-2",
+                    width=2,
+                ),
+                dbc.Label(
+                    "Days Until Stale:",
+                    html_for=f"stale-days-{PAGE}-{VIZ_ID}",
+                    width={"size": "auto"},
+                ),
+                dbc.Col(
+                    dbc.Input(
+                        id=f"stale-days-{PAGE}-{VIZ_ID}",
+                        type="number",
+                        min=1,
+                        max=120,
+                        step=1,
+                        value=30,
+                        size="sm",
+                        style={"width": "80px"},
+                        className="dark-input",
+                    ),
+                    className="me-2",
+                    width=2,
+                ),
+                dbc.Alert(
+                    children="Please ensure that 'Days Until Staling' is less than 'Days Until Stale'",
+                    id=f"check-alert-{PAGE}-{VIZ_ID}",
+                    dismissable=True,
+                    fade=False,
                     is_open=False,
+                    color="warning",
                 ),
-                dcc.Loading(
-                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-                    style={"marginBottom": "1rem"},
+            ],
+            align="center",
+        ),
+        dbc.Row(
+            [
+                dbc.Label(
+                    "Date Interval:",
+                    html_for=f"date-interval-{PAGE}-{VIZ_ID}",
+                    width={"size": "auto"},
                 ),
-                html.Hr(className="card-split"),  # Divider between graph and controls
-                dbc.Form(
+                dbc.Col(
                     [
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Days Until Staling:",
-                                    html_for=f"staling-days-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id=f"staling-days-{PAGE}-{VIZ_ID}",
-                                        type="number",
-                                        min=1,
-                                        max=120,
-                                        step=1,
-                                        value=7,
-                                        size="sm",
-                                        style={"width": "80px"},
-                                        className="dark-input",
-                                    ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                                dbc.Label(
-                                    "Days Until Stale:",
-                                    html_for=f"stale-days-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id=f"stale-days-{PAGE}-{VIZ_ID}",
-                                        type="number",
-                                        min=1,
-                                        max=120,
-                                        step=1,
-                                        value=30,
-                                        size="sm",
-                                        style={"width": "80px"},
-                                        className="dark-input",
-                                    ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                                dbc.Alert(
-                                    children="Please ensure that 'Days Until Staling' is less than 'Days Until Stale'",
-                                    id=f"check-alert-{PAGE}-{VIZ_ID}",
-                                    dismissable=True,
-                                    fade=False,
-                                    is_open=False,
-                                    color="warning",
-                                ),
+                        dbc.RadioItems(
+                            id=f"date-interval-{PAGE}-{VIZ_ID}",
+                            options=[
+                                {"label": "Trend", "value": "D"},
+                                {"label": "Month", "value": "M"},
+                                {"label": "Year", "value": "Y"},
                             ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Date Interval:",
-                                    html_for=f"date-interval-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    [
-                                        dbc.RadioItems(
-                                            id=f"date-interval-{PAGE}-{VIZ_ID}",
-                                            options=[
-                                                {"label": "Trend", "value": "D"},
-                                                {"label": "Month", "value": "M"},
-                                                {"label": "Year", "value": "Y"},
-                                            ],
-                                            value="M",
-                                            inline=True,
-                                            className="custom-radio-buttons",
-                                        ),
-                                    ]
-                                ),
-                            ],
-                            align="center",
+                            value="M",
+                            inline=True,
+                            className="custom-radio-buttons",
                         ),
                     ]
                 ),
             ],
-            style={"padding": "1.5rem"},
-        )
+            align="center",
+        ),
     ],
-    className="dark-card",
+    class_name="dark-card",
     id="issue-staleness",
 )
-
-
-# callback for graph info popover
-@callback(
-    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
-    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
-    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
-)
-def toggle_popover(n, is_open):
-    if n:
-        return not is_open
-    return is_open
 
 
 @callback(
