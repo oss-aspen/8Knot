@@ -23,165 +23,107 @@ from components.visualization import VisualizationAIO
 PAGE = "contributors"
 VIZ_ID = "lottery-factor-over-time"
 
-gc_lottery_factor_over_time = dbc.Card(
-    [
-        dbc.CardBody(
+gc_lottery_factor_over_time = VisualizationAIO(
+    PAGE,
+    VIZ_ID,
+    title="Lottery Factor: 6 Month Windows",
+    graph_info="""
+    This analysis is also referred to as "Bus Factor". For each action type, visualizes
+    the smallest group of contributors who account for a user-inputted percentage
+    of the total number of contributions. By default, the threshold is set to 50%.
+    Thus, the visualization will show the number of contributors who account for
+    50% of all contributions made, per action type. Suppose two individuals authored
+    50% of the commits, then the contributor prolificacy is 2. Analysis is done over
+    a time range, and snapshots of the time range are set according to window width
+    and step size. By default, window width and step size are set to 6 months.
+    Thus, contributor prolificacy is calculated for each non-overlapping 6-month
+    snapshot of the time range provided. Optionally, contributors who have 'bot' or
+    any custom keyword(s) in their logins can be filtered out. Please note that gaps
+    in the graph indicate that no contributions of a specific action type(s) were made
+    during that time period.
+    """,
+    controls=[
+        dbc.Row(
             [
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            html.H3(
-                                "Lottery Factor: 6 Month Windows",
-                                id=f"graph-title-{PAGE}-{VIZ_ID}",
-                                className="card-title",
-                            ),
-                        ),
-                        dbc.Col(
-                            dbc.Button(
-                                "About Graph",
-                                id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                color="outline-secondary",
-                                size="sm",
-                                className="about-graph-button",
-                            ),
-                            width="auto",
-                        ),
-                    ],
-                    align="center",
-                    justify="between",
-                    className="mb-3",
+                dbc.Label(
+                    "Window Width (Months):",
+                    html_for=f"window-width-{PAGE}-{VIZ_ID}",
+                    width={"size": "auto"},
                 ),
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody(
-                            """
-                                        This analysis is also referred to as "Bus Factor". For each action type, visualizes
-                                        the smallest group of contributors who account for a user-inputted percentage
-                                        of the total number of contributions. By default, the threshold is set to 50%.
-                                        Thus, the visualization will show the number of contributors who account for
-                                        50% of all contributions made, per action type. Suppose two individuals authored
-                                        50% of the commits, then the contributor prolificacy is 2. Analysis is done over
-                                        a time range, and snapshots of the time range are set according to window width
-                                        and step size. By default, window width and step size are set to 6 months.
-                                        Thus, contributor prolificacy is calculated for each non-overlapping 6-month
-                                        snapshot of the time range provided. Optionally, contributors who have 'bot' or
-                                        any custom keyword(s) in their logins can be filtered out. Please note that gaps
-                                        in the graph indicate that no contributions of a specific action type(s) were made
-                                        during that time period.
-                                        """
-                        ),
-                    ],
-                    id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",  # needs to be the same as dbc.Button id
-                    placement="top",
+                dbc.Col(
+                    dbc.Input(
+                        id=f"window-width-{PAGE}-{VIZ_ID}",
+                        type="number",
+                        min=1,
+                        max=12,
+                        step=1,
+                        value=6,
+                        size="sm",
+                        style={"width": "80px"},
+                        className="dark-input",
+                    ),
+                    className="me-2",
+                    width=2,
+                ),
+                dbc.Label(
+                    "Step Size (Months):",
+                    html_for=f"step-size-{PAGE}-{VIZ_ID}",
+                    width="auto",
+                ),
+                dbc.Col(
+                    dbc.Input(
+                        id=f"step-size-{PAGE}-{VIZ_ID}",
+                        type="number",
+                        min=1,
+                        max=12,
+                        step=1,
+                        value=6,
+                        size="sm",
+                        style={"width": "80px"},
+                        className="dark-input",
+                    ),
+                    className="me-2",
+                    width=2,
+                ),
+                dbc.Alert(
+                    children="Please ensure that 'Step Size' is less than or equal to 'Window Size'",
+                    id=f"check-alert-{PAGE}-{VIZ_ID}",
+                    dismissable=True,
+                    fade=False,
                     is_open=False,
-                ),
-                dcc.Loading(
-                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-                    style={"marginBottom": "1rem"},
-                ),
-                html.Hr(className="card-split"),  # Divider between graph and controls
-                dbc.Form(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Window Width (Months):",
-                                    html_for=f"window-width-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id=f"window-width-{PAGE}-{VIZ_ID}",
-                                        type="number",
-                                        min=1,
-                                        max=12,
-                                        step=1,
-                                        value=6,
-                                        size="sm",
-                                        style={"width": "80px"},
-                                        className="dark-input",
-                                    ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                                dbc.Label(
-                                    "Step Size (Months):",
-                                    html_for=f"step-size-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id=f"step-size-{PAGE}-{VIZ_ID}",
-                                        type="number",
-                                        min=1,
-                                        max=12,
-                                        step=1,
-                                        value=6,
-                                        size="sm",
-                                        style={"width": "80px"},
-                                        className="dark-input",
-                                    ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                                dbc.Alert(
-                                    children="Please ensure that 'Step Size' is less than or equal to 'Window Size'",
-                                    id=f"check-alert-{PAGE}-{VIZ_ID}",
-                                    dismissable=True,
-                                    fade=False,
-                                    is_open=False,
-                                    color="warning",
-                                ),
-                            ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Threshold:",
-                                    html_for=f"threshold-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    [
-                                        dcc.Slider(
-                                            id=f"threshold-{PAGE}-{VIZ_ID}",
-                                            min=10,
-                                            max=95,
-                                            value=50,
-                                            marks={i: f"{i}%" for i in range(10, 100, 5)},
-                                            className="dark-slider",
-                                        ),
-                                    ],
-                                    className="me-2",
-                                    width=9,
-                                ),
-                            ],
-                            align="center",
-                        ),
-                    ]
+                    color="warning",
                 ),
             ],
-            style={"padding": "1.5rem"},
-        )
+            align="center",
+        ),
+        dbc.Row(
+            [
+                dbc.Label(
+                    "Threshold:",
+                    html_for=f"threshold-{PAGE}-{VIZ_ID}",
+                    width={"size": "auto"},
+                ),
+                dbc.Col(
+                    [
+                        dcc.Slider(
+                            id=f"threshold-{PAGE}-{VIZ_ID}",
+                            min=10,
+                            max=95,
+                            value=50,
+                            marks={i: f"{i}%" for i in range(10, 100, 5)},
+                            className="dark-slider",
+                        ),
+                    ],
+                    className="me-2",
+                    width=9,
+                ),
+            ],
+            align="center",
+        ),
     ],
-    className="dark-card",
+    class_name="dark-card",
     id="lottery-factor-time",
 )
-
-
-# callback for graph info popover
-@callback(
-    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
-    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
-    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
-)
-def toggle_popover(n, is_open):
-    if n:
-        return not is_open
-    return is_open
 
 
 # callback for dynamically changing the graph title
