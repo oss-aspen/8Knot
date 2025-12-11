@@ -13,106 +13,53 @@ from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
 import cache_manager.cache_facade as cf
+from components.visualization import VisualizationAIO
 
 PAGE = "repo_info"
 VIZ_ID = "code-languages"
 
-gc_code_language = dbc.Card(
-    [
-        dbc.CardBody(
+gc_code_language = VisualizationAIO(
+    PAGE,
+    VIZ_ID,
+    graph_info="""
+        Visualizes the percent of files or lines of code by language.
+    """,
+    controls=[
+        dbc.Row(
             [
-                dbc.Row(
-                    [
-                        dbc.Col(html.H3(id=f"graph-title-{PAGE}-{VIZ_ID}", className="card-title")),
-                        dbc.Col(
-                            dbc.Button(
-                                "About Graph",
-                                id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                color="outline-secondary",
-                                size="sm",
-                                className="about-graph-button",
-                            ),
-                            width="auto",
-                        ),
-                    ],
-                    align="center",
-                    justify="between",
-                    className="mb-3",
+                dbc.Label(
+                    "Graph View:",
+                    html_for=f"graph-view-{PAGE}-{VIZ_ID}",
+                    width={"size": "auto"},
                 ),
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody(
-                            """
-                            Visualizes the percent of files or lines of code by language.
-                            """
-                        ),
-                    ],
-                    id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",
-                    placement="top",
-                    is_open=False,
-                ),
-                dcc.Loading(
-                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-                    style={"marginBottom": "1rem"},
-                ),
-                html.Hr(className="card-split"),  # Divider between graph and controls
-                dbc.Form(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Graph View:",
-                                    html_for=f"graph-view-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.RadioItems(
-                                        id=f"graph-view-{PAGE}-{VIZ_ID}",
-                                        options=[
-                                            {
-                                                "label": "Files",
-                                                "value": "file",
-                                            },
-                                            {
-                                                "label": "Lines of Code",
-                                                "value": "line",
-                                            },
-                                        ],
-                                        value="file",
-                                        inline=True,
-                                        className="custom-radio-buttons",
-                                    ),
-                                    className="me-2",
-                                    width=4,
-                                ),
-                            ],
-                            align="center",
-                            justify="start",
-                        ),
-                    ]
+                dbc.Col(
+                    dbc.RadioItems(
+                        id=f"graph-view-{PAGE}-{VIZ_ID}",
+                        options=[
+                            {
+                                "label": "Files",
+                                "value": "file",
+                            },
+                            {
+                                "label": "Lines of Code",
+                                "value": "line",
+                            },
+                        ],
+                        value="file",
+                        inline=True,
+                        className="custom-radio-buttons",
+                    ),
+                    className="me-2",
+                    width=4,
                 ),
             ],
-            style={"padding": "1.5rem"},  # Padding between main content and the card border
-        )
+            align="center",
+            justify="start",
+        ),
     ],
-    className="dark-card",
+    class_name="dark-card",
     id="code-languages",
 )
-
-
-# callback for graph info popover
-@callback(
-    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
-    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
-    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
-)
-def toggle_popover(n, is_open):
-    if n:
-        return not is_open
-    return is_open
-
 
 # callback for dynamically changing the graph title
 @callback(
