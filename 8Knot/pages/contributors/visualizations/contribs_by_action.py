@@ -15,6 +15,7 @@ import app
 import pages.utils.preprocessing_utils as preproc_utils
 import cache_manager.cache_facade as cf
 
+from components.visualization import VisualizationAIO
 
 PAGE = "contributors"
 VIZ_ID = "contribs-by-action"

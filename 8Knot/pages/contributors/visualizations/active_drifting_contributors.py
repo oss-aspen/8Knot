@@ -14,6 +14,7 @@ import app
 from queries.contributors_query import contributors_query as ctq
 import pages.utils.preprocessing_utils as preproc_utils
 import cache_manager.cache_facade as cf
+from components.visualization import VisualizationAIO
 
 PAGE = "contributors"
 VIZ_ID = "active-drifting-contributors"

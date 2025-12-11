@@ -12,6 +12,7 @@ from queries.commits_query import commits_query as cmq
 import cache_manager.cache_facade as cf
 from pages.utils.job_utils import nodata_graph
 import time
+from components.visualization import VisualizationAIO
 
 PAGE = "contributors"
 VIZ_ID = "contrib-activity-cycle"
