@@ -18,102 +18,40 @@ from components.visualization import VisualizationAIO
 PAGE = "contributions"
 VIZ_ID = "pr-review-response"
 
-gc_pr_review_response = dbc.Card(
-    [
-        dbc.CardBody(
-            [
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            html.H3(
-                                "Pull Request Conversation Engagement",
-                                className="card-title",
-                            ),
-                        ),
-                        dbc.Col(
-                            dbc.Button(
-                                "About Graph",
-                                id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                color="outline-secondary",
-                                size="sm",
-                                className="about-graph-button",
-                            ),
-                            width="auto",
-                        ),
-                    ],
-                    align="center",
-                    justify="between",
-                    className="mb-3",
-                ),
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody(
-                            """
-                            Tracks the number of PRs that are open on a given day vs. those that have
-                            received a comment or a review within a time interval, or that are waiting
-                            on a response from the opener.
-                            """
-                        ),
-                    ],
-                    id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",
-                    placement="top",
-                    is_open=False,
-                ),
-                dcc.Loading(
-                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-                    style={"marginBottom": "1rem"},
-                ),
-                html.Hr(className="card-split"),  # Divider between graph and controls
-                dbc.Form(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Response Days:",
-                                    html_for=f"response-days-{PAGE}-{VIZ_ID}",
-                                    width="auto",
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id=f"response-days-{PAGE}-{VIZ_ID}",
-                                        type="number",
-                                        min=1,
-                                        max=120,
-                                        step=1,
-                                        value=2,
-                                        size="sm",
-                                        style={"width": "80px"},
-                                        className="dark-input",
-                                    ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                            ],
-                            align="center",
-                        ),
-                    ]
-                ),
-            ],
-            style={"padding": "1.5rem"},
-        )
+gc_pr_review_response = VisualizationAIO(
+    PAGE,
+    VIZ_ID,
+    title="Pull Request Conversation Engagement",
+    graph_info="""
+    Tracks the number of PRs that are open on a given day vs. those that have
+    received a comment or a review within a time interval, or that are waiting
+    on a response from the opener.
+    """,
+    controls=[
+        dbc.Label(
+            "Response Days:",
+            html_for=f"response-days-{PAGE}-{VIZ_ID}",
+            width="auto",
+        ),
+        dbc.Col(
+            dbc.Input(
+                id=f"response-days-{PAGE}-{VIZ_ID}",
+                type="number",
+                min=1,
+                max=120,
+                step=1,
+                value=2,
+                size="sm",
+                style={"width": "80px"},
+                className="dark-input",
+            ),
+            className="me-2",
+            width=2,
+        ),
     ],
-    className="dark-card",
+    class_name="dark-card",
     id="pr-review-response",
 )
-
-
-# callback for graph info popover
-@callback(
-    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
-    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
-    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
-)
-def toggle_popover(n, is_open):
-    if n:
-        return not is_open
-    return is_open
 
 
 # callback for pr review response graph
