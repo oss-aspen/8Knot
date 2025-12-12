@@ -1,146 +1,79 @@
-from dash import html, dcc
-import dash
 import dash_bootstrap_components as dbc
 from dash import callback
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output
 import pandas as pd
 import logging
-import numpy as np
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from pages.utils.job_utils import nodata_graph
 from queries.contributors_query import contributors_query as ctq
 import time
-import io
-from cache_manager.cache_manager import CacheManager as cm
 import app
 import pages.utils.preprocessing_utils as preproc_utils
 import cache_manager.cache_facade as cf
+from components.visualization import VisualizationAIO
 
 PAGE = "contributors"
 VIZ_ID = "contrib-types-over-time"
 
-gc_contributors_over_time = dbc.Card(
-    [
-        dbc.CardBody(
-            [
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            html.H3(
-                                "Contributor Types Over Time",
-                                className="card-title",
-                            ),
-                        ),
-                        dbc.Col(
-                            dbc.Button(
-                                "About Graph",
-                                id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                color="outline-secondary",
-                                size="sm",
-                                className="about-graph-button",
-                            ),
-                            width="auto",
-                        ),
-                    ],
-                    align="center",
-                    justify="between",
-                    className="mb-3",
-                ),
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody(
-                            """
-                            Visualizes the per-quarter consistency of contributors.\n
-                            Partitions quarterly population of contributors based on whether they make\n
-                            'Required Contributions' or more contributions.
-                            Please read definition of 'Contributor Consistency' on Info page.
-                            """
-                        ),
-                    ],
-                    id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",
-                    placement="top",
-                    is_open=False,
-                ),
-                dcc.Loading(
-                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-                    style={"marginBottom": "1rem"},
-                ),
-                html.Hr(className="card-split"),  # Divider between graph and controls
-                dbc.Form(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Contributions Required:",
-                                    html_for=f"contributions-required-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id=f"contributions-required-{PAGE}-{VIZ_ID}",
-                                        type="number",
-                                        min=1,
-                                        max=15,
-                                        step=1,
-                                        value=4,
-                                        size="sm",
-                                        style={"width": "80px"},
-                                        className="dark-input",
-                                    ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                                dbc.Label(
-                                    "Date Interval:",
-                                    html_for=f"date-interval-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.RadioItems(
-                                        id=f"date-interval-{PAGE}-{VIZ_ID}",
-                                        options=[
-                                            {
-                                                "label": "Week",
-                                                "value": "W",
-                                            },
-                                            {"label": "Month", "value": "M"},
-                                            {"label": "Year", "value": "Y"},
-                                        ],
-                                        value="M",
-                                        inline=True,
-                                        className="custom-radio-buttons",
-                                    ),
-                                    className="me-2",
-                                    width=4,
-                                ),
-                            ],
-                            align="center",
-                            justify="start",
-                        ),
-                    ]
-                ),
-            ],
-            style={"padding": "1.5rem"},
-        )
+gc_contributors_over_time = VisualizationAIO(
+    PAGE,
+    VIZ_ID,
+    title="Contributor Types Over Time",
+    graph_info="""
+    Visualizes the per-quarter consistency of contributors.\n
+    Partitions quarterly population of contributors based on whether they make\n
+    'Required Contributions' or more contributions.
+    Please read definition of 'Contributor Consistency' on Info page.
+    """,
+    controls=[
+        dbc.Label(
+            "Contributions Required:",
+            html_for=f"contributions-required-{PAGE}-{VIZ_ID}",
+            width={"size": "auto"},
+        ),
+        dbc.Col(
+            dbc.Input(
+                id=f"contributions-required-{PAGE}-{VIZ_ID}",
+                type="number",
+                min=1,
+                max=15,
+                step=1,
+                value=4,
+                size="sm",
+                style={"width": "80px"},
+                className="dark-input",
+            ),
+            className="me-2",
+            width=2,
+        ),
+        dbc.Label(
+            "Date Interval:",
+            html_for=f"date-interval-{PAGE}-{VIZ_ID}",
+            width={"size": "auto"},
+        ),
+        dbc.Col(
+            dbc.RadioItems(
+                id=f"date-interval-{PAGE}-{VIZ_ID}",
+                options=[
+                    {
+                        "label": "Week",
+                        "value": "W",
+                    },
+                    {"label": "Month", "value": "M"},
+                    {"label": "Year", "value": "Y"},
+                ],
+                value="M",
+                inline=True,
+                className="custom-radio-buttons",
+            ),
+            className="me-2",
+            width=4,
+        ),
     ],
-    className="dark-card",
+    class_name="dark-card",
     id="contributor-types",
 )
-
-
-# callback for graph info popover
-@callback(
-    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
-    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
-    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
-)
-def toggle_popover(n, is_open):
-    if n:
-        return not is_open
-    return is_open
 
 
 @callback(
