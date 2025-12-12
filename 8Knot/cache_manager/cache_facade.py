@@ -20,6 +20,7 @@ typically have available.
 We're not experts in the field of ORMs and DB drivers, and would be
 happy to be proven wrong about the apparent performance tradeoff.
 """
+
 import logging
 from uuid import uuid4
 import psycopg2 as pg

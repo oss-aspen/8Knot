@@ -24,6 +24,7 @@ except ImportError:
 
 # Landing Page Callbacks
 
+
 # Callback to handle Learn button and show/hide welcome content
 @callback(
     [

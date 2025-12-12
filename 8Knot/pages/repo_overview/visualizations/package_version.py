@@ -31,6 +31,7 @@ gc_package_version = VisualizationAIO(
     id="package-version",
 )
 
+
 # callback for package version updates graph
 @callback(
     Output(f"{PAGE}-{VIZ_ID}", "figure"),

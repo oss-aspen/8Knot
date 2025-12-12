@@ -13,6 +13,7 @@ Search-Specific Functions:
     create_search_bar: Complete search bar with all features
     create_bottom_navbar: Bottom navigation with request links
 """
+
 from typing import List, Dict, Any, Optional, Union
 import re
 

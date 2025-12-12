@@ -11,6 +11,7 @@ import logging
 import traceback
 from functools import wraps
 
+
 # Configure logging for testing
 def setup_testing_logging():
     """Configure logging to be more descriptive during testing."""
