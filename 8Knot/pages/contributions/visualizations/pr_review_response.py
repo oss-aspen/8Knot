@@ -1,13 +1,11 @@
-from dash import html, dcc, callback
-import dash
+from dash import callback
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output
 import plotly.graph_objects as go
 import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
-import plotly.express as px
-from pages.utils.graph_utils import get_graph_time_values, baby_blue
+from pages.utils.graph_utils import baby_blue
 from queries.pr_response_query import pr_response_query as prr
 from pages.utils.job_utils import nodata_graph
 import time

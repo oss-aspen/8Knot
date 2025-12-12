@@ -1,8 +1,6 @@
-from dash import html, dcc
-import dash
 import dash_bootstrap_components as dbc
 from dash import callback
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output
 import plotly.graph_objects as go
 import pandas as pd
 import logging
