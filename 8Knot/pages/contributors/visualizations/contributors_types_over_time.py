@@ -1,18 +1,13 @@
-from dash import html, dcc
-import dash
 import dash_bootstrap_components as dbc
 from dash import callback
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output
 import pandas as pd
 import logging
-import numpy as np
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from pages.utils.job_utils import nodata_graph
 from queries.contributors_query import contributors_query as ctq
 import time
-import io
-from cache_manager.cache_manager import CacheManager as cm
 import app
 import pages.utils.preprocessing_utils as preproc_utils
 import cache_manager.cache_facade as cf
