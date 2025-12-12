@@ -1,15 +1,12 @@
-from dash import html, dcc, callback
-import dash
+from dash import dcc, callback
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output, State
-import plotly.graph_objects as go
+from dash.dependencies import Input, Output
 import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import baby_blue
 from queries.affiliation_query import affiliation_query as aq
-import io
 from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
