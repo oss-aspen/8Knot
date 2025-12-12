@@ -186,6 +186,7 @@ gc_project_velocity = VisualizationAIO(
     id="project-velocity",
 )
 
+
 # callback for Project Velocity graph
 @callback(
     Output(f"{PAGE}-{VIZ_ID}", "figure"),

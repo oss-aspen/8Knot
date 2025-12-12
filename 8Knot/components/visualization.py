@@ -2,6 +2,7 @@ from dash import html, dcc, Input, State, Output, callback, MATCH
 import dash_bootstrap_components as dbc
 from typing import Optional
 
+
 # All-in-One Components should be suffixed with 'AIO'
 class VisualizationAIO(dbc.Card):
     def __init__(
@@ -71,17 +72,19 @@ class VisualizationAIO(dbc.Card):
                             style={"marginBottom": "1rem"},
                         ),
                         html.Hr(className="card-split") if controls else None,  # Divider between graph and controls
-                        dbc.Form(
-                            [
-                                dbc.Row(
-                                    controls,
-                                    align="center",
-                                    justify="start",
-                                ),
-                            ]
-                        )
-                        if controls
-                        else None,
+                        (
+                            dbc.Form(
+                                [
+                                    dbc.Row(
+                                        controls,
+                                        align="center",
+                                        justify="start",
+                                    ),
+                                ]
+                            )
+                            if controls
+                            else None
+                        ),
                     ],
                     style={"padding": "1.5rem"},
                 ),

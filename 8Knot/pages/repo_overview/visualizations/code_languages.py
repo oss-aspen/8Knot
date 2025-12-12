@@ -61,6 +61,7 @@ gc_code_language = VisualizationAIO(
     id="code-languages",
 )
 
+
 # callback for dynamically changing the graph title
 @callback(
     Output(f"graph-title-{PAGE}-{VIZ_ID}", "children"),
