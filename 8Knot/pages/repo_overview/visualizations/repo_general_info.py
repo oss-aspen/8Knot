@@ -4,10 +4,12 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
+import polars as pl
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, color_seq
+from pages.utils.polars_utils import to_polars, to_pandas
 from queries.repo_info_query import repo_info_query as riq
 
 # from queries.repo_files_query import repo_files_query as rfq #TODO: run back on when the query hang is fixed
@@ -103,70 +105,75 @@ def repo_general_info(repo):
 
 
 def process_data(df_repo_files, df_repo_info, df_releases):
+    """
+    Process repository data using Polars for performance, returning Pandas for visualization.
 
-    updated_times_repo_info = pd.to_datetime(df_repo_info["data_collection_date"])
+    This follows the "Polars Core, Pandas Edge" architecture:
+    - Core processing in Polars (2-10x faster)
+    - Return Pandas DataFrame for Plotly/Dash compatibility
+    """
+    # === POLARS PROCESSING START ===
 
-    unique_updated_times = updated_times_repo_info.drop_duplicates().to_numpy().flatten()
+    # Convert to Polars for fast processing
+    pl_repo_info = to_polars(df_repo_info)
+    pl_releases = to_polars(df_releases) if not df_releases.empty else pl.DataFrame()
+    pl_files = to_polars(df_repo_files) if not df_repo_files.empty else pl.DataFrame()
 
-    if len(unique_updated_times) > 1:
+    # Get last update date
+    updated_times = pl_repo_info.select(pl.col("data_collection_date").cast(pl.Datetime)).unique()
+    if updated_times.height > 1:
         logging.warning(f"{VIZ_ID} - MORE THAN ONE LAST UPDATE DATE")
+    updated_date = updated_times.row(-1)[0].strftime("%d/%m/%Y") if updated_times.height > 0 else "Unknown"
 
-    updated_date = pd.to_datetime(str(unique_updated_times[-1])).strftime("%d/%m/%Y")
+    # Release information processing with Polars
+    if pl_releases.height > 0:
+        pl_releases = pl_releases.with_columns(pl.col("release_published_at").cast(pl.Datetime("us", "UTC")))
+        pl_releases = pl_releases.with_columns(pl.col("release_published_at").shift(1).alias("previous_release"))
+        pl_releases = pl_releases.with_columns(
+            (pl.col("release_published_at") - pl.col("previous_release")).dt.total_days().alias("time_bt_release")
+        )
 
-    # convert to datetime objects rather than strings
-    df_releases["release_published_at"] = pd.to_datetime(df_releases["release_published_at"], utc=True)
+        num_releases = pl_releases.height
+        last_release_date = pl_releases.select(pl.col("release_published_at").max()).item()
+        avg_release_time = pl_releases.select(pl.col("time_bt_release").abs().mean()).item()
 
-    # release information preprocessing
-    # get date of previous row/previous release
-    df_releases["previous_release"] = df_releases["release_published_at"].shift()
-    # calculate difference
-    df_releases["time_bt_release"] = df_releases["release_published_at"] - df_releases["previous_release"]
-    # reformat to days (vectorized - faster than .apply())
-    df_releases["time_bt_release"] = df_releases["time_bt_release"].dt.days
-
-    # release info initial assignments
-    num_releases = df_releases.shape[0]
-    last_release_date = df_releases["release_published_at"].max()
-    avg_release_time = df_releases["time_bt_release"].abs().mean().round(1)
-
-    # reformat based on if there are any releases
-    if num_releases == 0:
+        if avg_release_time is not None:
+            avg_release_time = f"{round(avg_release_time, 1)} Days"
+        else:
+            avg_release_time = "No Releases Found"
+        last_release_date = last_release_date.strftime("%Y-%m-%d") if last_release_date else "No Releases Found"
+    else:
+        num_releases = 0
         avg_release_time = "No Releases Found"
         last_release_date = "No Releases Found"
+
+    # Extract repo info values using Polars
+    repo_info_row = pl_repo_info.row(0, named=True)
+    license_val = repo_info_row["license"]
+    stars_count = repo_info_row["stars_count"]
+    fork_count = repo_info_row["fork_count"]
+    watchers_count = repo_info_row["watchers_count"]
+    issues_enabled = str(repo_info_row["issues_enabled"]).capitalize()
+
+    # Check for code of conduct file
+    coc = repo_info_row["code_of_conduct_file"]
+    coc = "File found" if coc is not None else "File not found"
+
+    # Check files for CONTRIBUTING.md and SECURITY.md using Polars
+    if pl_files.height > 0:
+        contrib_guide = pl_files.filter(pl.col("file_name") == "CONTRIBUTING.md").height > 0
+        security_policy = pl_files.filter(pl.col("file_name") == "SECURITY.md").height > 0
     else:
-        avg_release_time = str(avg_release_time) + " Days"
-        last_release_date = last_release_date.strftime("%Y-%m-%d")
+        contrib_guide = False
+        security_policy = False
 
-    # direct varible assignment from query results
-    license = df_repo_info.loc[0, "license"]
-    stars_count = df_repo_info.loc[0, "stars_count"]
-    fork_count = df_repo_info.loc[0, "fork_count"]
-    watchers_count = df_repo_info.loc[0, "watchers_count"]
-    issues_enabled = df_repo_info.loc[0, "issues_enabled"].capitalize()
+    contrib_guide = "File found" if contrib_guide else "File not found"
+    security_policy = "File found" if security_policy else "File not found"
 
-    # checks for code of conduct file
-    coc = df_repo_info.loc[0, "code_of_conduct_file"]
-    if coc is None:
-        coc = "File not found"
-    else:
-        coc = "File found"
+    # === POLARS PROCESSING END ===
 
-    # check files for CONTRIBUTING.md
-    contrib_guide = (df_repo_files["file_name"].eq("CONTRIBUTING.md")).any()
-    if contrib_guide:
-        contrib_guide = "File found"
-    else:
-        contrib_guide = "File not found"
-
-    # keep an eye out if github changes this to be located like coc
-    security_policy = (df_repo_files["file_name"].eq("SECURITY.md")).any()
-    if security_policy:
-        security_policy = "File found"
-    else:
-        security_policy = "File not found"
-
-    # create df to hold table information
-    df = pd.DataFrame(
+    # Create final DataFrame in Polars, then convert to Pandas for visualization
+    pl_result = pl.DataFrame(
         {
             "Section": [
                 "License",
@@ -182,22 +189,23 @@ def process_data(df_repo_files, df_repo_info, df_releases):
                 "Issues Enabled",
             ],
             "Info": [
-                license,
+                str(license_val) if license_val else "Unknown",
                 coc,
                 contrib_guide,
                 security_policy,
-                num_releases,
+                str(num_releases),
                 last_release_date,
                 avg_release_time,
-                stars_count,
-                fork_count,
-                watchers_count,
+                str(stars_count),
+                str(fork_count),
+                str(watchers_count),
                 issues_enabled,
             ],
         }
     )
 
-    return df, dbc.Label(updated_date)
+    # Convert to Pandas at the visualization boundary
+    return to_pandas(pl_result), dbc.Label(updated_date)
 
 
 def multi_query_helper(repos: list[int]):

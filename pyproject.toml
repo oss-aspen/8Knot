@@ -16,6 +16,7 @@ dependencies = [
     "numpy~=2.0",
     "pandas~=2.3.0",
     "plotly~=6.3",
+    "polars~=1.30",
     "psycopg2-binary==2.9.9",
     "pyarrow~=21.0",
     "python-dateutil~=2.9",
