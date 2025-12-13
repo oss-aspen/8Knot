@@ -4,10 +4,12 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
+import polars as pl
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import baby_blue
+from pages.utils.polars_utils import to_polars, to_pandas
 from queries.repo_languages_query import repo_languages_query as rlq
 from pages.utils.job_utils import nodata_graph
 import time
@@ -166,24 +168,59 @@ def code_languages_graph(repolist, view):
     return fig
 
 
-def process_data(df: pd.DataFrame):
+def process_data(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Process language data using Polars for performance, returning Pandas for visualization.
+
+    Follows the "Polars Core, Pandas Edge" architecture.
+    """
+    # === POLARS PROCESSING START ===
+
+    # Convert to Polars for fast processing
+    pl_df = to_polars(df)
 
     # SVG files give one line of code per file
-    df.loc[df["programming_language"] == "SVG", "code_lines"] = df["files"]
+    pl_df = pl_df.with_columns(
+        pl.when(pl.col("programming_language") == "SVG")
+        .then(pl.col("files"))
+        .otherwise(pl.col("code_lines"))
+        .alias("code_lines")
+    )
 
-    # require a language to have atleast .1 % of total lines to be shown, if not grouped into other
-    min_lines = df["code_lines"].sum() / 1000
-    df.loc[df.code_lines <= min_lines, "programming_language"] = "Other"
-    df = df[["programming_language", "code_lines", "files"]].groupby("programming_language").sum().reset_index()
+    # Calculate minimum lines threshold (0.1% of total)
+    total_lines = pl_df.select(pl.col("code_lines").sum()).item()
+    min_lines = total_lines / 1000
 
-    # order by descending file number and reset format
-    df = df.sort_values(by="files", axis=0, ascending=False).reset_index(drop=True)
+    # Group languages with few lines into "Other"
+    pl_df = pl_df.with_columns(
+        pl.when(pl.col("code_lines") <= min_lines)
+        .then(pl.lit("Other"))
+        .otherwise(pl.col("programming_language"))
+        .alias("programming_language")
+    )
 
-    # calculate percentages
-    df["Code %"] = (df["code_lines"] / df["code_lines"].sum()) * 100
-    df["Files %"] = (df["files"] / df["files"].sum()) * 100
+    # Aggregate by language
+    pl_df = (
+        pl_df.group_by("programming_language")
+        .agg([pl.col("code_lines").sum(), pl.col("files").sum()])
+        .sort("files", descending=True)
+    )
 
-    return df
+    # Calculate percentages
+    total_code = pl_df.select(pl.col("code_lines").sum()).item()
+    total_files = pl_df.select(pl.col("files").sum()).item()
+
+    pl_df = pl_df.with_columns(
+        [
+            ((pl.col("code_lines") / total_code) * 100).alias("Code %"),
+            ((pl.col("files") / total_files) * 100).alias("Files %"),
+        ]
+    )
+
+    # === POLARS PROCESSING END ===
+
+    # Convert to Pandas at the visualization boundary
+    return to_pandas(pl_df)
 
 
 def create_figure(df: pd.DataFrame, view):
