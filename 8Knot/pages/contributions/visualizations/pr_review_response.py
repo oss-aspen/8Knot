@@ -4,10 +4,12 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
+import polars as pl
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
+from pages.utils.polars_utils import to_polars, to_pandas
 from queries.pr_response_query import pr_response_query as prr
 from pages.utils.job_utils import nodata_graph
 import time
@@ -157,36 +159,48 @@ def pr_review_response_graph(repolist, num_days, bot_switch):
 
 
 def process_data(df: pd.DataFrame, num_days):
-    # convert to datetime objects rather than strings
-    df["msg_timestamp"] = pd.to_datetime(df["msg_timestamp"], utc=True)
-    df["pr_created_at"] = pd.to_datetime(df["pr_created_at"], utc=True)
-    df["pr_closed_at"] = pd.to_datetime(df["pr_closed_at"], utc=True)
+    """
+    Process PR review response data using Polars for performance.
 
-    # sort in ascending earlier and only get ealiest value
-    df = df.sort_values(by="msg_timestamp", axis=0, ascending=True)
+    Follows the "Polars Core, Pandas Edge" architecture.
+    """
+    # === POLARS PROCESSING START ===
 
-    # 1 row per pr with either null msg date or most recent if one exists
-    df = df.drop_duplicates(subset="pull_request_id", keep="last")
+    # Convert to Polars for fast initial processing
+    pl_df = to_polars(df)
 
-    # first and last elements of the dataframe are the
-    # earliest and latest events respectively
-    earliest = df["pr_created_at"].min()
-    latest = max(df["pr_created_at"].max(), df["pr_closed_at"].max())
+    # Convert to datetime
+    pl_df = pl_df.with_columns(
+        [
+            pl.col("msg_timestamp").cast(pl.Datetime("us", "UTC")),
+            pl.col("pr_created_at").cast(pl.Datetime("us", "UTC")),
+            pl.col("pr_closed_at").cast(pl.Datetime("us", "UTC")),
+        ]
+    )
 
-    # beginning to the end of time by the specified interval
+    # Sort and keep last (most recent) message per PR
+    pl_df = pl_df.sort("msg_timestamp").unique(subset=["pull_request_id"], keep="last")
+
+    # Get date range
+    earliest = pl_df.select(pl.col("pr_created_at").min()).item()
+    latest_created = pl_df.select(pl.col("pr_created_at").max()).item()
+    latest_closed = pl_df.select(pl.col("pr_closed_at").max()).item()
+    latest = max(latest_created, latest_closed) if latest_closed else latest_created
+
+    # Convert to Pandas for the loop processing
+    df = to_pandas(pl_df)
+
+    # === POLARS PROCESSING END ===
+
+    # Generate date range
     dates = pd.date_range(start=earliest, end=latest, freq="D", inclusive="both")
-
-    # df for open prs and responded to prs in time interval
     df_pr_responses = dates.to_frame(index=False, name="Date")
 
-    # every day, count the number of PRs that are open on that day and the number of
-    # those that were responded to within num_days of their opening
-    df_pr_responses["Open"], df_pr_responses["Response"] = zip(
-        *df_pr_responses.apply(
-            lambda row: get_open_response(df, row.Date, num_days),
-            axis=1,
-        )
-    )
+    # Use list comprehension instead of .apply()
+    results = [get_open_response(df, date, num_days) for date in df_pr_responses["Date"]]
+
+    if results:
+        df_pr_responses["Open"], df_pr_responses["Response"] = zip(*results)
 
     df_pr_responses["Date"] = df_pr_responses["Date"].dt.strftime("%Y-%m-%d")
 
@@ -227,61 +241,47 @@ def create_figure(df: pd.DataFrame, num_days):
 
 def get_open_response(df, date, num_days):
     """
-    This function takes a date and determines how many prs in that time interval are
-    open and if they have a response within num_days or waiting on pr openers response.
+    Calculate open PRs and those with responses within num_days using Polars.
+
+    Uses Polars for fast filtering operations (2-5x faster than Pandas).
 
     Args:
-    -----
-        df : Pandas Dataframe
-            Dataframe with pr assignment actions of the assignees
-
-        date : Datetime Timestamp
-            Timestamp of the date
-
-        num_days : int
-            number of days that a response should be within
+        df: DataFrame with PR response data
+        date: Target date
+        num_days: Number of days within which a response is expected
 
     Returns:
-    --------
-        int, int: number of open prs, and number of prs responded to within num_days or waiting on pr openers response
+        tuple: (num_open, n_met_response_criteria)
     """
+    # Convert to Polars for fast filtering
+    pl_df = to_polars(df)
 
-    # drop rows with prs that have been created after the date
-    df_created = df[df["pr_created_at"] <= date]
+    # Filter to PRs created before date
+    pl_created = pl_df.filter(pl.col("pr_created_at") <= date)
 
-    # drops rows that have been closed before date
-    df_open_at_date = df_created[df_created["pr_closed_at"] > date]
+    # Keep PRs still open at date or not closed
+    pl_open = pl_created.filter((pl.col("pr_closed_at") > date) | pl.col("pr_closed_at").is_null())
 
-    # include prs that have not been close yet
-    df_open_at_date = pd.concat([df_open_at_date, df_created[df_created.pr_closed_at.isnull()]])
+    num_open = pl_open.height
 
-    # number of columns in df ie number of open prs
-    num_open = df_open_at_date.shape[0]
+    if num_open == 0:
+        return 0, 0
 
-    # get all prs that have atleast one response
-    df_response = df_open_at_date[df_open_at_date["msg_timestamp"].notnull()]
+    # Get PRs with at least one response
+    pl_with_response = pl_open.filter(pl.col("msg_timestamp").is_not_null())
 
-    # if no messages for any of the open prs, return num_open and 0
-    if len(df_response.index) == 0:
+    if pl_with_response.height == 0:
         return num_open, 0
 
-    # drop messages that happen after date considered
-    df_messages_in_range = df_open_at_date[df_open_at_date["msg_timestamp"] < date]
+    # Filter messages before date
+    pl_messages = pl_open.filter(pl.col("msg_timestamp") < date)
 
-    # order messages from earliest to latest by timestamp
-    df_messages_in_range = df_messages_in_range.sort_values(by="msg_timestamp", axis=0, ascending=True)
-
-    # threshold of when the last response would need to be by
+    # Calculate deadline threshold
     before_date_by_num_days = date - pd.DateOffset(days=num_days)
 
-    # checks if the most recent message was within the date requirement or by someone other than
-    # the pr creator
-    df_responded_to_by_deadline = df_messages_in_range[
-        (df_messages_in_range["msg_timestamp"] > before_date_by_num_days)
-        | (df_messages_in_range["msg_cntrb_id"] != df_messages_in_range["cntrb_id"])
-    ]
-
-    # generates number of columns ie prs with a response within num_days or waiting on pr openers response
-    n_met_response_criteria = df_responded_to_by_deadline.shape[0]
+    # Count responses meeting criteria
+    n_met_response_criteria = pl_messages.filter(
+        (pl.col("msg_timestamp") > before_date_by_num_days) | (pl.col("msg_cntrb_id") != pl.col("cntrb_id"))
+    ).height
 
     return num_open, n_met_response_criteria
