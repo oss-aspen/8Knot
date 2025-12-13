@@ -4,10 +4,12 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
+import polars as pl
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import baby_blue
+from pages.utils.polars_utils import to_polars, to_pandas
 from queries.affiliation_query import affiliation_query as aq
 from pages.utils.job_utils import nodata_graph
 import time
@@ -173,45 +175,53 @@ def unique_domains_graph(repolist, num, start_date, end_date, bot_switch):
 
 
 def process_data(df: pd.DataFrame, num, start_date, end_date):
-    # convert to datetime objects rather than strings
-    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
+    """
+    Process unique domains data using Polars for performance.
 
-    # order values chronologically by COLUMN_TO_SORT_BY date
-    df = df.sort_values(by="created_at", axis=0, ascending=True)
+    Follows the "Polars Core, Pandas Edge" architecture.
+    """
+    # === POLARS PROCESSING START ===
 
-    # filter values based on date picker
+    # Convert to Polars for fast processing
+    pl_df = to_polars(df)
+
+    # Convert to datetime and sort
+    pl_df = pl_df.with_columns(pl.col("created_at").cast(pl.Datetime("us", "UTC")))
+    pl_df = pl_df.sort("created_at")
+
+    # Filter by date range
     if start_date is not None:
-        df = df[df.created_at >= start_date]
+        pl_df = pl_df.filter(pl.col("created_at") >= start_date)
     if end_date is not None:
-        df = df[df.created_at <= end_date]
+        pl_df = pl_df.filter(pl.col("created_at") <= end_date)
 
-    # creates list of unique emails and flattens list result
-    emails = df.email_list.str.split(" , ").explode("email_list").unique().tolist()
-
-    # remove any entries not in email format and put all emails in lowercase
-    emails = [x.lower() for x in emails if "@" in x]
-
-    # creates list of email domains from the emails list
-    email_domains = [x[x.rindex("@") + 1 :] for x in emails]
-
-    # creates df of domains and counts
-    df = pd.DataFrame(email_domains, columns=["domains"]).value_counts().to_frame().reset_index()
-
-    df = df.rename(columns={"count": "occurences"})
-
-    # changes the name of the company if under a certain threshold
-    df.loc[df.occurences <= num, "domains"] = "Other"
-
-    # groups others together for final counts
-    df = (
-        df.groupby(by="domains")["occurences"]
-        .sum()
-        .reset_index()
-        .sort_values(by=["occurences"], ascending=False)
-        .reset_index(drop=True)
+    # Split email lists and explode using Polars
+    pl_emails = (
+        pl_df.select(pl.col("email_list").str.split(" , ").explode().alias("email"))
+        .unique()
+        .filter(pl.col("email").str.contains("@"))
     )
 
-    return df
+    # Extract domains using Polars string operations
+    pl_domains = pl_emails.with_columns(
+        pl.col("email").str.to_lowercase().str.extract(r"@(.+)$", 1).alias("domains")
+    ).filter(pl.col("domains").is_not_null())
+
+    # Count domains
+    pl_counts = pl_domains.group_by("domains").agg(pl.len().alias("occurences"))
+
+    # Replace low-count domains with "Other"
+    pl_counts = pl_counts.with_columns(
+        pl.when(pl.col("occurences") <= num).then(pl.lit("Other")).otherwise(pl.col("domains")).alias("domains")
+    )
+
+    # Group by domains (consolidating "Other")
+    pl_result = pl_counts.group_by("domains").agg(pl.col("occurences").sum()).sort("occurences", descending=True)
+
+    # === POLARS PROCESSING END ===
+
+    # Convert to Pandas for visualization
+    return to_pandas(pl_result)
 
 
 def create_figure(df: pd.DataFrame):
