@@ -4,10 +4,12 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
+import polars as pl
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import baby_blue
+from pages.utils.polars_utils import to_polars, to_pandas
 from queries.affiliation_query import affiliation_query as aq
 from pages.utils.job_utils import nodata_graph
 import time
@@ -173,67 +175,68 @@ def gh_org_affiliation_graph(repolist, num, start_date, end_date, bot_switch):
 
 
 def process_data(df: pd.DataFrame, num, start_date, end_date):
-    """Implement your custom data-processing logic in this function.
-    The output of this function is the data you intend to create a visualization with,
-    requiring no further processing."""
+    """
+    Process GitHub organization affiliation data using Polars for initial processing.
 
-    # convert to datetime objects rather than strings
-    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
+    Follows the "Polars Core, Pandas Edge" architecture.
+    Note: Fuzzy matching still uses Pandas due to external library requirements.
+    """
+    # === POLARS PROCESSING START ===
 
-    # order values chronologically by COLUMN_TO_SORT_BY date
-    df = df.sort_values(by="created_at", axis=0, ascending=True)
+    # Convert to Polars for fast initial filtering
+    pl_df = to_polars(df)
 
-    # filter values based on date picker
+    # Convert to datetime and sort
+    pl_df = pl_df.with_columns(pl.col("created_at").cast(pl.Datetime("us", "UTC")))
+    pl_df = pl_df.sort("created_at")
+
+    # Filter by date range
     if start_date is not None:
-        df = df[df.created_at >= start_date]
+        pl_df = pl_df.filter(pl.col("created_at") >= start_date)
     if end_date is not None:
-        df = df[df.created_at <= end_date]
+        pl_df = pl_df.filter(pl.col("created_at") <= end_date)
 
-    # intital count of same company name in github profile
-    result = df.cntrb_company.value_counts(dropna=False)
+    # Count company affiliations using Polars (faster than value_counts)
+    pl_counts = (
+        pl_df.group_by("cntrb_company")
+        .agg(pl.len().alias("contribution_count"))
+        .with_columns(pl.col("cntrb_company").cast(pl.Utf8).alias("company_name"))
+    )
 
-    # reset format for df work
-    df = result.to_frame()
-    df["company_name"] = df.index
-    df = df.reset_index()
-    df["company_name"] = df["company_name"].astype(str)
-    df = df.rename(columns={"cntrb_company": "orginal_name", "count": "contribution_count"})
+    # Convert to Pandas for fuzzy matching (requires external library)
+    df = to_pandas(pl_counts)
 
-    # applies fuzzy matching comparing all rows to each other
+    # === POLARS PROCESSING END ===
+
+    # Fuzzy matching (keeping in Pandas due to rapidfuzz requirements)
     df["match"] = df.apply(lambda row: fuzzy_match(df, row["company_name"]), axis=1)
 
-    # changes company name to match other fuzzy matches
+    # Apply fuzzy match results
     for x in range(0, len(df)):
-        # gets match values for the current row
         matches = df.iloc[x]["match"]
         for y in matches:
-            # for each match, change the name to its match and clear out match column as
-            # it will unnecessarily reapply changes
             df.loc[y, "company_name"] = df.iloc[x]["company_name"]
             df.loc[y, "match"] = ""
 
-    # groups all same name company affiliation and sums the contributions
-    df = (
-        df.groupby(by="company_name")["contribution_count"]
-        .sum()
-        .reset_index()
-        .sort_values(by=["contribution_count"])
-        .reset_index(drop=True)
+    # === BACK TO POLARS FOR AGGREGATION ===
+
+    pl_df = to_polars(df[["company_name", "contribution_count"]])
+
+    # Group by company name and sum contributions
+    pl_grouped = pl_df.group_by("company_name").agg(pl.col("contribution_count").sum()).sort("contribution_count")
+
+    # Convert small contributors to "Other"
+    pl_grouped = pl_grouped.with_columns(
+        pl.when(pl.col("contribution_count") <= num)
+        .then(pl.lit("Other"))
+        .otherwise(pl.col("company_name"))
+        .alias("company_name")
     )
 
-    # changes the name of the company if under a certain threshold
-    df.loc[df["contribution_count"] <= num, "company_name"] = "Other"
+    # Final grouping
+    pl_result = pl_grouped.group_by("company_name").agg(pl.col("contribution_count").sum()).sort("contribution_count")
 
-    # groups others together for final counts
-    df = (
-        df.groupby(by="company_name")["contribution_count"]
-        .sum()
-        .reset_index()
-        .sort_values(by=["contribution_count"])
-        .reset_index(drop=True)
-    )
-
-    return df
+    return to_pandas(pl_result)
 
 
 def fuzzy_match(df, name):
