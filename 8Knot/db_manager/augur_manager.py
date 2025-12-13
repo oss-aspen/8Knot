@@ -154,8 +154,7 @@ class AugurManager:
         except:
             raise Exception("DB Read Failure")
 
-        result_df = result_df.reset_index()
-        result_df.drop("index", axis=1, inplace=True)
+        result_df = result_df.reset_index(drop=True)
 
         return result_df
 
@@ -200,7 +199,7 @@ class AugurManager:
         # used when the user selects an org
         # Output is of the form: {group_name: [rid1, rid2, ...], group_name: [...], ...}
         df_lower_repo_names = df_search_bar.copy()
-        df_lower_repo_names["rg_name"] = df_lower_repo_names["rg_name"].apply(str.lower)
+        df_lower_repo_names["rg_name"] = df_lower_repo_names["rg_name"].str.lower()
         self.org_name_to_repos_dict = df_lower_repo_names.groupby("rg_name")["repo_id"].apply(list).to_dict()
         self.org_names = list(self.org_name_to_repos_dict.keys())
 

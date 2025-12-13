@@ -191,12 +191,8 @@ def directory_dropdown(repo_id):
     df = df[df["rl_analysis_date"] == df["rl_analysis_date"].max()]
 
     # drop unneccessary columns not needed after preprocessing steps
-    df = df.reset_index()
-    df.drop(
-        ["index", "repo_id", "repo_name", "repo_path", "rl_analysis_date"],
-        axis=1,
-        inplace=True,
-    )
+    df = df.reset_index(drop=True)
+    df = df.drop(columns=["repo_id", "repo_name", "repo_path", "rl_analysis_date"])
 
     # split file path by directory
     df = df.join(df["file_path"].str.split("/", expand=True))
@@ -375,33 +371,31 @@ def df_file_clean(df_file: pd.DataFrame, df_file_cntbs: pd.DataFrame, bot_switch
     df_file["file_path"] = df_file["file_path"].str.rsplit(path_slice, n=1).str[1]
 
     # drop unneccessary columns not needed after preprocessing steps
-    df_file = df_file.reset_index()
-    df_file.drop(["index", "repo_name", "repo_path", "rl_analysis_date"], axis=1, inplace=True)
+    df_file = df_file.reset_index(drop=True)
+    df_file = df_file.drop(columns=["repo_name", "repo_path", "rl_analysis_date"])
 
     # split file path by directory
     df_file = df_file.join(df_file["file_path"].str.split("/", expand=True))
 
     # drop unnecessary columns
-    df_file.drop(["repo_id"], axis=1, inplace=True)
-    df_file_cntbs.drop(["repo_id", "reviewer_ids"], axis=1, inplace=True)
+    df_file = df_file.drop(columns=["repo_id"])
+    df_file_cntbs = df_file_cntbs.drop(columns=["repo_id", "reviewer_ids"])
 
     # Left join on df_files to only get the files that are currently in the repository
     # and the contributors that have ever reviewed a pr that included edits on the file
     df_file = pd.merge(df_file, df_file_cntbs, on="file_path", how="left")
     # replace nan with empty string to avoid errors in list comprehension
-    df_file.cntrb_ids.fillna("", inplace=True)
+    df_file["cntrb_ids"] = df_file["cntrb_ids"].fillna("")
 
     # reformat cntrb_ids to list and remove bots if filter is on
+    # Vectorized: cntrb_ids is already a list after the fillna, so we convert strings to lists
     if bot_switch:
-        df_file["cntrb_ids"] = df_file.apply(
-            lambda row: [x for x in row.cntrb_ids if x not in app.bots_list],
-            axis=1,
+        bots_set = set(app.bots_list)
+        df_file["cntrb_ids"] = df_file["cntrb_ids"].apply(
+            lambda ids: [x for x in ids if x not in bots_set] if isinstance(ids, list) else []
         )
     else:
-        df_file["cntrb_ids"] = df_file.apply(
-            lambda row: [x for x in row.cntrb_ids],
-            axis=1,
-        )
+        df_file["cntrb_ids"] = df_file["cntrb_ids"].apply(lambda ids: list(ids) if isinstance(ids, list) else [])
 
     return df_file
 
@@ -453,10 +447,8 @@ def cntrb_per_directory_value(directory, df_file):
     )
 
     # Set of cntrb_ids to confirm there are no duplicate cntrb_ids
-    df_dynamic_directory["cntrb_ids"] = df_dynamic_directory.apply(
-        lambda row: set(row.cntrb_ids),
-        axis=1,
-    )
+    # Vectorized: use list comprehension instead of apply for simple set conversion
+    df_dynamic_directory["cntrb_ids"] = [set(ids) for ids in df_dynamic_directory["cntrb_ids"]]
     return df_dynamic_directory
 
 
@@ -485,21 +477,15 @@ def cntrb_to_last_activity(df_actions: pd.DataFrame, df_dynamic_directory: pd.Da
     df_actions = df_actions.drop_duplicates(subset="cntrb_id", keep="first")
 
     # drop unneccessary columns not needed after preprocessing steps
-    df_actions = df_actions.reset_index()
-    df_actions.drop(
-        ["index", "repo_id", "repo_name", "login", "Action", "rank"],
-        axis=1,
-        inplace=True,
-    )
+    df_actions = df_actions.reset_index(drop=True)
+    df_actions = df_actions.drop(columns=["repo_id", "repo_name", "login", "Action", "rank"])
 
     # dictionary of cntrb_ids and their most recent activity on repo
     last_contrb = df_actions.set_index("cntrb_id")["created_at"].to_dict()
 
     # get list of dates of the most recent activity for each contributor for each file
-    df_dynamic_directory["dates"] = df_dynamic_directory.apply(
-        lambda row: [last_contrb[x] for x in row.cntrb_ids],
-        axis=1,
-    )
+    # Vectorized: use list comprehension instead of apply
+    df_dynamic_directory["dates"] = [[last_contrb.get(x) for x in ids] for ids in df_dynamic_directory["cntrb_ids"]]
 
     # reformat into each row being a directory value and a date of one of the contributors
     # most recent activity - preprocessing step
@@ -549,7 +535,7 @@ def file_cntrb_activity_by_month(df_dynamic_directory: pd.DataFrame, df_actions:
     final = final.groupby(pd.Grouper(key="dates", freq="1M"))["directory_value"].value_counts().unstack(0)
 
     # removing the None row that was used for column formating
-    final.drop("nan", inplace=True)
+    final = final.drop(index="nan")
 
     # add back the files that had no contributors
     for files in no_contribs:

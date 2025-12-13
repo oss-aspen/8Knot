@@ -204,12 +204,8 @@ def directory_dropdown(repo_id):
     df["file_path"] = df["file_path"].str.rsplit(path_slice, n=1).str[1]
 
     # drop unneccessary columns not needed after preprocessing steps
-    df = df.reset_index()
-    df.drop(
-        ["index", "repo_id", "repo_name", "repo_path", "rl_analysis_date"],
-        axis=1,
-        inplace=True,
-    )
+    df = df.reset_index(drop=True)
+    df = df.drop(columns=["repo_id", "repo_name", "repo_path", "rl_analysis_date"])
 
     # split file path by directory
     df = df.join(df["file_path"].str.split("/", expand=True))
@@ -383,15 +379,15 @@ def df_file_clean(df_file: pd.DataFrame, df_file_pr: pd.DataFrame):
     df_file["file_path"] = df_file["file_path"].str.rsplit(path_slice, n=1).str[1]
 
     # drop unneccessary columns not needed after preprocessing steps
-    df_file = df_file.reset_index()
-    df_file.drop(["index", "repo_name", "repo_path", "rl_analysis_date"], axis=1, inplace=True)
+    df_file = df_file.reset_index(drop=True)
+    df_file = df_file.drop(columns=["repo_name", "repo_path", "rl_analysis_date"])
 
     # split file path by directory
     df_file = df_file.join(df_file["file_path"].str.split("/", expand=True))
 
     # drop unnecessary columns
-    df_file.drop(["repo_id"], axis=1, inplace=True)
-    df_file_pr.drop(["repo_id"], axis=1, inplace=True)
+    df_file = df_file.drop(columns=["repo_id"])
+    df_file_pr = df_file_pr.drop(columns=["repo_id"])
 
     # create column with list of prs per file path
     df_file_pr = df_file_pr.groupby("file_path")["pull_request_id"].apply(list)
@@ -449,10 +445,8 @@ def pr_per_directory_value(directory, df_file):
     df_dynamic_directory.loc[df_dynamic_directory.pull_request_id == 0, "pull_request_id"] = ""
 
     # Set of pull_request to confirm there are no duplicate pull requests
-    df_dynamic_directory["pull_request_id"] = df_dynamic_directory.apply(
-        lambda row: set(row.pull_request_id),
-        axis=1,
-    )
+    # Vectorized: use list comprehension instead of apply for simple set conversion
+    df_dynamic_directory["pull_request_id"] = [set(ids) for ids in df_dynamic_directory["pull_request_id"]]
     return df_dynamic_directory
 
 
@@ -480,26 +474,21 @@ def pr_to_dates(df_pr: pd.DataFrame, df_dynamic_directory: pd.DataFrame, graph_v
     df_pr["merged_at"] = pd.to_datetime(df_pr["merged_at"], utc=True)
 
     # drop unneccessary columns not needed after preprocessing steps
-    df_pr.drop(
-        ["repo_id", "repo_name", "pr_src_number", "cntrb_id", "closed_at"],
-        axis=1,
-        inplace=True,
-    )
+    df_pr = df_pr.drop(columns=["repo_id", "repo_name", "pr_src_number", "cntrb_id", "closed_at"])
 
     # dictionaries of pull_requests and their open and merge dates
     pr_open = df_pr.set_index("pull_request_id")["created_at"].to_dict()
     pr_merged = df_pr.set_index("pull_request_id")["merged_at"].to_dict()
 
     # get list of pr created and merged dates for each pr
-    df_dynamic_directory["created_at"], df_dynamic_directory["merged_at"] = zip(
-        *df_dynamic_directory.apply(
-            lambda row: [
-                [pr_open[x] for x in row.pull_request_id],
-                [pr_merged[x] for x in row.pull_request_id if (not pd.isnull(pr_merged[x]))],
-            ],
-            axis=1,
-        )
-    )
+    # Vectorized: use list comprehension instead of apply
+    created_at_list = [[pr_open.get(x) for x in ids] for ids in df_dynamic_directory["pull_request_id"]]
+    merged_at_list = [
+        [pr_merged.get(x) for x in ids if not pd.isnull(pr_merged.get(x))]
+        for ids in df_dynamic_directory["pull_request_id"]
+    ]
+    df_dynamic_directory["created_at"] = created_at_list
+    df_dynamic_directory["merged_at"] = merged_at_list
 
     # reformat into each row being a directory value and a date of one of the pull request dates
     df_dynamic_directory = df_dynamic_directory.explode(graph_view)
@@ -548,7 +537,7 @@ def file_pr_activity_by_month(df_dynamic_directory: pd.DataFrame, df_pr: pd.Data
 
     # removing the None row that was used for column formating if exists
     if "nan" in final.index:
-        final.drop("nan", inplace=True)
+        final = final.drop(index="nan")
 
     # add back the files that had no pull requests
     for files in no_contribs:

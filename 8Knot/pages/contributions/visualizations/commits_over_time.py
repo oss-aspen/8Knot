@@ -163,7 +163,7 @@ def process_data(df: pd.DataFrame, interval):
     # convert to datetime objects with consistent column name
     # incoming value should be a posix integer.
     df["author_date"] = pd.to_datetime(df["author_date"], utc=True)
-    df.rename(columns={"author_date": "created_at"}, inplace=True)
+    df = df.rename(columns={"author_date": "created_at"})
 
     # variable to slice on to handle weekly period edge case
     period_slice = None

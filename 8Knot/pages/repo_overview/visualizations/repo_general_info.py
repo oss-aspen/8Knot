@@ -121,8 +121,8 @@ def process_data(df_repo_files, df_repo_info, df_releases):
     df_releases["previous_release"] = df_releases["release_published_at"].shift()
     # calculate difference
     df_releases["time_bt_release"] = df_releases["release_published_at"] - df_releases["previous_release"]
-    # reformat to days
-    df_releases["time_bt_release"] = df_releases["time_bt_release"].apply(lambda x: x.days)
+    # reformat to days (vectorized - faster than .apply())
+    df_releases["time_bt_release"] = df_releases["time_bt_release"].dt.days
 
     # release info initial assignments
     num_releases = df_releases.shape[0]

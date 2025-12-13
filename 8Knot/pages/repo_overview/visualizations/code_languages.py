@@ -177,8 +177,7 @@ def process_data(df: pd.DataFrame):
     df = df[["programming_language", "code_lines", "files"]].groupby("programming_language").sum().reset_index()
 
     # order by descending file number and reset format
-    df = df.sort_values(by="files", axis=0, ascending=False).reset_index()
-    df.drop("index", axis=1, inplace=True)
+    df = df.sort_values(by="files", axis=0, ascending=False).reset_index(drop=True)
 
     # calculate percentages
     df["Code %"] = (df["code_lines"] / df["code_lines"].sum()) * 100

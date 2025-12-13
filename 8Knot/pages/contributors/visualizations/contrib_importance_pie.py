@@ -275,7 +275,7 @@ def process_data(df: pd.DataFrame, action_type, top_k, start_date, end_date):
     df = (df.groupby("cntrb_id")["Action"].count()).to_frame()
 
     # sort rows according to amount of contributions from greatest to least
-    df.sort_values(by="Action", ascending=False, inplace=True)
+    df = df.sort_values(by="Action", ascending=False)
 
     df = df.reset_index()
 

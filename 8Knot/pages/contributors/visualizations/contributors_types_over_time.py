@@ -194,7 +194,7 @@ def process_data(df, interval, contribs):
     # df.rename(columns={"created_at": "created"}, inplace=True)
 
     # remove null contrib ids
-    df.dropna(inplace=True)
+    df = df.dropna()
 
     # create column for identifying Drive by and Repeat Contributors
     contributors = df["cntrb_id"][df["rank"] == contribs].to_list()

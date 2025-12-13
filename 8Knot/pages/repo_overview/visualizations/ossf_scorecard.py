@@ -122,17 +122,17 @@ def ossf_scorecard(repo: str):
         return dbc.Table.from_dataframe(df, striped=True, bordered=True, hover=True), dbc.Label("No data")
 
     # repo id not needed for table
-    df.drop(["repo_id"], axis=1, inplace=True)
+    df = df.drop(columns=["repo_id"])
 
     # get all values from the data_collection_date column
     updated_times = pd.to_datetime(df["data_collection_date"])
 
     # we dont need to display this column for every entry
-    df.drop(["data_collection_date"], axis=1, inplace=True)
+    df = df.drop(columns=["data_collection_date"])
 
     df.loc[df.name == "OSSF_SCORECARD_AGGREGATE_SCORE", "name"] = "Aggregate Score"
-    df.sort_values("name", ascending=True, inplace=True)
-    df.rename(columns={"name": "Check Type", "score": "Score"}, inplace=True)
+    df = df.sort_values("name", ascending=True)
+    df = df.rename(columns={"name": "Check Type", "score": "Score"})
 
     table = dbc.Table.from_dataframe(df, striped=True, bordered=True, hover=True)
 

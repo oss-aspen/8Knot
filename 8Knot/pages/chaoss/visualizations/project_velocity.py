@@ -352,12 +352,14 @@ def process_data(
     df_consolidated = pd.concat([df_actions, df_cntrbs], axis=1).reset_index()
 
     # replace all nan to 0
-    df_consolidated.fillna(value=0, inplace=True)
+    df_consolidated = df_consolidated.fillna(value=0)
 
-    # log of commits and contribs if values are not 0
-    df_consolidated["log_num_commits"] = df_consolidated["Commit"].apply(lambda x: math.log(x) if x != 0 else 0)
-    df_consolidated["log_num_contrib"] = df_consolidated["num_unique_contributors"].apply(
-        lambda x: math.log(x) if x != 0 else 0
+    # log of commits and contribs if values are not 0 (vectorized with np.log)
+    df_consolidated["log_num_commits"] = np.where(df_consolidated["Commit"] != 0, np.log(df_consolidated["Commit"]), 0)
+    df_consolidated["log_num_contrib"] = np.where(
+        df_consolidated["num_unique_contributors"] != 0,
+        np.log(df_consolidated["num_unique_contributors"]),
+        0,
     )
 
     # column to hold the weighted values of pr and issues actions summed together
@@ -370,10 +372,10 @@ def process_data(
     )
 
     # after weighting replace 0 with nan for log
-    df_consolidated["prs_issues_actions_weighted"].replace(0, np.nan, inplace=True)
+    df_consolidated["prs_issues_actions_weighted"] = df_consolidated["prs_issues_actions_weighted"].replace(0, np.nan)
 
-    # column for log value of pr and issue actions
-    df_consolidated["log_prs_issues_actions_weighted"] = df_consolidated["prs_issues_actions_weighted"].apply(math.log)
+    # column for log value of pr and issue actions (vectorized)
+    df_consolidated["log_prs_issues_actions_weighted"] = np.log(df_consolidated["prs_issues_actions_weighted"])
 
     return df_consolidated
 

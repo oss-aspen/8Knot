@@ -175,8 +175,8 @@ def process_data(df, interval):
     df = df[df["rank"] == 1]
 
     # get all of the unique entries by contributor ID
-    df.drop_duplicates(subset=["cntrb_id"], inplace=True)
-    df.reset_index(inplace=True)
+    df = df.drop_duplicates(subset=["cntrb_id"])
+    df = df.reset_index(drop=True)
 
     # variable to slice on to handle weekly period edge case
     period_slice = None

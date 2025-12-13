@@ -22,7 +22,7 @@ def contributors_df_action_naming(df):
     df.loc[df["action"] == "issue_comment", "action"] = "Issue Comment"
     df.loc[df["action"] == "commit", "action"] = "Commit"
     df["cntrb_id"] = df["cntrb_id"].astype(str)  # contributor ids to strings
-    df.rename(columns={"action": "Action"}, inplace=True)
+    df = df.rename(columns={"action": "Action"})
     return df
 
 
@@ -30,6 +30,5 @@ def cntrb_per_file(df):
     # pandas column and format updates
     df["cntrb_ids"] = df["cntrb_ids"].str.split(",")
     df["reviewer_ids"] = df["reviewer_ids"].str.split(",")
-    df = df.reset_index()
-    df.drop("index", axis=1, inplace=True)
+    df = df.reset_index(drop=True)
     return df
