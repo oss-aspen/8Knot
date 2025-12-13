@@ -4,9 +4,11 @@ import dash_bootstrap_components as dbc
 from dash import callback
 from dash.dependencies import Input, Output, State
 import pandas as pd
+import polars as pl
 import logging
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
+from pages.utils.polars_utils import to_polars, to_pandas
 from queries.commits_query import commits_query as cmq
 from pages.utils.job_utils import nodata_graph
 import time
@@ -159,31 +161,38 @@ def commits_over_time_graph(repolist, interval):
     return fig
 
 
-def process_data(df: pd.DataFrame, interval):
-    # convert to datetime objects with consistent column name
-    # incoming value should be a posix integer.
-    df["author_date"] = pd.to_datetime(df["author_date"], utc=True)
-    df = df.rename(columns={"author_date": "created_at"})
+def process_data(df: pd.DataFrame, interval) -> pd.DataFrame:
+    """
+    Process commit data using Polars for performance, returning Pandas for visualization.
 
-    # variable to slice on to handle weekly period edge case
-    period_slice = None
-    if interval == "W":
-        # this is to slice the extra period information that comes with the weekly case
-        period_slice = 10
+    Follows the "Polars Core, Pandas Edge" architecture.
+    """
+    # === POLARS PROCESSING START ===
 
-    # get the count of commits in the desired interval in pandas period format, sort index to order entries
-    df_created = (
-        df.groupby(by=df.created_at.dt.to_period(interval))["commit_hash"]
-        .nunique()
-        .reset_index()
-        .rename(columns={"created_at": "Date"})
-    )
+    # Convert to Polars for fast processing
+    pl_df = to_polars(df)
 
-    # converts date column to a datetime object, converts to string first to handle period information
-    # the period slice is to handle weekly corner case
-    df_created["Date"] = pd.to_datetime(df_created["Date"].astype(str).str[:period_slice])
+    # Convert to datetime and rename column
+    pl_df = pl_df.with_columns(pl.col("author_date").cast(pl.Datetime("us", "UTC")).alias("created_at"))
 
-    return df_created
+    # For period-based grouping, we need to truncate dates appropriately
+    # Polars has truncate which is similar to Pandas period
+    if interval == "D":
+        pl_df = pl_df.with_columns(pl.col("created_at").dt.truncate("1d").alias("Date"))
+    elif interval == "W":
+        pl_df = pl_df.with_columns(pl.col("created_at").dt.truncate("1w").alias("Date"))
+    elif interval == "M":
+        pl_df = pl_df.with_columns(pl.col("created_at").dt.truncate("1mo").alias("Date"))
+    elif interval == "Y":
+        pl_df = pl_df.with_columns(pl.col("created_at").dt.truncate("1y").alias("Date"))
+
+    # Count unique commits per period using Polars (faster than Pandas groupby)
+    pl_result = pl_df.group_by("Date").agg(pl.col("commit_hash").n_unique()).sort("Date")
+
+    # === POLARS PROCESSING END ===
+
+    # Convert to Pandas at the visualization boundary
+    return to_pandas(pl_result)
 
 
 def create_figure(df_created: pd.DataFrame, interval):

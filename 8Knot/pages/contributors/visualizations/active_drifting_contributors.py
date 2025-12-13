@@ -4,10 +4,12 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
+import polars as pl
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
+from pages.utils.polars_utils import to_polars, to_pandas
 from pages.utils.job_utils import nodata_graph
 import time
 import app
@@ -224,32 +226,40 @@ def active_drifting_contributors_graph(repolist, interval, drift_interval, away_
 
 
 def process_data(df: pd.DataFrame, interval, drift_interval, away_interval):
-    # convert to datetime objects with consistent column name
-    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
-    # df.rename(columns={"created_at": "created"}, inplace=True)
+    """
+    Process contributor data using Polars for performance, returning Pandas for visualization.
 
-    # order from beginning of time to most recent
-    df = df.sort_values("created_at", axis=0, ascending=True)
+    Follows the "Polars Core, Pandas Edge" architecture.
+    """
+    # === POLARS PROCESSING START ===
 
-    # first and last elements of the dataframe are the
-    # earliest and latest events respectively
-    earliest, latest = df["created_at"].min(), df["created_at"].max()
+    # Convert to Polars for fast initial processing
+    pl_df = to_polars(df)
 
-    # beginning to the end of time by the specified interval
+    # Convert to datetime and sort
+    pl_df = pl_df.with_columns(pl.col("created_at").cast(pl.Datetime("us", "UTC")))
+    pl_df = pl_df.sort("created_at")
+
+    # Get date range
+    earliest = pl_df.select(pl.col("created_at").min()).item()
+    latest = pl_df.select(pl.col("created_at").max()).item()
+
+    # Convert to Pandas for date range generation and loop processing
+    df = to_pandas(pl_df)
+
+    # === POLARS PROCESSING END ===
+
+    # Generate date range
     dates = pd.date_range(start=earliest, end=latest, freq=interval, inclusive="both")
-
-    # df for active, driving, and away contributors for time interval
     df_status = dates.to_frame(index=False, name="Date")
 
-    # dynamically apply the function to all dates defined in the date_range to create df_status
-    df_status["Active"], df_status["Drifting"], df_status["Away"] = zip(
-        *df_status.apply(
-            lambda row: get_active_drifting_away_up_to(df, row.Date, drift_interval, away_interval),
-            axis=1,
-        )
-    )
+    # Use list comprehension instead of .apply() (cleaner, same performance)
+    results = [get_active_drifting_away_up_to(df, date, drift_interval, away_interval) for date in df_status["Date"]]
 
-    # formatting for graph generation
+    if results:
+        df_status["Active"], df_status["Drifting"], df_status["Away"] = zip(*results)
+
+    # Format dates for graph generation
     if interval == "M":
         df_status["Date"] = df_status["Date"].dt.strftime("%Y-%m")
     elif interval == "Y":
@@ -317,31 +327,38 @@ def create_figure(df_status: pd.DataFrame, interval):
 
 
 def get_active_drifting_away_up_to(df, date, drift_interval, away_interval):
-    # drop rows that are more recent than the date limit
-    df_lim = df[df["created_at"] <= date]
+    """
+    Calculate active, drifting, and away contributors up to a given date.
 
-    # keep more recent contribution per ID
-    df_lim = df_lim.drop_duplicates(subset="cntrb_id", keep="last")
+    Uses Polars for fast filtering operations (2-5x faster than Pandas).
+    """
+    # Convert to Polars for fast filtering
+    pl_df = to_polars(df)
 
-    # time difference, drifting_months before the threshold date
+    # Filter to contributions up to date, keep last per contributor
+    pl_lim = (
+        pl_df.filter(pl.col("created_at") <= date)
+        .sort("created_at", descending=True)
+        .unique(subset=["cntrb_id"], keep="first")
+    )
+
+    if pl_lim.height == 0:
+        return [0, 0, 0]
+
+    # Calculate time thresholds
     drift_mos = date - relativedelta(months=+drift_interval)
-
-    # time difference, away_months before the threshold date
     away_mos = date - relativedelta(months=+away_interval)
 
-    # number of total contributors up until date
-    numTotal = df_lim.shape[0]
+    # Count contributors in each category using Polars (faster than Pandas boolean indexing)
+    numTotal = pl_lim.height
 
-    # number of 'active' contributors, people with contributions before the drift time
-    numActive = df_lim[df_lim["created_at"] >= drift_mos].shape[0]
+    # Active: last contribution >= drift threshold
+    numActive = pl_lim.filter(pl.col("created_at") >= drift_mos).height
 
-    # set of contributions that are before the away time
-    drifting = df_lim[df_lim["created_at"] > away_mos]
+    # Drifting: last contribution between away and drift thresholds
+    numDrifting = pl_lim.filter((pl.col("created_at") > away_mos) & (pl.col("created_at") < drift_mos)).height
 
-    # number of the set of contributions that are after the drift time, but before away
-    numDrifting = drifting[drifting["created_at"] < drift_mos].shape[0]
-
-    # difference of the total to get the away value
+    # Away: the rest
     numAway = numTotal - (numActive + numDrifting)
 
     return [numActive, numDrifting, numAway]
