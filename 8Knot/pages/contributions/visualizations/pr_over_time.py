@@ -5,8 +5,11 @@ from dash import callback
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
+import polars as pl
+import numpy as np
 import logging
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
+from pages.utils.polars_utils import to_polars, to_pandas
 from pages.utils.job_utils import nodata_graph
 from queries.prs_query import prs_query as prq
 import time
@@ -160,46 +163,59 @@ def prs_over_time_graph(repolist, interval):
 
 
 def process_data(df: pd.DataFrame, interval):
-    # convert dates to datetime objects rather than strings
-    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
-    df["merged_at"] = pd.to_datetime(df["merged_at"], utc=True)
-    df["closed_at"] = pd.to_datetime(df["closed_at"], utc=True)
+    """
+    Process PR data using Polars for performance, returning Pandas for visualization.
 
-    # order values chronologically by creation date
-    df = df.sort_values(by="created_at", axis=0, ascending=True)
+    Follows the "Polars Core, Pandas Edge" architecture.
+    """
+    # === POLARS PROCESSING START ===
+
+    # Convert to Polars for fast initial processing
+    pl_df = to_polars(df)
+
+    # Convert to datetime and sort
+    pl_df = pl_df.with_columns(
+        [
+            pl.col("created_at").cast(pl.Datetime("us", "UTC")),
+            pl.col("merged_at").cast(pl.Datetime("us", "UTC")),
+            pl.col("closed_at").cast(pl.Datetime("us", "UTC")),
+        ]
+    )
+    pl_df = pl_df.sort("created_at")
+
+    # Get date range
+    earliest = pl_df.select(pl.col("created_at").min()).item()
+    latest_created = pl_df.select(pl.col("created_at").max()).item()
+    latest_closed = pl_df.select(pl.col("closed_at").max()).item()
+    latest = max(latest_created, latest_closed) if latest_closed else latest_created
+
+    # Convert back to Pandas for period operations (Polars doesn't have period support)
+    df = to_pandas(pl_df)
+
+    # === POLARS PROCESSING END ===
 
     # variable to slice on to handle weekly period edge case
     period_slice = None
     if interval == "W":
-        # this is to slice the extra period information that comes with the weekly case
         period_slice = 10
 
-    # --data frames for PR created, merged, or closed. Detailed description applies for all 3.--
-
-    # get the count of created prs in the desired interval in pandas period format, sort index to order entries
+    # Data frames for PR created, merged, or closed
     created_range = df["created_at"].dt.to_period(interval).value_counts().sort_index()
-
-    # converts to data frame object and created date column from period values
     df_created = created_range.to_frame().reset_index().rename(columns={"created_at": "Date", "count": "created_at"})
-
-    # converts date column to a datetime object, converts to string first to handle period information
-    # the period slice is to handle weekly corner case
     df_created["Date"] = pd.to_datetime(df_created["Date"].astype(str).str[:period_slice])
 
-    # df for merged prs in time interval
     merged_range = pd.to_datetime(df["merged_at"]).dt.to_period(interval).value_counts().sort_index()
     df_merged = merged_range.to_frame().reset_index().rename(columns={"merged_at": "Date", "count": "merged_at"})
     df_merged["Date"] = pd.to_datetime(df_merged["Date"].astype(str).str[:period_slice])
 
-    # df for closed prs in time interval
     closed_range = pd.to_datetime(df["closed_at"]).dt.to_period(interval).value_counts().sort_index()
     df_closed = closed_range.to_frame().reset_index().rename(columns={"closed_at": "Date", "count": "closed_at"})
     df_closed["Date"] = pd.to_datetime(df_closed["Date"].astype(str).str[:period_slice])
 
-    # A single df created for plotting merged and closed as stacked bar chart
+    # Merge for stacked bar chart
     df_closed_merged = pd.merge(df_merged, df_closed, on="Date", how="outer")
 
-    # formatting for graph generation
+    # Format dates for graph generation
     if interval == "M":
         df_created["Date"] = df_created["Date"].dt.strftime("%Y-%m-01")
         df_closed_merged["Date"] = df_closed_merged["Date"].dt.strftime("%Y-%m-01")
@@ -209,23 +225,12 @@ def process_data(df: pd.DataFrame, interval):
 
     df_closed_merged["closed_at"] = df_closed_merged["closed_at"] - df_closed_merged["merged_at"]
 
-    # ----- Open PR processinging starts here ----
-
-    # first and last elements of the dataframe are the
-    # earliest and latest events respectively
-    earliest = df["created_at"].min()
-    latest = max(df["created_at"].max(), df["closed_at"].max())
-
-    # beginning to the end of time by the specified interval
+    # ----- Open PR processing ----
     dates = pd.date_range(start=earliest, end=latest, freq="D", inclusive="both")
-
-    # df for open prs from time interval
     df_open = dates.to_frame(index=False, name="Date")
 
-    # Vectorized approach: count open PRs at each date using cumulative sums
-    # For each date, count PRs where: created_at <= date AND (closed_at > date OR closed_at is null)
+    # Vectorized open count calculation
     df_open["Open"] = get_open_vectorized(df, df_open["Date"])
-
     df_open["Date"] = df_open["Date"].dt.strftime("%Y-%m-%d")
 
     return df_created, df_closed_merged, df_open

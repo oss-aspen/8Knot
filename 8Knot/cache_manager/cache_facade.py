@@ -26,6 +26,8 @@ import psycopg2 as pg
 from psycopg2.extras import execute_values
 from psycopg2 import sql as pg_sql
 import pandas as pd
+import polars as pl
+from typing import Literal, Union
 
 # requires relative import syntax "import .cx_common" because
 # other files importing cache_facade need to know how to resolve
@@ -202,17 +204,26 @@ def caching_wrapper(func_name: str, query: str, repolist: list[int], n_repolist_
 def retrieve_from_cache(
     tablename: str,
     repolist: list[int],
-) -> pd.DataFrame:
+    as_polars: bool = False,
+) -> Union[pd.DataFrame, pl.DataFrame]:
     """
     For a given table in cache, get all results
     that having a matching repo_id.
 
     Results are retrieved by a DataFrame, so column names
     may need to be overridden by calling function.
+
+    Args:
+        tablename: Name of the cache table
+        repolist: List of repo IDs to retrieve
+        as_polars: If True, return a Polars DataFrame (faster for processing).
+                   If False (default), return a Pandas DataFrame (for backward compatibility).
+
+    Returns:
+        DataFrame with cached results (Polars or Pandas based on as_polars flag)
     """
 
     # GET ALL DATA FROM POSTGRES CACHE
-    df = None
     with pg.connect(cache_cx_string) as cache_conn:
         with cache_conn.cursor() as cache_cur:
             cache_cur.execute(
@@ -227,10 +238,43 @@ def retrieve_from_cache(
             )
 
             logging.warning(f"{tablename} - LOADING DATA FROM CACHE")
-            df = pd.DataFrame(
-                cache_cur.fetchall(),
-                # get df column names from the database columns
-                columns=[desc[0] for desc in cache_cur.description],
-            )
-            logging.warning(f"{tablename} - DATA LOADED - {df.shape} rows,cols")
+
+            # Get column names from cursor description
+            columns = [desc[0] for desc in cache_cur.description]
+            rows = cache_cur.fetchall()
+
+            if as_polars:
+                # Create Polars DataFrame directly (faster for processing)
+                df = pl.DataFrame(rows, schema=columns, orient="row")
+                logging.warning(f"{tablename} - DATA LOADED AS POLARS - {df.shape} rows,cols")
+            else:
+                # Create Pandas DataFrame (backward compatible)
+                df = pd.DataFrame(rows, columns=columns)
+                logging.warning(f"{tablename} - DATA LOADED AS PANDAS - {df.shape} rows,cols")
+
             return df
+
+
+def retrieve_from_cache_polars(
+    tablename: str,
+    repolist: list[int],
+) -> pl.DataFrame:
+    """
+    Retrieve cached data as a Polars DataFrame for high-performance processing.
+
+    This is a convenience function that wraps retrieve_from_cache with as_polars=True.
+    Use this when you need fast data processing (2-10x faster than Pandas).
+
+    For visualization, convert to Pandas at the boundary:
+        pl_df = retrieve_from_cache_polars(...)
+        # ... Polars processing ...
+        pd_df = pl_df.to_pandas()  # For Plotly/Dash
+
+    Args:
+        tablename: Name of the cache table
+        repolist: List of repo IDs to retrieve
+
+    Returns:
+        Polars DataFrame with cached results
+    """
+    return retrieve_from_cache(tablename, repolist, as_polars=True)
