@@ -6,10 +6,12 @@ import dash_mantine_components as dmc
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
+import polars as pl
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
+from pages.utils.polars_utils import to_polars, to_pandas
 from queries.contributors_query import contributors_query as ctq
 from pages.utils.job_utils import nodata_graph
 import time
@@ -253,51 +255,47 @@ def create_top_k_cntrbs_graph(repolist, action_type, top_k, start_date, end_date
 
 
 def process_data(df: pd.DataFrame, action_type, top_k, start_date, end_date):
-    # convert to datetime objects rather than strings
-    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
+    """
+    Process contributor importance pie data using Polars for performance.
 
-    # order values chronologically by created_at date
-    df = df.sort_values(by="created_at", ascending=True)
+    Follows the "Polars Core, Pandas Edge" architecture.
+    """
+    # === POLARS PROCESSING START ===
 
-    # filter values based on date picker
+    # Convert to Polars for fast processing
+    pl_df = to_polars(df)
+
+    # Convert to datetime and sort
+    pl_df = pl_df.with_columns(pl.col("created_at").cast(pl.Datetime("us", "UTC")))
+    pl_df = pl_df.sort("created_at")
+
+    # Filter by date range
     if start_date is not None:
-        df = df[df.created_at >= start_date]
+        pl_df = pl_df.filter(pl.col("created_at") >= start_date)
     if end_date is not None:
-        df = df[df.created_at <= end_date]
+        pl_df = pl_df.filter(pl.col("created_at") <= end_date)
 
-    # subset the df such that it only contains rows where the Action column value is the action type
-    df = df[df["Action"].str.contains(action_type)]
+    # Filter by action type
+    pl_df = pl_df.filter(pl.col("Action").str.contains(action_type))
 
-    # get the number of total contributions of the specific action type
-    t_sum = df.shape[0]
+    # Count contributions per contributor
+    pl_grouped = pl_df.group_by("cntrb_id").agg(pl.len().alias(action_type)).sort(action_type, descending=True)
 
-    # count the number of contributions for each contributor
-    df = (df.groupby("cntrb_id")["Action"].count()).to_frame()
+    # Get total sum
+    t_sum = pl_grouped.select(pl.col(action_type).sum()).item()
 
-    # sort rows according to amount of contributions from greatest to least
-    df = df.sort_values(by="Action", ascending=False)
+    # Get top k
+    pl_top_k = pl_grouped.head(top_k)
+    df_sum = pl_top_k.select(pl.col(action_type).sum()).item()
 
-    df = df.reset_index()
+    # Add "Other" row for remaining contributions
+    other_row = pl.DataFrame({"cntrb_id": ["Other"], action_type: [t_sum - df_sum]})
+    pl_result = pl.concat([pl_top_k, other_row])
 
-    # rename Action column to action_type
-    df = df.rename(columns={"Action": action_type})
+    # === POLARS PROCESSING END ===
 
-    # get the number of total contributions
-    t_sum = df[action_type].sum()
-
-    # index df to get first k rows
-    df = df.head(top_k)
-
-    # get the number of total top k contributions
-    df_sum = df[action_type].sum()
-
-    # calculate the remaining contributions by taking the the difference of t_sum and df_sum
-    # dataframes no longer implement above 'append' interface as of Pandas 1.4.4
-    # create a single-entry dataframe that we can concatenate onto existing df
-    df_concat = pd.DataFrame(data={"cntrb_id": ["Other"], action_type: [t_sum - df_sum]})
-    df = pd.concat([df, df_concat], ignore_index=True)
-
-    return df
+    # Convert to Pandas for visualization
+    return to_pandas(pl_result)
 
 
 def create_figure(df: pd.DataFrame, action_type):
