@@ -4,9 +4,11 @@ import dash_bootstrap_components as dbc
 from dash import callback
 from dash.dependencies import Input, Output, State
 import pandas as pd
+import polars as pl
 import logging
 import plotly.express as px
 from pages.utils.graph_utils import baby_blue
+from pages.utils.polars_utils import to_polars, to_pandas
 from queries.contributors_query import contributors_query as ctq
 import time
 from pages.utils.job_utils import nodata_graph
@@ -127,17 +129,26 @@ def create_first_time_contributors_graph(repolist, bot_switch):
 
 
 def process_data(df):
-    # convert to datetime objects with consistent column name
-    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
-    # df.rename(columns={"created_at": "created"}, inplace=True)
+    """
+    Process first-time contribution data using Polars for performance.
 
-    # selection for 1st contribution only
-    df = df[df["rank"] == 1]
+    Follows the "Polars Core, Pandas Edge" architecture.
+    """
+    # === POLARS PROCESSING START ===
 
-    # reset index to be ready for plotly
-    df = df.reset_index()
+    # Convert to Polars for fast processing
+    pl_df = to_polars(df)
 
-    return df
+    # Convert to datetime
+    pl_df = pl_df.with_columns(pl.col("created_at").cast(pl.Datetime("us", "UTC")))
+
+    # Filter for first contributions only (rank == 1)
+    pl_df = pl_df.filter(pl.col("rank") == 1)
+
+    # === POLARS PROCESSING END ===
+
+    # Convert to Pandas for visualization
+    return to_pandas(pl_df)
 
 
 def create_figure(df):

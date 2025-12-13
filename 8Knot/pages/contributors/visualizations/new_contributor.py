@@ -4,9 +4,11 @@ import dash_bootstrap_components as dbc
 from dash import callback
 from dash.dependencies import Input, Output, State
 import pandas as pd
+import polars as pl
 import logging
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
+from pages.utils.polars_utils import to_polars, to_pandas
 from queries.contributors_query import contributors_query as ctq
 from pages.utils.job_utils import nodata_graph
 import time
@@ -158,43 +160,38 @@ def new_contributor_graph(repolist, interval, bot_switch):
 
 
 def process_data(df, interval):
-    # convert to datetime objects with consistent column name
-    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
-    # df.rename(columns={"created_at": "created"}, inplace=True)
-
-    # order from beginning of time to most recent
-    df = df.sort_values("created_at", axis=0, ascending=True)
-
     """
-        Assume that the cntrb_id values are unique to individual contributors.
-        Find the first rank-1 contribution of the contributors, saving the created
-        date.
+    Process new contributor data using Polars for performance, returning Pandas for visualization.
+
+    Follows the "Polars Core, Pandas Edge" architecture.
     """
+    # === POLARS PROCESSING START ===
 
-    # keep only first contributions
-    df = df[df["rank"] == 1]
+    # Convert to Polars for fast processing
+    pl_df = to_polars(df)
 
-    # get all of the unique entries by contributor ID
-    df = df.drop_duplicates(subset=["cntrb_id"])
-    df = df.reset_index(drop=True)
+    # Convert to datetime and sort
+    pl_df = pl_df.with_columns(pl.col("created_at").cast(pl.Datetime("us", "UTC")))
+    pl_df = pl_df.sort("created_at")
 
-    # variable to slice on to handle weekly period edge case
-    period_slice = None
-    if interval == "W":
-        # this is to slice the extra period information that comes with the weekly case
-        period_slice = 10
+    # Keep only first contributions (rank == 1) and unique contributors
+    pl_df = pl_df.filter(pl.col("rank") == 1).unique(subset=["cntrb_id"], keep="first")
 
-    # get the count of new contributors in the desired interval in pandas period format, sort index to order entries
-    created_range = pd.to_datetime(df["created_at"]).dt.to_period(interval).value_counts().sort_index()
+    # Truncate to period for grouping
+    interval_map = {"D": "1d", "W": "1w", "M": "1mo", "Y": "1y"}
+    polars_interval = interval_map.get(interval, "1mo")
 
-    # converts to data frame object and creates date column from period values
-    df_contribs = created_range.to_frame().reset_index().rename(columns={"created_at": "Date", "count": "contribs"})
+    pl_df = pl_df.with_columns(pl.col("created_at").dt.truncate(polars_interval).alias("Date"))
 
-    # converts date column to a datetime object, converts to string first to handle period information
-    df_contribs["Date"] = pd.to_datetime(df_contribs["Date"].astype(str))
+    # Group by period and count
+    pl_result = pl_df.group_by("Date").agg(pl.len().alias("contribs")).sort("Date")
 
-    # correction for year binning -
-    # rounded up to next year so this is a simple patch
+    # Convert to Pandas for visualization
+    df_contribs = to_pandas(pl_result)
+
+    # === POLARS PROCESSING END ===
+
+    # Correction for year binning
     if interval == "Y":
         df_contribs["Date"] = df_contribs["Date"].dt.year
     elif interval == "M":
