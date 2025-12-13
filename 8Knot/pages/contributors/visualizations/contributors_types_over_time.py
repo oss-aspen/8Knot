@@ -4,10 +4,12 @@ import dash_bootstrap_components as dbc
 from dash import callback
 from dash.dependencies import Input, Output, State
 import pandas as pd
+import polars as pl
 import logging
 import numpy as np
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
+from pages.utils.polars_utils import to_polars, to_pandas
 from pages.utils.job_utils import nodata_graph
 from queries.contributors_query import contributors_query as ctq
 import time
@@ -189,69 +191,68 @@ def create_contrib_over_time_graph(repolist, contribs, interval, bot_switch):
 
 
 def process_data(df, interval, contribs):
-    # convert to datetime objects with consistent column name
-    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
-    # df.rename(columns={"created_at": "created"}, inplace=True)
+    """
+    Process contributor types over time data using Polars for performance.
 
-    # remove null contrib ids
-    df = df.dropna()
+    Follows the "Polars Core, Pandas Edge" architecture.
+    """
+    # === POLARS PROCESSING START ===
 
-    # create column for identifying Drive by and Repeat Contributors
-    contributors = df["cntrb_id"][df["rank"] == contribs].to_list()
+    # Convert to Polars for fast processing
+    pl_df = to_polars(df)
 
-    # dfs for drive by and repeat contributors
-    df_drive_temp = df.loc[~df["cntrb_id"].isin(contributors)]
-    df_repeat_temp = df.loc[df["cntrb_id"].isin(contributors)]
+    # Convert to datetime and drop nulls
+    pl_df = pl_df.with_columns(pl.col("created_at").cast(pl.Datetime("us", "UTC")))
+    pl_df = pl_df.drop_nulls()
 
-    # order values chronologically by creation date
-    df = df.sort_values(by="created_at", axis=0, ascending=True)
+    # Get contributors with specified rank
+    contributors = pl_df.filter(pl.col("rank") == contribs).select("cntrb_id").unique().to_series().to_list()
+    contributors_set = set(contributors)
 
-    # variable to slice on to handle weekly period edge case
-    period_slice = None
-    if interval == "W":
-        # this is to slice the extra period information that comes with the weekly case
-        period_slice = 10
+    # Split into drive-by and repeat contributors
+    pl_drive = pl_df.filter(~pl.col("cntrb_id").is_in(contributors_set))
+    pl_repeat = pl_df.filter(pl.col("cntrb_id").is_in(contributors_set))
 
-    # create empty df for empty case
-    df_drive = pd.DataFrame(columns=["Date", "Drive"])
-    df_drive["Drive"] = df_drive.Drive.astype("int64")
+    # Map interval to Polars truncation format
+    interval_map = {"D": "1d", "W": "1w", "M": "1mo", "Y": "1y"}
+    polars_interval = interval_map.get(interval, "1mo")
 
-    # fill df only if there is data
-    if not df_drive_temp.empty:
-        # df for drive by contributros in time interval
-        df_drive = (
-            # disable and re-enable formatter
-            # fmt: off
-            df_drive_temp.groupby(by=df_drive_temp.created_at.dt.to_period(interval))["cntrb_id"]
-            # fmt: on
-            .nunique()
-            .reset_index()
-            .rename(columns={"cntrb_id": "Drive", "created_at": "Date"})
+    # Count unique drive-by contributors per period
+    if pl_drive.height > 0:
+        pl_drive_result = (
+            pl_drive.with_columns(pl.col("created_at").dt.truncate(polars_interval).alias("Date"))
+            .group_by("Date")
+            .agg(pl.col("cntrb_id").n_unique().alias("Drive"))
         )
-        df_drive["Date"] = pd.to_datetime(df_drive["Date"].astype(str).str[:period_slice])
+    else:
+        pl_drive_result = pl.DataFrame({"Date": [], "Drive": []})
 
-    # create empty df for empty case
-    df_repeat = pd.DataFrame(columns=["Date", "Repeat"])
-    df_repeat["Repeat"] = df_repeat.Repeat.astype("int64")
-
-    # fill df only if there is data
-    if not df_repeat_temp.empty:
-        # df for repeat contributors in time interval
-        df_repeat = (
-            # disable and re-enable formatter
-            # fmt: off
-            df_repeat_temp.groupby(by=df_repeat_temp.created_at.dt.to_period(interval))["cntrb_id"]
-            # fmt: on
-            .nunique()
-            .reset_index()
-            .rename(columns={"cntrb_id": "Repeat", "created_at": "Date"})
+    # Count unique repeat contributors per period
+    if pl_repeat.height > 0:
+        pl_repeat_result = (
+            pl_repeat.with_columns(pl.col("created_at").dt.truncate(polars_interval).alias("Date"))
+            .group_by("Date")
+            .agg(pl.col("cntrb_id").n_unique().alias("Repeat"))
         )
-        df_repeat["Date"] = pd.to_datetime(df_repeat["Date"].astype(str).str[:period_slice])
+    else:
+        pl_repeat_result = pl.DataFrame({"Date": [], "Repeat": []})
 
-    # A single df created for plotting merged and closed as stacked bar chart
-    df_drive_repeat = pd.merge(df_drive, df_repeat, on="Date", how="outer")
+    # Join drive and repeat data
+    if pl_drive_result.height > 0 and pl_repeat_result.height > 0:
+        pl_result = pl_drive_result.join(pl_repeat_result, on="Date", how="full").sort("Date")
+    elif pl_drive_result.height > 0:
+        pl_result = pl_drive_result.with_columns(pl.lit(None).cast(pl.UInt32).alias("Repeat")).sort("Date")
+    elif pl_repeat_result.height > 0:
+        pl_result = pl_repeat_result.with_columns(pl.lit(None).cast(pl.UInt32).alias("Drive")).sort("Date")
+    else:
+        pl_result = pl.DataFrame({"Date": [], "Drive": [], "Repeat": []})
 
-    # formating for graph generation
+    # === POLARS PROCESSING END ===
+
+    # Convert to Pandas for visualization
+    df_drive_repeat = to_pandas(pl_result)
+
+    # Format dates for graph generation
     if interval == "M":
         df_drive_repeat["Date"] = df_drive_repeat["Date"].dt.strftime("%Y-%m-01")
     elif interval == "Y":

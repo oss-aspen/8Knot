@@ -4,9 +4,11 @@ import dash_bootstrap_components as dbc
 from dash import callback
 from dash.dependencies import Input, Output, State
 import pandas as pd
+import polars as pl
 import logging
 import plotly.express as px
 from pages.utils.graph_utils import baby_blue
+from pages.utils.polars_utils import to_polars, to_pandas
 from pages.utils.job_utils import nodata_graph
 from queries.contributors_query import contributors_query as ctq
 import time
@@ -210,24 +212,33 @@ def repeat_drive_by_graph(repolist, contribs, view, bot_switch):
 
 
 def process_data(df, view, contribs):
-    # convert to datetime objects with consistent column name
-    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
-    # df.rename(columns={"created_at": "created"}, inplace=True)
+    """
+    Process contributor drive/repeat data using Polars for performance.
 
-    # graph on contribution subset
-    contributors = df["cntrb_id"][df["rank"] == contribs].to_list()
-    df_cont_subset = pd.DataFrame(df)
+    Follows the "Polars Core, Pandas Edge" architecture.
+    """
+    # === POLARS PROCESSING START ===
 
-    # filtering data by view
+    # Convert to Polars for fast processing
+    pl_df = to_polars(df)
+
+    # Convert to datetime
+    pl_df = pl_df.with_columns(pl.col("created_at").cast(pl.Datetime("us", "UTC")))
+
+    # Get contributors with specified rank
+    contributors = pl_df.filter(pl.col("rank") == contribs).select("cntrb_id").unique().to_series().to_list()
+    contributors_set = set(contributors)
+
+    # Filter based on view
     if view == "drive":
-        df_cont_subset = df_cont_subset.loc[~df_cont_subset["cntrb_id"].isin(contributors)]
+        pl_result = pl_df.filter(~pl.col("cntrb_id").is_in(contributors_set))
     else:
-        df_cont_subset = df_cont_subset.loc[df_cont_subset["cntrb_id"].isin(contributors)]
+        pl_result = pl_df.filter(pl.col("cntrb_id").is_in(contributors_set))
 
-    # reset index to be ready for plotly
-    df_cont_subset = df_cont_subset.reset_index()
+    # === POLARS PROCESSING END ===
 
-    return df_cont_subset
+    # Convert to Pandas for visualization
+    return to_pandas(pl_result)
 
 
 def create_figure(df_cont_subset):
