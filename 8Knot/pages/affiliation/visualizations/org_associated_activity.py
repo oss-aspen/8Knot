@@ -4,10 +4,12 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
+import polars as pl
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import baby_blue
+from pages.utils.polars_utils import to_polars, to_pandas
 from queries.affiliation_query import affiliation_query as aq
 from pages.utils.job_utils import nodata_graph
 import time
@@ -221,55 +223,61 @@ def org_associated_activity_graph(repolist, num, start_date, end_date, email_fil
 
 
 def process_data(df: pd.DataFrame, num, start_date, end_date, email_filter):
-    # convert to datetime objects rather than strings
-    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
+    """
+    Process organization associated activity data using Polars for performance.
 
-    # order values chronologically by COLUMN_TO_SORT_BY date
-    df = df.sort_values(by="created_at", axis=0, ascending=True)
+    Follows the "Polars Core, Pandas Edge" architecture.
+    """
+    # === POLARS PROCESSING START ===
 
-    # filter values based on date picker
+    # Convert to Polars for fast processing
+    pl_df = to_polars(df)
+
+    # Convert to datetime and sort
+    pl_df = pl_df.with_columns(pl.col("created_at").cast(pl.Datetime("us", "UTC")))
+    pl_df = pl_df.sort("created_at")
+
+    # Filter by date range
     if start_date is not None:
-        df = df[df.created_at >= start_date]
+        pl_df = pl_df.filter(pl.col("created_at") >= start_date)
     if end_date is not None:
-        df = df[df.created_at <= end_date]
+        pl_df = pl_df.filter(pl.col("created_at") <= end_date)
 
-    # creates list of emails for each contribution and flattens list result
-    emails = df.email_list.str.split(" , ").explode("email_list").tolist()
-
-    # remove any entries not in email format and flattens list result
-    emails = [x.lower() for x in emails if "@" in x]
-
-    # creates list of email domains from the emails list
-    email_domains = [x[x.rindex("@") + 1 :] for x in emails]
-
-    # creates df of domains and counts
-    df = pd.DataFrame(email_domains, columns=["domains"]).value_counts().to_frame().reset_index()
-
-    df = df.rename(columns={"count": "occurrences"})
-
-    # changes the name of the organization if under a certain threshold
-    df.loc[df.occurrences <= num, "domains"] = "Other"
-
-    # groups others together for final counts
-    df = (
-        df.groupby(by="domains")["occurrences"]
-        .sum()
-        .reset_index()
-        .sort_values(by=["occurrences"], ascending=False)
-        .reset_index(drop=True)
+    # Split email lists and explode using Polars
+    pl_emails = pl_df.select(pl.col("email_list").str.split(" , ").explode().alias("email")).filter(
+        pl.col("email").str.contains("@")
     )
 
-    # remove other from set
-    df = df[df.domains != "Other"]
+    # Extract domains using Polars string operations
+    pl_domains = pl_emails.with_columns(
+        pl.col("email").str.to_lowercase().str.extract(r"@(.+)$", 1).alias("domains")
+    ).filter(pl.col("domains").is_not_null())
 
-    # removes entries with gmail or other if checked
+    # Count domains
+    pl_counts = pl_domains.group_by("domains").agg(pl.len().alias("occurrences"))
+
+    # Replace low-count domains with "Other"
+    pl_counts = pl_counts.with_columns(
+        pl.when(pl.col("occurrences") <= num).then(pl.lit("Other")).otherwise(pl.col("domains")).alias("domains")
+    )
+
+    # Group by domains (consolidating "Other")
+    pl_result = pl_counts.group_by("domains").agg(pl.col("occurrences").sum()).sort("occurrences", descending=True)
+
+    # Remove "Other" from set
+    pl_result = pl_result.filter(pl.col("domains") != "Other")
+
+    # Apply email filters
     if email_filter is not None:
         if "gmail" in email_filter:
-            df = df[df.domains != "gmail.com"]
+            pl_result = pl_result.filter(pl.col("domains") != "gmail.com")
         if "github" in email_filter:
-            df = df[df.domains != "users.noreply.github.com"]
+            pl_result = pl_result.filter(pl.col("domains") != "users.noreply.github.com")
 
-    return df
+    # === POLARS PROCESSING END ===
+
+    # Convert to Pandas for visualization
+    return to_pandas(pl_result)
 
 
 def create_figure(df: pd.DataFrame):

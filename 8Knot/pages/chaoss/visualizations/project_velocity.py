@@ -4,10 +4,12 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
+import polars as pl
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
+from pages.utils.polars_utils import to_polars, to_pandas
 from queries.contributors_query import contributors_query as ctq
 from pages.utils.job_utils import nodata_graph
 import time
@@ -324,60 +326,84 @@ def process_data(
     pr_m_weight,
     pr_c_weight,
 ):
-    # convert to datetime objects rather than strings
-    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
+    """
+    Process project velocity data using Polars for performance.
 
-    # order values chronologically by COLUMN_TO_SORT_BY date
-    df = df.sort_values(by="created_at", axis=0, ascending=True)
+    Follows the "Polars Core, Pandas Edge" architecture.
+    """
+    # === POLARS PROCESSING START ===
 
-    # filter values based on date picker
+    # Convert to Polars for fast processing
+    pl_df = to_polars(df)
+
+    # Convert to datetime and sort
+    pl_df = pl_df.with_columns(pl.col("created_at").cast(pl.Datetime("us", "UTC")))
+    pl_df = pl_df.sort("created_at")
+
+    # Filter by date range
     if start_date is not None:
-        df = df[df.created_at >= start_date]
+        pl_df = pl_df.filter(pl.col("created_at") >= start_date)
     if end_date is not None:
-        df = df[df.created_at <= end_date]
+        pl_df = pl_df.filter(pl.col("created_at") <= end_date)
 
-    # df to hold value of unique contributors for each repo
-    df_cntrbs = pd.DataFrame(df.groupby("repo_name")["cntrb_id"].nunique()).rename(
-        columns={"cntrb_id": "num_unique_contributors"}
+    # Count unique contributors per repo
+    pl_cntrbs = pl_df.group_by("repo_name").agg(pl.col("cntrb_id").n_unique().alias("num_unique_contributors"))
+
+    # Count actions per repo
+    pl_actions = (
+        pl_df.group_by(["repo_name", "Action"])
+        .agg(pl.len().alias("count"))
+        .pivot(on="Action", index="repo_name", values="count")
     )
 
-    # group actions and repos to get the counts of the actions by repo
-    df_actions = pd.DataFrame(df.groupby("repo_name")["Action"].value_counts())
-    df_actions = df_actions.rename(columns={"Action": "count"}).reset_index()
+    # Join contributors and actions
+    pl_consolidated = pl_actions.join(pl_cntrbs, on="repo_name", how="left")
 
-    # pivot df to reformat the actions to be columns and repo_id to be rows
-    df_actions = df_actions.pivot(index="repo_name", columns="Action", values="count")
+    # Fill nulls with 0
+    pl_consolidated = pl_consolidated.fill_null(0)
 
-    # df_consolidated combines the actions and unique contributors and then specific columns for visualization use are added on
-    df_consolidated = pd.concat([df_actions, df_cntrbs], axis=1).reset_index()
+    # Ensure all required columns exist with 0 default
+    for col in ["Commit", "Issue Opened", "Issue Closed", "PR Opened", "PR Merged", "PR Closed"]:
+        if col not in pl_consolidated.columns:
+            pl_consolidated = pl_consolidated.with_columns(pl.lit(0).alias(col))
 
-    # replace all nan to 0
-    df_consolidated = df_consolidated.fillna(value=0)
-
-    # log of commits and contribs if values are not 0 (vectorized with np.log)
-    df_consolidated["log_num_commits"] = np.where(df_consolidated["Commit"] != 0, np.log(df_consolidated["Commit"]), 0)
-    df_consolidated["log_num_contrib"] = np.where(
-        df_consolidated["num_unique_contributors"] != 0,
-        np.log(df_consolidated["num_unique_contributors"]),
-        0,
+    # Calculate log values using Polars expressions
+    pl_consolidated = pl_consolidated.with_columns(
+        [
+            pl.when(pl.col("Commit") != 0).then(pl.col("Commit").log()).otherwise(0).alias("log_num_commits"),
+            pl.when(pl.col("num_unique_contributors") != 0)
+            .then(pl.col("num_unique_contributors").log())
+            .otherwise(0)
+            .alias("log_num_contrib"),
+        ]
     )
 
-    # column to hold the weighted values of pr and issues actions summed together
-    df_consolidated["prs_issues_actions_weighted"] = (
-        df_consolidated["Issue Opened"] * i_o_weight
-        + df_consolidated["Issue Closed"] * i_c_weight
-        + df_consolidated["PR Opened"] * pr_o_weight
-        + df_consolidated["PR Merged"] * pr_m_weight
-        + df_consolidated["PR Closed"] * pr_c_weight
+    # Calculate weighted PR/Issue actions
+    pl_consolidated = pl_consolidated.with_columns(
+        (
+            pl.col("Issue Opened") * i_o_weight
+            + pl.col("Issue Closed") * i_c_weight
+            + pl.col("PR Opened") * pr_o_weight
+            + pl.col("PR Merged") * pr_m_weight
+            + pl.col("PR Closed") * pr_c_weight
+        ).alias("prs_issues_actions_weighted")
     )
 
-    # after weighting replace 0 with nan for log
-    df_consolidated["prs_issues_actions_weighted"] = df_consolidated["prs_issues_actions_weighted"].replace(0, np.nan)
+    # Replace 0 with null for log, then calculate log
+    pl_consolidated = pl_consolidated.with_columns(
+        pl.when(pl.col("prs_issues_actions_weighted") == 0)
+        .then(None)
+        .otherwise(pl.col("prs_issues_actions_weighted"))
+        .alias("prs_issues_actions_weighted")
+    )
+    pl_consolidated = pl_consolidated.with_columns(
+        pl.col("prs_issues_actions_weighted").log().alias("log_prs_issues_actions_weighted")
+    )
 
-    # column for log value of pr and issue actions (vectorized)
-    df_consolidated["log_prs_issues_actions_weighted"] = np.log(df_consolidated["prs_issues_actions_weighted"])
+    # === POLARS PROCESSING END ===
 
-    return df_consolidated
+    # Convert to Pandas for visualization
+    return to_pandas(pl_consolidated)
 
 
 def create_figure(df: pd.DataFrame, log):
