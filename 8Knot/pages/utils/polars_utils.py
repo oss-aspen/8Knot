@@ -256,7 +256,7 @@ class LazyPatterns:
     def filter_and_aggregate(
         df: pl.DataFrame,
         filter_expr: pl.Expr,
-        group_by: str | list,
+        group_by: Union[str, list],
         agg_exprs: list,
     ) -> pl.DataFrame:
         """
