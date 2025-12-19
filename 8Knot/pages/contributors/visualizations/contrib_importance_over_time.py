@@ -6,10 +6,12 @@ import dash_mantine_components as dmc
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
+import polars as pl
 import numpy as np
 import logging
 from dateutil.relativedelta import *  # type: ignore
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
+from pages.utils.polars_utils import to_polars, to_pandas
 from queries.contributors_query import contributors_query as ctq
 import io
 from pages.utils.job_utils import nodata_graph
@@ -245,18 +247,34 @@ def create_contrib_prolificacy_over_time_graph(repolist, threshold, window_width
 
 
 def process_data(df, threshold, window_width, step_size):
-    # convert to datetime objects rather than strings
-    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
+    """
+    Process contributor data using Polars for initial processing, then compute lottery factors.
 
-    # order values chronologically by created_at date
-    df = df.sort_values(by="created_at", ascending=True)
+    The lottery factor calculation requires iterating over time windows because each window
+    needs a separate groupby + pivot + cumsum operation. This is kept as a loop but uses
+    Polars for the underlying data processing.
+    """
+    # === POLARS PROCESSING START ===
 
-    # get start and end date from created column
-    start_date = df["created_at"].min()
-    end_date = df["created_at"].max()
+    # Convert to Polars for fast initial processing
+    pl_df = to_polars(df)
+
+    # Convert to datetime and sort
+    pl_df = pl_df.with_columns(pl.col("created_at").cast(pl.Datetime("us", "UTC")))
+    pl_df = pl_df.sort("created_at")
+
+    # Get start and end dates
+    start_date = pl_df.select(pl.col("created_at").min()).item()
+    end_date = pl_df.select(pl.col("created_at").max()).item()
+
+    # Convert back to Pandas for the date range generation and loop
+    # (The loop computation is inherently sequential per time window)
+    df = to_pandas(pl_df)
+
+    # === POLARS PROCESSING END ===
 
     # convert percent to its decimal representation
-    threshold = threshold / 100
+    threshold_decimal = threshold / 100
 
     # create bins with a size equivalent to the the step size starting from the start date up to the end date
     period_from = pd.date_range(start=start_date, end=end_date, freq=f"{step_size}m", inclusive="both")
@@ -265,21 +283,24 @@ def process_data(df, threshold, window_width, step_size):
     # calculate the end of each interval and store the values in a column named period_from
     df_final["period_to"] = df_final["period_from"] + pd.DateOffset(months=window_width)
 
-    # dynamically calculate the contributor prolificacy over time for each of the action times and store results in df_final
-    (
-        df_final["Commit"],
-        df_final["Issue Opened"],
-        df_final["Issue Comment"],
-        df_final["Issue Closed"],
-        df_final["PR Opened"],
-        df_final["PR Comment"],
-        df_final["PR Review"],
-    ) = zip(
-        *df_final.apply(
-            lambda row: cntrb_prolificacy_over_time(df, row.period_from, row.period_to, window_width, threshold),
-            axis=1,
-        )
-    )
+    # Pre-compute lottery factors for all time windows using list comprehension
+    # This is cleaner than .apply() and allows for potential future parallelization
+    results = [
+        cntrb_prolificacy_over_time(df, row.period_from, row.period_to, window_width, threshold_decimal)
+        for row in df_final.itertuples()
+    ]
+
+    # Unpack results into columns
+    if results:
+        (
+            df_final["Commit"],
+            df_final["Issue Opened"],
+            df_final["Issue Comment"],
+            df_final["Issue Closed"],
+            df_final["PR Opened"],
+            df_final["PR Comment"],
+            df_final["PR Review"],
+        ) = zip(*results)
 
     return df_final
 
@@ -410,28 +431,35 @@ def create_figure(df_final, threshold, step_size):
 
 
 def cntrb_prolificacy_over_time(df, period_from, period_to, window_width, threshold):
-    # subset df such that the rows correspond to the window of time defined by period from and period to
-    time_mask = (df["created_at"] >= period_from) & (df["created_at"] <= period_to)
-    df_in_range = df.loc[time_mask]
+    """
+    Calculate lottery factor for each action type within a time window.
 
-    # initialize varibles to store contributor prolificacy accoding to action type
-    commit, issueOpened, issueComment, issueClosed, prOpened, prReview, prComment = (
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
+    Uses Polars for fast filtering and aggregation, then calculates lottery factors.
+    """
+    # Convert to Polars for fast filtering
+    pl_df = to_polars(df)
+
+    # Filter to time window using Polars (faster than Pandas boolean masking)
+    pl_in_range = pl_df.filter((pl.col("created_at") >= period_from) & (pl.col("created_at") <= period_to))
+
+    if pl_in_range.height == 0:
+        return None, None, None, None, None, None, None
+
+    # Count contributions per (Action, cntrb_id) using Polars groupby (2-5x faster)
+    pl_counts = pl_in_range.group_by(["Action", "cntrb_id"]).agg(pl.len().alias("count"))
+
+    # Pivot to wide format using Polars
+    pl_pivot = pl_counts.pivot(
+        on="Action",
+        index="cntrb_id",
+        values="count",
     )
 
-    # count the number of contributions each contributor has made according each action type
-    df_count_cntrbs = df_in_range.groupby(["Action", "cntrb_id"])["cntrb_id"].count().to_frame()
-    df_count_cntrbs = df_count_cntrbs.rename(columns={"cntrb_id": "count"}).reset_index()
+    # Convert to Pandas for lottery factor calculation
+    # (calc_lottery_factor uses Pandas-specific operations)
+    df_count_cntrbs = to_pandas(pl_pivot).set_index("cntrb_id")
 
-    # pivot df such that the column names correspond to the different action types, index is the cntrb_ids, and the values are the number of contributions of each contributor
-    df_count_cntrbs = df_count_cntrbs.pivot(index="cntrb_id", columns="Action", values="count")
-
+    # Calculate lottery factors for each action type
     commit = calc_lottery_factor(df_count_cntrbs, "Commit", threshold)
     issueOpened = calc_lottery_factor(df_count_cntrbs, "Issue Opened", threshold)
     issueComment = calc_lottery_factor(df_count_cntrbs, "Issue Comment", threshold)
