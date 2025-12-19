@@ -4,10 +4,12 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
+import polars as pl
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
+from pages.utils.polars_utils import to_polars, to_pandas
 from queries.contributors_query import contributors_query as ctq
 from pages.utils.job_utils import nodata_graph
 import time
@@ -221,32 +223,38 @@ def contribs_by_action_graph(repolist, interval, action, bot_switch):
 
 
 def process_data(df: pd.DataFrame, interval, action):
-    # convert to datetime objects rather than strings
-    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
+    """
+    Process contributors by action data using Polars for performance.
 
-    # order values chronologically by COLUMN_TO_SORT_BY date
-    df = df.sort_values(by="created_at", axis=0, ascending=True)
+    Follows the "Polars Core, Pandas Edge" architecture.
+    """
+    # === POLARS PROCESSING START ===
 
-    # drop all contributions that are not the selected action
-    df = df[df["Action"].str.contains(action)]
+    # Convert to Polars for fast processing
+    pl_df = to_polars(df)
 
-    # For distinct contributors per interval: keep one row per (cntrb_id, interval)
-    """df["_period"] = df["created_at"].dt.to_period(interval)
-    df = df.drop_duplicates(subset=["cntrb_id", "_period"], keep="first")
-    # Use the start of the interval for plotting consistency
-    df["created_at"] = df["_period"].dt.start_time
-    df = df.drop(columns=["_period"])  # cleanup"""
+    # Convert to datetime and sort
+    pl_df = pl_df.with_columns(pl.col("created_at").cast(pl.Datetime("us", "UTC")))
+    pl_df = pl_df.sort("created_at")
 
-    freq_map = {"M1": "M", "M3": "Q", "M6": "2Q", "M12": "Y"}
-    pandas_freq = freq_map.get(interval, interval)
+    # Filter for selected action using Polars string contains
+    pl_df = pl_df.filter(pl.col("Action").str.contains(action))
 
-    df["_period"] = df["created_at"].dt.to_period(pandas_freq)
-    df = df.drop_duplicates(subset=["cntrb_id", "_period"], keep="first")
-    df["created_at"] = df["_period"].dt.start_time
-    df = df.drop(columns=["_period"])
-    print(df)
+    # Map interval to Polars truncation format
+    interval_map = {"M1": "1mo", "M3": "3mo", "M6": "6mo", "M12": "1y"}
+    polars_interval = interval_map.get(interval, "1mo")
 
-    return df
+    # Add period column and dedupe per contributor per period
+    pl_df = pl_df.with_columns(pl.col("created_at").dt.truncate(polars_interval).alias("_period"))
+    pl_df = pl_df.unique(subset=["cntrb_id", "_period"], keep="first")
+
+    # Update created_at to period start time
+    pl_df = pl_df.with_columns(pl.col("_period").alias("created_at")).drop("_period")
+
+    # === POLARS PROCESSING END ===
+
+    # Convert to Pandas for visualization
+    return to_pandas(pl_df)
 
 
 def create_figure(df: pd.DataFrame, interval, action):

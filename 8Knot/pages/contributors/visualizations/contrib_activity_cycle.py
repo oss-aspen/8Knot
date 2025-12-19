@@ -4,10 +4,12 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
+import polars as pl
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import baby_blue
+from pages.utils.polars_utils import to_polars, to_pandas
 from queries.commits_query import commits_query as cmq
 import cache_manager.cache_facade as cf
 from pages.utils.job_utils import nodata_graph
@@ -156,36 +158,65 @@ def contrib_activity_cycle_graph(repolist, interval):
 
 
 def process_data(df: pd.DataFrame, interval):
-    # for this usecase we want the datetimes to be in their local values
-    # tricking pandas to keep local values when UTC conversion is required for to_datetime
-    df["author_timestamp"] = df["author_timestamp"].astype("str").str[:-6]
-    df["committer_timestamp"] = df["committer_timestamp"].astype("str").str[:-6]
+    """
+    Process contributor activity cycle data using Polars for performance.
 
-    # convert to datetime objects rather than strings
-    df["author_timestamp"] = pd.to_datetime(df["author_timestamp"], utc=True)
-    df["committer_timestamp"] = pd.to_datetime(df["committer_timestamp"], utc=True)
-    # removes duplicate values when the author and committer is the same
-    df.loc[df["author_timestamp"] == df["committer_timestamp"], "author_timestamp"] = None
+    Follows the "Polars Core, Pandas Edge" architecture.
+    """
+    # === POLARS PROCESSING START ===
 
-    df_final = pd.DataFrame()
+    # Convert to Polars for fast processing
+    pl_df = to_polars(df)
+
+    # Convert string timestamps to datetime, stripping timezone offset
+    pl_df = pl_df.with_columns(
+        [
+            pl.col("author_timestamp").cast(pl.Utf8).str.slice(0, -6).str.to_datetime().alias("author_timestamp"),
+            pl.col("committer_timestamp").cast(pl.Utf8).str.slice(0, -6).str.to_datetime().alias("committer_timestamp"),
+        ]
+    )
+
+    # Remove duplicate values when author and committer are the same
+    pl_df = pl_df.with_columns(
+        pl.when(pl.col("author_timestamp") == pl.col("committer_timestamp"))
+        .then(None)
+        .otherwise(pl.col("author_timestamp"))
+        .alias("author_timestamp")
+    )
 
     if interval == "H":
-        # combine the hour values for author and committer
-        hour = pd.concat([df["author_timestamp"].dt.hour, df["committer_timestamp"].dt.hour])
-        df_hour = pd.DataFrame(hour, columns=["Hour"])
-        df_final = df_hour.groupby(["Hour"])["Hour"].count()
+        # Extract hour values and combine
+        author_hours = pl_df.select(pl.col("author_timestamp").dt.hour().alias("Hour")).drop_nulls()
+        committer_hours = pl_df.select(pl.col("committer_timestamp").dt.hour().alias("Hour")).drop_nulls()
+        combined = pl.concat([author_hours, committer_hours])
+        pl_result = combined.group_by("Hour").agg(pl.len().alias("Hour")).sort("Hour")
     else:
-        # combine the weekday values for author and committer
-        weekday = pd.concat(
-            [
-                df["author_timestamp"].dt.day_name(),
-                df["committer_timestamp"].dt.day_name(),
-            ]
-        )
-        df_weekday = pd.DataFrame(weekday, columns=["Weekday"])
-        df_final = df_weekday.groupby(["Weekday"])["Weekday"].count()
+        # Extract weekday names and combine
+        # Polars uses 1-7 for weekdays, we need to map to names
+        weekday_map = {
+            1: "Monday",
+            2: "Tuesday",
+            3: "Wednesday",
+            4: "Thursday",
+            5: "Friday",
+            6: "Saturday",
+            7: "Sunday",
+        }
+        author_weekdays = pl_df.select(pl.col("author_timestamp").dt.weekday().alias("day_num")).drop_nulls()
+        committer_weekdays = pl_df.select(pl.col("committer_timestamp").dt.weekday().alias("day_num")).drop_nulls()
+        combined = pl.concat([author_weekdays, committer_weekdays])
 
-    return df_final
+        # Map day numbers to names
+        combined = combined.with_columns(
+            pl.col("day_num").replace_strict(weekday_map, default="Unknown").alias("Weekday")
+        )
+        pl_result = combined.group_by("Weekday").agg(pl.len().alias("Weekday")).sort("Weekday")
+
+    # === POLARS PROCESSING END ===
+
+    # Convert to Pandas Series for compatibility with existing create_figure
+    result_df = to_pandas(pl_result)
+    return result_df.set_index(result_df.columns[0])[result_df.columns[1]]
 
 
 def create_figure(df: pd.DataFrame, interval):
