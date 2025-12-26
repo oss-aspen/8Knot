@@ -163,7 +163,7 @@ def create_top_k_cntrbs_graph(repolist, action_type, top_k, start_date, end_date
     # wait for data to asynchronously download and become available.
     if not wait_for_query_data(ctq, repolist, timeout=600, poll_interval=0.5):
         logging.warning(f"{VIZ_ID} - TIMEOUT waiting for data")
-        return nodata_graph
+        return nodata_graph, False
 
     logging.warning(f"{VIZ_ID} - START")
     start = time.perf_counter()

@@ -65,7 +65,7 @@ gc_pr_review_response = VisualizationAIO(
 )
 def pr_review_response_graph(repolist, num_days, bot_switch):
     if not wait_for_query_data(prr, repolist, timeout=600, poll_interval=0.5):
-        logging.warning(f"PR_FIRST_RESPONSE  - TIMEOUT waiting for data")
+        logging.warning(f"{VIZ_ID} - TIMEOUT waiting for data")
         return nodata_graph
 
     start = time.perf_counter()

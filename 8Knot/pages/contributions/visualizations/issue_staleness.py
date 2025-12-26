@@ -135,8 +135,8 @@ def new_staling_issues_graph(repolist, interval, staling_interval, stale_interva
     # wait for data to asynchronously download and become available.
 
     if not wait_for_query_data(iq, repolist, timeout=600, poll_interval=0.5):
-        logging.warning(f"ISSUES STALENESS  - TIMEOUT waiting for data")
-        return nodata_graph
+        logging.warning(f"{VIZ_ID} - TIMEOUT waiting for data")
+        return nodata_graph, False
 
     # data ready.
     start = time.perf_counter()

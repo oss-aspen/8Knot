@@ -35,12 +35,14 @@ def wait_for_query_data(
     query_name = query_func.__name__
     viz_id = f"wait_for_{query_name}"
     start_time = time.time()
+    last_log_time = start_time
 
     logging.info(f"{viz_id} - Waiting for {query_name} data to become available")
 
     while True:
+        now = time.time()
         # Check if we've exceeded timeout
-        elapsed = time.time() - start_time
+        elapsed = now - start_time
         if elapsed > timeout:
             logging.warning(f"{viz_id} - Timeout after {timeout}s waiting for {query_name}")
             return False
@@ -55,8 +57,9 @@ def wait_for_query_data(
             return True
 
         # Log progress every 5 seconds
-        if int(elapsed) % 5 == 0 and elapsed > 0:
+        if now - last_log_time >= 5:
             logging.debug(f"{viz_id} - Still waiting for {query_name} ({len(repos_not_cached)} repos not cached)")
+            last_log_time = now
 
         time.sleep(poll_interval)
 

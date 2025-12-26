@@ -151,7 +151,7 @@ def create_contrib_prolificacy_over_time_graph(repolist, threshold, window_width
     # wait for data to asynchronously download and become available.
     if not wait_for_query_data(ctq, repolist, timeout=600, poll_interval=0.5):
         logging.warning(f"{VIZ_ID} - TIMEOUT waiting for data")
-        return nodata_graph
+        return nodata_graph, False
 
     start = time.perf_counter()
     logging.warning(f"{VIZ_ID} - START")

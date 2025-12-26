@@ -42,7 +42,8 @@ def create_async_results_from_metadata(job_metadata, filter_query_names=None):
     query_names = []
 
     # Determine which queries to process
-    queries_to_process = filter_query_names if filter_query_names else job_metadata.keys()
+    # Use explicit None check: empty list means "no queries", None means "all queries"
+    queries_to_process = job_metadata.keys() if filter_query_names is None else filter_query_names
 
     for query_name in queries_to_process:
         if query_name in job_metadata:
@@ -136,7 +137,7 @@ def wait_for_job_completion(
         time.sleep(poll_interval)
 
 
-def wait_for_all_jobs_to_finish(jobs):
+def wait_for_all_jobs_to_finish(jobs, max_wait_time=MAX_QUERY_WAIT_TIME):
     """
     Wait for all jobs to reach terminal state (success or failure).
 
@@ -145,8 +146,16 @@ def wait_for_all_jobs_to_finish(jobs):
 
     Args:
         jobs (list): List of AsyncResult objects
+        max_wait_time (int): Maximum time to wait before giving up (seconds)
     """
+    start_time = time.time()
+
     while True:
+        # Check for timeout to prevent indefinite blocking
+        if time.time() - start_time > max_wait_time:
+            logging.warning(f"Timeout waiting for all jobs to finish after {max_wait_time}s")
+            break
+
         num_succeeded = sum(1 for j in jobs if j.successful())
         num_failed = sum(1 for j in jobs if j.failed())
         num_total = num_failed + num_succeeded

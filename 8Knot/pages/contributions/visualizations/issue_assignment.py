@@ -12,7 +12,6 @@ from pages.utils.job_utils import nodata_graph
 from pages.utils.query_status import wait_for_query_data
 import time
 import app
-import app
 import cache_manager.cache_facade as cf
 from components.visualization import VisualizationAIO
 

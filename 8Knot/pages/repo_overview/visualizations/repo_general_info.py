@@ -209,12 +209,12 @@ def multi_query_helper(repos: list[int]):
     # Wait for repo_info_query data
     if not wait_for_query_data(riq, repos, timeout=600, poll_interval=0.5):
         logging.warning("REPO GENERAL INFO - TIMEOUT waiting for repo_info_query data")
-        return None, None
+        return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
 
     # Wait for repo_releases_query data
     if not wait_for_query_data(rrq, repos, timeout=600, poll_interval=0.5):
         logging.warning("REPO GENERAL INFO - TIMEOUT waiting for repo_releases_query data")
-        return None, None
+        return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
 
     # GET ALL DATA FROM POSTGRES CACHE
     """df_file = cf.retrieve_from_cache(

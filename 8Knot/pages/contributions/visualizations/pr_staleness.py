@@ -131,8 +131,8 @@ def new_staling_prs_graph(repolist, interval, staling_interval, stale_interval):
 
     # wait for data to asynchronously download and become available.
     if not wait_for_query_data(prq, repolist, timeout=600, poll_interval=0.5):
-        logging.warning(f"PULL REQUESTS STALENESS  - TIMEOUT waiting for data")
-        return nodata_graph
+        logging.warning(f"{VIZ_ID} - TIMEOUT waiting for data")
+        return nodata_graph, False
 
     start = time.perf_counter()
     logging.warning("PULL REQUEST STALENESS - START")

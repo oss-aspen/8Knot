@@ -80,7 +80,7 @@ def new_contributor_graph(repolist, interval, bot_switch):
 
     # test if there is data
     if df.empty:
-        logging.warning("TOTAL_CONTRIBUTOR_GROWTH_VIZ - NO DATA AVAILABLE")
+        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return nodata_graph
 
     # remove bot data

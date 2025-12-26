@@ -79,7 +79,7 @@ gc_commit_domains = VisualizationAIO(
 def commit_domains_graph(repolist, num, start_date, end_date):
     # wait for data to asynchronously download and become available.
     if not wait_for_query_data(cmq, repolist, timeout=600, poll_interval=0.5):
-        logging.warning(f"COMMITS_OVER_TIME_VIZ  - TIMEOUT waiting for data")
+        logging.warning(f"{VIZ_ID} - TIMEOUT waiting for data")
         return nodata_graph
 
     start = time.perf_counter()

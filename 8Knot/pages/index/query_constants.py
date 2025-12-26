@@ -50,7 +50,7 @@ BADGE_TEXT_PAGE_FAILED = "Page Load Failed"
 BADGE_TEXT_PAGE_TIMEOUT = "Page Timeout"
 BADGE_TEXT_DATA_READY = "Data Ready"
 BADGE_TEXT_TIMEOUT_RETRY = "Timeout - Retry"
-BADGE_TEXT_DATA_INCOMPLETE = "Data Incomplete- Retry"
+BADGE_TEXT_DATA_INCOMPLETE = "Data Incomplete - Retry"
 
 # Badge colors (Baby Blue color scheme)
 BADGE_COLOR_READY = "#0F5880"  # Baby Blue 700 - dark blue for success
