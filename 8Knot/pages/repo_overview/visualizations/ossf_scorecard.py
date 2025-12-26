@@ -9,6 +9,7 @@ from queries.ossf_score_query import ossf_score_query as osq
 import io
 import cache_manager.cache_facade as cf
 from pages.utils.job_utils import nodata_graph
+from pages.utils.query_status import wait_for_query_data
 import time
 from datetime import datetime
 
@@ -102,13 +103,12 @@ def ossf_scorecard(repo: str):
     if repo is not None:
         repo = int(repo)
 
-    # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=osq.__name__, repolist=[repo]):
-        logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
-
     logging.warning(f"{VIZ_ID} - START")
     start = time.perf_counter()
+
+    if not wait_for_query_data(osq, [repo], timeout=600, poll_interval=0.5):
+        logging.warning(f"{VIZ_ID} - TIMEOUT waiting for data")
+        return dbc.Table.from_dataframe(pd.DataFrame(), striped=True, bordered=True, hover=True), dbc.Label("No data")
 
     # GET ALL DATA FROM POSTGRES CACHE
     df = cf.retrieve_from_cache(

@@ -15,6 +15,7 @@ from queries.repo_releases_query import repo_releases_query as rrq
 import io
 import cache_manager.cache_facade as cf
 from pages.utils.job_utils import nodata_graph
+from pages.utils.query_status import wait_for_query_data
 import time
 from datetime import datetime
 
@@ -202,24 +203,18 @@ def process_data(df_repo_files, df_repo_info, df_releases):
 
 def multi_query_helper(repos: list[int]):
     """
-    hack to put all of the cache-retrieval
-    in the same place temporarily
+    Helper to wait for multiple queries needed by repo_general_info visualization.
     """
 
-    # wait for data to asynchronously download and become available.
-    """while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=repos):
-        logging.warning(f"REPO GENERAL INFO - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)"""  # comment out until query is fixed
+    # Wait for repo_info_query data
+    if not wait_for_query_data(riq, repos, timeout=600, poll_interval=0.5):
+        logging.warning("REPO GENERAL INFO - TIMEOUT waiting for repo_info_query data")
+        return None, None
 
-    # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=riq.__name__, repolist=repos):
-        logging.warning(f"REPO GENERAL INFO - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
-
-    # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=rrq.__name__, repolist=repos):
-        logging.warning(f"REPO GENERAL INFO - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
+    # Wait for repo_releases_query data
+    if not wait_for_query_data(rrq, repos, timeout=600, poll_interval=0.5):
+        logging.warning("REPO GENERAL INFO - TIMEOUT waiting for repo_releases_query data")
+        return None, None
 
     # GET ALL DATA FROM POSTGRES CACHE
     """df_file = cf.retrieve_from_cache(

@@ -10,6 +10,7 @@ import plotly.express as px
 from pages.utils.graph_utils import baby_blue
 from queries.repo_languages_query import repo_languages_query as rlq
 from pages.utils.job_utils import nodata_graph
+from pages.utils.query_status import wait_for_query_data
 import time
 import datetime as dt
 import cache_manager.cache_facade as cf
@@ -86,13 +87,15 @@ def graph_title(view):
     background=True,
 )
 def code_languages_graph(repolist, view):
-    # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=rlq.__name__, repolist=repolist):
-        logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
-
+    # Wait for this specific query's data to become available
+    # This allows the viz to render as soon as its data is ready,
+    # without waiting for all other queries to complete
     start = time.perf_counter()
     logging.warning(f"{VIZ_ID}- START")
+
+    if not wait_for_query_data(rlq, repolist, timeout=600, poll_interval=0.5):
+        logging.warning(f"{VIZ_ID} - TIMEOUT waiting for data")
+        return nodata_graph
 
     # GET ALL DATA FROM POSTGRES CACHE
     df = cf.retrieve_from_cache(
