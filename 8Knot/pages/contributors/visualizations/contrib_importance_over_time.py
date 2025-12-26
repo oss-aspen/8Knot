@@ -155,7 +155,7 @@ def create_contrib_prolificacy_over_time_graph(repolist, threshold, window_width
 
     # remove bot data
     if bot_switch:
-        df = df[~df["cntrb_id"].isin(app.bots_list)], False
+        df = df[~df["cntrb_id"].isin(app.bots_list)]
 
     # if the step size is greater than window width raise Alert
     if step_size > window_width:

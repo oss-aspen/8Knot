@@ -10,6 +10,7 @@ import io
 from pages.utils.job_utils import nodata_graph
 from pages.utils.query_status import wait_for_query_data
 from datetime import datetime
+import cache_manager.cache_facade as cf
 
 PAGE = "repo_info"
 VIZ_ID = "ossf-scorecard"
