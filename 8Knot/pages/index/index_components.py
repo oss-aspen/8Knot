@@ -246,7 +246,9 @@ def create_app_stores():
     """Create application-level data stores."""
     return [
         dcc.Store(id="repo-choices", storage_type="session", data=[]),
-        dcc.Store(id="job-ids", storage_type="session", data=[]),
+        dcc.Store(id="job-ids", storage_type="session", data={}),  # Now stores dict of {query_name: job_id}
+        dcc.Store(id="current-page", storage_type="memory", data=None),  # Track current page for priority
+        dcc.Store(id="current-page-status", storage_type="memory", data="idle"),  # Status of current page queries
         dcc.Store(id="user-group-loading-signal", data="", storage_type="memory"),
         dcc.Location(id="url"),
     ]
