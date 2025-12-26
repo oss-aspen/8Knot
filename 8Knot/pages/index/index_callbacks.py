@@ -4,6 +4,8 @@ import os
 import time
 import logging
 import json
+import threading
+from typing import Optional
 from celery.result import AsyncResult
 import dash_bootstrap_components as dbc
 import dash
@@ -36,14 +38,486 @@ import redis
 import flask
 from .search_utils import fuzzy_search
 from .search_utils import clean_repo_name
+from .search_utils import get_adaptive_debounce_time
+from .query_constants import (
+    QUERY_STATUS_CACHED,
+    PAGE_STATUS_IDLE,
+    PAGE_STATUS_READY,
+    PAGE_STATUS_FAILED,
+    PAGE_STATUS_TIMEOUT,
+    CURRENT_PAGE_POLL_INTERVAL,
+    MAX_QUERY_WAIT_TIME,
+    BADGE_TEXT_NO_DATA,
+    BADGE_TEXT_ALL_READY,
+    BADGE_TEXT_PAGE_READY,
+    BADGE_TEXT_PAGE_FAILED,
+    BADGE_TEXT_PAGE_TIMEOUT,
+    BADGE_TEXT_DATA_READY,
+    BADGE_TEXT_TIMEOUT_RETRY,
+    BADGE_TEXT_DATA_INCOMPLETE,
+    BADGE_COLOR_READY,
+    BADGE_COLOR_LOADING,
+    BADGE_COLOR_ERROR,
+    BADGE_COLOR_WARNING,
+    BADGE_COLOR_SECONDARY,
+)
+from .query_job_utils import (
+    create_async_results_from_metadata,
+    check_all_jobs_complete,
+    wait_for_job_completion,
+    forget_jobs,
+)
 
 # list of queries to be run
 # QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq] - codebase page disabled
 QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, rlq, pvq, rrq, osq, riq]
 
+# Map pages to their required queries for priority loading
+PAGE_QUERIES = {
+    "/home": [cq, iq, prq],
+    "/repo_overview": [rlq, pvq, rrq, osq, riq],
+    "/contributions": [iq, cq, prq, iaq, praq, prr],
+    "/contributors/behavior": [cq, cnq],
+    "/contributors/contribution_types": [cq, cnq],
+    "/affiliation": [aq, cq],
+    "/chaoss": [cnq],
+}
+
+
+# Helper function to get query names for a page
+def get_page_query_names(page_path):
+    """Get list of query function names for a given page path."""
+    queries = PAGE_QUERIES.get(page_path, [])
+    return [q.__name__ for q in queries]
+
 
 # check if login has been enabled in config
 login_enabled = os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True"
+
+
+# Adaptive debounce state manager
+class AdaptiveDebounceManager:
+    """
+    Manages adaptive debouncing for search queries.
+
+    The component-level debounce (100ms) provides frequent check-ins.
+    This manager applies adaptive debouncing based on query length:
+    - Short queries (1-3 chars): Longer debounce (800-400ms) - user likely still typing
+    - Medium queries (4-5 chars): Medium debounce (250ms) - user may be finishing
+    - Long queries (6+ chars): Shorter debounce (150ms) - user likely finished
+
+    Strategy: Track when each unique query was first seen. Only process queries
+    that have been stable (unchanged) for the required adaptive debounce time.
+
+    Note: Dash Mantine Components' debounce prop is static, so we implement
+    adaptive debouncing in the callback logic rather than changing the component prop.
+    """
+
+    # Constants
+    COMPONENT_DEBOUNCE_SECONDS = 0.1  # 100ms from component
+    MIN_REPROCESS_INTERVAL_SECONDS = 0.1  # Don't reprocess same query within 100ms
+    CLEANUP_AGE_SECONDS = 5.0  # Remove queries older than 5 seconds
+
+    # Immediate processing thresholds (for detecting active typing)
+    SIGNIFICANT_LENGTH_INCREASE = 3  # Process immediately if query is 3+ chars longer
+    PREFIX_EXTENSION_THRESHOLD = 2  # Process immediately if prefix extension is 2+ chars longer
+
+    def __init__(self):
+        self._lock = threading.Lock()  # Thread safety for concurrent Dash callbacks
+        self._query_first_seen: dict[str, float] = {}  # Map query -> first time seen
+        self._last_processed_query: Optional[str] = None
+        self._last_processed_time: float = 0.0
+        self._last_results: list = []  # Store last results to return during debouncing (empty = no cache yet)
+        self._has_processed_any_query: bool = False  # Track if we've ever processed a query
+
+    def should_process_query(self, query: str) -> bool:
+        """
+        Determine if a query should be processed based on adaptive debounce logic.
+
+        Thread-safe: Uses locking to prevent race conditions in multi-threaded Dash environments.
+        Optimized with fast-path checks to minimize lock contention and reduce typing pauses.
+
+        Performance optimizations:
+        1. Fast-path lock-free check for duplicate queries (most common case)
+        2. Pre-compute expensive operations outside lock
+        3. Minimize time spent holding lock
+        4. Defer logging until after lock release
+
+        Args:
+            query: The current search query
+
+        Returns:
+            True if query should be processed, False if it should be debounced
+        """
+        current_time = time.time()
+
+        # FAST PATH: Lock-free check for same query reprocessing (most common case)
+        # Read-only access to these vars is safe without lock (they're only written with lock held)
+        if query == self._last_processed_query:
+            if current_time - self._last_processed_time < self.MIN_REPROCESS_INTERVAL_SECONDS:
+                return False  # Same query, too soon - no lock needed
+
+        # PRE-COMPUTE: Do expensive operations BEFORE acquiring lock
+        query_length = len(query)
+        debounce_seconds = get_adaptive_debounce_time(query) / 1000.0
+        effective_debounce = max(self.COMPONENT_DEBOUNCE_SECONDS, debounce_seconds)
+
+        # Variables for deferred logging (to minimize lock duration)
+        should_log = False
+        log_message = ""
+
+        # LOCK REQUIRED: For all state-mutating operations
+        # Keep lock scope as small as possible
+        with self._lock:
+            # Re-check time in case it changed while waiting for lock
+            if query == self._last_processed_query:
+                if current_time - self._last_processed_time < self.MIN_REPROCESS_INTERVAL_SECONDS:
+                    return False
+
+            # Track when this query was first seen (reset timer if query changed)
+            if query not in self._query_first_seen:
+                self._query_first_seen[query] = current_time
+
+            # IMPORTANT: If query is significantly longer than last processed, process immediately
+            # This handles the case where user types quickly (e.g., "k" -> "kubernetes")
+            # The user is actively building up the query, so we should process it
+            if self._last_processed_query is not None:
+                length_diff = query_length - len(self._last_processed_query)
+                # If query is significantly longer OR is a prefix extension (user actively typing), process immediately
+                is_prefix_extension = query.startswith(self._last_processed_query) and length_diff > 0
+                if length_diff >= self.SIGNIFICANT_LENGTH_INCREASE or (
+                    is_prefix_extension and length_diff >= self.PREFIX_EXTENSION_THRESHOLD
+                ):
+                    # Defer logging until after lock release
+                    should_log = True
+                    log_message = (
+                        f"Query '{query[:50]}...' processed immediately (length increased by {length_diff} chars, "
+                        f"user actively typing: '{self._last_processed_query}' -> '{query}', "
+                        f"is_prefix={is_prefix_extension})"
+                    )
+                    self._last_processed_query = query
+                    self._last_processed_time = current_time
+                    self._cleanup_old_queries(current_time)
+
+                    # Release lock before logging
+                    result = True
+                    # Lock will be released here
+            else:
+                result = None
+
+            if result is None:  # Not early exit, continue normal flow
+                # Check if query has been stable long enough
+                query_stable_time = current_time - self._query_first_seen[query]
+
+                if query_stable_time >= effective_debounce:
+                    # Query is ready to process
+                    self._last_processed_query = query
+                    self._last_processed_time = current_time
+                    self._cleanup_old_queries(current_time)
+
+                    # Defer logging until after lock release
+                    should_log = True
+                    log_message = (
+                        f"Query '{query[:50]}...' processed after {query_stable_time:.3f}s "
+                        f"stable time (debounce: {debounce_seconds*1000:.0f}ms, "
+                        f"length: {query_length})"
+                    )
+                    result = True
+                else:
+                    result = False
+
+        # DEFERRED LOGGING: Log AFTER releasing lock to minimize lock duration
+        if should_log:
+            logging.info(log_message)
+
+        return result
+
+    def mark_query_processed(self, query: str) -> None:
+        """
+        Mark a query as processed without checking debounce time.
+        Used when bypassing debounce (e.g., for first query with no cached results).
+
+        Args:
+            query: The query to mark as processed
+        """
+        with self._lock:
+            current_time = time.time()
+            self._last_processed_query = query
+            self._last_processed_time = current_time
+            # Ensure query is tracked
+            if query not in self._query_first_seen:
+                self._query_first_seen[query] = current_time
+            self._cleanup_old_queries(current_time)
+
+    def set_last_results(self, results: list) -> None:
+        """
+        Store the last results to return during debouncing.
+
+        Args:
+            results: The search results list (can be empty [] for zero matches)
+        """
+        with self._lock:
+            # Store results even if empty - empty list is a valid search result
+            self._last_results = results.copy() if results else []
+            self._has_processed_any_query = True
+
+    def get_last_results(self) -> list:
+        """
+        Get the last results to return during debouncing.
+
+        Returns:
+            The cached results list (empty list if no results cached yet or if previous search returned zero matches).
+        """
+        with self._lock:
+            return self._last_results.copy()
+
+    def has_processed_any_query(self) -> bool:
+        """
+        Check if we have processed any query yet (for debounce state tracking).
+
+        This is used to determine if we should bypass debounce for the first query.
+        It tracks whether we've ever processed a query, not whether we have cached results.
+
+        Returns:
+            True if we've processed at least one query (even if it returned empty results).
+        """
+        with self._lock:
+            return self._has_processed_any_query
+
+    def _cleanup_old_queries(self, current_time: float) -> None:
+        """
+        Remove queries older than CLEANUP_AGE_SECONDS to prevent memory growth.
+
+        Note: This method should only be called from within should_process_query()
+        which already holds the lock, so no additional locking is needed here.
+        """
+        cutoff_time = current_time - self.CLEANUP_AGE_SECONDS
+        # Efficient single-pass cleanup
+        queries_to_remove = [
+            q
+            for q, first_seen in self._query_first_seen.items()
+            if first_seen < cutoff_time and q != self._last_processed_query
+        ]
+        for q in queries_to_remove:
+            del self._query_first_seen[q]
+
+
+# Global instance of adaptive debounce manager
+_adaptive_debounce_manager = AdaptiveDebounceManager()
+
+
+def _perform_search(
+    search_query: str,
+    cached_options: list,
+    get_server_options_func,
+) -> tuple[list, bool]:
+    """
+    Perform search across cache and server, combining results.
+
+    This function encapsulates the search strategy:
+    - Search client-side cache if available
+    - Search server for queries >= 3 chars
+    - Combine results, prioritizing cache but adding server matches
+
+    Args:
+        search_query: The search query (without prefixes)
+        cached_options: Client-side cache options (can be None)
+        get_server_options_func: Function to get server options (cached per request)
+
+    Returns:
+        Tuple of (matched_options, use_server_fallback) where:
+        - matched_options: Combined search results
+        - use_server_fallback: True if server results were used/combined
+    """
+    cache_matches = []
+    server_matches = []
+    use_server_fallback = False
+
+    # Adjust threshold based on query length - more specific queries can use lower threshold
+    search_threshold = 0.15 if len(search_query) >= 4 else 0.2
+
+    # First, the search goes through the client-side cache if available
+    if cached_options:
+        cache_matches = fuzzy_search(search_query, cached_options, threshold=search_threshold)
+        logging.info(f"Cache search found {len(cache_matches)} matches (threshold={search_threshold})")
+
+    # Always also search server for comprehensive results
+    # Strategy: Always search server for queries >= 3 chars
+    should_search_server = len(search_query) >= 3
+    if should_search_server:
+        logging.info(
+            f"Searching server for query '{search_query}' (length: {len(search_query)}, has_client_cache: {cached_options is not None})"
+        )
+        try:
+            # Use cached server options to avoid redundant fetch
+            server_options = get_server_options_func()
+            server_matches = fuzzy_search(search_query, server_options, threshold=search_threshold)
+            logging.info(f"Server search found {len(server_matches)} matches (threshold={search_threshold})")
+
+        except Exception as e:
+            logging.error(f"Server search failed: {str(e)}", exc_info=True)
+            server_matches = []
+    else:
+        logging.debug(
+            f"Skipping server search for query '{search_query}' (length: {len(search_query)} < 3, using cache only)"
+        )
+
+    # Combine cache and server results (same logic as DEV)
+    if not cached_options:
+        # No cache available, use server results only
+        matched_options = server_matches
+        use_server_fallback = True
+        logging.info(f"No cache available, using {len(server_matches)} server matches")
+    else:
+        # Combine cache and server results, prioritizing cache but adding server matches
+        matched_options = cache_matches.copy()
+        seen_values = set(opt["value"] for opt in cache_matches)
+        additional_from_server = []
+
+        for server_match in server_matches:
+            if server_match["value"] not in seen_values:
+                additional_from_server.append(server_match)
+                seen_values.add(server_match["value"])
+
+        matched_options.extend(additional_from_server)
+        use_server_fallback = len(additional_from_server) > 0
+
+        logging.info(
+            f"Combined results: {len(cache_matches)} from cache + {len(additional_from_server)} from server = {len(matched_options)} total"
+        )
+
+        # Explicit verification for debugging
+        if should_search_server and len(server_matches) == 0 and len(cache_matches) > 0:
+            logging.warning(
+                f"WARNING: Server search was requested but returned 0 matches. "
+                f"Query: '{search_query}', Cache matches: {len(cache_matches)}, "
+                f"Server search executed: {should_search_server}"
+            )
+
+    return matched_options, use_server_fallback
+
+
+def _format_search_results(matched_options: list, prefix_type: Optional[str] = None) -> tuple[list, list]:
+    """
+    Format search results with prefixes and reorder (orgs first, then repos).
+
+    Args:
+        matched_options: Raw search results to format
+        prefix_type: Optional prefix filter ("repo" or "org")
+
+    Returns:
+        Tuple of (orgs_first, repos_after) - formatted and separated results
+    """
+    # Filter by prefix type if specified
+    if prefix_type == "repo":
+        matched_options = [opt for opt in matched_options if SearchItem.from_id(opt["value"]) == SearchItem.REPO]
+        logging.info(f"Filtered to {len(matched_options)} repos")
+    elif prefix_type == "org":
+        matched_options = [opt for opt in matched_options if SearchItem.from_id(opt["value"]) == SearchItem.ORG]
+        logging.info(f"Filtered to {len(matched_options)} orgs")
+
+    # Format options with prefixes based on their type
+    formatted_opts = []
+    seen_values = set()  # Track seen values to prevent duplicates
+
+    for opt in matched_options:
+        # Skip duplicates (based on value)
+        if opt["value"] in seen_values:
+            continue
+
+        seen_values.add(opt["value"])
+        formatted_opt = opt.copy()
+        search_item = SearchItem.from_id(opt["value"])
+
+        # Clean repository names by removing URL prefixes
+        label = opt["label"]
+        if search_item == SearchItem.REPO:
+            cleaned_name, platform = clean_repo_name(label)
+            # Apply platform-specific prefix
+            if platform == "github":
+                formatted_opt["label"] = f"GH Repo: {cleaned_name}"
+            elif platform == "gitlab":
+                formatted_opt["label"] = f"GL Repo: {cleaned_name}"
+            else:
+                formatted_opt["label"] = f"Repo: {cleaned_name}"
+        else:
+            formatted_opt["label"] = search_item.prefix(label)
+        formatted_opts.append(formatted_opt)
+
+    # Reorder: organizations first, then repositories (single-pass optimization)
+    orgs_first = []
+    repos_after = []
+    for opt in formatted_opts:
+        if SearchItem.from_id(opt["value"]) == SearchItem.ORG:
+            orgs_first.append(opt)
+        else:  # Must be REPO (we filtered earlier)
+            repos_after.append(opt)
+
+    logging.info(
+        f"Final results breakdown: {len(orgs_first)} orgs, {len(repos_after)} repos, {len(formatted_opts)} total"
+    )
+
+    return orgs_first, repos_after
+
+
+def _handle_selected_options(
+    selections: list,
+    cached_options: list,
+    matched_options: list,
+    use_server_fallback: bool,
+    get_server_options_func,
+) -> list:
+    """
+    Handle selected options, ensuring they're included in results with proper formatting.
+
+    Args:
+        selections: List of selected option values
+        cached_options: Client-side cache options
+        matched_options: Current matched search results
+        use_server_fallback: Whether server results were used
+        get_server_options_func: Function to get server options
+
+    Returns:
+        List of formatted selected options
+    """
+    if not selections:
+        return []
+
+    selected_options = []
+
+    # First check if selections are in our current options (cache + any server fallback)
+    current_selection_values = set(
+        opt["value"] for opt in (cached_options or []) + (matched_options if use_server_fallback else [])
+    )
+    missing_selections = [v for v in selections if v not in current_selection_values]
+
+    # If any selections aren't in our current options, fetch them from the server
+    if missing_selections:
+        logging.info(f"Fetching {len(missing_selections)} missing selections from server")
+        all_options = get_server_options_func()  # Use cached server options
+        for v in selections:
+            matched_opts = [opt for opt in all_options if opt["value"] == v]
+            if matched_opts:
+                formatted_v = matched_opts[0].copy()
+                if SearchItem.from_id(v) == SearchItem.ORG:
+                    formatted_v["label"] = f"org: {formatted_v['label']}"
+                elif SearchItem.from_id(v) == SearchItem.REPO:
+                    formatted_v["label"] = f"repo: {formatted_v['label']}"
+                selected_options.append(formatted_v)
+    else:
+        # All selections are in our current options
+        all_current_options = (cached_options or []) + matched_options
+        for v in selections:
+            for opt in all_current_options:
+                if opt["value"] == v:
+                    formatted_v = opt.copy()
+                    search_item = SearchItem.from_id(v)
+                    formatted_v["label"] = search_item.prefix(opt["label"])
+                    selected_options.append(formatted_v)
+                    break
+
+    return selected_options
+
 
 # Note: Login-related callbacks are conditionally registered based on login_enabled
 # because when login is disabled, the UI elements (refresh-button, logout-button, etc.)
@@ -189,18 +663,74 @@ def _login_username_button_disabled(url):
 def dynamic_multiselect_options(user_in: str, selections, cached_options):
     """
     Enhanced search using fuzzy matching and client-side cache with server fallback.
+    Implements adaptive debouncing based on query length.
 
     Args:
         user_in: User's search input
         selections: Currently selected values
         cached_options: All available options from client-side cache
     """
+    # Performance monitoring: Track search start time
+    search_start_time = time.time()
+
     if not user_in:
         return dash.no_update
 
+    # Check if we have processed any query yet (for debounce state tracking)
+    # This determines if we should bypass debounce for the first query
+    has_processed_any_query = _adaptive_debounce_manager.has_processed_any_query()
+
+    # Apply adaptive debouncing (but bypass if no queries processed yet to ensure first query works)
+    if has_processed_any_query and not _adaptive_debounce_manager.should_process_query(user_in):
+        debounce_ms = get_adaptive_debounce_time(user_in)
+        logging.debug(
+            f"Query '{user_in[:50]}...' debounced " f"(adaptive debounce: {debounce_ms}ms, length: {len(user_in)})"
+        )
+        # Return last results instead of no_update to prevent dropdown from showing "no matching"
+        # This maintains the dropdown state while debouncing
+        # Return cached results even if empty (empty is a valid search result)
+        last_results = _adaptive_debounce_manager.get_last_results()
+        return [last_results]
+
+    # If no queries processed yet, we bypass debounce and process immediately
+    # This ensures the first query always processes and shows results
+    if not has_processed_any_query:
+        logging.info(
+            f"Processing first query '{user_in[:50]}...' immediately (no queries processed yet, bypassing debounce)"
+        )
+        # Don't mark as processed yet - let the search complete first, then mark it
+        # This ensures the search actually happens
+
     try:
         start_time = time.time()
-        logging.info(f"Search query: '{user_in}'")
+        debounce_ms = get_adaptive_debounce_time(user_in)
+        logging.info(f"Search query: '{user_in}' (adaptive debounce: {debounce_ms}ms)")
+
+        # Cache server options to avoid redundant fetches (used in multiple places)
+        _server_options_cache = None
+
+        def _get_server_options():
+            """Helper to fetch server options once per request."""
+            nonlocal _server_options_cache
+            if _server_options_cache is None:
+                _server_options_cache = augur.get_multiselect_options().copy()
+                logging.info(f"Fetched {len(_server_options_cache)} options from server")
+                if current_user.is_authenticated:
+                    try:
+                        users_cache = redis.StrictRedis(
+                            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
+                            port=6379,
+                            password=os.getenv("REDIS_PASSWORD", ""),
+                            decode_responses=True,
+                        )
+                        users_cache.ping()
+                        if users_cache.exists(f"{current_user.get_id()}_group_options"):
+                            user_options = json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
+                            _server_options_cache = _server_options_cache + user_options
+                            logging.info(f"Added {len(user_options)} user options from Redis")
+                    except redis.exceptions.ConnectionError as e:
+                        logging.error(f"MULTISELECT: Could not connect to users-cache. Error: {str(e)}")
+            return _server_options_cache
 
         # Start with cached options if available
         if cached_options:
@@ -208,23 +738,7 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
             options = cached_options
         else:
             logging.info("Client-side cache empty, fetching from server")
-            options = augur.get_multiselect_options().copy()
-            logging.info(f"Fetched {len(options)} options from server")
-            if current_user.is_authenticated:
-                try:
-                    users_cache = redis.StrictRedis(
-                        host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
-                        port=6379,
-                        password=os.getenv("REDIS_PASSWORD", ""),
-                        decode_responses=True,
-                    )
-                    users_cache.ping()
-                    if users_cache.exists(f"{current_user.get_id()}_group_options"):
-                        user_options = json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
-                        options = options + user_options
-                        logging.info(f"Added {len(user_options)} user options from Redis")
-                except redis.exceptions.ConnectionError as e:
-                    logging.error(f"MULTISELECT: Could not connect to users-cache. Error: {str(e)}")
+            options = _get_server_options()
 
         if selections is None:
             selections = []
@@ -242,156 +756,30 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
             prefix_type = "org"
             logging.info(f"Org prefix detected, searching for: '{search_query}'")
 
-        # SEARCH STRATEGY: searching both cache and server for best results. The client-side cache is still prioritized if available.
-        cache_matches = []
-        server_matches = []
-
-        # Initialize fallback flag
-        use_server_fallback = False
-
-        # Adjust threshold based on query length - more specific queries can use lower threshold
-        search_threshold = 0.15 if len(search_query) >= 4 else 0.2
-
-        # First, the search goes through the client-side cache if available
-        if cached_options:
-            cache_matches = fuzzy_search(search_query, cached_options, threshold=search_threshold)
-            logging.info(f"Cache search found {len(cache_matches)} matches (threshold={search_threshold})")
-
-        # Always also search server for comprehensive results (especially for longer queries)
-        if len(search_query) >= 3:
-            try:
-                server_options = augur.get_multiselect_options().copy()
-                if current_user.is_authenticated:
-                    try:
-                        users_cache = redis.StrictRedis(
-                            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
-                            port=6379,
-                            password=os.getenv("REDIS_PASSWORD", ""),
-                            decode_responses=True,
-                        )
-                        users_cache.ping()
-                        if users_cache.exists(f"{current_user.get_id()}_group_options"):
-                            user_options = json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
-                            server_options = server_options + user_options
-                    except redis.exceptions.ConnectionError as e:
-                        logging.error(f"SERVER SEARCH: Could not connect to users-cache. Error: {str(e)}")
-
-                server_matches = fuzzy_search(search_query, server_options, threshold=search_threshold)
-                logging.info(f"Server search found {len(server_matches)} matches (threshold={search_threshold})")
-
-            except Exception as e:
-                logging.error(f"Server search failed: {str(e)}")
-                server_matches = []
-
-        # If no cache available, fetch from server
-        if not cached_options:
-            matched_options = server_matches
-            use_server_fallback = True
-            logging.info(f"No cache available, using {len(server_matches)} server matches")
-        else:
-            # Combine cache and server results, prioritizing cache but adding server matches
-            matched_options = cache_matches.copy()
-            seen_values = set(opt["value"] for opt in cache_matches)
-            additional_from_server = []
-
-            for server_match in server_matches:
-                if server_match["value"] not in seen_values:
-                    additional_from_server.append(server_match)
-                    seen_values.add(server_match["value"])
-
-            matched_options.extend(additional_from_server)
-            use_server_fallback = len(additional_from_server) > 0
-
-            logging.info(
-                f"Combined results: {len(cache_matches)} from cache + {len(additional_from_server)} from server = {len(matched_options)} total"
-            )
-
-        # Filter by prefix type if specified
-        if prefix_type == "repo":
-            matched_options = [opt for opt in matched_options if SearchItem.from_id(opt["value"]) == SearchItem.REPO]
-            logging.info(f"Filtered to {len(matched_options)} repos")
-        elif prefix_type == "org":
-            matched_options = [opt for opt in matched_options if SearchItem.from_id(opt["value"]) == SearchItem.ORG]
-            logging.info(f"Filtered to {len(matched_options)} orgs")
-
-        # Format options with prefixes based on their type
-        formatted_opts = []
-        seen_values = set()  # Track seen values to prevent duplicates
-
-        for opt in matched_options:
-            # Skip duplicates (based on value)
-            if opt["value"] in seen_values:
-                continue
-
-            seen_values.add(opt["value"])
-            formatted_opt = opt.copy()
-            search_item = SearchItem.from_id(opt["value"])
-
-            # Clean repository names by removing URL prefixes
-            label = opt["label"]
-            if search_item == SearchItem.REPO:
-                cleaned_name, platform = clean_repo_name(label)
-                # Apply platform-specific prefix
-                if platform == "github":
-                    formatted_opt["label"] = f"GH Repo: {cleaned_name}"
-                elif platform == "gitlab":
-                    formatted_opt["label"] = f"GL Repo: {cleaned_name}"
-                else:
-                    formatted_opt["label"] = f"Repo: {cleaned_name}"
-            else:
-                formatted_opt["label"] = search_item.prefix(label)
-            formatted_opts.append(formatted_opt)
-
-        # Simple reordering: put organizations first, then repositories
-        orgs_first = [opt for opt in formatted_opts if SearchItem.from_id(opt["value"]) == SearchItem.ORG]
-        repos_after = [opt for opt in formatted_opts if SearchItem.from_id(opt["value"]) == SearchItem.REPO]
-        formatted_opts = orgs_first + repos_after
-
-        # Always include the previous selections
-        # Format selected options with prefixes
-        selected_options = []
-
-        # First check if selections are in our current options (cache + any server fallback)
-        current_selection_values = set(
-            opt["value"] for opt in (cached_options or []) + (matched_options if use_server_fallback else [])
-        )
-        missing_selections = [v for v in selections if v not in current_selection_values]
-
-        # If any selections aren't in our current options, fetch them from the server
-        if missing_selections:
-            logging.info(f"Fetching {len(missing_selections)} missing selections from server")
-            all_options = augur.get_multiselect_options().copy()
-            for v in selections:
-                matched_opts = [opt for opt in all_options if opt["value"] == v]
-                if matched_opts:
-                    formatted_v = matched_opts[0].copy()
-                    if SearchItem.from_id(v) == SearchItem.ORG:
-                        # It's an org
-                        formatted_v["label"] = f"org: {formatted_v['label']}"
-                    elif SearchItem.from_id(v) == SearchItem.REPO:
-                        # It's a repo
-                        formatted_v["label"] = f"repo: {formatted_v['label']}"
-                    selected_options.append(formatted_v)
-        else:
-            # All selections are in our current options
-            all_current_options = (cached_options or []) + matched_options
-            for v in selections:
-                for opt in all_current_options:
-                    if opt["value"] == v:
-                        formatted_v = opt.copy()
-                        search_item = SearchItem.from_id(v)
-                        formatted_v["label"] = search_item.prefix(opt["label"])
-                        selected_options.append(formatted_v)
-                        break
-
-        # NO LIMITS for now: Return all matches with orgs prioritized
-        # Use the org/repo separation already done
-
-        logging.info(
-            f"Final results breakdown: {len(orgs_first)} orgs, {len(repos_after)} repos, {len(formatted_opts)} total"
+        # Perform search across cache and server
+        # IMPORTANT: Separation of concerns
+        # - Adaptive debounce (has_processed_any_query): Controls WHEN to process (timing concern)
+        # - Client-side cache (cached_options): Controls WHAT data source to use (data concern)
+        # - Server search condition: Based only on query length
+        matched_options, use_server_fallback = _perform_search(
+            search_query=search_query,
+            cached_options=cached_options,
+            get_server_options_func=_get_server_options,
         )
 
-        # Always prioritize orgs first, then repos, but don't limit the total count
+        # Format and reorder search results (orgs first, then repos)
+        orgs_first, repos_after = _format_search_results(matched_options, prefix_type=prefix_type)
+
+        # Handle selected options, ensuring they're included with proper formatting
+        selected_options = _handle_selected_options(
+            selections=selections,
+            cached_options=cached_options,
+            matched_options=matched_options,
+            use_server_fallback=use_server_fallback,
+            get_server_options_func=_get_server_options,
+        )
+
+        # Combine formatted results: orgs first, then repos
         result = orgs_first + repos_after
 
         # Add selected options that aren't already in the results
@@ -401,35 +789,87 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
                 result.append(opt)
 
         end_time = time.time()
-        logging.info(f"Search completed in {end_time - start_time:.2f} seconds")
+        search_duration = end_time - start_time
+        total_duration = end_time - search_start_time
+
+        # Performance monitoring: Log detailed metrics
+        logging.info(f"Search completed in {search_duration:.2f} seconds (total: {total_duration:.2f}s)")
         logging.info(f"Returning {len(result)} options to dropdown (fallback used: {use_server_fallback})")
+
+        # Performance monitoring: Log key metrics for analysis
+        debounce_ms = get_adaptive_debounce_time(user_in)
+        logging.info(
+            f"PERF_METRICS: query_len={len(user_in)}, "
+            f"search_time_ms={search_duration*1000:.1f}, "
+            f"total_time_ms={total_duration*1000:.1f}, "
+            f"debounce_ms={debounce_ms}, "
+            f"results={len(result)}, "
+            f"cache_hit={cached_options is not None}, "
+            f"server_fallback={use_server_fallback}"
+        )
+
+        # Store results for potential return during debouncing
+        _adaptive_debounce_manager.set_last_results(result)
+
+        # Mark query as processed AFTER search completes (for first query that bypassed debounce)
+        # This ensures the search actually happened before we mark it as processed
+        if not has_processed_any_query:
+            _adaptive_debounce_manager.mark_query_processed(user_in)
+            logging.debug(
+                f"Marked first query '{user_in[:50]}...' as processed after search completed with {len(result)} results"
+            )
 
         return [result]
 
-    except Exception as e:
-        logging.error(f"Error in dynamic_multiselect_options: {str(e)}")
-        # Return at least the current selections as a fallback
+    except (redis.exceptions.ConnectionError, redis.exceptions.TimeoutError) as e:
+        # Transient network/connection errors - log and return fallback
+        logging.error(f"Redis connection error in dynamic_multiselect_options: {str(e)}")
         if selections:
-            default_options = []
-            try:
-                # Try to get the labels for the current selections
-                options = augur.get_multiselect_options()
-                for v in options:
-                    if v["value"] in selections:
-                        formatted_v = v.copy()
-                        search_item = SearchItem.from_id(v)
-                        if search_item == SearchItem.ORG:
-                            formatted_v["label"] = f"org: {v['label']}"
-                        elif search_item == SearchItem.REPO:
-                            formatted_v["label"] = f"repo: {v['label']}"
-                        default_options.append(formatted_v)
-            except:
-                # If that fails, just return the raw selection values
-                default_options = [{"value": v, "label": f"ID: {v}"} for v in selections]
-
-            return [default_options]
-
+            return _get_fallback_selections(selections)
         return dash.no_update
+    except (AttributeError, KeyError, TypeError) as e:
+        # Programming errors - should be fixed, but don't crash the app
+        logging.error(f"Programming error in dynamic_multiselect_options: {str(e)}", exc_info=True)
+        if selections:
+            return _get_fallback_selections(selections)
+        return dash.no_update
+    except Exception as e:
+        # Catch-all for unexpected errors
+        logging.error(f"Unexpected error in dynamic_multiselect_options: {str(e)}", exc_info=True)
+        if selections:
+            return _get_fallback_selections(selections)
+        return dash.no_update
+
+
+def _get_fallback_selections(selections: list) -> list:
+    """
+    Helper function to return fallback options when search fails.
+
+    Args:
+        selections: List of selected option values
+
+    Returns:
+        List of formatted option dictionaries with basic labels
+    """
+    default_options = []
+    try:
+        # Try to get the labels for the current selections
+        options = augur.get_multiselect_options()
+        for v in selections:
+            matched_opts = [opt for opt in options if opt["value"] == v]
+            if matched_opts:
+                formatted_v = matched_opts[0].copy()
+                search_item = SearchItem.from_id(v)
+                if search_item == SearchItem.ORG:
+                    formatted_v["label"] = f"org: {formatted_v['label']}"
+                elif search_item == SearchItem.REPO:
+                    formatted_v["label"] = f"repo: {formatted_v['label']}"
+                default_options.append(formatted_v)
+    except Exception:
+        # If that fails, just return the raw selection values
+        default_options = [{"value": v, "label": f"ID: {v}"} for v in selections]
+
+    return [default_options]
 
 
 # callback for repo selections to feed into visualization call backs
@@ -551,61 +991,126 @@ def show_repolist_alert(n_clicks, openness, repo_ids):
 
 @callback(
     [Output("data-badge", "children"), Output("data-badge", "color")],
-    Input("job-ids", "data"),
+    [Input("job-ids", "data"), Input("current-page-status", "data"), Input("current-page", "data")],
     background=True,
 )
-def wait_queries(job_ids):
-    # TODO add docstring to function
+def wait_queries(job_metadata, page_status, current_page):
+    """
+    Wait for all queries to complete and update the global data badge.
 
-    jobs = [AsyncResult(j_id) for j_id in job_ids]
+    Shows priority status for current page first, then global status.
+    Refactored to use helper utilities following SRP and DRY principles.
 
-    # Add timeout protection to prevent infinite waiting
-    start_time = time.time()
-    max_wait_time = 600  # 10 minutes timeout
+    Args:
+        job_metadata: Dict mapping {query_name: job_id}
+        page_status: Status of current page queries (ready/failed/timeout/idle)
+        current_page: Current page path (used for context in logging)
 
-    # default 'result_expires' for celery config is 86400 seconds.
-    # so we don't have to check if the jobs exist. if this tasks
-    # is enqueued 24 hours after the query-worker tasks finish
-    # then we have a big problem. However, we should 'forget' all
-    # results before we exit.
+    Returns:
+        Tuple of (badge_text, badge_color)
+    """
+    if not job_metadata:
+        return BADGE_TEXT_NO_DATA, BADGE_COLOR_SECONDARY
 
-    while True:
-        # Check for timeout to prevent SoftTimeLimitExceeded
-        if time.time() - start_time > max_wait_time:
-            logging.warning(f"wait_queries: Timeout after {max_wait_time}s - returning timeout status")
-            jobs = [j.forget() for j in jobs]
-            return "Timeout - Retry", "warning"
+    # If current page is ready, show page-specific status
+    if page_status == PAGE_STATUS_READY:
+        # Check if ALL queries are done for global status
+        if check_all_jobs_complete(job_metadata):
+            return BADGE_TEXT_ALL_READY, BADGE_COLOR_READY
+        else:
+            return BADGE_TEXT_PAGE_READY, BADGE_COLOR_LOADING
+    elif page_status == PAGE_STATUS_FAILED:
+        return BADGE_TEXT_PAGE_FAILED, BADGE_COLOR_ERROR
+    elif page_status == PAGE_STATUS_TIMEOUT:
+        return BADGE_TEXT_PAGE_TIMEOUT, BADGE_COLOR_WARNING
 
-        logging.warning([(j.name, j.status) for j in jobs])
+    # Create AsyncResult objects for non-cached jobs
+    jobs, query_names = create_async_results_from_metadata(job_metadata)
 
-        # jobs are either all ready
-        if all(j.successful() for j in jobs):
-            logging.warning([(j.name, j.status) for j in jobs])
-            jobs = [j.forget() for j in jobs]
-            return "Data Ready", "#0F5880"
+    # If all queries were cached, we're done
+    if not jobs:
+        return BADGE_TEXT_DATA_READY, BADGE_COLOR_READY
 
-        # or one of them has failed
-        if any(j.failed() for j in jobs):
-            # if a job fails, we need to wait for the others to finish before
-            # we can 'forget' them. otherwise to-be-successful jobs will always
-            # be forgotten if one fails.
+    # Wait for all jobs to complete
+    status, message = wait_for_job_completion(jobs, query_names, context="wait_queries")
 
-            # tasks need to have either failed or succeeded before being forgotten.
-            while True:
-                num_succeeded = [j.successful() for j in jobs].count(True)
-                num_failed = [j.failed() for j in jobs].count(True)
-                num_total = num_failed + num_succeeded
+    # Clean up job results
+    forget_jobs(jobs)
 
-                if num_total == len(jobs):
-                    break
+    # Map status to badge text and color
+    if status == PAGE_STATUS_READY:
+        return BADGE_TEXT_DATA_READY, BADGE_COLOR_READY
+    elif status == PAGE_STATUS_FAILED:
+        return BADGE_TEXT_DATA_INCOMPLETE, BADGE_COLOR_ERROR
+    elif status == PAGE_STATUS_TIMEOUT:
+        return BADGE_TEXT_TIMEOUT_RETRY, BADGE_COLOR_WARNING
+    else:
+        return BADGE_TEXT_NO_DATA, BADGE_COLOR_SECONDARY
 
-                time.sleep(4.0)
 
-            jobs = [j.forget() for j in jobs]
-            return "Data Incomplete- Retry", "danger"
+@callback(
+    Output("current-page", "data"),
+    Input("url", "pathname"),
+)
+def track_current_page(pathname):
+    """Track which page the user is currently on for priority loading."""
+    return pathname
 
-        # pause to let something change
-        time.sleep(2.0)
+
+@callback(
+    Output("current-page-status", "data"),
+    [Input("current-page", "data"), Input("job-ids", "data"), Input("repo-choices", "data")],
+    background=True,
+)
+def wait_current_page_queries(current_page, job_metadata, repos):
+    """
+    Wait for the current page's queries to complete with high priority.
+
+    This runs in the background and aggressively polls only the queries needed
+    for the current page, enabling faster page load times.
+    Refactored to use helper utilities following SRP and DRY principles.
+
+    Args:
+        current_page: URL path of current page (e.g., "/contributions")
+        job_metadata: Dict mapping {query_name: job_id}
+        repos: List of repo IDs being queried
+
+    Returns:
+        Status string: "idle", "ready", "failed", or "timeout"
+    """
+    if not current_page or not job_metadata or not repos:
+        return PAGE_STATUS_IDLE
+
+    # Get the queries needed for the current page
+    page_query_names = get_page_query_names(current_page)
+
+    if not page_query_names:
+        logging.info(f"No queries mapped for page: {current_page}")
+        return PAGE_STATUS_IDLE
+
+    # Create AsyncResult objects for current page queries only
+    jobs, query_names = create_async_results_from_metadata(job_metadata, page_query_names)
+
+    # If all current page queries are cached
+    if not jobs:
+        logging.info(f"All queries for {current_page} are cached")
+        return PAGE_STATUS_READY
+
+    logging.info(f"Waiting for {len(jobs)} queries for page: {current_page}")
+
+    # Wait with aggressive polling for current page (faster than background queries)
+    status, message = wait_for_job_completion(
+        jobs,
+        query_names,
+        poll_interval=CURRENT_PAGE_POLL_INTERVAL,  # 0.5s - faster polling
+        max_wait_time=MAX_QUERY_WAIT_TIME,
+        context=current_page,
+    )
+
+    # Note: We don't forget jobs here as they may still be needed by wait_queries()
+    # Celery will clean them up automatically based on result_expires config
+
+    return status
 
 
 @callback(
@@ -617,6 +1122,8 @@ def run_queries(repos):
     Executes queries defined in /queries against Augur
     instance for input Repos; caches results in Postgres.
 
+    Returns a dict mapping query names to job IDs for tracking.
+
     Args:
         repos ([int]): repositories we collect data for.
     """
@@ -627,23 +1134,26 @@ def run_queries(repos):
     # list of queries to process
     funcs = QUERIES
 
-    # list of job promises
-    jobs = []
+    # dict to store job metadata: {query_name: job_id}
+    job_metadata = {}
 
     for f in funcs:
         # only download repos that aren't currently in cache
         not_ready = cf.get_uncached(f.__name__, repos)
         if len(not_ready) == 0:
             logging.warning(f"{f.__name__} - NO DISPATCH - ALL REPOS IN CACHE")
+            # Mark as cached/complete
+            job_metadata[f.__name__] = QUERY_STATUS_CACHED
             continue
 
         # add job to queue
         j = f.apply_async(args=[not_ready], queue="data")
 
-        # add job promise to local promise list
-        jobs.append(j)
+        # store job ID with query name
+        job_metadata[f.__name__] = j.id
+        logging.info(f"{f.__name__} - DISPATCHED - Job ID: {j.id}")
 
-    return [j.id for j in jobs]
+    return job_metadata
 
 
 # Add a cache initialization callback that runs on page load
@@ -731,6 +1241,70 @@ def update_search_status(search_value):
 )
 def hide_search_status_when_loaded(_):
     """Hide the search status indicator when results are loaded."""
+    return [{"display": "none"}]
+
+
+# Enhanced search progress indicator with adaptive debounce feedback
+@callback(
+    [Output("search-progress-indicator", "children"), Output("search-progress-indicator", "style")],
+    [Input("projects", "searchValue")],
+    prevent_initial_call=True,
+)
+def update_search_progress_indicator(search_value):
+    """
+    Update the search progress indicator with adaptive debounce information.
+    This provides visual feedback to users about search state and expected wait time.
+    """
+    if not search_value:
+        return ["", {"display": "none"}]
+
+    # Get adaptive debounce time for this query
+    debounce_ms = get_adaptive_debounce_time(search_value)
+
+    # Determine message based on query characteristics
+    query_length = len(search_value)
+
+    if query_length <= 2:
+        # Very short queries - user still typing
+        message = "Refining..."
+        color = "#888"
+    elif query_length <= 5:
+        # Medium queries - user may be finishing
+        message = "Searching..."
+        color = "#0F5880"  # Brand blue
+    else:
+        # Long queries - likely complete, searching fast
+        message = "Searching..."
+        color = "#0F5880"
+
+    # Show indicator with appropriate styling
+    style = {
+        "position": "absolute",
+        "right": "16px",
+        "top": "50%",
+        "transform": "translateY(-50%)",
+        "fontSize": "11px",
+        "color": color,
+        "fontWeight": "500",
+        "display": "flex",
+        "alignItems": "center",
+        "gap": "6px",
+        "zIndex": 2,
+        "whiteSpace": "nowrap",
+        "animation": "pulse 1.5s ease-in-out infinite",
+    }
+
+    return [message, style]
+
+
+# Hide progress indicator when results are loaded
+@callback(
+    [Output("search-progress-indicator", "style", allow_duplicate=True)],
+    [Input("projects", "data")],
+    prevent_initial_call=True,
+)
+def hide_search_progress_when_loaded(_):
+    """Hide the search progress indicator when results are loaded."""
     return [{"display": "none"}]
 
 
