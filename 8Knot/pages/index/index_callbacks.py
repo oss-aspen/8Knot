@@ -1034,8 +1034,8 @@ def wait_queries(job_metadata, page_status, current_page):
     # Wait for all jobs to complete
     status, message = wait_for_job_completion(jobs, query_names, context="wait_queries")
 
-    # Clean up job results
-    forget_jobs(jobs)
+    # Note: We don't forget jobs here because wait_current_page_queries might still need them
+    # Celery will clean them up automatically based on result_expires config (24 hours)
 
     # Map status to badge text and color
     if status == PAGE_STATUS_READY:
