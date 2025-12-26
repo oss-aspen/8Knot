@@ -6,7 +6,6 @@ from db_manager.augur_manager import AugurManager
 import numpy as np
 import pandas as pd
 
-
 # card for number of open issues in the selected repo set
 issue_open = dbc.Card(
     [
@@ -86,7 +85,6 @@ issue_closed_age = dbc.Card(
     ],
     className="box_emissions",
 )
-
 
 gc_issue_metrics = dbc.Card(
     [

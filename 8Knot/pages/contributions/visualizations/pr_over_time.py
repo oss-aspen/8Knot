@@ -6,10 +6,8 @@ import pandas as pd
 import logging
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from pages.utils.job_utils import nodata_graph
-from pages.utils.query_status import wait_for_query_data
+from pages.utils.query_status import load_query_data
 from queries.prs_query import prs_query as prq
-import time
-import cache_manager.cache_facade as cf
 from components.visualization import VisualizationAIO
 
 PAGE = "contributions"
@@ -67,32 +65,15 @@ gc_pr_over_time = VisualizationAIO(
     background=True,
 )
 def prs_over_time_graph(repolist, interval):
-    # wait for data to asynchronously download and become available.
-    if not wait_for_query_data(prq, repolist, timeout=600, poll_interval=0.5):
-        logging.warning(f"PULL REQUESTS OVER TIME  - TIMEOUT waiting for data")
-        return nodata_graph
-
-    # data ready.
-    start = time.perf_counter()
-    logging.warning("PULL REQUESTS OVER TIME - START")
-
-    # GET ALL DATA FROM POSTGRES CACHE
-    df = cf.retrieve_from_cache(
-        tablename=prq.__name__,
-        repolist=repolist,
-    )
-
-    # test if there is data
-    if df.empty:
-        logging.warning("PULL REQUESTS OVER TIME - NO DATA AVAILABLE")
+    # Wait for and load query data (includes timeout, error handling, and validation)
+    df = load_query_data(prq, repolist, VIZ_ID)
+    if df is None:
         return nodata_graph
 
     # function for all data pre processing
     df_created, df_closed_merged, df_open = process_data(df, interval)
 
     fig = create_figure(df_created, df_closed_merged, df_open, interval)
-
-    logging.warning(f"PRS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
 
     return fig
 

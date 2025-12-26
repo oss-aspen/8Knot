@@ -6,12 +6,10 @@ import logging
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from pages.utils.job_utils import nodata_graph
-from pages.utils.query_status import wait_for_query_data
+from pages.utils.query_status import load_query_data
 from queries.contributors_query import contributors_query as ctq
-import time
 import app
 import pages.utils.preprocessing_utils as preproc_utils
-import cache_manager.cache_facade as cf
 from components.visualization import VisualizationAIO
 
 PAGE = "contributors"
@@ -88,26 +86,12 @@ gc_contributors_over_time = VisualizationAIO(
     background=True,
 )
 def create_contrib_over_time_graph(repolist, contribs, interval, bot_switch):
-    # wait for data to asynchronously download and become available.
-    if not wait_for_query_data(ctq, repolist, timeout=600, poll_interval=0.5):
-        logging.warning(f"{VIZ_ID} - TIMEOUT waiting for data")
+    # Wait for and load query data (includes timeout, error handling, and validation)
+    df = load_query_data(ctq, repolist, VIZ_ID)
+    if df is None:
         return nodata_graph
-
-    logging.warning(f"{VIZ_ID} - START")
-    start = time.perf_counter()
-
-    # GET ALL DATA FROM POSTGRES CACHE
-    df = cf.retrieve_from_cache(
-        tablename=ctq.__name__,
-        repolist=repolist,
-    )
 
     df = preproc_utils.contributors_df_action_naming(df)
-
-    # test if there is data
-    if df.empty:
-        logging.warning("PULL REQUESTS OVER TIME - NO DATA AVAILABLE")
-        return nodata_graph
 
     # remove bot data
     if bot_switch:
@@ -117,8 +101,6 @@ def create_contrib_over_time_graph(repolist, contribs, interval, bot_switch):
     df_drive_repeat = process_data(df, interval, contribs)
 
     fig = create_figure(df_drive_repeat, interval)
-
-    logging.warning(f"CONTRIBUTIONS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
     return fig
 
 

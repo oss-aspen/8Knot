@@ -7,9 +7,7 @@ import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from queries.commits_query import commits_query as cmq
 from pages.utils.job_utils import nodata_graph
-from pages.utils.query_status import wait_for_query_data
-import time
-import cache_manager.cache_facade as cf
+from pages.utils.query_status import load_query_data
 from components.visualization import VisualizationAIO
 
 PAGE = "contributions"
@@ -67,32 +65,15 @@ gc_commits_over_time = VisualizationAIO(
     background=True,
 )
 def commits_over_time_graph(repolist, interval):
-    # wait for data to asynchronously download and become available.
-    if not wait_for_query_data(cmq, repolist, timeout=600, poll_interval=0.5):
-        logging.warning(f"COMMITS_OVER_TIME_VIZ  - TIMEOUT waiting for data")
-        return nodata_graph
-
-    # data ready.
-    start = time.perf_counter()
-    logging.warning("COMMITS_OVER_TIME_VIZ - START")
-
-    # GET ALL DATA FROM POSTGRES CACHE
-    df = cf.retrieve_from_cache(
-        tablename=cmq.__name__,
-        repolist=repolist,
-    )
-
-    # test if there is data
-    if df.empty:
-        logging.warning("COMMITS OVER TIME - NO DATA AVAILABLE")
+    # Wait for and load query data (includes timeout, error handling, and validation)
+    df = load_query_data(cmq, repolist, VIZ_ID)
+    if df is None:
         return nodata_graph
 
     # function for all data pre processing
     df_created = process_data(df, interval)
 
     fig = create_figure(df_created, interval)
-
-    logging.warning(f"COMMITS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
     return fig
 
 

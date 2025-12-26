@@ -8,10 +8,8 @@ from dateutil.relativedelta import *  # type: ignore
 from pages.utils.graph_utils import baby_blue
 from queries.pr_response_query import pr_response_query as prr
 from pages.utils.job_utils import nodata_graph
-from pages.utils.query_status import wait_for_query_data
-import time
+from pages.utils.query_status import load_query_data
 import app
-import cache_manager.cache_facade as cf
 from components.visualization import VisualizationAIO
 
 PAGE = "contributions"
@@ -64,22 +62,9 @@ gc_pr_review_response = VisualizationAIO(
     background=True,
 )
 def pr_review_response_graph(repolist, num_days, bot_switch):
-    if not wait_for_query_data(prr, repolist, timeout=600, poll_interval=0.5):
-        logging.warning(f"{VIZ_ID} - TIMEOUT waiting for data")
-        return nodata_graph
-
-    start = time.perf_counter()
-    logging.warning(f"{VIZ_ID}- START")
-
-    # GET ALL DATA FROM POSTGRES CACHE
-    df = cf.retrieve_from_cache(
-        tablename=prr.__name__,
-        repolist=repolist,
-    )
-
-    # test if there is data
-    if df.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
+    # Wait for and load query data (includes timeout, error handling, and validation)
+    df = load_query_data(prr, repolist, VIZ_ID)
+    if df is None:
         return nodata_graph
 
     # remove bot data
@@ -89,8 +74,6 @@ def pr_review_response_graph(repolist, num_days, bot_switch):
     df = process_data(df, num_days)
 
     fig = create_figure(df, num_days)
-
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
 

@@ -8,10 +8,8 @@ import plotly.express as px
 from pages.utils.graph_utils import baby_blue
 from queries.commits_query import commits_query as cmq
 from pages.utils.job_utils import nodata_graph
-from pages.utils.query_status import wait_for_query_data
-import time
+from pages.utils.query_status import load_query_data
 import datetime as dt
-import cache_manager.cache_facade as cf
 from components.visualization import VisualizationAIO
 
 PAGE = "affiliation"
@@ -77,31 +75,15 @@ gc_commit_domains = VisualizationAIO(
     background=True,
 )
 def commit_domains_graph(repolist, num, start_date, end_date):
-    # wait for data to asynchronously download and become available.
-    if not wait_for_query_data(cmq, repolist, timeout=600, poll_interval=0.5):
-        logging.warning(f"{VIZ_ID} - TIMEOUT waiting for data")
-        return nodata_graph
-
-    start = time.perf_counter()
-    logging.warning(f"{VIZ_ID}- START")
-
-    # GET ALL DATA FROM POSTGRES CACHE
-    df = cf.retrieve_from_cache(
-        tablename=cmq.__name__,
-        repolist=repolist,
-    )
-
-    # test if there is data
-    if df.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
+    # Wait for and load query data (includes timeout, error handling, and validation)
+    df = load_query_data(cmq, repolist, VIZ_ID)
+    if df is None:
         return nodata_graph
 
     # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
     df = process_data(df, num, start_date, end_date)
 
     fig = create_figure(df)
-
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
 

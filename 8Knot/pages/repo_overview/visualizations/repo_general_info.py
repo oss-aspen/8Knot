@@ -13,10 +13,8 @@ from queries.repo_info_query import repo_info_query as riq
 # from queries.repo_files_query import repo_files_query as rfq #TODO: run back on when the query hang is fixed
 from queries.repo_releases_query import repo_releases_query as rrq
 import io
-import cache_manager.cache_facade as cf
 from pages.utils.job_utils import nodata_graph
-from pages.utils.query_status import wait_for_query_data
-import time
+from pages.utils.query_status import load_query_data
 from datetime import datetime
 
 PAGE = "repo_info"
@@ -84,22 +82,16 @@ def repo_general_info(repo):
     if repo is not None:
         repo = int(repo)
 
-    logging.warning(f"{VIZ_ID} - START")
-    start = time.perf_counter()
-
     # get dataframes of data from cache
     df_repo_files, df_repo_info, df_releases = multi_query_helper([repo])
 
     # test if there is data
     if df_repo_files.empty and df_repo_info.empty and df_releases.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return dbc.Table.from_dataframe(pd.DataFrame(), striped=True, bordered=True, hover=True), dbc.Label("No data")
 
     df, last_updated = process_data(df_repo_files, df_repo_info, df_releases)
 
     table = dbc.Table.from_dataframe(df, striped=True, bordered=True, hover=True)
-
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return table, last_updated
 
 

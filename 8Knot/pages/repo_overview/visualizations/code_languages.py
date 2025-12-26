@@ -10,10 +10,8 @@ import plotly.express as px
 from pages.utils.graph_utils import baby_blue
 from queries.repo_languages_query import repo_languages_query as rlq
 from pages.utils.job_utils import nodata_graph
-from pages.utils.query_status import wait_for_query_data
-import time
+from pages.utils.query_status import load_query_data
 import datetime as dt
-import cache_manager.cache_facade as cf
 from components.visualization import VisualizationAIO
 
 PAGE = "repo_info"
@@ -87,25 +85,9 @@ def graph_title(view):
     background=True,
 )
 def code_languages_graph(repolist, view):
-    # Wait for this specific query's data to become available
-    # This allows the viz to render as soon as its data is ready,
-    # without waiting for all other queries to complete
-    start = time.perf_counter()
-    logging.warning(f"{VIZ_ID}- START")
-
-    if not wait_for_query_data(rlq, repolist, timeout=600, poll_interval=0.5):
-        logging.warning(f"{VIZ_ID} - TIMEOUT waiting for data")
-        return nodata_graph
-
-    # GET ALL DATA FROM POSTGRES CACHE
-    df = cf.retrieve_from_cache(
-        tablename=rlq.__name__,
-        repolist=repolist,
-    )
-
-    # test if there is data
-    if df.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
+    # Wait for and load query data (includes timeout, error handling, and validation)
+    df = load_query_data(rlq, repolist, VIZ_ID)
+    if df is None:
         return nodata_graph
 
     # function for all data pre processing
@@ -113,7 +95,6 @@ def code_languages_graph(repolist, view):
 
     fig = create_figure(df, view)
 
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
 

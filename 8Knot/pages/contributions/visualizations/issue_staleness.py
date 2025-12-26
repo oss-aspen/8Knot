@@ -10,14 +10,11 @@ import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from queries.issues_query import issues_query as iq
 from pages.utils.job_utils import nodata_graph
-from pages.utils.query_status import wait_for_query_data
-import time
-import cache_manager.cache_facade as cf
+from pages.utils.query_status import load_query_data
 from components.visualization import VisualizationAIO
 
 PAGE = "contributions"
 VIZ_ID = "issue-staleness"
-
 
 gc_issue_staleness = VisualizationAIO(
     PAGE,
@@ -132,36 +129,15 @@ def new_staling_issues_graph(repolist, interval, staling_interval, stale_interva
     if staling_interval is None or stale_interval is None:
         return dash.no_update, dash.no_update
 
-    # wait for data to asynchronously download and become available.
-
-    if not wait_for_query_data(iq, repolist, timeout=600, poll_interval=0.5):
-        logging.warning(f"{VIZ_ID} - TIMEOUT waiting for data")
-        return nodata_graph, False
-
-    # data ready.
-    start = time.perf_counter()
-    logging.warning("ISSUES STALENESS - START")
-
-    # GET ALL DATA FROM POSTGRES CACHE
-    df = cf.retrieve_from_cache(
-        tablename=iq.__name__,
-        repolist=repolist,
-    )
-
-    start = time.perf_counter()
-    logging.warning("ISSUES STALENESS - START")
-
-    # test if there is data
-    if df.empty:
-        logging.warning("ISSUE STALENESS - NO DATA AVAILABLE")
+    # Wait for and load query data (includes timeout, error handling, and validation)
+    df = load_query_data(iq, repolist, VIZ_ID)
+    if df is None:
         return nodata_graph, False
 
     # function for all data pre processing
     df_status = process_data(df, interval, staling_interval, stale_interval)
 
     fig = create_figure(df_status, interval)
-
-    logging.warning(f"ISSUE STALENESS - END - {time.perf_counter() - start}")
     return fig, False
 
 

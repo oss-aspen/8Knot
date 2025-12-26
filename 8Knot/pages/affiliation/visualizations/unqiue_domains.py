@@ -8,11 +8,9 @@ import plotly.express as px
 from pages.utils.graph_utils import baby_blue
 from queries.affiliation_query import affiliation_query as aq
 from pages.utils.job_utils import nodata_graph
-from pages.utils.query_status import wait_for_query_data
-import time
+from pages.utils.query_status import load_query_data
 import datetime as dt
 import app
-import cache_manager.cache_facade as cf
 from components.visualization import VisualizationAIO
 
 PAGE = "affiliation"
@@ -77,23 +75,9 @@ gc_unique_domains = VisualizationAIO(
     background=True,
 )
 def unique_domains_graph(repolist, num, start_date, end_date, bot_switch):
-    # wait for data to asynchronously download and become available.
-    if not wait_for_query_data(aq, repolist, timeout=600, poll_interval=0.5):
-        logging.warning(f"{VIZ_ID} - TIMEOUT waiting for data")
-        return nodata_graph
-
-    start = time.perf_counter()
-    logging.warning(f"{VIZ_ID}- START")
-
-    # GET ALL DATA FROM POSTGRES CACHE
-    df = cf.retrieve_from_cache(
-        tablename=aq.__name__,
-        repolist=repolist,
-    )
-
-    # test if there is data
-    if df.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
+    # Wait for and load query data (includes timeout, error handling, and validation)
+    df = load_query_data(aq, repolist, VIZ_ID)
+    if df is None:
         return nodata_graph
 
     # remove bot data
@@ -104,8 +88,6 @@ def unique_domains_graph(repolist, num, start_date, end_date, bot_switch):
     df = process_data(df, num, start_date, end_date)
 
     fig = create_figure(df)
-
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
 

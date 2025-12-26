@@ -7,10 +7,8 @@ import logging
 from dateutil.relativedelta import *  # type: ignore
 from queries.ossf_score_query import ossf_score_query as osq
 import io
-import cache_manager.cache_facade as cf
 from pages.utils.job_utils import nodata_graph
-from pages.utils.query_status import wait_for_query_data
-import time
+from pages.utils.query_status import load_query_data
 from datetime import datetime
 
 PAGE = "repo_info"
@@ -103,11 +101,7 @@ def ossf_scorecard(repo: str):
     if repo is not None:
         repo = int(repo)
 
-    logging.warning(f"{VIZ_ID} - START")
-    start = time.perf_counter()
-
     if not wait_for_query_data(osq, [repo], timeout=600, poll_interval=0.5):
-        logging.warning(f"{VIZ_ID} - TIMEOUT waiting for data")
         return dbc.Table.from_dataframe(pd.DataFrame(), striped=True, bordered=True, hover=True), dbc.Label("No data")
 
     # GET ALL DATA FROM POSTGRES CACHE
@@ -118,7 +112,6 @@ def ossf_scorecard(repo: str):
 
     # test if there is data
     if df.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return dbc.Table.from_dataframe(df, striped=True, bordered=True, hover=True), dbc.Label("No data")
 
     # repo id not needed for table
@@ -142,6 +135,4 @@ def ossf_scorecard(repo: str):
         logging.warning(f"{VIZ_ID} - MORE THAN ONE DATA COLLECTION DATE")
 
     updated_date = pd.to_datetime(str(unique_updated_times[-1])).strftime("%d/%m/%Y")
-
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return table, dbc.Label(updated_date)

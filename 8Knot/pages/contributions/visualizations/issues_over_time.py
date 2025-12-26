@@ -6,10 +6,8 @@ import pandas as pd
 import logging
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from pages.utils.job_utils import nodata_graph
-from pages.utils.query_status import wait_for_query_data
+from pages.utils.query_status import load_query_data
 from queries.issues_query import issues_query as iq
-import time
-import cache_manager.cache_facade as cf
 import datetime as dt
 from components.visualization import VisualizationAIO
 
@@ -94,32 +92,15 @@ gc_issues_over_time = VisualizationAIO(
     background=True,
 )
 def issues_over_time_graph(repolist, interval, start_date, end_date):
-    # wait for data to asynchronously download and become available.
-    if not wait_for_query_data(iq, repolist, timeout=600, poll_interval=0.5):
-        logging.warning(f"ISSUES OVER TIME  - TIMEOUT waiting for data")
-        return nodata_graph
-
-    # data ready.
-    start = time.perf_counter()
-    logging.warning("ISSUES OVER TIME - START")
-
-    # GET ALL DATA FROM POSTGRES CACHE
-    df = cf.retrieve_from_cache(
-        tablename=iq.__name__,
-        repolist=repolist,
-    )
-
-    # test if there is data
-    if df.empty:
-        logging.warning("ISSUES OVER TIME - NO DATA AVAILABLE")
+    # Wait for and load query data (includes timeout, error handling, and validation)
+    df = load_query_data(iq, repolist, VIZ_ID)
+    if df is None:
         return nodata_graph
 
     # function for all data pre processing
     df_created, df_closed, df_open = process_data(df, interval, start_date, end_date)
 
     fig = create_figure(df_created, df_closed, df_open, interval)
-
-    logging.warning(f"ISSUES_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
 
     return fig
 

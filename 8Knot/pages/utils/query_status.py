@@ -109,3 +109,58 @@ def get_query_status(query_func, repolist):
         "missing_repos": repos_not_cached,
         "query_name": query_name,
     }
+
+
+def load_query_data(query_func, repolist, viz_id):
+    """
+    Wait for query data and retrieve it from cache with error handling.
+
+    This is a convenience function that combines wait_for_query_data() and
+    cache retrieval into a single call, reducing boilerplate in visualizations.
+    Includes proper error handling and logging.
+
+    DRY principle: Eliminates the repeated pattern of:
+        - Wait for data with timeout check
+        - Retrieve from cache with error handling
+        - Validate non-empty data
+        - Log appropriate messages
+
+    Args:
+        query_func: The query function (e.g., repo_languages_query)
+        repolist: List of repo IDs
+        viz_id: Visualization ID for logging context
+
+    Returns:
+        pd.DataFrame | None: DataFrame if data is ready and valid, None otherwise
+            - Returns None on timeout
+            - Returns None on cache retrieval error
+            - Returns None if data is empty
+
+    Example:
+        df = load_query_data(commits_query, repolist, VIZ_ID)
+        if df is None:
+            return nodata_graph
+        # Process df...
+    """
+    # Wait for data to become available
+    if not wait_for_query_data(query_func, repolist):
+        logging.warning(f"{viz_id} - Timeout waiting for {query_func.__name__}")
+        return None
+
+    # Retrieve data from cache with error handling
+    try:
+        df = cf.retrieve_from_cache(
+            tablename=query_func.__name__,
+            repolist=repolist,
+        )
+    except Exception as e:
+        logging.error(f"{viz_id} - Cache retrieval failed for {query_func.__name__}: {e}")
+        return None
+
+    # Validate data is not empty
+    if df.empty:
+        logging.info(f"{viz_id} - No data available for {query_func.__name__}")
+        return None
+
+    logging.info(f"{viz_id} - Successfully loaded data from {query_func.__name__}")
+    return df

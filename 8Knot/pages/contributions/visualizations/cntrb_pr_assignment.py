@@ -9,11 +9,9 @@ import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from queries.pr_assignee_query import pr_assignee_query as praq
 from pages.utils.job_utils import nodata_graph
-from pages.utils.query_status import wait_for_query_data
-import time
+from pages.utils.query_status import load_query_data
 import datetime as dt
 import app
-import cache_manager.cache_facade as cf
 from components.visualization import VisualizationAIO
 
 PAGE = "contributions"
@@ -127,28 +125,12 @@ gc_cntrib_pr_assignment = VisualizationAIO(
     background=True,
 )
 def cntrib_pr_assignment_graph(repolist, interval, assign_req, start_date, end_date, bot_switch):
-    # wait for data to asynchronously download and become available.
-    if not wait_for_query_data(praq, repolist, timeout=600, poll_interval=0.5):
-        logging.warning(f"{VIZ_ID} - TIMEOUT waiting for data")
+    # Wait for and load query data (includes timeout, error handling, and validation)
+    df = load_query_data(praq, repolist, VIZ_ID)
+    if df is None:
         return nodata_graph, False
 
-    # data ready.
-    start = time.perf_counter()
-    logging.warning(f"{VIZ_ID}- START")
-
-    # GET ALL DATA FROM POSTGRES CACHE
-    df = cf.retrieve_from_cache(
-        tablename=praq.__name__,
-        repolist=repolist,
-    )
-
-    start = time.perf_counter()
-    logging.warning(f"{VIZ_ID}- START")
-
-    # test if there is data
-    if df.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
-        return nodata_graph, False
+    # data ready., False
 
     # remove bot data
     if bot_switch:
@@ -162,8 +144,6 @@ def cntrib_pr_assignment_graph(repolist, interval, assign_req, start_date, end_d
         return nodata_graph, True
 
     fig = create_figure(df, interval)
-
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig, False
 
 

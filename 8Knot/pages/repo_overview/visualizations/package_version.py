@@ -10,10 +10,8 @@ import plotly.express as px
 from pages.utils.graph_utils import baby_blue
 from queries.package_version_query import package_version_query as pvq
 from pages.utils.job_utils import nodata_graph
-from pages.utils.query_status import wait_for_query_data
-import time
+from pages.utils.query_status import load_query_data
 import datetime as dt
-import cache_manager.cache_facade as cf
 from components.visualization import VisualizationAIO
 
 PAGE = "repo_info"
@@ -42,22 +40,9 @@ gc_package_version = VisualizationAIO(
     background=True,
 )
 def package_version_graph(repolist):
-    start = time.perf_counter()
-    logging.warning(f"{VIZ_ID}- START")
-
-    if not wait_for_query_data(pvq, repolist, timeout=600, poll_interval=0.5):
-        logging.warning(f"{VIZ_ID} - TIMEOUT waiting for data")
-        return nodata_graph
-
-    # GET ALL DATA FROM POSTGRES CACHE
-    df = cf.retrieve_from_cache(
-        tablename=pvq.__name__,
-        repolist=repolist,
-    )
-
-    # test if there is data
-    if df.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
+    # Wait for and load query data (includes timeout, error handling, and validation)
+    df = load_query_data(pvq, repolist, VIZ_ID)
+    if df is None:
         return nodata_graph
 
     # count the number of each package grouping
@@ -73,6 +58,4 @@ def package_version_graph(repolist):
 
     # add legend title
     fig["layout"]["legend_title"] = "Date Range"
-
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig

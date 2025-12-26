@@ -11,11 +11,9 @@ from dateutil.relativedelta import *  # type: ignore
 from pages.utils.graph_utils import baby_blue
 from queries.contributors_query import contributors_query as ctq
 from pages.utils.job_utils import nodata_graph
-from pages.utils.query_status import wait_for_query_data
-import time
+from pages.utils.query_status import load_query_data
 import app
 import pages.utils.preprocessing_utils as preproc_utils
-import cache_manager.cache_facade as cf
 from components.visualization import VisualizationAIO
 
 PAGE = "contributors"
@@ -148,30 +146,16 @@ def graph_title(window_width):
     background=True,
 )
 def create_contrib_prolificacy_over_time_graph(repolist, threshold, window_width, step_size, bot_switch):
-    # wait for data to asynchronously download and become available.
-    if not wait_for_query_data(ctq, repolist, timeout=600, poll_interval=0.5):
-        logging.warning(f"{VIZ_ID} - TIMEOUT waiting for data")
+    # Wait for and load query data (includes timeout, error handling, and validation)
+    df = load_query_data(ctq, repolist, VIZ_ID)
+    if df is None:
         return nodata_graph, False
-
-    start = time.perf_counter()
-    logging.warning(f"{VIZ_ID} - START")
-
-    # GET ALL DATA FROM POSTGRES CACHE
-    df = cf.retrieve_from_cache(
-        tablename=ctq.__name__,
-        repolist=repolist,
-    )
 
     df = preproc_utils.contributors_df_action_naming(df)
 
     # remove bot data
     if bot_switch:
-        df = df[~df["cntrb_id"].isin(app.bots_list)]
-
-    # test if there is data
-    if df.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
-        return nodata_graph, False
+        df = df[~df["cntrb_id"].isin(app.bots_list)], False
 
     # if the step size is greater than window width raise Alert
     if step_size > window_width:
@@ -180,8 +164,6 @@ def create_contrib_prolificacy_over_time_graph(repolist, threshold, window_width
     df = process_data(df, threshold, window_width, step_size)
 
     fig = create_figure(df, threshold, step_size)
-
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig, False
 
 

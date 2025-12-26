@@ -84,7 +84,6 @@ commit_files = dbc.Card(
     className="box_emissions",
 )
 
-
 gc_commit_metrics = dbc.Card(
     [
         dbc.CardBody(
@@ -107,7 +106,6 @@ gc_commit_metrics = dbc.Card(
         ),
     ],
 )
-
 
 # callbacks below are for the specific queries for these cards
 

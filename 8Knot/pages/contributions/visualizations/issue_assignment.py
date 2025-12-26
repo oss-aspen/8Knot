@@ -9,10 +9,8 @@ import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from queries.issue_assignee_query import issue_assignee_query as iaq
 from pages.utils.job_utils import nodata_graph
-from pages.utils.query_status import wait_for_query_data
-import time
+from pages.utils.query_status import load_query_data
 import app
-import cache_manager.cache_facade as cf
 from components.visualization import VisualizationAIO
 
 PAGE = "contributions"
@@ -65,26 +63,10 @@ gc_issue_assignment = VisualizationAIO(
     background=True,
 )
 def cntrib_issue_assignment_graph(repolist, interval, bot_switch):
-    # wait for data to asynchronously download and become available.
-    if not wait_for_query_data(iaq, repolist, timeout=600, poll_interval=0.5):
-        logging.warning(f"{VIZ_ID}  - TIMEOUT waiting for data")
+    # Wait for and load query data (includes timeout, error handling, and validation)
+    df = load_query_data(iaq, repolist, VIZ_ID)
+    if df is None:
         return nodata_graph
-
-    # data ready.
-    start = time.perf_counter()
-    logging.warning(f"{VIZ_ID}- START")
-
-    # GET ALL DATA FROM POSTGRES CACHE
-    df = cf.retrieve_from_cache(
-        tablename=iaq.__name__,
-        repolist=repolist,
-    )
-
-    # test if there is data
-    if df.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
-        return nodata_graph
-
     # remove assignment data if assigned to a bot
     if bot_switch:
         df["bot"] = df["assignee"].isin(app.bots_list)
@@ -95,8 +77,6 @@ def cntrib_issue_assignment_graph(repolist, interval, bot_switch):
     df = process_data(df, interval)
 
     fig = create_figure(df, interval)
-
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
 
