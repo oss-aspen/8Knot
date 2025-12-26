@@ -8,7 +8,7 @@ from dateutil.relativedelta import *  # type: ignore
 from queries.ossf_score_query import ossf_score_query as osq
 import io
 from pages.utils.job_utils import nodata_graph
-from pages.utils.query_status import load_query_data
+from pages.utils.query_status import wait_for_query_data
 from datetime import datetime
 
 PAGE = "repo_info"

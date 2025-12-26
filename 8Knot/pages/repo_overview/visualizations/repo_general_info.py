@@ -14,7 +14,7 @@ from queries.repo_info_query import repo_info_query as riq
 from queries.repo_releases_query import repo_releases_query as rrq
 import io
 from pages.utils.job_utils import nodata_graph
-from pages.utils.query_status import load_query_data
+from pages.utils.query_status import wait_for_query_data
 from datetime import datetime
 
 PAGE = "repo_info"

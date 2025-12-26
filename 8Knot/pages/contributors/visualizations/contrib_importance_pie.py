@@ -163,7 +163,7 @@ def create_top_k_cntrbs_graph(repolist, action_type, top_k, start_date, end_date
     if df is None:
         return nodata_graph, False
 
-    df = preproc_utils.contributors_df_action_naming(df), False
+    df = preproc_utils.contributors_df_action_naming(df)
 
     # remove bot data
     if bot_switch:

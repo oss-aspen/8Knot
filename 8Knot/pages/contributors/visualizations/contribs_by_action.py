@@ -131,7 +131,7 @@ def contribs_by_action_graph(repolist, interval, action, bot_switch):
     if df is None:
         return nodata_graph, False
 
-    df = preproc_utils.contributors_df_action_naming(df), False
+    df = preproc_utils.contributors_df_action_naming(df)
 
     # remove bot data
     if bot_switch:
