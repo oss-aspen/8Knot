@@ -33,6 +33,11 @@ FAILURE_WAIT_INTERVAL = 4.0  # seconds - wait between failure state checks
 # Maximum time to wait for queries
 MAX_QUERY_WAIT_TIME = 600  # seconds - 10 minute timeout for query completion
 
+# Visualization-specific polling configuration
+# These values control how visualizations wait for their specific query data
+VISUALIZATION_QUERY_TIMEOUT = 600  # seconds - 10 minute timeout for visualization data
+VISUALIZATION_POLL_INTERVAL = 0.5  # seconds - how often visualizations check if data is ready
+
 # ============================================================================
 # DATA BADGE UI CONSTANTS
 # ============================================================================
