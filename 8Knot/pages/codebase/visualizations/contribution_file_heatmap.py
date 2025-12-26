@@ -14,6 +14,7 @@ from queries.repo_files_query import repo_files_query as rfq
 from app import augur
 import io
 from pages.utils.job_utils import nodata_graph
+from pages.utils.query_status import wait_for_query_data
 import time
 from dash.exceptions import PreventUpdate
 import app
@@ -177,9 +178,9 @@ def repo_dropdown(repo_ids):
 )
 def directory_dropdown(repo_id):
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=[repo_id]):
-        logging.warning(f"DIRECTORY DROPDOWN - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
+    if not wait_for_query_data(rfq, [repo_id], timeout=600, poll_interval=0.5):
+        logging.warning(f"DIRECTORY DROPDOWN  - TIMEOUT waiting for data")
+        return nodata_graph
 
     logging.warning(f"DIRECTORY DROPDOWN - RETRIEVING FROM CACHE")
     df = cf.retrieve_from_cache(
@@ -276,19 +277,19 @@ def multi_query_helper(repos):
     """
 
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=repos):
-        logging.warning(f"CONTRIBUTION FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
+    if not wait_for_query_data(rfq, repos, timeout=600, poll_interval=0.5):
+        logging.warning(f"CONTRIBUTION FILE HEATMAP  - TIMEOUT waiting for data")
+        return nodata_graph
 
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=prfq.__name__, repolist=repos):
-        logging.warning(f"CONTRIBUTION FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
+    if not wait_for_query_data(prfq, repos, timeout=600, poll_interval=0.5):
+        logging.warning(f"CONTRIBUTION FILE HEATMAP  - TIMEOUT waiting for data")
+        return nodata_graph
 
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=prq.__name__, repolist=repos):
-        logging.warning(f"CONTRIBUTION FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
+    if not wait_for_query_data(prq, repos, timeout=600, poll_interval=0.5):
+        logging.warning(f"CONTRIBUTION FILE HEATMAP  - TIMEOUT waiting for data")
+        return nodata_graph
 
     # GET ALL DATA FROM POSTGRES CACHE
     df_file = cf.retrieve_from_cache(

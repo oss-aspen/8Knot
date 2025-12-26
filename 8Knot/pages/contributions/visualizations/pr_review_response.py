@@ -8,6 +8,7 @@ from dateutil.relativedelta import *  # type: ignore
 from pages.utils.graph_utils import baby_blue
 from queries.pr_response_query import pr_response_query as prr
 from pages.utils.job_utils import nodata_graph
+from pages.utils.query_status import wait_for_query_data
 import time
 import app
 import cache_manager.cache_facade as cf
@@ -63,9 +64,9 @@ gc_pr_review_response = VisualizationAIO(
     background=True,
 )
 def pr_review_response_graph(repolist, num_days, bot_switch):
-    while not_cached := cf.get_uncached(func_name=prr.__name__, repolist=repolist):
-        logging.warning(f"PR_FIRST_RESPONSE - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
+    if not wait_for_query_data(prr, repolist, timeout=600, poll_interval=0.5):
+        logging.warning(f"PR_FIRST_RESPONSE  - TIMEOUT waiting for data")
+        return nodata_graph
 
     start = time.perf_counter()
     logging.warning(f"{VIZ_ID}- START")

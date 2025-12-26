@@ -7,6 +7,7 @@ import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from queries.contributors_query import contributors_query as ctq
 from pages.utils.job_utils import nodata_graph
+from pages.utils.query_status import wait_for_query_data
 import time
 import app
 import pages.utils.preprocessing_utils as preproc_utils
@@ -62,9 +63,9 @@ gc_new_contributor = VisualizationAIO(
 )
 def new_contributor_graph(repolist, interval, bot_switch):
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=ctq.__name__, repolist=repolist):
-        logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
+    if not wait_for_query_data(ctq, repolist, timeout=600, poll_interval=0.5):
+        logging.warning(f"{VIZ_ID} - TIMEOUT waiting for data")
+        return nodata_graph
 
     logging.warning(f"{VIZ_ID} - START")
     start = time.perf_counter()

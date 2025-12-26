@@ -9,6 +9,7 @@ from pages.utils.graph_utils import baby_blue
 from queries.commits_query import commits_query as cmq
 import cache_manager.cache_facade as cf
 from pages.utils.job_utils import nodata_graph
+from pages.utils.query_status import wait_for_query_data
 import time
 from components.visualization import VisualizationAIO
 
@@ -64,9 +65,9 @@ gc_contrib_activity_cycle = VisualizationAIO(
 )
 def contrib_activity_cycle_graph(repolist, interval):
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=cmq.__name__, repolist=repolist):
-        logging.warning(f"COMMITS_OVER_TIME_VIZ - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
+    if not wait_for_query_data(cmq, repolist, timeout=600, poll_interval=0.5):
+        logging.warning(f"COMMITS_OVER_TIME_VIZ  - TIMEOUT waiting for data")
+        return nodata_graph
 
     start = time.perf_counter()
     logging.warning(f"{VIZ_ID}- START")

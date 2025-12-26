@@ -7,6 +7,7 @@ import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from queries.commits_query import commits_query as cmq
 from pages.utils.job_utils import nodata_graph
+from pages.utils.query_status import wait_for_query_data
 import time
 import cache_manager.cache_facade as cf
 from components.visualization import VisualizationAIO
@@ -67,9 +68,9 @@ gc_commits_over_time = VisualizationAIO(
 )
 def commits_over_time_graph(repolist, interval):
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=cmq.__name__, repolist=repolist):
-        logging.warning(f"COMMITS_OVER_TIME_VIZ - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
+    if not wait_for_query_data(cmq, repolist, timeout=600, poll_interval=0.5):
+        logging.warning(f"COMMITS_OVER_TIME_VIZ  - TIMEOUT waiting for data")
+        return nodata_graph
 
     # data ready.
     start = time.perf_counter()

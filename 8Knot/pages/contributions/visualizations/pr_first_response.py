@@ -12,6 +12,7 @@ import io
 from cache_manager.cache_manager import CacheManager as cm
 import cache_manager.cache_facade as cf
 from pages.utils.job_utils import nodata_graph
+from pages.utils.query_status import wait_for_query_data
 import time
 import app
 from components.visualization import VisualizationAIO
@@ -65,9 +66,9 @@ gc_pr_first_response = VisualizationAIO(
     background=True,
 )
 def pr_first_response_graph(repolist, num_days, bot_switch):
-    while not_cached := cf.get_uncached(func_name=prr.__name__, repolist=repolist):
-        logging.warning(f"PR_FIRST_RESPONSE - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
+    if not wait_for_query_data(prr, repolist, timeout=600, poll_interval=0.5):
+        logging.warning(f"PR_FIRST_RESPONSE  - TIMEOUT waiting for data")
+        return nodata_graph
 
     start = time.perf_counter()
     logging.warning(f"{VIZ_ID}- START")

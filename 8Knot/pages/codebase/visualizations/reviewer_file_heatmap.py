@@ -14,6 +14,7 @@ from queries.cntrb_per_file_query import cntrb_per_file_query as cpfq
 from queries.repo_files_query import repo_files_query as rfq
 from app import augur
 from pages.utils.job_utils import nodata_graph
+from pages.utils.query_status import wait_for_query_data
 import pages.utils.preprocessing_utils as preproc_u
 import time
 from dash.exceptions import PreventUpdate
@@ -161,9 +162,9 @@ def repo_dropdown(repo_ids):
 )
 def directory_dropdown(repo_id):
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=[repo_id]):
-        logging.warning(f"DIRECTORY DROPDOWN - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
+    if not wait_for_query_data(rfq, [repo_id], timeout=600, poll_interval=0.5):
+        logging.warning(f"DIRECTORY DROPDOWN  - TIMEOUT waiting for data")
+        return nodata_graph
 
     logging.warning(f"DIRECTORY DROPDOWN - RETRIEVING FROM CACHE")
     df = cf.retrieve_from_cache(
@@ -265,19 +266,19 @@ def multi_query_helper(searchbar_repos, repo):
     """
 
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=repo):
-        logging.warning(f"CONTRIBUTOR FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
+    if not wait_for_query_data(rfq, repo, timeout=600, poll_interval=0.5):
+        logging.warning(f"CONTRIBUTOR FILE HEATMAP  - TIMEOUT waiting for data")
+        return nodata_graph
 
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=cnq.__name__, repolist=searchbar_repos):
-        logging.warning(f"CONTRIBUTOR FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
+    if not wait_for_query_data(cnq, searchbar_repos, timeout=600, poll_interval=0.5):
+        logging.warning(f"CONTRIBUTOR FILE HEATMAP  - TIMEOUT waiting for data")
+        return nodata_graph
 
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=cpfq.__name__, repolist=repo):
-        logging.warning(f"CONTRIBUTOR FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
+    if not wait_for_query_data(cpfq, repo, timeout=600, poll_interval=0.5):
+        logging.warning(f"CONTRIBUTOR FILE HEATMAP  - TIMEOUT waiting for data")
+        return nodata_graph
 
     # GET ALL DATA FROM POSTGRES CACHE
     df_file = cf.retrieve_from_cache(
