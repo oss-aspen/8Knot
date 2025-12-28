@@ -2,6 +2,7 @@ from dash import html, dcc, callback
 import dash
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
+from typing import List, Optional, Tuple, Union
 import plotly.graph_objects as go
 import pandas as pd
 import logging
@@ -84,7 +85,7 @@ def graph_title(view):
     ],
     background=True,
 )
-def code_languages_graph(repolist, view):
+def code_languages_graph(repolist: List[int], view):
     # Wait for and load query data (includes timeout, error handling, and validation)
     df = load_query_data(rlq, repolist, VIZ_ID)
     if df is None:
@@ -119,7 +120,7 @@ def process_data(df: pd.DataFrame):
     return df
 
 
-def create_figure(df: pd.DataFrame, view):
+def create_figure(df: pd.DataFrame, view) -> go.Figure:
 
     value = "files"
     if view == "line":

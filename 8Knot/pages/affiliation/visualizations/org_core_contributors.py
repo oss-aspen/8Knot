@@ -1,10 +1,12 @@
 from dash import dcc, callback
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
+from typing import List, Optional, Tuple, Union
 import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
+import plotly.graph_objects as go
 from pages.utils.graph_utils import baby_blue
 from queries.affiliation_query import affiliation_query as aq
 from pages.utils.job_utils import nodata_graph
@@ -155,7 +157,7 @@ def compay_associated_activity_graph(
     return fig
 
 
-def process_data(df: pd.DataFrame, contributions, contributors, start_date, end_date, email_filter):
+def process_data(df: pd.DataFrame, contributions, contributors, start_date: Optional[str], end_date, email_filter):
     # convert to datetime objects rather than strings
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
 
@@ -214,7 +216,7 @@ def process_data(df: pd.DataFrame, contributions, contributors, start_date, end_
     return df
 
 
-def create_figure(df: pd.DataFrame):
+def create_figure(df: pd.DataFrame) -> go.Figure:
     # graph generation
     fig = px.bar(df, x="domains", y="contributors", color_discrete_sequence=[baby_blue[8]])
     fig.update_xaxes(rangeslider_visible=True, range=[-0.5, 15])

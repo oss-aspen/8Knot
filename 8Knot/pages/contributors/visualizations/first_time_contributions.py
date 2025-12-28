@@ -1,8 +1,10 @@
 from dash import callback
 from dash.dependencies import Input, Output
+from typing import List, Optional, Tuple, Union
 import pandas as pd
 import logging
 import plotly.express as px
+import plotly.graph_objects as go
 from pages.utils.graph_utils import baby_blue
 from queries.contributors_query import contributors_query as ctq
 from pages.utils.job_utils import nodata_graph
@@ -35,7 +37,7 @@ gc_first_time_contributions = VisualizationAIO(
     ],
     background=True,
 )
-def create_first_time_contributors_graph(repolist, bot_switch):
+def create_first_time_contributors_graph(repolist: List[int], bot_switch: bool) -> Tuple[go.Figure, bool]:
     # Wait for and load query data (includes timeout, error handling, and validation)
     df = load_query_data(ctq, repolist, VIZ_ID)
     if df is None:
@@ -68,7 +70,7 @@ def process_data(df):
     return df
 
 
-def create_figure(df):
+def create_figure(df) -> go.Figure:
     # create plotly express histogram
     fig = px.histogram(df, x="created_at", color="Action", color_discrete_sequence=baby_blue)
 

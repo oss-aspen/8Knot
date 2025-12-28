@@ -2,6 +2,7 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import callback
 from dash.dependencies import Input, Output
+from typing import List, Optional, Tuple, Union
 import plotly.graph_objects as go
 import pandas as pd
 import logging
@@ -121,7 +122,7 @@ gc_issue_staleness = VisualizationAIO(
     ],
     background=True,
 )
-def new_staling_issues_graph(repolist, interval, staling_interval, stale_interval):
+def new_staling_issues_graph(repolist: List[int], interval, staling_interval, stale_interval):
     # conditional for the intervals to be valid options
     if staling_interval > stale_interval:
         return dash.no_update, True
@@ -177,7 +178,7 @@ def process_data(df: pd.DataFrame, interval, staling_interval, stale_interval):
     return df_status
 
 
-def create_figure(df_status: pd.DataFrame, interval):
+def create_figure(df_status: pd.DataFrame, interval) -> go.Figure:
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 

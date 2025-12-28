@@ -1,6 +1,7 @@
 from dash import callback
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
+from typing import List, Optional, Tuple, Union
 import plotly.graph_objects as go
 import pandas as pd
 import logging
@@ -61,7 +62,7 @@ gc_pr_review_response = VisualizationAIO(
     ],
     background=True,
 )
-def pr_review_response_graph(repolist, num_days, bot_switch):
+def pr_review_response_graph(repolist: List[int], num_days, bot_switch: bool) -> Tuple[go.Figure, bool]:
     # Wait for and load query data (includes timeout, error handling, and validation)
     df = load_query_data(prr, repolist, VIZ_ID)
     if df is None:
@@ -114,7 +115,7 @@ def process_data(df: pd.DataFrame, num_days):
     return df_pr_responses
 
 
-def create_figure(df: pd.DataFrame, num_days):
+def create_figure(df: pd.DataFrame, num_days) -> go.Figure:
     fig = go.Figure(
         [
             go.Scatter(

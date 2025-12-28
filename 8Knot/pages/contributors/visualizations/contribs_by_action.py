@@ -2,10 +2,12 @@ from dash import dcc, callback
 import dash
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
+from typing import List, Optional, Tuple, Union
 import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
+import plotly.graph_objects as go
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from queries.contributors_query import contributors_query as ctq
 from pages.utils.job_utils import nodata_graph
@@ -125,7 +127,7 @@ gc_contribs_by_action = VisualizationAIO(
     ],
     background=True,
 )
-def contribs_by_action_graph(repolist, interval, action, bot_switch):
+def contribs_by_action_graph(repolist: List[int], interval, action, bot_switch: bool) -> Tuple[go.Figure, bool]:
     # Wait for and load query data (includes timeout, error handling, and validation)
     df = load_query_data(ctq, repolist, VIZ_ID)
     if df is None:
@@ -148,7 +150,7 @@ def contribs_by_action_graph(repolist, interval, action, bot_switch):
     return fig, False
 
 
-def process_data(df: pd.DataFrame, interval, action):
+def process_data(df: pd.DataFrame, interval, action: str) -> pd.DataFrame:
     # convert to datetime objects rather than strings
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
 
@@ -177,7 +179,7 @@ def process_data(df: pd.DataFrame, interval, action):
     return df
 
 
-def create_figure(df: pd.DataFrame, interval, action):
+def create_figure(df: pd.DataFrame, interval, action) -> go.Figure:
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 

@@ -1,10 +1,12 @@
 from dash import callback
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
+from typing import List, Optional, Tuple, Union
 import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
+import plotly.graph_objects as go
 from pages.utils.graph_utils import baby_blue
 from queries.commits_query import commits_query as cmq
 from pages.utils.job_utils import nodata_graph
@@ -60,7 +62,7 @@ gc_contrib_activity_cycle = VisualizationAIO(
     ],
     background=True,
 )
-def contrib_activity_cycle_graph(repolist, interval):
+def contrib_activity_cycle_graph(repolist: List[int], interval: str) -> Tuple[go.Figure, bool]:
     # Wait for and load query data (includes timeout, error handling, and validation)
     df = load_query_data(cmq, repolist, VIZ_ID)
     if df is None:
@@ -73,7 +75,7 @@ def contrib_activity_cycle_graph(repolist, interval):
     return fig
 
 
-def process_data(df: pd.DataFrame, interval):
+def process_data(df: pd.DataFrame, interval: str) -> pd.DataFrame:
     # for this usecase we want the datetimes to be in their local values
     # tricking pandas to keep local values when UTC conversion is required for to_datetime
     df["author_timestamp"] = df["author_timestamp"].astype("str").str[:-6]
@@ -106,7 +108,7 @@ def process_data(df: pd.DataFrame, interval):
     return df_final
 
 
-def create_figure(df: pd.DataFrame, interval):
+def create_figure(df: pd.DataFrame, interval) -> go.Figure:
     column = "Weekday"
     order = [
         "Monday",

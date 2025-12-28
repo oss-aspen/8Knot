@@ -3,10 +3,12 @@ import dash
 from dash import dcc
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
+from typing import List, Optional, Tuple, Union
 import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
+import plotly.graph_objects as go
 from pages.utils.graph_utils import baby_blue
 from queries.contributors_query import contributors_query as ctq
 from pages.utils.job_utils import nodata_graph
@@ -157,7 +159,9 @@ def graph_title(k, action_type):
     ],
     background=True,
 )
-def create_top_k_cntrbs_graph(repolist, action_type, top_k, start_date, end_date, bot_switch):
+def create_top_k_cntrbs_graph(
+    repolist: List[int], action_type, top_k, start_date: Optional[str], end_date, bot_switch: bool
+) -> Tuple[go.Figure, bool]:
     # Wait for and load query data (includes timeout, error handling, and validation)
     df = load_query_data(ctq, repolist, VIZ_ID)
     if df is None:
@@ -181,7 +185,9 @@ def create_top_k_cntrbs_graph(repolist, action_type, top_k, start_date, end_date
     return fig, False
 
 
-def process_data(df: pd.DataFrame, action_type, top_k, start_date, end_date):
+def process_data(
+    df: pd.DataFrame, action_type, top_k, start_date: Optional[str], end_date: Optional[str]
+) -> pd.DataFrame:
     # convert to datetime objects rather than strings
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
 
@@ -229,7 +235,7 @@ def process_data(df: pd.DataFrame, action_type, top_k, start_date, end_date):
     return df
 
 
-def create_figure(df: pd.DataFrame, action_type):
+def create_figure(df: pd.DataFrame, action_type) -> go.Figure:
     # create plotly express pie chart
     fig = px.pie(
         df,

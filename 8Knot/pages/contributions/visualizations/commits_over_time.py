@@ -1,9 +1,11 @@
 import dash_bootstrap_components as dbc
 from dash import callback
 from dash.dependencies import Input, Output
+from typing import List, Optional, Tuple, Union
 import pandas as pd
 import logging
 import plotly.express as px
+import plotly.graph_objects as go
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from queries.commits_query import commits_query as cmq
 from pages.utils.job_utils import nodata_graph
@@ -64,7 +66,7 @@ gc_commits_over_time = VisualizationAIO(
     ],
     background=True,
 )
-def commits_over_time_graph(repolist, interval):
+def commits_over_time_graph(repolist: List[int], interval: str) -> Tuple[go.Figure, bool]:
     # Wait for and load query data (includes timeout, error handling, and validation)
     df = load_query_data(cmq, repolist, VIZ_ID)
     if df is None:
@@ -77,7 +79,7 @@ def commits_over_time_graph(repolist, interval):
     return fig
 
 
-def process_data(df: pd.DataFrame, interval):
+def process_data(df: pd.DataFrame, interval: str) -> pd.DataFrame:
     # convert to datetime objects with consistent column name
     # incoming value should be a posix integer.
     df["author_date"] = pd.to_datetime(df["author_date"], utc=True)
@@ -104,7 +106,7 @@ def process_data(df: pd.DataFrame, interval):
     return df_created
 
 
-def create_figure(df_created: pd.DataFrame, interval):
+def create_figure(df_created: pd.DataFrame, interval) -> go.Figure:
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 

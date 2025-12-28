@@ -1,10 +1,12 @@
 from dash import dcc, callback
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
+from typing import List, Optional, Tuple, Union
 import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
+import plotly.graph_objects as go
 from pages.utils.graph_utils import baby_blue
 from queries.commits_query import commits_query as cmq
 from pages.utils.job_utils import nodata_graph
@@ -74,7 +76,9 @@ gc_commit_domains = VisualizationAIO(
     ],
     background=True,
 )
-def commit_domains_graph(repolist, num, start_date, end_date):
+def commit_domains_graph(
+    repolist: List[int], num, start_date: Optional[str], end_date: Optional[str]
+) -> Tuple[go.Figure, bool]:
     # Wait for and load query data (includes timeout, error handling, and validation)
     df = load_query_data(cmq, repolist, VIZ_ID)
     if df is None:
@@ -87,7 +91,7 @@ def commit_domains_graph(repolist, num, start_date, end_date):
     return fig
 
 
-def process_data(df: pd.DataFrame, num, start_date, end_date):
+def process_data(df: pd.DataFrame, num, start_date: Optional[str], end_date: Optional[str]) -> pd.DataFrame:
     # TODO: create docstring
 
     # convert to datetime objects rather than strings
@@ -131,7 +135,7 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
     return df
 
 
-def create_figure(df: pd.DataFrame):
+def create_figure(df: pd.DataFrame) -> go.Figure:
     # graph generation
     fig = px.pie(df, names="domains", values="occurrences", color_discrete_sequence=baby_blue)
     fig.update_traces(

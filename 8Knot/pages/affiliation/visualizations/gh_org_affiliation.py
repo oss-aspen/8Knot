@@ -1,10 +1,12 @@
 from dash import dcc, callback
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
+from typing import List, Optional, Tuple, Union
 import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
+import plotly.graph_objects as go
 from pages.utils.graph_utils import baby_blue
 from queries.affiliation_query import affiliation_query as aq
 from pages.utils.job_utils import nodata_graph
@@ -75,7 +77,9 @@ gc_gh_org_affiliation = VisualizationAIO(
     ],
     background=True,
 )
-def gh_org_affiliation_graph(repolist, num, start_date, end_date, bot_switch):
+def gh_org_affiliation_graph(
+    repolist: List[int], num, start_date: Optional[str], end_date, bot_switch: bool
+) -> Tuple[go.Figure, bool]:
     # Wait for and load query data (includes timeout, error handling, and validation)
     df = load_query_data(aq, repolist, VIZ_ID)
     if df is None:
@@ -92,7 +96,7 @@ def gh_org_affiliation_graph(repolist, num, start_date, end_date, bot_switch):
     return fig
 
 
-def process_data(df: pd.DataFrame, num, start_date, end_date):
+def process_data(df: pd.DataFrame, num, start_date: Optional[str], end_date: Optional[str]) -> pd.DataFrame:
     """Implement your custom data-processing logic in this function.
     The output of this function is the data you intend to create a visualization with,
     requiring no further processing."""
@@ -167,7 +171,7 @@ def fuzzy_match(df, name):
     return [i for i, x in enumerate(matches) if x]
 
 
-def create_figure(df: pd.DataFrame):
+def create_figure(df: pd.DataFrame) -> go.Figure:
     # graph generation
     fig = px.pie(
         df,

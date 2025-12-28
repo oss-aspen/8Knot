@@ -2,6 +2,7 @@ from dash import html, dcc, callback
 import dash
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
+from typing import List, Optional, Tuple, Union
 import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore

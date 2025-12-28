@@ -1,9 +1,11 @@
 import dash_bootstrap_components as dbc
 from dash import callback
 from dash.dependencies import Input, Output
+from typing import List, Optional, Tuple, Union
 import pandas as pd
 import logging
 import plotly.express as px
+import plotly.graph_objects as go
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from queries.contributors_query import contributors_query as ctq
 from pages.utils.job_utils import nodata_graph
@@ -59,7 +61,7 @@ gc_new_contributor = VisualizationAIO(
     ],
     background=True,
 )
-def new_contributor_graph(repolist, interval, bot_switch):
+def new_contributor_graph(repolist: List[int], interval, bot_switch: bool) -> Tuple[go.Figure, bool]:
     # Wait for and load query data (includes timeout, error handling, and validation)
     df = load_query_data(ctq, repolist, VIZ_ID)
     if df is None:
@@ -124,7 +126,7 @@ def process_data(df, interval):
     return df, df_contribs
 
 
-def create_figure(df, df_contribs, interval):
+def create_figure(df, df_contribs, interval) -> go.Figure:
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 

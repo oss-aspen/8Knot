@@ -2,6 +2,7 @@ from dash import callback
 import dash
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
+from typing import List, Optional, Tuple, Union
 import plotly.graph_objects as go
 import pandas as pd
 import logging
@@ -124,7 +125,9 @@ gc_active_drifting_contributors = VisualizationAIO(
     ],
     background=True,
 )
-def active_drifting_contributors_graph(repolist, interval, drift_interval, away_interval, bot_switch):
+def active_drifting_contributors_graph(
+    repolist: List[int], interval, drift_interval: int, away_interval, bot_switch: bool
+) -> Tuple[go.Figure, bool]:
     # conditional for the intervals to be valid options
     if drift_interval is None or away_interval is None:
         return dash.no_update, dash.no_update
@@ -150,7 +153,7 @@ def active_drifting_contributors_graph(repolist, interval, drift_interval, away_
     return fig, False
 
 
-def process_data(df: pd.DataFrame, interval, drift_interval, away_interval):
+def process_data(df: pd.DataFrame, interval, drift_interval: int, away_interval: int) -> pd.DataFrame:
     # convert to datetime objects with consistent column name
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
     # df.rename(columns={"created_at": "created"}, inplace=True)
@@ -185,7 +188,7 @@ def process_data(df: pd.DataFrame, interval, drift_interval, away_interval):
     return df_status
 
 
-def create_figure(df_status: pd.DataFrame, interval):
+def create_figure(df_status: pd.DataFrame, interval) -> go.Figure:
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 

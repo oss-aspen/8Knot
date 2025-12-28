@@ -1,6 +1,7 @@
 from dash import dcc, callback
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
+from typing import List, Optional, Tuple, Union
 import plotly.graph_objects as go
 import pandas as pd
 import logging
@@ -124,7 +125,9 @@ gc_cntrib_pr_assignment = VisualizationAIO(
     ],
     background=True,
 )
-def cntrib_pr_assignment_graph(repolist, interval, assign_req, start_date, end_date, bot_switch):
+def cntrib_pr_assignment_graph(
+    repolist: List[int], interval, assign_req, start_date: Optional[str], end_date, bot_switch: bool
+) -> Tuple[go.Figure, bool]:
     # Wait for and load query data (includes timeout, error handling, and validation)
     df = load_query_data(praq, repolist, VIZ_ID)
     if df is None:
@@ -147,7 +150,9 @@ def cntrib_pr_assignment_graph(repolist, interval, assign_req, start_date, end_d
     return fig, False
 
 
-def process_data(df: pd.DataFrame, interval, assign_req, start_date, end_date):
+def process_data(
+    df: pd.DataFrame, interval, assign_req, start_date: Optional[str], end_date: Optional[str]
+) -> pd.DataFrame:
     # convert to datetime objects rather than strings
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
     df["closed_at"] = pd.to_datetime(df["closed_at"], utc=True)
@@ -218,7 +223,7 @@ def process_data(df: pd.DataFrame, interval, assign_req, start_date, end_date):
     return df_assign
 
 
-def create_figure(df: pd.DataFrame, interval):
+def create_figure(df: pd.DataFrame, interval) -> go.Figure:
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 

@@ -1,6 +1,7 @@
 from dash import dcc, callback
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
+from typing import List, Optional, Tuple, Union
 import plotly.graph_objects as go
 import pandas as pd
 import logging
@@ -91,7 +92,9 @@ gc_issues_over_time = VisualizationAIO(
     ],
     background=True,
 )
-def issues_over_time_graph(repolist, interval, start_date, end_date):
+def issues_over_time_graph(
+    repolist: List[int], interval, start_date: Optional[str], end_date: Optional[str]
+) -> Tuple[go.Figure, bool]:
     # Wait for and load query data (includes timeout, error handling, and validation)
     df = load_query_data(iq, repolist, VIZ_ID)
     if df is None:
@@ -105,7 +108,7 @@ def issues_over_time_graph(repolist, interval, start_date, end_date):
     return fig
 
 
-def process_data(df: pd.DataFrame, interval, start_date, end_date):
+def process_data(df: pd.DataFrame, interval, start_date: Optional[str], end_date: Optional[str]) -> pd.DataFrame:
     # convert to datetime objects rather than strings
     df["created_at"] = pd.to_datetime(df["created_at"], utc=False)
     df["closed_at"] = pd.to_datetime(df["closed_at"], utc=False)
@@ -174,7 +177,7 @@ def process_data(df: pd.DataFrame, interval, start_date, end_date):
     return df_created, df_closed, df_open
 
 
-def create_figure(df_created: pd.DataFrame, df_closed: pd.DataFrame, df_open: pd.DataFrame, interval):
+def create_figure(df_created: pd.DataFrame, df_closed: pd.DataFrame, df_open: pd.DataFrame, interval) -> go.Figure:
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 

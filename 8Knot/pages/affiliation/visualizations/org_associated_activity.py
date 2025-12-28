@@ -1,10 +1,12 @@
 from dash import dcc, callback
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
+from typing import List, Optional, Tuple, Union
 import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
+import plotly.graph_objects as go
 from pages.utils.graph_utils import baby_blue
 from queries.affiliation_query import affiliation_query as aq
 from pages.utils.job_utils import nodata_graph
@@ -115,7 +117,9 @@ gc_org_associated_activity = VisualizationAIO(
     ],
     background=True,
 )
-def org_associated_activity_graph(repolist, num, start_date, end_date, email_filter, bot_switch):
+def org_associated_activity_graph(
+    repolist: List[int], num, start_date: Optional[str], end_date, email_filter, bot_switch: bool
+) -> Tuple[go.Figure, bool]:
     """Each contribution is associated with a contributor. That contributor can be associated with
 
     more than one different email. Hence each contribution is associated with all of the emails that a contributor has historically used.
@@ -143,7 +147,7 @@ def org_associated_activity_graph(repolist, num, start_date, end_date, email_fil
     return fig
 
 
-def process_data(df: pd.DataFrame, num, start_date, end_date, email_filter):
+def process_data(df: pd.DataFrame, num, start_date: Optional[str], end_date, email_filter):
     # convert to datetime objects rather than strings
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
 
@@ -195,7 +199,7 @@ def process_data(df: pd.DataFrame, num, start_date, end_date, email_filter):
     return df
 
 
-def create_figure(df: pd.DataFrame):
+def create_figure(df: pd.DataFrame) -> go.Figure:
     # graph generation
     fig = px.bar(df, x="domains", y="occurrences", color_discrete_sequence=[baby_blue[8]])
     fig.update_xaxes(rangeslider_visible=True, range=[-0.5, 15])

@@ -1,6 +1,7 @@
 import dash_bootstrap_components as dbc
 from dash import callback
 from dash.dependencies import Input, Output
+from typing import List, Optional, Tuple, Union
 import plotly.graph_objects as go
 import pandas as pd
 import logging
@@ -64,7 +65,7 @@ gc_pr_over_time = VisualizationAIO(
     ],
     background=True,
 )
-def prs_over_time_graph(repolist, interval):
+def prs_over_time_graph(repolist: List[int], interval: str) -> Tuple[go.Figure, bool]:
     # Wait for and load query data (includes timeout, error handling, and validation)
     df = load_query_data(prq, repolist, VIZ_ID)
     if df is None:
@@ -78,7 +79,7 @@ def prs_over_time_graph(repolist, interval):
     return fig
 
 
-def process_data(df: pd.DataFrame, interval):
+def process_data(df: pd.DataFrame, interval: str) -> pd.DataFrame:
     # convert dates to datetime objects rather than strings
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
     df["merged_at"] = pd.to_datetime(df["merged_at"], utc=True)
@@ -154,7 +155,7 @@ def create_figure(
     df_closed_merged: pd.DataFrame,
     df_open: pd.DataFrame,
     interval,
-):
+) -> go.Figure:
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
