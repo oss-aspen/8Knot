@@ -8,14 +8,19 @@ where visualizations render as soon as their data is available.
 
 import time
 import logging
+from typing import Callable, Optional, Dict, List
 from celery.result import AsyncResult
+import pandas as pd
 import cache_manager.cache_facade as cf
 from pages.index.query_constants import VISUALIZATION_QUERY_TIMEOUT, VISUALIZATION_POLL_INTERVAL
 
 
 def wait_for_query_data(
-    query_func, repolist, timeout=VISUALIZATION_QUERY_TIMEOUT, poll_interval=VISUALIZATION_POLL_INTERVAL
-):
+    query_func: Callable,
+    repolist: List[int],
+    timeout: int = VISUALIZATION_QUERY_TIMEOUT,
+    poll_interval: float = VISUALIZATION_POLL_INTERVAL,
+) -> bool:
     """
     Wait for a specific query's data to become available in cache.
 
@@ -64,7 +69,7 @@ def wait_for_query_data(
         time.sleep(poll_interval)
 
 
-def is_query_ready(query_func, repolist):
+def is_query_ready(query_func: Callable, repolist: List[int]) -> bool:
     """
     Check if a query's data is already available in cache (non-blocking).
 
@@ -81,7 +86,7 @@ def is_query_ready(query_func, repolist):
     return all_repos_cached
 
 
-def get_query_status(query_func, repolist):
+def get_query_status(query_func: Callable, repolist: List[int]) -> Dict[str, any]:
     """
     Get detailed status of a query's data availability.
 
@@ -111,7 +116,11 @@ def get_query_status(query_func, repolist):
     }
 
 
-def load_query_data(query_func, repolist, viz_id):
+def load_query_data(
+    query_func: Callable,
+    repolist: List[int],
+    viz_id: str,
+) -> Optional[pd.DataFrame]:
     """
     Wait for query data and retrieve it from cache with error handling.
 

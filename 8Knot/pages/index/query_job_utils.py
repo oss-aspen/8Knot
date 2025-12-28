@@ -9,6 +9,7 @@ These utilities follow SOLID principles:
 
 import time
 import logging
+from typing import Dict, List, Tuple, Optional
 from celery.result import AsyncResult
 from .query_constants import (
     QUERY_STATUS_CACHED,
@@ -21,7 +22,10 @@ from .query_constants import (
 )
 
 
-def create_async_results_from_metadata(job_metadata, filter_query_names=None):
+def create_async_results_from_metadata(
+    job_metadata: Dict[str, str],
+    filter_query_names: Optional[List[str]] = None,
+) -> Tuple[List[AsyncResult], List[str]]:
     """
     Create AsyncResult objects from job metadata, filtering out cached jobs.
 
@@ -55,7 +59,7 @@ def create_async_results_from_metadata(job_metadata, filter_query_names=None):
     return jobs, query_names
 
 
-def check_all_jobs_complete(job_metadata):
+def check_all_jobs_complete(job_metadata: Dict[str, str]) -> bool:
     """
     Check if all jobs in metadata are complete (either cached or successful).
 
@@ -81,12 +85,12 @@ def check_all_jobs_complete(job_metadata):
 
 
 def wait_for_job_completion(
-    jobs,
-    query_names,
-    poll_interval=GLOBAL_QUERY_POLL_INTERVAL,
-    max_wait_time=MAX_QUERY_WAIT_TIME,
-    context="",
-):
+    jobs: List[AsyncResult],
+    query_names: List[str],
+    poll_interval: float = GLOBAL_QUERY_POLL_INTERVAL,
+    max_wait_time: int = MAX_QUERY_WAIT_TIME,
+    context: str = "",
+) -> Tuple[str, str]:
     """
     Poll jobs until they complete, fail, or timeout.
 
@@ -137,7 +141,10 @@ def wait_for_job_completion(
         time.sleep(poll_interval)
 
 
-def wait_for_all_jobs_to_finish(jobs, max_wait_time=MAX_QUERY_WAIT_TIME):
+def wait_for_all_jobs_to_finish(
+    jobs: List[AsyncResult],
+    max_wait_time: int = MAX_QUERY_WAIT_TIME,
+) -> None:
     """
     Wait for all jobs to reach terminal state (success or failure).
 
@@ -167,7 +174,7 @@ def wait_for_all_jobs_to_finish(jobs, max_wait_time=MAX_QUERY_WAIT_TIME):
         time.sleep(FAILURE_WAIT_INTERVAL)
 
 
-def forget_jobs(jobs):
+def forget_jobs(jobs: List[AsyncResult]) -> List[None]:
     """
     Forget all jobs to free up Celery backend resources.
 
