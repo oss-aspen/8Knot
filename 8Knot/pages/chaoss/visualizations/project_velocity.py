@@ -32,15 +32,17 @@ gc_project_velocity = VisualizationAIO(
         https://chaoss.community/kb/metric-project-velocity/ \n
         https://www.cncf.io/blog/2017/06/05/30-highest-velocity-open-source-projects/
     """,
-    controls=[
-        dbc.Row(
-            [
-                dbc.Label(
-                    "Issue Opened Weight:",
-                    html_for=f"issue-opened-weight-{PAGE}-{VIZ_ID}",
-                    width={"size": "auto"},
-                ),
-                dbc.Col(
+    controls = [
+    dbc.Row(
+        [
+            
+            dbc.Col(
+                [  
+                    dbc.Label(
+                        "Issue Opened Weight:",
+                        html_for=f"issue-opened-weight-{PAGE}-{VIZ_ID}",
+                        className="me-2", 
+                    ),
                     dbc.Input(
                         id=f"issue-opened-weight-{PAGE}-{VIZ_ID}",
                         type="number",
@@ -52,15 +54,19 @@ gc_project_velocity = VisualizationAIO(
                         style={"width": "80px"},
                         className="dark-input",
                     ),
-                    className="me-2",
-                    width=2,
-                ),
-                dbc.Label(
-                    "Issue Closed Weight:",
-                    html_for=f"issue-closed-weight-{PAGE}-{VIZ_ID}",
-                    width={"size": "auto"},
-                ),
-                dbc.Col(
+                ], 
+                width="auto",  
+                className="d-flex align-items-center", 
+            ),
+
+           
+            dbc.Col(
+                [
+                    dbc.Label(
+                        "Issue Closed Weight:",
+                        html_for=f"issue-closed-weight-{PAGE}-{VIZ_ID}",
+                        className="me-2",
+                    ),
                     dbc.Input(
                         id=f"issue-closed-weight-{PAGE}-{VIZ_ID}",
                         type="number",
@@ -72,20 +78,19 @@ gc_project_velocity = VisualizationAIO(
                         style={"width": "80px"},
                         className="dark-input",
                     ),
-                    className="me-2",
-                    width=2,
-                ),
-            ],
-            align="center",
-        ),
-        dbc.Row(
-            [
-                dbc.Label(
-                    "PR Open Weight:",
-                    html_for=f"pr-open-weight-{PAGE}-{VIZ_ID}",
-                    width={"size": "auto"},
-                ),
-                dbc.Col(
+                ],
+                width="auto",
+                className="d-flex align-items-center",
+            ),
+
+          
+            dbc.Col(
+                [
+                    dbc.Label(
+                        "PR Open Weight:",
+                        html_for=f"pr-open-weight-{PAGE}-{VIZ_ID}",
+                        className="me-2",
+                    ),
                     dbc.Input(
                         id=f"pr-open-weight-{PAGE}-{VIZ_ID}",
                         type="number",
@@ -97,15 +102,19 @@ gc_project_velocity = VisualizationAIO(
                         style={"width": "80px"},
                         className="dark-input",
                     ),
-                    className="me-2",
-                    width=2,
-                ),
-                dbc.Label(
-                    "PR Merged Weight:",
-                    html_for=f"pr-merged-weight-{PAGE}-{VIZ_ID}",
-                    width={"size": "auto"},
-                ),
-                dbc.Col(
+                ],
+                width="auto",
+                className="d-flex align-items-center",
+            ),
+
+           
+            dbc.Col(
+                [
+                    dbc.Label(
+                        "PR Merged Weight:",
+                        html_for=f"pr-merged-weight-{PAGE}-{VIZ_ID}",
+                        className="me-2",
+                    ),
                     dbc.Input(
                         id=f"pr-merged-weight-{PAGE}-{VIZ_ID}",
                         type="number",
@@ -117,20 +126,19 @@ gc_project_velocity = VisualizationAIO(
                         style={"width": "80px"},
                         className="dark-input",
                     ),
-                    className="me-2",
-                    width=2,
-                ),
-            ],
-            align="center",
-        ),
-        dbc.Row(
-            [
-                dbc.Label(
-                    "PR Closed Weight:",
-                    html_for=f"pr-closed-weight-{PAGE}-{VIZ_ID}",
-                    width={"size": "auto"},
-                ),
-                dbc.Col(
+                ],
+                width="auto",
+                className="d-flex align-items-center",
+            ),
+
+           
+            dbc.Col(
+                [
+                    dbc.Label(
+                        "PR Closed Weight:",
+                        html_for=f"pr-closed-weight-{PAGE}-{VIZ_ID}",
+                        className="me-2",
+                    ),
                     dbc.Input(
                         id=f"pr-closed-weight-{PAGE}-{VIZ_ID}",
                         type="number",
@@ -142,15 +150,19 @@ gc_project_velocity = VisualizationAIO(
                         style={"width": "80px"},
                         className="dark-input",
                     ),
-                    className="me-2",
-                    width=2,
-                ),
-                dbc.Label(
-                    "Y-axis:",
-                    html_for=f"graph-view-{PAGE}-{VIZ_ID}",
-                    width={"size": "auto"},
-                ),
-                dbc.Col(
+                ],
+                width="auto",
+                className="d-flex align-items-center",
+            ),
+
+           
+            dbc.Col(
+                [
+                    dbc.Label(
+                        "Y-axis:",
+                        html_for=f"graph-view-{PAGE}-{VIZ_ID}",
+                        className="me-2",
+                    ),
                     dbc.RadioItems(
                         id=f"graph-view-{PAGE}-{VIZ_ID}",
                         options=[
@@ -161,27 +173,28 @@ gc_project_velocity = VisualizationAIO(
                         inline=True,
                         className="custom-radio-buttons",
                     ),
-                    className="me-2",
+                ],
+                width="auto",
+                className="d-flex align-items-center",
+            ),
+
+          
+            dbc.Col(
+                dcc.DatePickerRange(
+                    id=f"date-picker-range-{PAGE}-{VIZ_ID}",
+                    min_date_allowed=dt.date(2005, 1, 1),
+                    max_date_allowed=dt.date.today(),
+                    initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                    clearable=True,
+                    className="dark-date-picker",
                 ),
-            ],
-            align="center",
-        ),
-        dbc.Row(
-            [
-                dbc.Col(
-                    dcc.DatePickerRange(
-                        id=f"date-picker-range-{PAGE}-{VIZ_ID}",
-                        min_date_allowed=dt.date(2005, 1, 1),
-                        max_date_allowed=dt.date.today(),
-                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
-                        clearable=True,
-                        className="dark-date-picker",
-                    ),
-                    width=7,
-                ),
-            ],
-        ),
-    ],
+                width="auto",
+            ),
+        ],
+        align="center",
+        className="g-3", 
+    )
+],
     class_name="dark-card",
     id="project-velocity",
 )
