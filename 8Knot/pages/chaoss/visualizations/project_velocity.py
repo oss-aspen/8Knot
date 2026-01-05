@@ -41,7 +41,7 @@ gc_project_velocity = VisualizationAIO(
                     dbc.Label(
                         "Issue Opened Weight:",
                         html_for=f"issue-opened-weight-{PAGE}-{VIZ_ID}",
-                        className="me-2", 
+                        className="me-4", 
                     ),
                     dbc.Input(
                         id=f"issue-opened-weight-{PAGE}-{VIZ_ID}",
@@ -56,7 +56,7 @@ gc_project_velocity = VisualizationAIO(
                     ),
                 ], 
                 width="auto",  
-                className="d-flex align-items-center", 
+                className="d-flex align-items-baseline me-5", 
             ),
 
            
@@ -65,7 +65,7 @@ gc_project_velocity = VisualizationAIO(
                     dbc.Label(
                         "Issue Closed Weight:",
                         html_for=f"issue-closed-weight-{PAGE}-{VIZ_ID}",
-                        className="me-2",
+                        className="me-4",
                     ),
                     dbc.Input(
                         id=f"issue-closed-weight-{PAGE}-{VIZ_ID}",
@@ -80,7 +80,7 @@ gc_project_velocity = VisualizationAIO(
                     ),
                 ],
                 width="auto",
-                className="d-flex align-items-center",
+                className="d-flex align-items-baseline me-5",
             ),
 
           
@@ -89,7 +89,7 @@ gc_project_velocity = VisualizationAIO(
                     dbc.Label(
                         "PR Open Weight:",
                         html_for=f"pr-open-weight-{PAGE}-{VIZ_ID}",
-                        className="me-2",
+                        className="me-4",
                     ),
                     dbc.Input(
                         id=f"pr-open-weight-{PAGE}-{VIZ_ID}",
@@ -104,7 +104,7 @@ gc_project_velocity = VisualizationAIO(
                     ),
                 ],
                 width="auto",
-                className="d-flex align-items-center",
+                className="d-flex align-items-baseline me-5",
             ),
 
            
@@ -113,7 +113,7 @@ gc_project_velocity = VisualizationAIO(
                     dbc.Label(
                         "PR Merged Weight:",
                         html_for=f"pr-merged-weight-{PAGE}-{VIZ_ID}",
-                        className="me-2",
+                        className="me-4",
                     ),
                     dbc.Input(
                         id=f"pr-merged-weight-{PAGE}-{VIZ_ID}",
@@ -128,7 +128,7 @@ gc_project_velocity = VisualizationAIO(
                     ),
                 ],
                 width="auto",
-                className="d-flex align-items-center",
+                className="d-flex align-items-baseline me-5",
             ),
 
            
@@ -137,7 +137,7 @@ gc_project_velocity = VisualizationAIO(
                     dbc.Label(
                         "PR Closed Weight:",
                         html_for=f"pr-closed-weight-{PAGE}-{VIZ_ID}",
-                        className="me-2",
+                        className="me-4",
                     ),
                     dbc.Input(
                         id=f"pr-closed-weight-{PAGE}-{VIZ_ID}",
@@ -152,7 +152,7 @@ gc_project_velocity = VisualizationAIO(
                     ),
                 ],
                 width="auto",
-                className="d-flex align-items-center",
+                className="d-flex align-items-baseline me-5",
             ),
 
            
@@ -161,7 +161,7 @@ gc_project_velocity = VisualizationAIO(
                     dbc.Label(
                         "Y-axis:",
                         html_for=f"graph-view-{PAGE}-{VIZ_ID}",
-                        className="me-2",
+                        className="me-4",
                     ),
                     dbc.RadioItems(
                         id=f"graph-view-{PAGE}-{VIZ_ID}",
@@ -175,7 +175,7 @@ gc_project_velocity = VisualizationAIO(
                     ),
                 ],
                 width="auto",
-                className="d-flex align-items-center",
+                className="d-flex align-items-baseline me-5",
             ),
 
           
