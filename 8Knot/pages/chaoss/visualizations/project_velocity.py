@@ -192,7 +192,8 @@ gc_project_velocity = VisualizationAIO(
             ),
         ],
         align="center",
-        className="g-3", 
+        className="g-3",
+        style={"marginTop": "-0.5rem"}
     )
 ],
     class_name="dark-card",
