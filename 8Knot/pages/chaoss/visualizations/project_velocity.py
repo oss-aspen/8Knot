@@ -33,16 +33,11 @@ gc_project_velocity = VisualizationAIO(
         https://www.cncf.io/blog/2017/06/05/30-highest-velocity-open-source-projects/
     """,
     controls = [
-    dbc.Row(
+    html.Div(
         [
-            
-            dbc.Col(
-                [  
-                    dbc.Label(
-                        "Issue Opened Weight:",
-                        html_for=f"issue-opened-weight-{PAGE}-{VIZ_ID}",
-                        className="me-4", 
-                    ),
+            dbc.Label(
+                [
+                    "Issue Opened Weight:",
                     dbc.Input(
                         id=f"issue-opened-weight-{PAGE}-{VIZ_ID}",
                         type="number",
@@ -52,21 +47,14 @@ gc_project_velocity = VisualizationAIO(
                         value=0.3,
                         size="sm",
                         style={"width": "80px"},
-                        className="dark-input",
+                        className="dark-input ms-4",                          
                     ),
-                ], 
-                width="auto",  
-                className="d-flex align-items-baseline me-5", 
-            ),
-
-           
-            dbc.Col(
+                ],
+                    className="d-flex align-items-baseline me-5 mb-3",
+                ),
+            dbc.Label(
                 [
-                    dbc.Label(
-                        "Issue Closed Weight:",
-                        html_for=f"issue-closed-weight-{PAGE}-{VIZ_ID}",
-                        className="me-4",
-                    ),
+                    "Issue Closed Weight:",
                     dbc.Input(
                         id=f"issue-closed-weight-{PAGE}-{VIZ_ID}",
                         type="number",
@@ -76,21 +64,14 @@ gc_project_velocity = VisualizationAIO(
                         value=0.4,
                         size="sm",
                         style={"width": "80px"},
-                        className="dark-input",
+                        className="dark-input ms-4",
                     ),
                 ],
-                width="auto",
-                className="d-flex align-items-baseline me-5",
-            ),
-
-          
-            dbc.Col(
+                    className="d-flex align-items-baseline me-5 mb-3",
+                ),
+            dbc.Label(
                 [
-                    dbc.Label(
-                        "PR Open Weight:",
-                        html_for=f"pr-open-weight-{PAGE}-{VIZ_ID}",
-                        className="me-4",
-                    ),
+                    "PR Open Weight:",
                     dbc.Input(
                         id=f"pr-open-weight-{PAGE}-{VIZ_ID}",
                         type="number",
@@ -100,21 +81,14 @@ gc_project_velocity = VisualizationAIO(
                         value=0.5,
                         size="sm",
                         style={"width": "80px"},
-                        className="dark-input",
+                        className="dark-input ms-4",
                     ),
                 ],
-                width="auto",
-                className="d-flex align-items-baseline me-5",
-            ),
-
-           
-            dbc.Col(
+                    className="d-flex align-items-baseline me-5 mb-3",
+                ),
+            dbc.Label(
                 [
-                    dbc.Label(
-                        "PR Merged Weight:",
-                        html_for=f"pr-merged-weight-{PAGE}-{VIZ_ID}",
-                        className="me-4",
-                    ),
+                    "PR Merged Weight:",
                     dbc.Input(
                         id=f"pr-merged-weight-{PAGE}-{VIZ_ID}",
                         type="number",
@@ -124,21 +98,14 @@ gc_project_velocity = VisualizationAIO(
                         value=0.7,
                         size="sm",
                         style={"width": "80px"},
-                        className="dark-input",
+                        className="dark-input ms-4",
                     ),
                 ],
-                width="auto",
-                className="d-flex align-items-baseline me-5",
-            ),
-
-           
-            dbc.Col(
+                    className="d-flex align-items-baseline me-5 mb-3",
+                ),
+            dbc.Label(
                 [
-                    dbc.Label(
-                        "PR Closed Weight:",
-                        html_for=f"pr-closed-weight-{PAGE}-{VIZ_ID}",
-                        className="me-4",
-                    ),
+                    "PR Closed Weight:",
                     dbc.Input(
                         id=f"pr-closed-weight-{PAGE}-{VIZ_ID}",
                         type="number",
@@ -148,21 +115,14 @@ gc_project_velocity = VisualizationAIO(
                         value=0.2,
                         size="sm",
                         style={"width": "80px"},
-                        className="dark-input",
+                        className="dark-input ms-4",
                     ),
                 ],
-                width="auto",
-                className="d-flex align-items-baseline me-5",
-            ),
-
-           
-            dbc.Col(
+                    className="d-flex align-items-baseline me-5 mb-3",
+                ),
+            dbc.Label(
                 [
-                    dbc.Label(
-                        "Y-axis:",
-                        html_for=f"graph-view-{PAGE}-{VIZ_ID}",
-                        className="me-4",
-                    ),
+                    "Y-axis:",
                     dbc.RadioItems(
                         id=f"graph-view-{PAGE}-{VIZ_ID}",
                         options=[
@@ -171,29 +131,21 @@ gc_project_velocity = VisualizationAIO(
                         ],
                         value=False,
                         inline=True,
-                        className="custom-radio-buttons",
+                        className="custom-radio-buttons ms-4",
                     ),
                 ],
-                width="auto",
-                className="d-flex align-items-baseline me-5",
-            ),
-
-          
-            dbc.Col(
-                dcc.DatePickerRange(
-                    id=f"date-picker-range-{PAGE}-{VIZ_ID}",
-                    min_date_allowed=dt.date(2005, 1, 1),
-                    max_date_allowed=dt.date.today(),
-                    initial_visible_month=dt.date(dt.date.today().year, 1, 1),
-                    clearable=True,
-                    className="dark-date-picker",
+                    className="d-flex align-items-baseline me-5 mb-3",
                 ),
-                width="auto",
+            dcc.DatePickerRange(
+                id=f"date-picker-range-{PAGE}-{VIZ_ID}",
+                min_date_allowed=dt.date(2005, 1, 1),
+                max_date_allowed=dt.date.today(),
+                initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                clearable=True,
+                className="dark-date-picker mb-3",
             ),
         ],
-        align="center",
-        className="g-3",
-        style={"marginTop": "-0.5rem"}
+        className="d-flex flex-wrap align-items-center",
     )
 ],
     class_name="dark-card",
