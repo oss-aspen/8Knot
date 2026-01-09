@@ -32,122 +32,123 @@ gc_project_velocity = VisualizationAIO(
         https://chaoss.community/kb/metric-project-velocity/ \n
         https://www.cncf.io/blog/2017/06/05/30-highest-velocity-open-source-projects/
     """,
-    controls = [
-    html.Div(
-        [
-            dbc.Label(
-                [
-                    "Issue Opened Weight:",
-                    dbc.Input(
-                        id=f"issue-opened-weight-{PAGE}-{VIZ_ID}",
-                        type="number",
-                        min=0,
-                        max=1,
-                        step=0.1,
-                        value=0.3,
-                        size="sm",
-                        style={"width": "80px"},
-                        className="dark-input ms-4",                          
-                    ),
-                ],
+    controls=[
+        html.Div(
+            [
+                dbc.Label(
+                    [
+                        "Issue Opened Weight:",
+                        dbc.Input(
+                            id=f"issue-opened-weight-{PAGE}-{VIZ_ID}",
+                            type="number",
+                            min=0,
+                            max=1,
+                            step=0.1,
+                            value=0.3,
+                            size="sm",
+                            style={"width": "80px"},
+                            className="dark-input ms-4",
+                        ),
+                    ],
                     className="d-flex align-items-baseline me-5 mb-3",
                 ),
-            dbc.Label(
-                [
-                    "Issue Closed Weight:",
-                    dbc.Input(
-                        id=f"issue-closed-weight-{PAGE}-{VIZ_ID}",
-                        type="number",
-                        min=0,
-                        max=1,
-                        step=0.1,
-                        value=0.4,
-                        size="sm",
-                        style={"width": "80px"},
-                        className="dark-input ms-4",
-                    ),
-                ],
+                dbc.Label(
+                    [
+                        "Issue Closed Weight:",
+                        dbc.Input(
+                            id=f"issue-closed-weight-{PAGE}-{VIZ_ID}",
+                            type="number",
+                            min=0,
+                            max=1,
+                            step=0.1,
+                            value=0.4,
+                            size="sm",
+                            style={"width": "80px"},
+                            className="dark-input ms-4",
+                        ),
+                    ],
                     className="d-flex align-items-baseline me-5 mb-3",
                 ),
-            dbc.Label(
-                [
-                    "PR Open Weight:",
-                    dbc.Input(
-                        id=f"pr-open-weight-{PAGE}-{VIZ_ID}",
-                        type="number",
-                        min=0,
-                        max=1,
-                        step=0.1,
-                        value=0.5,
-                        size="sm",
-                        style={"width": "80px"},
-                        className="dark-input ms-4",
-                    ),
-                ],
+                dbc.Label(
+                    [
+                        "PR Open Weight:",
+                        dbc.Input(
+                            id=f"pr-open-weight-{PAGE}-{VIZ_ID}",
+                            type="number",
+                            min=0,
+                            max=1,
+                            step=0.1,
+                            value=0.5,
+                            size="sm",
+                            style={"width": "80px"},
+                            className="dark-input ms-4",
+                        ),
+                    ],
                     className="d-flex align-items-baseline me-5 mb-3",
                 ),
-            dbc.Label(
-                [
-                    "PR Merged Weight:",
-                    dbc.Input(
-                        id=f"pr-merged-weight-{PAGE}-{VIZ_ID}",
-                        type="number",
-                        min=0,
-                        max=1,
-                        step=0.1,
-                        value=0.7,
-                        size="sm",
-                        style={"width": "80px"},
-                        className="dark-input ms-4",
-                    ),
-                ],
+                dbc.Label(
+                    [
+                        "PR Merged Weight:",
+                        dbc.Input(
+                            id=f"pr-merged-weight-{PAGE}-{VIZ_ID}",
+                            type="number",
+                            min=0,
+                            max=1,
+                            step=0.1,
+                            value=0.7,
+                            size="sm",
+                            style={"width": "80px"},
+                            className="dark-input ms-4",
+                        ),
+                    ],
                     className="d-flex align-items-baseline me-5 mb-3",
                 ),
-            dbc.Label(
-                [
-                    "PR Closed Weight:",
-                    dbc.Input(
-                        id=f"pr-closed-weight-{PAGE}-{VIZ_ID}",
-                        type="number",
-                        min=0,
-                        max=1,
-                        step=0.1,
-                        value=0.2,
-                        size="sm",
-                        style={"width": "80px"},
-                        className="dark-input ms-4",
-                    ),
-                ],
+                dbc.Label(
+                    [
+                        "PR Closed Weight:",
+                        dbc.Input(
+                            id=f"pr-closed-weight-{PAGE}-{VIZ_ID}",
+                            type="number",
+                            min=0,
+                            max=1,
+                            step=0.1,
+                            value=0.2,
+                            size="sm",
+                            style={"width": "80px"},
+                            className="dark-input ms-4",
+                        ),
+                    ],
                     className="d-flex align-items-baseline me-5 mb-3",
                 ),
-            dbc.Label(
-                [
-                    "Y-axis:",
-                    dbc.RadioItems(
-                        id=f"graph-view-{PAGE}-{VIZ_ID}",
-                        options=[
-                            {"label": "Non-log", "value": False},
-                            {"label": "Log", "value": True},
-                        ],
-                        value=False,
-                        inline=True,
-                        className="custom-radio-buttons ms-4",
-                    ),
-                ],
+                dbc.Label(
+                    [
+                        "Y-axis:",
+                        dbc.RadioItems(
+                            id=f"graph-view-{PAGE}-{VIZ_ID}",
+                            options=[
+                                {"label": "Non-log", "value": False},
+                                {"label": "Log", "value": True},
+                            ],
+                            value=False,
+                            inline=True,
+                            className="custom-radio-buttons ms-4",
+                        ),
+                    ],
                     className="d-flex align-items-baseline me-5 mb-3",
                 ),
-            dcc.DatePickerRange(
-                id=f"date-picker-range-{PAGE}-{VIZ_ID}",
-                min_date_allowed=dt.date(2005, 1, 1),
-                max_date_allowed=dt.date.today(),
-                initial_visible_month=dt.date(dt.date.today().year, 1, 1),
-                clearable=True,
-                className="dark-date-picker mb-3",
-            ),
-        ],
-        className="d-flex flex-wrap align-items-center",
-    )
-],
+                dcc.DatePickerRange(
+                    id=f"date-picker-range-{PAGE}-{VIZ_ID}",
+                    min_date_allowed=dt.date(2005, 1, 1),
+                    max_date_allowed=dt.date.today(),
+                    initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                    clearable=True,
+                    className="dark-date-picker mb-3",
+                ),
+            ],
+            className="d-flex flex-wrap align-items-center",
+            style={"gap": "1rem"},
+        )
+    ],
     class_name="dark-card",
     id="project-velocity",
 )
