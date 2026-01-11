@@ -1,0 +1,18 @@
+# Set default behavior to automatically normalize line endings
+* text=auto
+
+# Python files should always use LF line endings
+*.py text eol=lf
+
+# Other text files in this repository
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sql text eol=lf
+*.css text eol=lf
+*.sh text eol=lf
+
+# Configuration files
+*.conf text eol=lf
+Dockerfile text eol=lf
+*.Dockerfile text eol=lf
