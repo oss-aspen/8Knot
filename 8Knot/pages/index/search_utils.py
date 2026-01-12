@@ -59,7 +59,9 @@ def search_short_query(query: str, options: List[Dict[str, Any]]) -> List[Dict[s
     return starts_with_matches[:max_starts_with] + contains_matches[:max_contains]
 
 
-def search_with_fuzzy_matching(query: str, options: List[Dict[str, Any]], threshold: float) -> List[Dict[str, Any]]:
+def search_with_fuzzy_matching(
+    query: str, options: List[Dict[str, Any]], threshold: float, limit: Optional[int] = None
+) -> List[Dict[str, Any]]:
     """
     Perform fuzzy search using the rapidfuzz library for longer queries.
     Enhanced to prioritize exact substring matches.
@@ -68,6 +70,7 @@ def search_with_fuzzy_matching(query: str, options: List[Dict[str, Any]], thresh
         query: Search query string
         options: List of dictionaries with 'label' and 'value' keys
         threshold: Minimum similarity score to include in results (0-1)
+        limit: Maximum number of results to return (None = all results)
 
     Returns:
         List of matching options sorted by relevance
@@ -87,19 +90,29 @@ def search_with_fuzzy_matching(query: str, options: List[Dict[str, Any]], thresh
         label_lower = opt["label"].lower()
         if query_lower in label_lower:
             exact_matches.append(opt)
+            # Early termination if we have enough exact matches and limit is set
+            if limit and len(exact_matches) >= limit:
+                return exact_matches[:limit]
 
     # Second pass: find fuzzy matches for items not already matched exactly
     exact_labels = set(opt["label"] for opt in exact_matches)
     remaining_options = [opt for opt in options if opt["label"] not in exact_labels]
 
     if remaining_options:
+        # Calculate how many fuzzy matches we need (if limit is set)
+        fuzzy_limit = None
+        if limit:
+            fuzzy_limit = max(0, limit - len(exact_matches))
+            if fuzzy_limit == 0:
+                return exact_matches  # Already have enough exact matches
+
         # Use fuzzy matching for remaining options
         matches = process.extract(
             query_lower,  # Use lowercased query
             [opt["label"] for opt in remaining_options],
             scorer=fuzz.token_sort_ratio,
             processor=str.lower,
-            limit=None,  # Remove the 100 limit to get all matches
+            limit=fuzzy_limit,  # Use calculated limit or None for comprehensive
             score_cutoff=threshold_100,
         )
 
@@ -143,7 +156,9 @@ def calculate_token_score(token: str, label: str, label_tokens: List[str]) -> fl
     return best_score
 
 
-def fuzzy_search(query: str, options: List[Dict[str, Any]], threshold: float = 0.2) -> List[Dict[str, Any]]:
+def fuzzy_search(
+    query: str, options: List[Dict[str, Any]], threshold: float = 0.2, limit: Optional[int] = None
+) -> List[Dict[str, Any]]:
     """
     Perform fuzzy search on a list of options using rapidfuzz, case-insensitive.
 
@@ -151,6 +166,7 @@ def fuzzy_search(query: str, options: List[Dict[str, Any]], threshold: float = 0
         query: Search query string
         options: List of dictionaries with 'label' and 'value' keys
         threshold: Minimum similarity score to include in results (0-1)
+        limit: Maximum number of results to return (None = all results)
 
     Returns:
         List of matching options sorted by relevance
@@ -162,7 +178,7 @@ def fuzzy_search(query: str, options: List[Dict[str, Any]], threshold: float = 0
     if len(query) <= 2:
         return search_short_query(query, options)
     else:
-        return search_with_fuzzy_matching(query, options, threshold)
+        return search_with_fuzzy_matching(query, options, threshold, limit)
 
 
 def tokenize_search(query: str) -> List[str]:  # Function breaks down a search query into smaller parts (tokens)
