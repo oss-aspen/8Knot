@@ -254,8 +254,8 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
 
         # First, the search goes through the client-side cache if available
         if cached_options:
-            cache_matches = fuzzy_search(search_query, cached_options, threshold=search_threshold)
-            logging.info(f"Cache search found {len(cache_matches)} matches (threshold={search_threshold})")
+            cache_matches = fuzzy_search(search_query, cached_options, threshold=search_threshold, limit=1000)
+            logging.info(f"Cache search found {len(cache_matches)} matches (threshold={search_threshold}, limit=1000)")
 
         # Always also search server for comprehensive results (especially for longer queries)
         if len(search_query) >= 3:
@@ -276,8 +276,10 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
                     except redis.exceptions.ConnectionError as e:
                         logging.error(f"SERVER SEARCH: Could not connect to users-cache. Error: {str(e)}")
 
-                server_matches = fuzzy_search(search_query, server_options, threshold=search_threshold)
-                logging.info(f"Server search found {len(server_matches)} matches (threshold={search_threshold})")
+                server_matches = fuzzy_search(search_query, server_options, threshold=search_threshold, limit=1000)
+                logging.info(
+                    f"Server search found {len(server_matches)} matches (threshold={search_threshold}, limit=1000)"
+                )
 
             except Exception as e:
                 logging.error(f"Server search failed: {str(e)}")
@@ -680,9 +682,10 @@ def initialize_cache(_):
                 logging.error(f"CACHE INIT: Could not connect to users-cache. Error: {str(e)}")
 
         # Get configuration from environment variables with defaults
+        # Larger cache = faster search results (browser sessionStorage handles 20,000+ items easily)
         sort_method = os.getenv("EIGHTKNOT_SEARCHBAR_OPTS_SORT", "shortest").lower()
-        max_total_results = int(os.getenv("EIGHTKNOT_SEARCHBAR_OPTS_MAX_RESULTS", "2000"))
-        max_repos = int(os.getenv("EIGHTKNOT_SEARCHBAR_OPTS_MAX_REPOS", "1500"))
+        max_total_results = int(os.getenv("EIGHTKNOT_SEARCHBAR_OPTS_MAX_RESULTS", "20000"))
+        max_repos = int(os.getenv("EIGHTKNOT_SEARCHBAR_OPTS_MAX_REPOS", "19500"))
 
         # Sort options based on configuration
         if sort_method == "shortest":
