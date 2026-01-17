@@ -1,0 +1,42 @@
+# Set default behavior to automatically normalize line endings
+* text=auto
+
+# Python files should always use LF line endings
+*.py text eol=lf
+
+# Shell scripts should always use LF line endings
+*.sh text eol=lf
+
+# Batch files should use CRLF (Windows)
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Configuration files that may be used in containers/Linux
+Dockerfile text eol=lf
+docker-compose*.yml text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+Makefile text eol=lf
+
+# Explicitly declare text files to avoid ambiguity
+*.md text
+*.txt text
+*.json text
+*.toml text
+*.cfg text
+*.ini text
+*.html text
+*.css text
+*.js text
+
+# Binary files - do not modify
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
