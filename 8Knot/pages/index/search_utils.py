@@ -607,8 +607,8 @@ def create_query_progress_indicator():
     """
     return html.Div(
         id="query-progress-container",
-        className="query-progress-container",
-        style={"display": "none"},  # Hidden by default, shown when queries are running
+        # Hidden by default via CSS class, shown when queries run (see main_layout.css)
+        className="query-progress-container query-progress-container--hidden",
         children=[
             html.Div(
                 id="query-progress-text",
@@ -620,8 +620,8 @@ def create_query_progress_indicator():
                 value=0,
                 striped=True,
                 animated=True,
+                # Height is set in main_layout.css via .query-progress-bar
                 className="query-progress-bar",
-                style={"height": "8px"},
             ),
             html.Div(
                 id="query-progress-details",

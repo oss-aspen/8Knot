@@ -52,17 +52,24 @@
     --gray-light: #787878;
     --gray-lighter: #E5E5E5;
     --border-divider: #909090;
-
     /* Component-specific colors */
     --placeholder-bg-color: #1D1D1D;
     --placeholder-text-color: #9c9c9c;
     --button-light-bg: #f8f9fa;
     --button-text-light: #fff9f9;
-
     /* MultiSelect pill colors */
     --pill-default-bg: #555555;
     --pill-default-color: #ffffff;
-
+    /* Query progress bar gradient colors */
+    --progress-info-start: #0F5880;
+    --progress-info-end: #1a7ab3;
+    --progress-success-start: #28a745;
+    --progress-success-end: #34ce57;
+    --progress-danger-start: #dc3545;
+    --progress-danger-end: #e4606d;
+    --progress-warning-start: #ffc107;
+    --progress-warning-end: #ffcd39;
+    /* Note: --baby-blue-700 (#0F5880) is used in callbacks for "Data Ready" badge */
     /* Table colors */
     --table-bg-dark: #222;
     --table-row-hover: #2e2e2e;

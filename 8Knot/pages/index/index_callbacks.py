@@ -46,6 +46,9 @@ QUERY_TIMEOUT_SECONDS = 600  # Maximum time to wait for queries (10 minutes)
 QUERY_POLL_INTERVAL_SECONDS = 2.0  # How often to check query status
 TOTAL_QUERIES = len(QUERIES)  # Total number of queries to execute
 
+# Badge color for "Data Ready" state - matches --baby-blue-700 in color.css
+DATA_READY_BADGE_COLOR = "#0F5880"
+
 # check if login has been enabled in config
 login_enabled = os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True"
 
@@ -566,18 +569,11 @@ def show_repolist_alert(n_clicks, openness, repo_ids):
     background=True,
     prevent_initial_call=True,
     running=[
-        # Show progress container while running, hide when done
+        # Show/hide progress container using CSS classes (styles defined in main_layout.css)
         (
-            Output("query-progress-container", "style"),
-            {
-                "display": "block",
-                "marginTop": "16px",
-                "padding": "12px",
-                "backgroundColor": "rgba(64, 64, 64, 0.3)",
-                "borderRadius": "8px",
-                "border": "1px solid #404040",
-            },
-            {"display": "none"},
+            Output("query-progress-container", "className"),
+            "query-progress-container query-progress-container--visible",
+            "query-progress-container query-progress-container--hidden",
         ),
         # Keep progress bar animated while running
         (Output("query-progress-bar", "animated"), True, False),
@@ -610,7 +606,7 @@ def wait_queries(job_ids, current_progress):
             "completed": 0,
             "status": "complete",
         }
-        return "Data Ready", "#0F5880", complete_progress
+        return "Data Ready", DATA_READY_BADGE_COLOR, complete_progress
 
     jobs = [AsyncResult(j_id) for j_id in job_ids]
     total_jobs = len(jobs)
@@ -664,7 +660,7 @@ def wait_queries(job_ids, current_progress):
             logging.warning([(j.name, j.status) for j in jobs])
             jobs = [j.forget() for j in jobs]
             progress_update["status"] = "complete"
-            return "Data Ready", "#0F5880", progress_update
+            return "Data Ready", DATA_READY_BADGE_COLOR, progress_update
 
         # or one of them has failed
         if num_failed > 0:
@@ -764,7 +760,7 @@ def run_queries(repos):
 
 @callback(
     [
-        Output("query-progress-container", "style", allow_duplicate=True),
+        Output("query-progress-container", "className", allow_duplicate=True),
         Output("query-progress-bar", "value", allow_duplicate=True),
         Output("query-progress-bar", "color"),
         Output("query-progress-bar", "animated", allow_duplicate=True),
@@ -791,21 +787,14 @@ def update_progress_ui(progress):
             - status: 'idle' | 'running' | 'complete' | 'error' | 'timeout'
 
     Returns:
-        tuple: (container_style, bar_value, bar_color, animated, text, details)
+        tuple: (container_class, bar_value, bar_color, animated, text, details)
     """
-    # Default hidden state
-    hidden_style = {"display": "none"}
-    visible_style = {
-        "display": "block",
-        "marginTop": "16px",
-        "padding": "12px",
-        "backgroundColor": "rgba(64, 64, 64, 0.3)",
-        "borderRadius": "8px",
-        "border": "1px solid #404040",
-    }
+    # CSS classes for visibility (styles defined in main_layout.css)
+    hidden_class = "query-progress-container query-progress-container--hidden"
+    visible_class = "query-progress-container query-progress-container--visible"
 
     if not progress:
-        return hidden_style, 0, "primary", False, "", ""
+        return hidden_class, 0, "primary", False, "", ""
 
     status = progress.get("status", "idle")
     completed = progress.get("completed", 0)
@@ -816,7 +805,7 @@ def update_progress_ui(progress):
 
     # Hide when idle
     if status == "idle":
-        return hidden_style, 0, "primary", False, "", ""
+        return hidden_class, 0, "primary", False, "", ""
 
     # Calculate progress percentage with smooth transitions
     # Give partial credit (50%) to queries that are currently running
@@ -859,7 +848,7 @@ def update_progress_ui(progress):
         else:
             details = f"{completed}/{dispatched} fetched • {running_count} running"
 
-    return visible_style, pct, bar_color, animated, text, details
+    return visible_class, pct, bar_color, animated, text, details
 
 
 # Add a cache initialization callback that runs on page load
