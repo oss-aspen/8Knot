@@ -60,7 +60,7 @@
     /* MultiSelect pill colors */
     --pill-default-bg: #555555;
     --pill-default-color: #ffffff;
-    /* Query progress bar gradient colors */
+    /* Query progress bar colors (--baby-blue-700 also used for "Data Ready" badge) */
     --progress-info-start: #0F5880;
     --progress-info-end: #1a7ab3;
     --progress-success-start: #28a745;
@@ -69,7 +69,6 @@
     --progress-danger-end: #e4606d;
     --progress-warning-start: #ffc107;
     --progress-warning-end: #ffcd39;
-    /* Note: --baby-blue-700 (#0F5880) is used in callbacks for "Data Ready" badge */
     /* Table colors */
     --table-bg-dark: #222;
     --table-row-hover: #2e2e2e;

@@ -183,9 +183,6 @@ a.sidebar-section-text {
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-
-/* Visibility states for callback control */
-
 .query-progress-container--visible {
     display: block;
 }
@@ -199,12 +196,15 @@ a.sidebar-section-text {
     transform: translateY(-8px);
 }
 
+.query-progress-container[style*="display: block"] {
+    animation: progressFadeIn 0.3s ease forwards;
+}
+
 .query-progress-text {
     font-size: 13px;
     font-weight: 500;
     color: var(--color-white);
     margin-bottom: var(--spacing-sm);
-    transition: opacity 0.3s ease;
 }
 
 .query-progress-bar {
@@ -217,11 +217,17 @@ a.sidebar-section-text {
 .query-progress-bar .progress-bar {
     transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 3px;
-    will-change: width;
+}
+
+.query-progress-details {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    margin-top: var(--spacing-xs);
+    opacity: 0.8;
 }
 
 
-/* Custom colors for progress states - !important overrides Bootstrap .bg-* defaults */
+/* Progress bar state colors - !important overrides Bootstrap .bg-* defaults */
 
 .query-progress-bar .progress-bar.bg-info {
     background: linear-gradient(90deg, var(--progress-info-start), var(--progress-info-end)) !important;
@@ -239,17 +245,6 @@ a.sidebar-section-text {
     background: linear-gradient(90deg, var(--progress-warning-start), var(--progress-warning-end)) !important;
 }
 
-.query-progress-details {
-    font-size: 11px;
-    color: var(--color-text-secondary);
-    margin-top: var(--spacing-xs);
-    opacity: 0.8;
-    transition: opacity 0.3s ease;
-}
-
-
-/* Smooth fade-in animation for progress container */
-
 @keyframes progressFadeIn {
     from {
         opacity: 0;
@@ -259,10 +254,6 @@ a.sidebar-section-text {
         opacity: 1;
         transform: translateY(0);
     }
-}
-
-.query-progress-container[style*="display: block"] {
-    animation: progressFadeIn 0.3s ease forwards;
 }
 
 
