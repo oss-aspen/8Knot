@@ -673,12 +673,18 @@ def wait_queries(job_ids, current_progress):
             # be forgotten if one fails.
 
             # tasks need to have either failed or succeeded before being forgotten.
+            cleanup_start = time.time()
             while True:
                 num_succeeded = sum(1 for j in jobs if j.successful())
                 num_failed = sum(1 for j in jobs if j.failed())
                 num_total = num_failed + num_succeeded
 
                 if num_total == total_jobs:
+                    break
+
+                # Prevent infinite wait during cleanup
+                if time.time() - cleanup_start > QUERY_TIMEOUT_SECONDS / 2:
+                    logging.warning("Cleanup timeout - forcing job forget")
                     break
 
                 time.sleep(QUERY_POLL_INTERVAL_SECONDS * 2)  # Wait longer for cleanup
