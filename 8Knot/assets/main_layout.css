@@ -167,6 +167,85 @@ a.sidebar-section-text {
 }
 
 
+/* ==== QUERY PROGRESS INDICATOR ==== */
+
+.query-progress-container {
+    margin-top: var(--spacing-md);
+    padding: 12px;
+    background-color: rgba(64, 64, 64, 0.3);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--bg-tertiary);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.query-progress-container[style*="display: none"] {
+    opacity: 0;
+    transform: translateY(-8px);
+}
+
+.query-progress-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-white);
+    margin-bottom: var(--spacing-sm);
+    transition: opacity 0.3s ease;
+}
+
+.query-progress-bar {
+    height: 6px !important;
+    border-radius: 3px;
+    background-color: var(--bg-tertiary);
+    overflow: hidden;
+}
+
+.query-progress-bar .progress-bar {
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 3px;
+    will-change: width;
+}
+
+/* Custom colors for progress states */
+.query-progress-bar .progress-bar.bg-info {
+    background: linear-gradient(90deg, #0F5880, #1a7ab3) !important;
+}
+
+.query-progress-bar .progress-bar.bg-success {
+    background: linear-gradient(90deg, #28a745, #34ce57) !important;
+}
+
+.query-progress-bar .progress-bar.bg-danger {
+    background: linear-gradient(90deg, #dc3545, #e4606d) !important;
+}
+
+.query-progress-bar .progress-bar.bg-warning {
+    background: linear-gradient(90deg, #ffc107, #ffcd39) !important;
+}
+
+.query-progress-details {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    margin-top: var(--spacing-xs);
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+/* Smooth fade-in animation for progress container */
+@keyframes progressFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.query-progress-container[style*="display: block"] {
+    animation: progressFadeIn 0.3s ease forwards;
+}
+
+
 /* Top Bar */
 
 .topbar {
