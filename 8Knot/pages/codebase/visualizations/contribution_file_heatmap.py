@@ -152,33 +152,8 @@ def toggle_popover(n, is_open):
 )
 def repo_dropdown(repo_ids):
     """Populate repository dropdown."""
-    if not repo_ids:
-        return [], None
-
-    data_array = []
-    for repo_id in repo_ids:
-        try:
-            label = augur.repo_id_to_git(repo_id)
-            data_array.append({"value": repo_id, "label": label})
-        except Exception as e:
-            logging.warning(f"Error getting repo label for {repo_id}: {e}")
-            data_array.append({"value": repo_id, "label": str(repo_id)})
-
-    # Find first repo with valid metadata (non-empty repo_name and repo_path)
-    default_repo = None
-    for repo_id in repo_ids:
-        df = hu.retrieve_cached_data(rfq.__name__, [repo_id])
-        if not df.empty:
-            repo_name = df["repo_name"].iloc[0] if "repo_name" in df.columns else None
-            repo_path = df["repo_path"].iloc[0] if "repo_path" in df.columns else None
-            if repo_name and repo_path:  # Skip empty strings and None
-                default_repo = repo_id
-                break
-
-    if default_repo is None:
-        default_repo = repo_ids[0] if repo_ids else None
-
-    return data_array, default_repo
+    logging.debug(f"{VIZ_ID} - repo_dropdown called with {len(repo_ids) if repo_ids else 0} repos")
+    return hu.build_repo_dropdown_data(repo_ids, rfq)
 
 
 @callback(
@@ -191,25 +166,28 @@ def repo_dropdown(repo_ids):
 )
 def directory_dropdown(repo_id):
     """Populate directory dropdown based on selected repository."""
+    logging.debug(f"{VIZ_ID} - Loading directories for repo_id={repo_id}")
     if repo_id is None:
-        return ["Top Level Directory"], "Top Level Directory"
+        return [hu.TOP_LEVEL_DIRECTORY], hu.TOP_LEVEL_DIRECTORY
 
     # Wait for cache with timeout
     if not hu.wait_for_cache(rfq.__name__, [repo_id]):
-        return ["Top Level Directory"], "Top Level Directory"
+        logging.error(f"{VIZ_ID} - Cache timeout for repo {repo_id}")
+        return [hu.TOP_LEVEL_DIRECTORY], hu.TOP_LEVEL_DIRECTORY
 
     # Retrieve file data
     df = hu.retrieve_cached_data(rfq.__name__, [repo_id])
 
     if df.empty:
-        logging.warning(f"{VIZ_ID} DROPDOWN - NO DATA AVAILABLE")
-        return ["Top Level Directory"], "Top Level Directory"
+        logging.info(f"{VIZ_ID} - No file data available for repo {repo_id}")
+        return [hu.TOP_LEVEL_DIRECTORY], hu.TOP_LEVEL_DIRECTORY
 
     # Prepare file dataframe and extract directories
     df = hu.prepare_file_df(df)
     directories = hu.get_directories(df)
 
-    return directories, "Top Level Directory"
+    logging.debug(f"{VIZ_ID} - Found {len(directories)} directories")
+    return directories, hu.TOP_LEVEL_DIRECTORY
 
 
 @callback(
@@ -224,17 +202,16 @@ def directory_dropdown(repo_id):
 def contribution_file_heatmap_graph(repo_id, directory, graph_view):
     """Generate the contribution file heatmap."""
     start = time.perf_counter()
-    logging.warning(f"{VIZ_ID} - START")
-    logging.warning(f"{VIZ_ID} - repo_id={repo_id}, directory={directory}")
+    logging.info(f"{VIZ_ID} - Generating heatmap for repo {repo_id}, directory '{directory}', view '{graph_view}'")
 
     if repo_id is None or directory is None:
-        logging.warning(f"{VIZ_ID} - EARLY RETURN: repo_id is None or directory is None")
+        logging.debug(f"{VIZ_ID} - Missing required parameters")
         return nodata_graph
 
     # Wait for all required caches
-    for query_func in [rfq, prfq, prq]:
+    for query_func, query_name in [(rfq, "repo_files"), (prfq, "pr_files"), (prq, "prs")]:
         if not hu.wait_for_cache(query_func.__name__, [repo_id]):
-            logging.warning(f"{VIZ_ID} - CACHE TIMEOUT for {query_func.__name__}")
+            logging.error(f"{VIZ_ID} - Cache timeout for {query_name}")
             return nodata_graph
 
     # Retrieve data
@@ -244,7 +221,7 @@ def contribution_file_heatmap_graph(repo_id, directory, graph_view):
 
     # Validate data
     if df_file.empty or df_file_pr.empty or df_pr.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
+        logging.info(f"{VIZ_ID} - No data available for repo {repo_id}")
         return nodata_graph
 
     # Process data
@@ -257,7 +234,7 @@ def contribution_file_heatmap_graph(repo_id, directory, graph_view):
     color_label = "PRs Opened" if graph_view == "created" else "PRs Merged"
     fig = hu.create_heatmap_figure(df, color_label=color_label)
 
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start:.2f}s")
+    logging.info(f"{VIZ_ID} - Heatmap generated in {time.perf_counter() - start:.2f}s")
     return fig
 
 
@@ -270,6 +247,8 @@ def process_data(
 ) -> pd.DataFrame:
     """
     Process data for contribution file heatmap.
+
+    Refactored to use shared utilities for DRY compliance.
 
     Steps:
     1. Clean file data and join with PR files
@@ -308,142 +287,33 @@ def process_data(
         if df_file.empty:
             return pd.DataFrame()
 
-        # Step 2: Aggregate by directory
-        df_dir = aggregate_prs_by_directory(df_file, directory)
-
-        if df_dir.empty:
-            return pd.DataFrame()
-
-        # Step 3: Map PRs to dates
-        df_dir = map_prs_to_dates(df_dir, df_pr, graph_view)
-
-        if df_dir.empty:
-            return pd.DataFrame()
-
-        # Step 4: Create time matrix
-        result = create_time_matrix(df_dir, df_pr, graph_view)
-
-        return result
-
-    except Exception as e:
-        logging.error(f"Error processing data: {e}")
-        return pd.DataFrame()
-
-
-def aggregate_prs_by_directory(df_file: pd.DataFrame, directory: str) -> pd.DataFrame:
-    """Aggregate PRs by directory level."""
-    try:
-        # Determine directory level
-        level = directory.count("/")
-        if directory == "Top Level Directory":
-            level = -1
-            directory = ""
-
-        # Filter to files in selected directory
-        df_filtered = df_file[df_file["file_path"].str.startswith(directory, na=False)]
-
-        if df_filtered.empty:
-            return pd.DataFrame()
-
-        # Check if any PRs exist
-        if "pull_request_id" not in df_filtered.columns or df_filtered["pull_request_id"].isna().all():
-            return pd.DataFrame()
-
-        # Get group column
-        group_column = level + 1
-
-        if group_column not in df_filtered.columns:
-            return pd.DataFrame()
-
         # Fill NaN with empty lists
-        df_filtered = df_filtered.copy()
-        df_filtered["pull_request_id"] = df_filtered["pull_request_id"].apply(
-            lambda x: x if isinstance(x, list) else []
-        )
+        df_file = df_file.copy()
+        df_file["pull_request_id"] = df_file["pull_request_id"].apply(lambda x: x if isinstance(x, list) else [])
 
-        # Group and aggregate
-        result = (
-            df_filtered.groupby(group_column)["pull_request_id"]
-            .sum()
-            .reset_index()
-            .rename(columns={group_column: "directory_value"})
-        )
+        # Step 2: Aggregate by directory using new utility
+        df_dir = hu.aggregate_ids_by_directory(df_file, directory, "pull_request_id")
 
-        # Convert to sets to remove duplicates
-        result["pull_request_id"] = result["pull_request_id"].apply(lambda x: set(x) if isinstance(x, list) else set())
+        if df_dir.empty:
+            return pd.DataFrame()
 
-        # Filter out empty sets
-        result = result[result["pull_request_id"].apply(len) > 0]
-
-        return result
-
-    except Exception as e:
-        logging.error(f"Error aggregating PRs by directory: {e}")
-        return pd.DataFrame()
-
-
-def map_prs_to_dates(df_dir: pd.DataFrame, df_pr: pd.DataFrame, graph_view: str) -> pd.DataFrame:
-    """Map PRs to their dates based on graph view."""
-    try:
-        # Convert dates
+        # Step 3: Map PRs to dates using new utility
         date_col = "created_at" if graph_view == "created" else "merged_at"
-
-        df_pr = df_pr.copy()
-        df_pr[date_col] = pd.to_datetime(df_pr[date_col], utc=True)
-
-        # Create PR to date mapping
-        pr_dates = df_pr.set_index("pull_request_id")[date_col].to_dict()
-
-        # Map PRs to dates
-        df_dir = df_dir.copy()
-        df_dir["dates"] = df_dir["pull_request_id"].apply(
-            lambda prs: [pr_dates.get(pr) for pr in prs if pr in pr_dates and pd.notna(pr_dates.get(pr))]
+        df_dir = hu.map_ids_to_dates(
+            df_dir, df_pr, "pull_request_id", "pull_request_id", date_col, convert_to_string=False
         )
 
-        # Explode dates
-        df_dir = df_dir.explode("dates")
-
-        # Remove rows with no dates
+        # Remove rows with no dates (for merged view, PRs might not have merge dates)
         df_dir = df_dir.dropna(subset=["dates"])
 
-        return df_dir
-
-    except Exception as e:
-        logging.error(f"Error mapping PRs to dates: {e}")
-        return pd.DataFrame()
-
-
-def create_time_matrix(df_dir: pd.DataFrame, df_pr: pd.DataFrame, graph_view: str) -> pd.DataFrame:
-    """Create time-based matrix for heatmap."""
-    try:
-        date_col = "created_at" if graph_view == "created" else "merged_at"
-
-        # Get date range
-        df_pr = df_pr.copy()
-        df_pr[date_col] = pd.to_datetime(df_pr[date_col], utc=True)
-
-        min_date = df_pr[date_col].min()
-        max_date = df_pr[date_col].max()
-
-        if pd.isna(min_date) or pd.isna(max_date):
+        if df_dir.empty:
             return pd.DataFrame()
 
-        # Create filler dates
-        df_fill = hu.create_time_range_df(min_date, max_date, "dates")
-
-        # Combine with data
-        df_combined = pd.concat([df_dir[["directory_value", "dates"]], df_fill], axis=0)
-        df_combined["directory_value"] = df_combined["directory_value"].astype(str)
-
-        # Group by month and count
-        result = df_combined.groupby(pd.Grouper(key="dates", freq="1M"))["directory_value"].value_counts().unstack(0)
-
-        # Remove "nan" row if exists
-        if "nan" in result.index:
-            result = result.drop("nan")
+        # Step 4: Create time matrix using new utility
+        result = hu.create_time_matrix(df_dir, df_pr, date_col)
 
         return result
 
     except Exception as e:
-        logging.error(f"Error creating time matrix: {e}")
+        logging.error(f"{VIZ_ID} - Error processing data: {e}")
         return pd.DataFrame()
