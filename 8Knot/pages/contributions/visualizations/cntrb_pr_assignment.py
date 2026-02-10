@@ -23,7 +23,7 @@ gc_cntrib_pr_assignment = VisualizationAIO(
     VIZ_ID,
     title="Contributor Pull Request Review Assignment",
     graph_info="""
-    Visualizes number of pull request reviews assigned to each each contributor\n
+    Visualizes number of pull request reviews assigned to each contributor\n
     in the specifed time bucket. The visualization only includes contributors\n
     that meet the user inputed the assignment criteria.
     """,
