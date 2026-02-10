@@ -23,7 +23,7 @@ gc_cntrib_issue_assignment = VisualizationAIO(
     VIZ_ID,
     title="Contributor Issue Assignment",
     graph_info="""
-    Visualizes number of issue assigned to each each contributor in the\n
+    Visualizes number of issue assigned to each contributor in the\n
     specifed time bucket. The visualization only includes contributors\n
     that meet the user inputed the assignment criteria.
     """,
