@@ -140,8 +140,10 @@ def toggle_popover(n, is_open):
 )
 def repo_dropdown(repo_ids):
     """Populate repository dropdown."""
-    logging.debug(f"{VIZ_ID} - repo_dropdown called with {len(repo_ids) if repo_ids else 0} repos")
-    return hu.build_repo_dropdown_data(repo_ids, rfq)
+    logging.warning(f"{VIZ_ID} - repo_dropdown called with repo_ids={repo_ids}")
+    result = hu.build_repo_dropdown_data(repo_ids, rfq)
+    logging.warning(f"{VIZ_ID} - repo_dropdown returning: {result}")
+    return result
 
 
 @callback(
@@ -154,8 +156,9 @@ def repo_dropdown(repo_ids):
 )
 def directory_dropdown(repo_id):
     """Populate directory dropdown based on selected repository."""
-    logging.debug(f"{VIZ_ID} - Loading directories for repo_id={repo_id}")
+    logging.warning(f"{VIZ_ID} - directory_dropdown called with repo_id={repo_id}")
     if repo_id is None:
+        logging.warning(f"{VIZ_ID} - directory_dropdown repo_id is None, returning TOP_LEVEL_DIRECTORY")
         return [hu.TOP_LEVEL_DIRECTORY], hu.TOP_LEVEL_DIRECTORY
 
     # Wait for cache with timeout
@@ -174,7 +177,9 @@ def directory_dropdown(repo_id):
     df = hu.prepare_file_df(df)
     directories = hu.get_directories(df)
 
-    logging.debug(f"{VIZ_ID} - Found {len(directories)} directories")
+    logging.warning(
+        f"{VIZ_ID} - directory_dropdown returning {len(directories)} directories, default={hu.TOP_LEVEL_DIRECTORY}"
+    )
     return directories, hu.TOP_LEVEL_DIRECTORY
 
 
