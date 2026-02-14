@@ -34,13 +34,12 @@ graph_loading = html.Div(
                 dbc.PopoverHeader("Graph Info:"),
                 dbc.PopoverBody(
                     """
-                    This visualization analyzes the activity of the reviewers to sub-sections (files or folders)
-                    of a repository. Specifically, this heatmap identifies the last time a sub-section's reviewer
-                    (those people who have reviewed at least one pull request to a sub-section) last contributed to the
-                    repository. See the definition of "contribution" on the Info page for more information. This could be
-                    interpreted as monitoring technical knowledge retention of codebase components: if a sub-section's
-                    past reviewers are no longer active in the repository, maintainership of that sub-section could
-                    be insufficient and require attention.
+                    This visualization analyzes when reviewers of each file/directory
+                    were last active in the repository. A reviewer is someone who has
+                    reviewed at least one pull request touching a file. The heatmap shows
+                    the count of reviewers whose last activity falls in each month.
+                    This helps identify files where past reviewers may no longer be
+                    actively maintaining the code.
                     """
                 ),
             ],
@@ -55,7 +54,7 @@ graph_loading = html.Div(
                 dbc.Row(
                     [
                         dbc.Label(
-                            "Select Repository:",
+                            "Repository:",
                             html_for=f"repo-{PAGE}-{VIZ_ID}",
                             width="auto",
                         ),
@@ -141,33 +140,8 @@ def toggle_popover(n, is_open):
 )
 def repo_dropdown(repo_ids):
     """Populate repository dropdown."""
-    if not repo_ids:
-        return [], None
-
-    data_array = []
-    for repo_id in repo_ids:
-        try:
-            label = augur.repo_id_to_git(repo_id)
-            data_array.append({"value": repo_id, "label": label})
-        except Exception as e:
-            logging.warning(f"Error getting repo label for {repo_id}: {e}")
-            data_array.append({"value": repo_id, "label": str(repo_id)})
-
-    # Find first repo with valid metadata (non-empty repo_name and repo_path)
-    default_repo = None
-    for repo_id in repo_ids:
-        df = hu.retrieve_cached_data(rfq.__name__, [repo_id])
-        if not df.empty:
-            repo_name = df["repo_name"].iloc[0] if "repo_name" in df.columns else None
-            repo_path = df["repo_path"].iloc[0] if "repo_path" in df.columns else None
-            if repo_name and repo_path:  # Skip empty strings and None
-                default_repo = repo_id
-                break
-
-    if default_repo is None:
-        default_repo = repo_ids[0] if repo_ids else None
-
-    return data_array, default_repo
+    logging.debug(f"{VIZ_ID} - repo_dropdown called with {len(repo_ids) if repo_ids else 0} repos")
+    return hu.build_repo_dropdown_data(repo_ids, rfq)
 
 
 @callback(
@@ -179,29 +153,28 @@ def repo_dropdown(repo_ids):
 )
 def directory_dropdown(repo_id):
     """Populate directory dropdown based on selected repository."""
-    logging.warning(f"{VIZ_ID} - directory_dropdown called with repo_id={repo_id}")
+    logging.debug(f"{VIZ_ID} - Loading directories for repo_id={repo_id}")
     if repo_id is None:
-        logging.warning(f"{VIZ_ID} - directory_dropdown returning default (repo_id is None)")
-        return ["Top Level Directory"], "Top Level Directory"
+        return [hu.TOP_LEVEL_DIRECTORY], hu.TOP_LEVEL_DIRECTORY
 
     # Wait for cache with timeout
     if not hu.wait_for_cache(rfq.__name__, [repo_id]):
-        logging.warning(f"{VIZ_ID} - directory_dropdown cache timeout")
-        return ["Top Level Directory"], "Top Level Directory"
+        logging.error(f"{VIZ_ID} - Cache timeout for repo {repo_id}")
+        return [hu.TOP_LEVEL_DIRECTORY], hu.TOP_LEVEL_DIRECTORY
 
     # Retrieve file data
     df = hu.retrieve_cached_data(rfq.__name__, [repo_id])
 
     if df.empty:
-        logging.warning(f"{VIZ_ID} DROPDOWN - NO DATA AVAILABLE")
-        return ["Top Level Directory"], "Top Level Directory"
+        logging.info(f"{VIZ_ID} - No file data available for repo {repo_id}")
+        return [hu.TOP_LEVEL_DIRECTORY], hu.TOP_LEVEL_DIRECTORY
 
     # Prepare file dataframe and extract directories
     df = hu.prepare_file_df(df)
     directories = hu.get_directories(df)
 
-    logging.warning(f"{VIZ_ID} - directory_dropdown returning {len(directories)} directories")
-    return directories, "Top Level Directory"
+    logging.debug(f"{VIZ_ID} - Found {len(directories)} directories")
+    return directories, hu.TOP_LEVEL_DIRECTORY
 
 
 @callback(
@@ -217,20 +190,21 @@ def directory_dropdown(repo_id):
 def reviewer_file_heatmap_graph(searchbar_repos, repo_id, directory, bot_switch):
     """Generate the reviewer file heatmap."""
     start = time.perf_counter()
-    logging.warning(f"{VIZ_ID} - START")
-    logging.warning(f"{VIZ_ID} - repo_id={repo_id}, directory={directory}, searchbar_repos={searchbar_repos}")
+    logging.info(f"{VIZ_ID} - Generating heatmap for repo {repo_id}, directory '{directory}'")
 
     if repo_id is None or directory is None:
-        logging.warning(f"{VIZ_ID} - EARLY RETURN: repo_id is None or directory is None")
+        logging.debug(f"{VIZ_ID} - Missing required parameters")
         return nodata_graph
 
     # Wait for all required caches
-    if not hu.wait_for_cache(rfq.__name__, [repo_id]):
-        return nodata_graph
-    if not hu.wait_for_cache(cnq.__name__, searchbar_repos):
-        return nodata_graph
-    if not hu.wait_for_cache(cpfq.__name__, [repo_id]):
-        return nodata_graph
+    for query_func, query_name, repos in [
+        (rfq, "repo_files", [repo_id]),
+        (cnq, "contributors", searchbar_repos),
+        (cpfq, "cntrb_per_file", [repo_id]),
+    ]:
+        if not hu.wait_for_cache(query_func.__name__, repos):
+            logging.error(f"{VIZ_ID} - Cache timeout for {query_name}")
+            return nodata_graph
 
     # Retrieve data
     df_file = hu.retrieve_cached_data(rfq.__name__, [repo_id])
@@ -239,7 +213,7 @@ def reviewer_file_heatmap_graph(searchbar_repos, repo_id, directory, bot_switch)
 
     # Validate data
     if df_file.empty or df_actions.empty or df_file_cntrbs.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
+        logging.info(f"{VIZ_ID} - No data available for repo {repo_id}")
         return nodata_graph
 
     # Apply preprocessing
@@ -255,7 +229,7 @@ def reviewer_file_heatmap_graph(searchbar_repos, repo_id, directory, bot_switch)
     # Create figure
     fig = hu.create_heatmap_figure(df, color_label="Reviewers")
 
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start:.2f}s")
+    logging.info(f"{VIZ_ID} - Heatmap generated in {time.perf_counter() - start:.2f}s")
     return fig
 
 
@@ -268,6 +242,8 @@ def process_data(
 ) -> pd.DataFrame:
     """
     Process data for reviewer file heatmap.
+
+    Refactored to use shared utilities for DRY compliance.
 
     Steps:
     1. Clean file data and join with reviewer data
@@ -282,7 +258,7 @@ def process_data(
         if df_file.empty:
             return pd.DataFrame()
 
-        # Clean reviewer data - keep only reviewer_ids
+        # Clean reviewer data - drop unnecessary columns
         df_file_cntrbs = df_file_cntrbs.copy()
         if "repo_id" in df_file_cntrbs.columns:
             df_file_cntrbs = df_file_cntrbs.drop(columns=["repo_id"])
@@ -295,161 +271,36 @@ def process_data(
         if df_file.empty:
             return pd.DataFrame()
 
-        # Fill NaN with empty lists and filter bots
+        # Fill NaN with empty lists and filter bots using utility
         df_file = df_file.copy()
-        df_file["reviewer_ids"] = df_file["reviewer_ids"].apply(lambda x: x if isinstance(x, list) else [])
-
-        if bot_switch:
-            bots_list = getattr(app, "bots_list", [])
-            df_file["reviewer_ids"] = df_file["reviewer_ids"].apply(lambda ids: [x for x in ids if x not in bots_list])
-
-        # Step 2: Aggregate by directory
-        df_dir = aggregate_reviewers_by_directory(df_file, directory)
-
-        if df_dir.empty:
-            return pd.DataFrame()
-
-        # Step 3: Map reviewers to last activity
-        df_dir = map_reviewers_to_last_activity(df_dir, df_actions)
-
-        if df_dir.empty:
-            return pd.DataFrame()
-
-        # Step 4: Create time matrix
-        result = create_time_matrix(df_dir, df_actions)
-
-        return result
-
-    except Exception as e:
-        logging.error(f"Error processing data: {e}")
-        return pd.DataFrame()
-
-
-def aggregate_reviewers_by_directory(df_file: pd.DataFrame, directory: str) -> pd.DataFrame:
-    """Aggregate reviewers by directory level."""
-    try:
-        # Determine directory level
-        level = directory.count("/")
-        if directory == "Top Level Directory":
-            level = -1
-            directory = ""
-
-        # Filter to files in selected directory
-        df_filtered = df_file[df_file["file_path"].str.startswith(directory, na=False)]
-
-        if df_filtered.empty:
-            return pd.DataFrame()
-
-        # Check if any reviewers exist
-        if "reviewer_ids" not in df_filtered.columns:
-            return pd.DataFrame()
-
-        # Count files with no reviewers
-        num_empty = df_filtered["reviewer_ids"].apply(len).eq(0).sum()
-        if num_empty == len(df_filtered):
-            return pd.DataFrame()
-
-        # Get group column
-        group_column = level + 1
-
-        if group_column not in df_filtered.columns:
-            return pd.DataFrame()
-
-        # Group and aggregate
-        result = (
-            df_filtered.groupby(group_column)["reviewer_ids"]
-            .sum()
-            .reset_index()
-            .rename(columns={group_column: "directory_value"})
+        df_file["reviewer_ids"] = df_file["reviewer_ids"].apply(
+            lambda x: hu.filter_bots_from_ids(x if isinstance(x, list) else [], bot_switch)
         )
 
-        # Convert to sets to remove duplicates
-        result["reviewer_ids"] = result["reviewer_ids"].apply(lambda x: set(x) if isinstance(x, list) else set())
+        # Step 2: Aggregate by directory using new utility
+        df_dir = hu.aggregate_ids_by_directory(df_file, directory, "reviewer_ids")
 
-        return result
+        if df_dir.empty:
+            return pd.DataFrame()
 
-    except Exception as e:
-        logging.error(f"Error aggregating reviewers by directory: {e}")
-        return pd.DataFrame()
-
-
-def map_reviewers_to_last_activity(df_dir: pd.DataFrame, df_actions: pd.DataFrame) -> pd.DataFrame:
-    """Map reviewers to their last activity dates."""
-    try:
-        # Prepare actions dataframe
-        df_actions = df_actions.copy()
-        df_actions["created_at"] = pd.to_datetime(df_actions["created_at"], utc=True)
-
-        # Get most recent activity per contributor
-        df_last = df_actions.sort_values(by="created_at", ascending=False).drop_duplicates(
+        # Step 3: Map reviewers to last activity using new utility
+        # First get last activity per reviewer
+        df_actions_copy = df_actions.copy()
+        df_actions_copy["created_at"] = pd.to_datetime(df_actions_copy["created_at"], utc=True)
+        df_last = df_actions_copy.sort_values(by="created_at", ascending=False).drop_duplicates(
             subset="cntrb_id", keep="first"
         )
 
-        # Create contributor to last activity mapping
-        last_activity = df_last.set_index("cntrb_id")["created_at"].to_dict()
+        df_dir = hu.map_ids_to_dates(df_dir, df_last, "reviewer_ids", "cntrb_id", "created_at")
 
-        # Map reviewers to dates
-        df_dir = df_dir.copy()
-        df_dir["dates"] = df_dir["reviewer_ids"].apply(
-            lambda ids: [last_activity.get(str(x)) for x in ids if str(x) in last_activity]
-        )
-
-        # Explode dates
-        df_dir = df_dir.explode("dates")
-
-        return df_dir
-
-    except Exception as e:
-        logging.error(f"Error mapping reviewers to last activity: {e}")
-        return pd.DataFrame()
-
-
-def create_time_matrix(df_dir: pd.DataFrame, df_actions: pd.DataFrame) -> pd.DataFrame:
-    """Create time-based matrix for heatmap."""
-    try:
-        # Separate rows with and without dates
-        no_reviewers = df_dir[df_dir["dates"].isna()]["directory_value"].tolist()
-        df_with_dates = df_dir[df_dir["dates"].notna()]
-
-        if df_with_dates.empty:
+        if df_dir.empty:
             return pd.DataFrame()
 
-        # Get date range from PR opened actions
-        df_actions = df_actions.copy()
-        df_actions["created_at"] = pd.to_datetime(df_actions["created_at"], utc=True)
-
-        pr_opened = df_actions[df_actions["Action"] == "PR Opened"]
-        if pr_opened.empty:
-            min_date = df_actions["created_at"].min()
-        else:
-            min_date = pr_opened["created_at"].min()
-
-        max_date = df_actions["created_at"].max()
-
-        if pd.isna(min_date) or pd.isna(max_date):
-            return pd.DataFrame()
-
-        # Create filler dates
-        df_fill = hu.create_time_range_df(min_date, max_date, "dates")
-
-        # Combine with data
-        df_combined = pd.concat([df_with_dates[["directory_value", "dates"]], df_fill], axis=0)
-        df_combined["directory_value"] = df_combined["directory_value"].astype(str)
-
-        # Group by month and count
-        result = df_combined.groupby(pd.Grouper(key="dates", freq="1M"))["directory_value"].value_counts().unstack(0)
-
-        # Remove "nan" row if exists
-        if "nan" in result.index:
-            result = result.drop("nan")
-
-        # Add back files with no reviewers
-        for file in no_reviewers:
-            if file not in result.index:
-                result.loc[str(file)] = None
+        # Step 4: Create time matrix using new utility
+        result = hu.create_time_matrix(df_dir, df_actions, "created_at", filter_action="PR Opened")
 
         return result
 
     except Exception as e:
-        logging.error(f"Error creating time matrix: {e}")
+        logging.error(f"{VIZ_ID} - Error processing data: {e}")
         return pd.DataFrame()
