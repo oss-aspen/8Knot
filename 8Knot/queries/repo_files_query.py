@@ -34,6 +34,12 @@ def repo_files_query(self, repos):
     if len(repos) == 0:
         return None
 
+    # NOTE: in below query, for each repo_id we're interested in,
+    # we pre-compute the most recent augur analysis date. This allows
+    # us to quickly get the names of the files in the repo that
+    # exist most-currently, dropping files that have been added and
+    # then deleted in the past.
+
     # Use pre-computed materialized view for faster performance
     query_string = """
                     SELECT

@@ -1,9 +1,3 @@
-"""
-Contribution File Heatmap Visualization
-
-Shows PR activity (opened/merged) per file/directory over time.
-"""
-
 from dash import html, dcc, callback
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
@@ -32,9 +26,8 @@ graph_loading = html.Div(
                 dbc.PopoverHeader("Graph Info:"),
                 dbc.PopoverBody(
                     """
-                    This visualization analyzes the activity of pull requests to sub-sections
-                    (files or folders) of a repository over time. The heatmap shows the number
-                    of PRs opened or merged for each file/directory by month.
+                    This visualization analyzes the activity of the open or merged pull requests to sub-sections
+                    (files or folders) of a repository.
                     """
                 ),
             ],

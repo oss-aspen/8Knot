@@ -1,9 +1,3 @@
-"""
-Reviewer File Heatmap Visualization
-
-Shows when reviewers of file PRs were last active in the repository.
-"""
-
 from dash import html, dcc, callback
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
@@ -34,12 +28,13 @@ graph_loading = html.Div(
                 dbc.PopoverHeader("Graph Info:"),
                 dbc.PopoverBody(
                     """
-                    This visualization analyzes when reviewers of each file/directory
-                    were last active in the repository. A reviewer is someone who has
-                    reviewed at least one pull request touching a file. The heatmap shows
-                    the count of reviewers whose last activity falls in each month.
-                    This helps identify files where past reviewers may no longer be
-                    actively maintaining the code.
+                    This visualization analyzes the activity of the reviewers to sub-sections (files or folders)
+                    of a repository. Specifically, this heatmap identifies the last time a sub-section's reviewer
+                    (those people who have reviewed at least one pull request to a sub-section) last contributed to the
+                    repository. See the definition of "contribution" on the Info page for more information. This could be
+                    interpreted as monitoring technical knowledge retention of codebase components: if a sub-section's
+                    past reviewers are no longer active in the repository, maintainership of that sub-section could
+                    be insufficient and require attention.
                     """
                 ),
             ],
