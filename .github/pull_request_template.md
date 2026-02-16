@@ -3,8 +3,9 @@
 
 Please select one option:
 
-- [ ] This contribution was assisted or created by Generative AI tools.
 - [ ] This contribution was NOT assisted or created by Generative AI tools.
+- [ ] This contribution was assisted or created by Generative AI tools.
+
 
 If AI tools were used, please provide details below:
     - What tools were used? <!-- gemini / chatgpt / claude .etc -->
