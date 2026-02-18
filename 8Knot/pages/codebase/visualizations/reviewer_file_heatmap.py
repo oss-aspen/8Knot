@@ -145,9 +145,9 @@ def repo_dropdown(repo_ids):
     # array to hold repo_id and git url pairing for dropdown
     data_array = []
     for repo_id in repo_ids:
-        entry = {"value": repo_id, "label": augur.repo_id_to_git(repo_id)}
+        entry = {"value": str(repo_id), "label": augur.repo_id_to_git(int(repo_id))}
         data_array.append(entry)
-    return data_array, repo_ids[0]
+    return data_array, str(repo_ids[0])
 
 
 # callback for populating directory drop down
@@ -160,15 +160,17 @@ def repo_dropdown(repo_ids):
     background=True,
 )
 def directory_dropdown(repo_id):
+    repo_id_int = int(repo_id)
+
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=[repo_id]):
+    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=[repo_id_int]):
         logging.warning(f"DIRECTORY DROPDOWN - WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 
     logging.warning(f"DIRECTORY DROPDOWN - RETRIEVING FROM CACHE")
     df = cf.retrieve_from_cache(
         tablename=rfq.__name__,
-        repolist=[repo_id],
+        repolist=[repo_id_int],
     )
 
     logging.warning(f"DIRECTORY DROPDOWN - CACHE READ")
@@ -236,8 +238,10 @@ def reviewer_file_heatmap_graph(searchbar_repos, repo_id, directory, bot_switch)
     start = time.perf_counter()
     logging.warning(f"{VIZ_ID}- START")
 
+    repo_id_int = int(repo_id)
+
     # get dataframes of data from cache
-    df_file, df_actions, df_file_cntbs = multi_query_helper(searchbar_repos, [repo_id])
+    df_file, df_actions, df_file_cntbs = multi_query_helper(searchbar_repos, [repo_id_int])
 
     # test if there is data
     if df_file.empty or df_actions.empty or df_file_cntbs.empty:
