@@ -163,7 +163,34 @@ def repo_dropdown(repo_ids):
     for repo_id in repo_ids:
         entry = {"value": repo_id, "label": augur.repo_id_to_git(repo_id)}
         data_array.append(entry)
-    return data_array, repo_ids[0]
+
+    # Find first repo with valid metadata (non-empty repo_name and repo_path)
+    default_repo = None
+    for repo_id in repo_ids:
+        try:
+            df = cf.retrieve_from_cache(tablename=rfq.__name__, repolist=[repo_id])
+            if not df.empty:
+                repo_name = df["repo_name"].iloc[0] if "repo_name" in df.columns else None
+                repo_path = df["repo_path"].iloc[0] if "repo_path" in df.columns else None
+                # Skip repos with NULL or empty metadata
+                if repo_name and repo_path and repo_name != "None" and repo_path != "None":
+                    default_repo = repo_id
+                    logging.warning(f"contribution-file-heatmap - Selected repo {repo_id} with valid metadata")
+                    break
+                else:
+                    logging.warning(
+                        f"contribution-file-heatmap - Skipping repo {repo_id} with NULL metadata: repo_name='{repo_name}', repo_path='{repo_path}'"
+                    )
+        except Exception as e:
+            logging.warning(f"contribution-file-heatmap - Error checking repo {repo_id}: {e}")
+            continue
+
+    # Fall back to first repo if none have valid metadata
+    if default_repo is None:
+        default_repo = repo_ids[0] if repo_ids else None
+        logging.warning(f"contribution-file-heatmap - No valid repos found, falling back to {default_repo}")
+
+    return data_array, default_repo
 
 
 # callback for populating directory drop down
@@ -176,6 +203,11 @@ def repo_dropdown(repo_ids):
     background=True,
 )
 def directory_dropdown(repo_id):
+    # Handle None repo_id case
+    if repo_id is None:
+        logging.warning(f"{VIZ_ID} DROPDOWN - repo_id is None")
+        return ["Top Level Directory"], "Top Level Directory"
+
     # wait for data to asynchronously download and become available.
     while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=[repo_id]):
         logging.warning(f"DIRECTORY DROPDOWN - WAITING ON DATA TO BECOME AVAILABLE")
@@ -197,7 +229,16 @@ def directory_dropdown(repo_id):
     # strings to hold the values for each column (always the same for every row of this query)
     repo_name = df["repo_name"].iloc[0]
     repo_path = df["repo_path"].iloc[0]
-    repo_id = str(df["repo_id"].iloc[0])
+    repo_id_raw = df["repo_id"].iloc[0]
+
+    # Check for None or empty string values
+    if not repo_name or not repo_path or repo_id_raw is None or repo_name == "None" or repo_path == "None":
+        logging.warning(
+            f"{VIZ_ID} DROPDOWN - Null or empty values in repo metadata: repo_name='{repo_name}', repo_path='{repo_path}', repo_id={repo_id_raw}"
+        )
+        return ["Top Level Directory"], "Top Level Directory"
+
+    repo_id = str(repo_id_raw)
 
     # pattern found in each file path, used to slice to get only the root file path
     path_slice = repo_id + "-" + repo_path + "/" + repo_name + "/"
@@ -246,6 +287,11 @@ def directory_dropdown(repo_id):
 def cntrb_file_heatmap_graph(repo_id, directory, graph_view):
     start = time.perf_counter()
     logging.warning(f"{VIZ_ID}- START")
+
+    # Handle None repo_id case
+    if repo_id is None:
+        logging.warning(f"{VIZ_ID} - repo_id is None")
+        return nodata_graph
 
     # get dataframes of data from cache
     df_file, df_file_pr, df_pr = multi_query_helper([repo_id])
@@ -325,6 +371,10 @@ def process_data(
 
     df_file = df_file_clean(df_file, df_file_pr)
 
+    # Check if df_file_clean returned early due to NULL values
+    if df_file.empty:
+        return pd.DataFrame()
+
     df_dynamic_directory = pr_per_directory_value(directory, df_file)
 
     # work around for using functions, will clean later
@@ -376,7 +426,16 @@ def df_file_clean(df_file: pd.DataFrame, df_file_pr: pd.DataFrame):
     # strings to hold the values for each column (always the same for every row of this query)
     repo_name = df_file["repo_name"].iloc[0]
     repo_path = df_file["repo_path"].iloc[0]
-    repo_id = str(df_file["repo_id"].iloc[0])
+    repo_id_raw = df_file["repo_id"].iloc[0]
+
+    # Check for None or empty string values
+    if not repo_name or not repo_path or repo_id_raw is None or repo_name == "None" or repo_path == "None":
+        logging.warning(
+            f"contribution-file-heatmap - Null or empty values in repo metadata: repo_name='{repo_name}', repo_path='{repo_path}', repo_id={repo_id_raw}"
+        )
+        return pd.DataFrame()
+
+    repo_id = str(repo_id_raw)
 
     # pattern found in each file path, used to slice to get only the root file path
     path_slice = repo_id + "-" + repo_path + "/" + repo_name + "/"
@@ -392,6 +451,10 @@ def df_file_clean(df_file: pd.DataFrame, df_file_pr: pd.DataFrame):
     # drop unnecessary columns
     df_file.drop(["repo_id"], axis=1, inplace=True)
     df_file_pr.drop(["repo_id"], axis=1, inplace=True)
+
+    # Rename pull_request column to pull_request_id for consistency
+    if "pull_request" in df_file_pr.columns:
+        df_file_pr = df_file_pr.rename(columns={"pull_request": "pull_request_id"})
 
     # create column with list of prs per file path
     df_file_pr = df_file_pr.groupby("file_path")["pull_request_id"].apply(list)
