@@ -145,7 +145,7 @@ def repo_dropdown(repo_ids):
     # array to hold repo_id and git url pairing for dropdown
     data_array = []
     for repo_id in repo_ids:
-        entry = {"value": repo_id, "label": augur.repo_id_to_git(repo_id)}
+        entry = {"value": str(repo_id), "label": augur.repo_id_to_git(int(repo_id))}
         data_array.append(entry)
 
     # Find first repo with valid metadata (non-empty repo_name and repo_path)
@@ -158,7 +158,7 @@ def repo_dropdown(repo_ids):
                 repo_path = df["repo_path"].iloc[0] if "repo_path" in df.columns else None
                 # Skip repos with NULL or empty metadata
                 if repo_name and repo_path and repo_name != "None" and repo_path != "None":
-                    default_repo = repo_id
+                    default_repo = str(repo_id)
                     logging.warning(f"reviewer-file-heatmap - Selected repo {repo_id} with valid metadata")
                     break
                 else:
@@ -171,7 +171,7 @@ def repo_dropdown(repo_ids):
 
     # Fall back to first repo if none have valid metadata
     if default_repo is None:
-        default_repo = repo_ids[0] if repo_ids else None
+        default_repo = str(repo_ids[0]) if repo_ids else None
         logging.warning(f"reviewer-file-heatmap - No valid repos found, falling back to {default_repo}")
 
     return data_array, default_repo
@@ -192,15 +192,17 @@ def directory_dropdown(repo_id):
         logging.warning(f"{VIZ_ID} DROPDOWN - repo_id is None")
         return ["Top Level Directory"], "Top Level Directory"
 
+    repo_id_int = int(repo_id)
+
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=[repo_id]):
+    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=[repo_id_int]):
         logging.warning(f"DIRECTORY DROPDOWN - WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 
     logging.warning(f"DIRECTORY DROPDOWN - RETRIEVING FROM CACHE")
     df = cf.retrieve_from_cache(
         tablename=rfq.__name__,
-        repolist=[repo_id],
+        repolist=[repo_id_int],
     )
 
     logging.warning(f"DIRECTORY DROPDOWN - CACHE READ")
@@ -282,8 +284,10 @@ def reviewer_file_heatmap_graph(searchbar_repos, repo_id, directory, bot_switch)
         logging.warning(f"{VIZ_ID} - repo_id is None")
         return nodata_graph
 
+    repo_id_int = int(repo_id)
+
     # get dataframes of data from cache
-    df_file, df_actions, df_file_cntbs = multi_query_helper(searchbar_repos, [repo_id])
+    df_file, df_actions, df_file_cntbs = multi_query_helper(searchbar_repos, [repo_id_int])
 
     # test if there is data
     if df_file.empty or df_actions.empty or df_file_cntbs.empty:
