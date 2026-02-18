@@ -204,6 +204,25 @@ def create_sidebar_navigation():
                 "CHAOSS",
                 "/chaoss",
             ),
+            DropdownNavItemAIO(
+                [
+                    NavItemAIO(
+                        "PR File Heatmap",
+                        "/codebase#contribution-file-heatmap",
+                    ),
+                    NavItemAIO(
+                        "Contributor File Heatmap",
+                        "/codebase#cntrb-file-heatmap",
+                    ),
+                    NavItemAIO(
+                        "Reviewer File Heatmap",
+                        "/codebase#reviewer-file-heatmap",
+                    ),
+                ],
+                "/assets/repo_overview.svg",
+                "Codebase",
+                "/codebase",
+            ),
         ],
         vertical=True,
     )
