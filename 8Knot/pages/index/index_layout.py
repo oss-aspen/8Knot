@@ -74,6 +74,12 @@ topbar = html.Div(
                     active="exact",
                     className="nav-link nav-link--visualization",
                 ),
+                dbc.NavLink(
+                    "Codebase",
+                    href="/codebase",
+                    active="exact",
+                    className="nav-link",
+                ),
             ],
             className="topbar-center",
         ),
