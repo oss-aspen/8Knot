@@ -219,7 +219,7 @@ def create_sidebar_navigation():
                         "/codebase#reviewer-file-heatmap",
                     ),
                 ],
-                "/assets/repo_overview.svg",
+                "/assets/codebase.svg",
                 "Codebase",
                 "/codebase",
             ),
