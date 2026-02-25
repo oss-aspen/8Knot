@@ -489,7 +489,33 @@ def multiselect_values_to_repo_ids(n_clicks, user_vals):
     all_repo_ids = list(set().union(*[repos, org_repos, group_repos]))
     logging.warning(f"SELECTED_REPOS: {all_repo_ids}")
 
-    return "", all_repo_ids
+    # Filter out repos with NULL metadata
+    valid_repo_ids = []
+    for repo_id in all_repo_ids:
+        try:
+            # Check if repo is already cached
+            if cf.get_uncached(func_name=rfq.__name__, repolist=[repo_id]):
+                # Not cached yet - include it so it gets queried
+                valid_repo_ids.append(repo_id)
+            else:
+                # Already cached - check if it has data
+                df = cf.retrieve_from_cache(tablename=rfq.__name__, repolist=[repo_id])
+                if not df.empty:
+                    repo_name = df["repo_name"].iloc[0] if "repo_name" in df.columns else None
+                    repo_path = df["repo_path"].iloc[0] if "repo_path" in df.columns else None
+                    # Only include repos with valid metadata
+                    if repo_name and repo_path and repo_name != "None" and repo_path != "None":
+                        valid_repo_ids.append(repo_id)
+                    else:
+                        logging.warning(f"FILTER: Excluding repo {repo_id} with NULL metadata")
+                else:
+                    # Cached but empty (NULL metadata repo filtered by query)
+                    logging.warning(f"FILTER: Excluding repo {repo_id} - no data (likely NULL metadata)")
+        except Exception as e:
+            logging.warning(f"FILTER: Error checking repo {repo_id}, excluding: {e}")
+
+    logging.warning(f"FILTERED_REPOS: {valid_repo_ids}")
+    return "", valid_repo_ids
 
 
 @callback(
