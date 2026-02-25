@@ -39,3 +39,24 @@ timeout_graph.update_layout(
     },
     font=dict(size=18, color="orange"),
 )
+
+
+def get_default_repo_with_data(repo_ids, cache_tablename):
+    """
+    Find the first repo that has valid cached data.
+
+    Args:
+        repo_ids: List of repo IDs to check
+        cache_tablename: Name of the cache table to query
+
+    Returns:
+        str: The first repo_id (as string) that has cached data, or repo_ids[0] as fallback
+    """
+    import cache_manager.cache_facade as cf
+
+    default = str(repo_ids[0])
+    for repo_id in repo_ids:
+        df = cf.retrieve_from_cache(tablename=cache_tablename, repolist=[repo_id])
+        if not df.empty:
+            return str(repo_id)
+    return default

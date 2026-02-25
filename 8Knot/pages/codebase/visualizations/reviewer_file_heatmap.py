@@ -13,7 +13,7 @@ from queries.contributors_query import contributors_query as cnq
 from queries.cntrb_per_file_query import cntrb_per_file_query as cpfq
 from queries.repo_files_query import repo_files_query as rfq
 from app import augur
-from pages.utils.job_utils import nodata_graph
+from pages.utils.job_utils import nodata_graph, get_default_repo_with_data
 import pages.utils.preprocessing_utils as preproc_u
 import time
 from dash.exceptions import PreventUpdate
@@ -149,12 +149,7 @@ def repo_dropdown(repo_ids):
         data_array.append(entry)
 
     # Select first repo with valid cached data as default
-    default = str(repo_ids[0])
-    for repo_id in repo_ids:
-        df = cf.retrieve_from_cache(tablename=rfq.__name__, repolist=[repo_id])
-        if not df.empty:
-            default = str(repo_id)
-            break
+    default = get_default_repo_with_data(repo_ids, rfq.__name__)
 
     return data_array, default
 
