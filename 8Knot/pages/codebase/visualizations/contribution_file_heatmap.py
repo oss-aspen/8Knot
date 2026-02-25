@@ -164,7 +164,15 @@ def repo_dropdown(repo_ids):
         entry = {"value": str(repo_id), "label": augur.repo_id_to_git(repo_id)}
         data_array.append(entry)
 
-    return data_array, str(repo_ids[0])
+    # Select first repo with valid cached data as default
+    default = str(repo_ids[0])
+    for repo_id in repo_ids:
+        df = cf.retrieve_from_cache(tablename=rfq.__name__, repolist=[repo_id])
+        if not df.empty:
+            default = str(repo_id)
+            break
+
+    return data_array, default
 
 
 # callback for populating directory drop down
