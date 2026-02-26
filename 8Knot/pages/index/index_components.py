@@ -162,33 +162,33 @@ def create_sidebar_navigation():
                 "Contributor Types",
                 "/contributors/contribution_types",
             ),
-            DropdownNavItemAIO(
-                [
-                    NavItemAIO(
-                        "Commits by Domain",
-                        "/affiliation#commits-by-domain",
-                    ),
-                    NavItemAIO(
-                        "Unique Domains",
-                        "/affiliation#unique-domains",
-                    ),
-                    NavItemAIO(
-                        "Org Activity",
-                        "/affiliation#org-activity",
-                    ),
-                    NavItemAIO(
-                        "Org Core Contributors",
-                        "/affiliation#org-core-contributors",
-                    ),
-                    NavItemAIO(
-                        "GitHub Org Affiliation",
-                        "/affiliation#gh-org-affiliation",
-                    ),
-                ],
-                "/assets/affiliation.svg",
-                "Affiliation",
-                "/affiliation",
-            ),
+            # DropdownNavItemAIO(
+            #     [
+            #         NavItemAIO(
+            #             "Commits by Domain",
+            #             "/affiliation#commits-by-domain",
+            #         ),
+            #         NavItemAIO(
+            #             "Unique Domains",
+            #             "/affiliation#unique-domains",
+            #         ),
+            #         NavItemAIO(
+            #             "Org Activity",
+            #             "/affiliation#org-activity",
+            #         ),
+            #         NavItemAIO(
+            #             "Org Core Contributors",
+            #             "/affiliation#org-core-contributors",
+            #         ),
+            #         NavItemAIO(
+            #             "GitHub Org Affiliation",
+            #             "/affiliation#gh-org-affiliation",
+            #         ),
+            #     ],
+            #     "/assets/affiliation.svg",
+            #     "Affiliation",
+            #     "/affiliation",
+            # ),
             DropdownNavItemAIO(
                 [
                     NavItemAIO(
