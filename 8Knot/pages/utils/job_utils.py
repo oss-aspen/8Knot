@@ -54,9 +54,17 @@ def get_default_repo_with_data(repo_ids, cache_tablename):
     """
     import cache_manager.cache_facade as cf
 
-    default = str(repo_ids[0])
+    df = cf.retrieve_from_cache(tablename=cache_tablename, repolist=repo_ids)
+
+    if df.empty:
+        return str(repo_ids[0])
+
+    # Get set of repo_ids that have data
+    repos_with_data = set(df["repo_id"].unique())
+
+    # Return first repo with data (preserving original order)
     for repo_id in repo_ids:
-        df = cf.retrieve_from_cache(tablename=cache_tablename, repolist=[repo_id])
-        if not df.empty:
+        if repo_id in repos_with_data:
             return str(repo_id)
-    return default
+
+    return str(repo_ids[0])
