@@ -1,4 +1,5 @@
 import plotly.graph_objects as go
+import cache_manager.cache_facade as cf
 
 columns = ["1", "2", "3"]
 
@@ -52,7 +53,6 @@ def get_default_repo_with_data(repo_ids, cache_tablename):
     Returns:
         str: The first repo_id (as string) that has cached data, or repo_ids[0] as fallback
     """
-    import cache_manager.cache_facade as cf
 
     df = cf.retrieve_from_cache(tablename=cache_tablename, repolist=repo_ids)
 
