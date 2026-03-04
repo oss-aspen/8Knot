@@ -43,7 +43,6 @@ layout = dbc.Container(
                             placeholder="Repo for info section",
                             searchable=True,
                             clearable=True,
-                            className="dark-dropdown",
                         ),
                     ],
                     width=3,
@@ -63,6 +62,7 @@ layout = dbc.Container(
     ],
     fluid=True,
 )
+
 
 # callback for populating repo drop down
 @callback(

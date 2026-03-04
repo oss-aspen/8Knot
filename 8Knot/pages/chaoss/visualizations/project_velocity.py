@@ -17,229 +17,141 @@ import numpy as np
 import app
 import pages.utils.preprocessing_utils as preproc_utils
 import cache_manager.cache_facade as cf
-
+from components.visualization import VisualizationAIO
 
 PAGE = "chaoss"
 VIZ_ID = "project-velocity"
 
-gc_project_velocity = dbc.Card(
-    [
-        dbc.CardBody(
+gc_project_velocity = VisualizationAIO(
+    PAGE,
+    VIZ_ID,
+    title="Project Velocity",
+    graph_info="""
+        This visualization gives a view into the development speed of a repository in\n
+        relation to the other selected repositories. For more context of this visualization see\n
+        https://chaoss.community/kb/metric-project-velocity/ \n
+        https://www.cncf.io/blog/2017/06/05/30-highest-velocity-open-source-projects/
+    """,
+    controls=[
+        html.Div(
             [
-                dbc.Row(
+                dbc.Label(
                     [
-                        dbc.Col(
-                            html.H3(
-                                "Project Velocity",
-                                className="card-title",
-                            ),
-                        ),
-                        dbc.Col(
-                            dbc.Button(
-                                "About Graph",
-                                id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                color="outline-secondary",
-                                size="sm",
-                                className="about-graph-button",
-                            ),
-                            width="auto",
+                        "Issue Opened Weight:",
+                        dbc.Input(
+                            id=f"issue-opened-weight-{PAGE}-{VIZ_ID}",
+                            type="number",
+                            min=0,
+                            max=1,
+                            step=0.1,
+                            value=0.3,
+                            size="sm",
+                            style={"width": "80px"},
+                            className="dark-input ms-4",
                         ),
                     ],
-                    align="center",
-                    justify="between",
-                    className="mb-3",
+                    className="d-flex align-items-baseline me-5 mb-3",
                 ),
-                dbc.Popover(
+                dbc.Label(
                     [
-                        dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody(
-                            """This visualization gives a view into the development speed of a repository in\n
-                            relation to the other selected repositories. For more context of this visualization see\n
-                            https://chaoss.community/kb/metric-project-velocity/ \n
-                            https://www.cncf.io/blog/2017/06/05/30-highest-velocity-open-source-projects/ """
+                        "Issue Closed Weight:",
+                        dbc.Input(
+                            id=f"issue-closed-weight-{PAGE}-{VIZ_ID}",
+                            type="number",
+                            min=0,
+                            max=1,
+                            step=0.1,
+                            value=0.4,
+                            size="sm",
+                            style={"width": "80px"},
+                            className="dark-input ms-4",
                         ),
                     ],
-                    id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",
-                    placement="top",
-                    is_open=False,
+                    className="d-flex align-items-baseline me-5 mb-3",
                 ),
-                dcc.Loading(
-                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-                    style={"marginBottom": "1rem"},
-                ),
-                html.Hr(className="card-split"),  # Divider between graph and controls
-                dbc.Form(
+                dbc.Label(
                     [
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Issue Opened Weight:",
-                                    html_for=f"issue-opened-weight-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id=f"issue-opened-weight-{PAGE}-{VIZ_ID}",
-                                        type="number",
-                                        min=0,
-                                        max=1,
-                                        step=0.1,
-                                        value=0.3,
-                                        size="sm",
-                                        style={"width": "80px"},
-                                        className="dark-input",
-                                    ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                                dbc.Label(
-                                    "Issue Closed Weight:",
-                                    html_for=f"issue-closed-weight-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id=f"issue-closed-weight-{PAGE}-{VIZ_ID}",
-                                        type="number",
-                                        min=0,
-                                        max=1,
-                                        step=0.1,
-                                        value=0.4,
-                                        size="sm",
-                                        style={"width": "80px"},
-                                        className="dark-input",
-                                    ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                            ],
-                            align="center",
+                        "PR Open Weight:",
+                        dbc.Input(
+                            id=f"pr-open-weight-{PAGE}-{VIZ_ID}",
+                            type="number",
+                            min=0,
+                            max=1,
+                            step=0.1,
+                            value=0.5,
+                            size="sm",
+                            style={"width": "80px"},
+                            className="dark-input ms-4",
                         ),
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "PR Open Weight:",
-                                    html_for=f"pr-open-weight-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id=f"pr-open-weight-{PAGE}-{VIZ_ID}",
-                                        type="number",
-                                        min=0,
-                                        max=1,
-                                        step=0.1,
-                                        value=0.5,
-                                        size="sm",
-                                        style={"width": "80px"},
-                                        className="dark-input",
-                                    ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                                dbc.Label(
-                                    "PR Merged Weight:",
-                                    html_for=f"pr-merged-weight-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id=f"pr-merged-weight-{PAGE}-{VIZ_ID}",
-                                        type="number",
-                                        min=0,
-                                        max=1,
-                                        step=0.1,
-                                        value=0.7,
-                                        size="sm",
-                                        style={"width": "80px"},
-                                        className="dark-input",
-                                    ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                            ],
-                            align="center",
+                    ],
+                    className="d-flex align-items-baseline me-5 mb-3",
+                ),
+                dbc.Label(
+                    [
+                        "PR Merged Weight:",
+                        dbc.Input(
+                            id=f"pr-merged-weight-{PAGE}-{VIZ_ID}",
+                            type="number",
+                            min=0,
+                            max=1,
+                            step=0.1,
+                            value=0.7,
+                            size="sm",
+                            style={"width": "80px"},
+                            className="dark-input ms-4",
                         ),
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "PR Closed Weight:",
-                                    html_for=f"pr-closed-weight-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id=f"pr-closed-weight-{PAGE}-{VIZ_ID}",
-                                        type="number",
-                                        min=0,
-                                        max=1,
-                                        step=0.1,
-                                        value=0.2,
-                                        size="sm",
-                                        style={"width": "80px"},
-                                        className="dark-input",
-                                    ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                                dbc.Label(
-                                    "Y-axis:",
-                                    html_for=f"graph-view-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.RadioItems(
-                                        id=f"graph-view-{PAGE}-{VIZ_ID}",
-                                        options=[
-                                            {"label": "Non-log", "value": False},
-                                            {"label": "Log", "value": True},
-                                        ],
-                                        value=False,
-                                        inline=True,
-                                        className="custom-radio-buttons",
-                                    ),
-                                    className="me-2",
-                                ),
-                            ],
-                            align="center",
+                    ],
+                    className="d-flex align-items-baseline me-5 mb-3",
+                ),
+                dbc.Label(
+                    [
+                        "PR Closed Weight:",
+                        dbc.Input(
+                            id=f"pr-closed-weight-{PAGE}-{VIZ_ID}",
+                            type="number",
+                            min=0,
+                            max=1,
+                            step=0.1,
+                            value=0.2,
+                            size="sm",
+                            style={"width": "80px"},
+                            className="dark-input ms-4",
                         ),
-                        dbc.Row(
-                            [
-                                dbc.Col(
-                                    dcc.DatePickerRange(
-                                        id=f"date-picker-range-{PAGE}-{VIZ_ID}",
-                                        min_date_allowed=dt.date(2005, 1, 1),
-                                        max_date_allowed=dt.date.today(),
-                                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
-                                        clearable=True,
-                                        className="dark-date-picker",
-                                    ),
-                                    width=7,
-                                ),
+                    ],
+                    className="d-flex align-items-baseline me-5 mb-3",
+                ),
+                dbc.Label(
+                    [
+                        "Y-axis:",
+                        dbc.RadioItems(
+                            id=f"graph-view-{PAGE}-{VIZ_ID}",
+                            options=[
+                                {"label": "Non-log", "value": False},
+                                {"label": "Log", "value": True},
                             ],
+                            value=False,
+                            inline=True,
+                            className="custom-radio-buttons ms-4",
                         ),
-                    ]
+                    ],
+                    className="d-flex align-items-baseline me-5 mb-3",
+                ),
+                dcc.DatePickerRange(
+                    id=f"date-picker-range-{PAGE}-{VIZ_ID}",
+                    min_date_allowed=dt.date(2005, 1, 1),
+                    max_date_allowed=dt.date.today(),
+                    initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                    clearable=True,
+                    className="dark-date-picker mb-3",
                 ),
             ],
-            style={"padding": "1.5rem"},
+            className="d-flex flex-wrap align-items-center",
+            style={"gap": "1rem"},
         )
     ],
-    className="dark-card",
+    class_name="dark-card",
     id="project-velocity",
 )
-
-
-# callback for graph info popover
-@callback(
-    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
-    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
-    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
-)
-def toggle_popover(n, is_open):
-    if n:
-        return not is_open
-    return is_open
 
 
 # callback for Project Velocity graph

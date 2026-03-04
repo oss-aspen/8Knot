@@ -1,8 +1,6 @@
-from dash import html, dcc
-import dash
 import dash_bootstrap_components as dbc
 from dash import callback
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output
 import pandas as pd
 import logging
 import plotly.express as px
@@ -11,113 +9,51 @@ from queries.commits_query import commits_query as cmq
 from pages.utils.job_utils import nodata_graph
 import time
 import cache_manager.cache_facade as cf
+from components.visualization import VisualizationAIO
 
 PAGE = "contributions"
 VIZ_ID = "commits-over-time"
 
-gc_commits_over_time = dbc.Card(
-    [
-        dbc.CardBody(
-            [
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            html.H3(
-                                "Commits Over Time",
-                                className="card-title",
-                            ),
-                        ),
-                        dbc.Col(
-                            dbc.Button(
-                                "About Graph",
-                                id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                color="outline-secondary",
-                                size="sm",
-                                className="about-graph-button",
-                            ),
-                            width="auto",
-                        ),
-                    ],
-                    align="center",
-                    justify="between",
-                    className="mb-3",
-                ),
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody(
-                            """
-                            Visualizes the number of commits added to the project.\n
-                            Commits are counted relative to a user-selected time window.
-                            """
-                        ),
-                    ],
-                    id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",  # needs to be the same as dbc.Button id
-                    placement="top",
-                    is_open=False,
-                ),
-                dcc.Loading(
-                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-                    style={"marginBottom": "1rem"},
-                ),
-                html.Hr(className="card-split"),  # Divider between graph and controls
-                dbc.Form(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Date Interval:",
-                                    html_for=f"date-interval-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.RadioItems(
-                                        id=f"date-interval-{PAGE}-{VIZ_ID}",
-                                        options=[
-                                            {
-                                                "label": "Day",
-                                                "value": "D",
-                                            },
-                                            {
-                                                "label": "Week",
-                                                "value": "W",
-                                            },
-                                            {"label": "Month", "value": "M"},
-                                            {"label": "Year", "value": "Y"},
-                                        ],
-                                        value="M",
-                                        inline=True,
-                                        className="custom-radio-buttons",
-                                    ),
-                                    className="me-2",
-                                    width=4,
-                                ),
-                            ],
-                            align="center",
-                            justify="start",
-                        ),
-                    ]
-                ),
-            ],
-            style={"padding": "1.5rem"},
-        )
+gc_commits_over_time = VisualizationAIO(
+    PAGE,
+    VIZ_ID,
+    title="Commits Over Time",
+    graph_info="""
+    Visualizes the number of commits added to the project.\n
+    Commits are counted relative to a user-selected time window.
+    """,
+    controls=[
+        dbc.Label(
+            "Date Interval:",
+            html_for=f"date-interval-{PAGE}-{VIZ_ID}",
+            width={"size": "auto"},
+        ),
+        dbc.Col(
+            dbc.RadioItems(
+                id=f"date-interval-{PAGE}-{VIZ_ID}",
+                options=[
+                    {
+                        "label": "Day",
+                        "value": "D",
+                    },
+                    {
+                        "label": "Week",
+                        "value": "W",
+                    },
+                    {"label": "Month", "value": "M"},
+                    {"label": "Year", "value": "Y"},
+                ],
+                value="M",
+                inline=True,
+                className="custom-radio-buttons",
+            ),
+            className="me-2",
+            width=4,
+        ),
     ],
-    className="dark-card",
+    class_name="dark-card",
     id="commits-over-time",
 )
-
-
-# callback for graph info popover
-@callback(
-    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
-    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
-    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
-)
-def toggle_popover(n, is_open):
-    if n:
-        return not is_open
-    return is_open
 
 
 # callback for commits over time graph

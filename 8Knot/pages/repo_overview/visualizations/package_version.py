@@ -13,69 +13,23 @@ from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
 import cache_manager.cache_facade as cf
+from components.visualization import VisualizationAIO
 
 PAGE = "repo_info"
 VIZ_ID = "package-version"
 
-gc_package_version = dbc.Card(
-    [
-        dbc.CardBody(
-            [
-                dbc.Row(
-                    [
-                        dbc.Col(html.H3("Package Version Updates", className="card-title")),
-                        dbc.Col(
-                            dbc.Button(
-                                "About Graph",
-                                id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                color="outline-secondary",
-                                size="sm",
-                                className="about-graph-button",
-                            ),
-                            width="auto",
-                        ),
-                    ],
-                    align="center",
-                    justify="between",
-                    className="mb-3",
-                ),
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody(
-                            """
-                            Visualizes for each packaged dependency, if it is up to date and if not if it is
-                            less than 6 months out, between 6 months and a year, or greater than a year.
-                            """
-                        ),
-                    ],
-                    id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",
-                    placement="top",
-                    is_open=False,
-                ),
-                dcc.Loading(
-                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-                    style={"marginBottom": "1rem"},
-                ),
-            ]
-        )
-    ],
-    className="dark-card",
+gc_package_version = VisualizationAIO(
+    PAGE,
+    VIZ_ID,
+    title="Package Version Updates",
+    graph_info="""
+        Visualizes for each packaged dependency, if it is up to date and if not if it is
+        less than 6 months out, between 6 months and a year, or greater than a year.
+    """,
+    controls=[],
+    class_name="dark-card",
     id="package-version",
 )
-
-
-# callback for graph info popover
-@callback(
-    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
-    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
-    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
-)
-def toggle_popover(n, is_open):
-    if n:
-        return not is_open
-    return is_open
 
 
 # callback for package version updates graph

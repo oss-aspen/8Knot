@@ -1,7 +1,7 @@
-from dash import html, dcc, callback
+from dash import callback
 import dash
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output
 import plotly.graph_objects as go
 import pandas as pd
 import logging
@@ -14,159 +14,103 @@ import app
 from queries.contributors_query import contributors_query as ctq
 import pages.utils.preprocessing_utils as preproc_utils
 import cache_manager.cache_facade as cf
+from components.visualization import VisualizationAIO
 
 PAGE = "contributors"
 VIZ_ID = "active-drifting-contributors"
 
-gc_active_drifting_contributors = dbc.Card(
-    [
-        dbc.CardBody(
+gc_active_drifting_contributors = VisualizationAIO(
+    PAGE,
+    VIZ_ID,
+    title="Contributor Growth by Engagement",
+    graph_info="""
+    Visualizes growth of contributor population, including sub-populations\n
+    in consideration of how recently a contributor has contributed.\n
+    Please see definitions of 'Contributor Recency' on Info page.
+    """,
+    controls=[
+        dbc.Row(
             [
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            html.H3(
-                                "Contributor Growth by Engagement",
-                                className="card-title",
-                            ),
-                        ),
-                        dbc.Col(
-                            dbc.Button(
-                                "About Graph",
-                                id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                color="outline-secondary",
-                                size="sm",
-                                className="about-graph-button",
-                            ),
-                            width="auto",
-                        ),
-                    ],
-                    align="center",
-                    justify="between",
-                    className="mb-3",
+                dbc.Label(
+                    "Months Until Drifting:",
+                    html_for=f"drifting-months-{PAGE}-{VIZ_ID}",
+                    width={"size": "auto"},
                 ),
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody(
-                            """
-                            Visualizes growth of contributor population, including sub-populations\n
-                            in consideration of how recently a contributor has contributed.\n
-                            Please see definitions of 'Contributor Recency' on Info page.
-                            """
-                        ),
-                    ],
-                    id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",  # needs to be the same as dbc.Button id
-                    placement="top",
+                dbc.Col(
+                    dbc.Input(
+                        id=f"drifting-months-{PAGE}-{VIZ_ID}",
+                        type="number",
+                        min=1,
+                        max=120,
+                        step=1,
+                        value=6,
+                        size="sm",
+                        style={"width": "80px"},
+                        className="dark-input",
+                    ),
+                    className="me-2",
+                    width=2,
+                ),
+                dbc.Label(
+                    "Months Until Away:",
+                    html_for=f"away-months-{PAGE}-{VIZ_ID}",
+                    width={"size": "auto"},
+                ),
+                dbc.Col(
+                    dbc.Input(
+                        id=f"away-months-{PAGE}-{VIZ_ID}",
+                        type="number",
+                        min=1,
+                        max=120,
+                        step=1,
+                        value=12,
+                        size="sm",
+                        style={"width": "80px"},
+                        className="dark-input",
+                    ),
+                    className="me-2",
+                    width=2,
+                ),
+                dbc.Alert(
+                    children="Please ensure that 'Months Until Drifting' is less than 'Months Until Away'",
+                    id=f"check-alert-{PAGE}-{VIZ_ID}",
+                    dismissable=True,
+                    fade=False,
                     is_open=False,
+                    color="warning",
                 ),
-                dcc.Loading(
-                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-                    style={"marginBottom": "1rem"},
+            ],
+            align="center",
+        ),
+        dbc.Row(
+            [
+                dbc.Label(
+                    "Date Interval:",
+                    html_for=f"date-interval-{PAGE}-{VIZ_ID}",
+                    width={"size": "auto"},
                 ),
-                html.Hr(className="card-split"),  # Divider between graph and controls
-                dbc.Form(
+                dbc.Col(
                     [
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Months Until Drifting:",
-                                    html_for=f"drifting-months-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id=f"drifting-months-{PAGE}-{VIZ_ID}",
-                                        type="number",
-                                        min=1,
-                                        max=120,
-                                        step=1,
-                                        value=6,
-                                        size="sm",
-                                        style={"width": "80px"},
-                                        className="dark-input",
-                                    ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                                dbc.Label(
-                                    "Months Until Away:",
-                                    html_for=f"away-months-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id=f"away-months-{PAGE}-{VIZ_ID}",
-                                        type="number",
-                                        min=1,
-                                        max=120,
-                                        step=1,
-                                        value=12,
-                                        size="sm",
-                                        style={"width": "80px"},
-                                        className="dark-input",
-                                    ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                                dbc.Alert(
-                                    children="Please ensure that 'Months Until Drifting' is less than 'Months Until Away'",
-                                    id=f"check-alert-{PAGE}-{VIZ_ID}",
-                                    dismissable=True,
-                                    fade=False,
-                                    is_open=False,
-                                    color="warning",
-                                ),
+                        dbc.RadioItems(
+                            id=f"date-interval-{PAGE}-{VIZ_ID}",
+                            options=[
+                                {"label": "Trend", "value": "D"},
+                                {"label": "Month", "value": "M"},
+                                {"label": "Year", "value": "Y"},
                             ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Date Interval:",
-                                    html_for=f"date-interval-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    [
-                                        dbc.RadioItems(
-                                            id=f"date-interval-{PAGE}-{VIZ_ID}",
-                                            options=[
-                                                {"label": "Trend", "value": "D"},
-                                                {"label": "Month", "value": "M"},
-                                                {"label": "Year", "value": "Y"},
-                                            ],
-                                            value="M",
-                                            inline=True,
-                                            className="custom-radio-buttons",
-                                        ),
-                                    ]
-                                ),
-                            ],
-                            align="center",
+                            value="M",
+                            inline=True,
+                            className="custom-radio-buttons",
                         ),
                     ]
                 ),
             ],
-            style={"padding": "1.5rem"},
-        )
+            align="center",
+        ),
     ],
-    className="dark-card",
+    class_name="dark-card",
     id="engagement-growth",
 )
-
-
-# callback for graph info popover
-@callback(
-    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
-    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
-    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
-)
-def toggle_popover(n, is_open):
-    if n:
-        return not is_open
-    return is_open
 
 
 @callback(

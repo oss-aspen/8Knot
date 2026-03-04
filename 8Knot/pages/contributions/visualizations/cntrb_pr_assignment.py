@@ -1,7 +1,6 @@
-from dash import html, dcc, callback
-import dash
+from dash import dcc, callback
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output
 import plotly.graph_objects as go
 import pandas as pd
 import logging
@@ -14,158 +13,102 @@ import time
 import datetime as dt
 import app
 import cache_manager.cache_facade as cf
+from components.visualization import VisualizationAIO
 
 PAGE = "contributions"
 VIZ_ID = "cntrib-pr-assignment"
 
-gc_cntrib_pr_assignment = dbc.Card(
-    [
-        dbc.CardBody(
+gc_cntrib_pr_assignment = VisualizationAIO(
+    PAGE,
+    VIZ_ID,
+    title="Contributor Pull Request Review Assignment",
+    graph_info="""
+    Visualizes number of pull request reviews assigned to each contributor\n
+    in the specifed time bucket. The visualization only includes contributors\n
+    that meet the user inputed the assignment criteria.
+    """,
+    controls=[
+        dbc.Row(
             [
-                dbc.Row(
+                dbc.Label(
+                    "Date Interval:",
+                    html_for=f"date-radio-{PAGE}-{VIZ_ID}",
+                    width={"size": "auto"},
+                ),
+                dbc.Col(
                     [
-                        dbc.Col(
-                            html.H3(
-                                "Contributor Pull Request Review Assignment",
-                                className="card-title",
-                            ),
-                        ),
-                        dbc.Col(
-                            dbc.Button(
-                                "About Graph",
-                                id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                color="outline-secondary",
-                                size="sm",
-                                className="about-graph-button",
-                            ),
-                            width="auto",
+                        dbc.RadioItems(
+                            id=f"date-radio-{PAGE}-{VIZ_ID}",
+                            options=[
+                                {"label": "Trend", "value": "D"},
+                                {"label": "Week", "value": "W"},
+                                {"label": "Month", "value": "M"},
+                                {"label": "Year", "value": "Y"},
+                            ],
+                            value="W",
+                            inline=True,
+                            className="custom-radio-buttons",
                         ),
                     ],
-                    align="center",
-                    justify="between",
-                    className="mb-3",
-                ),
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody(
-                            """
-                            Visualizes number of pull request reviews assigned to each each contributor\n
-                            in the specifed time bucket. The visualization only includes contributors\n
-                            that meet the user inputed the assignment criteria.
-                            """
-                        ),
-                    ],
-                    id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",
-                    placement="top",
-                    is_open=False,
-                ),
-                dcc.Loading(
-                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-                    style={"marginBottom": "1rem"},
-                ),
-                html.Hr(className="card-split"),  # Divider between graph and controls
-                dbc.Form(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Date Interval:",
-                                    html_for=f"date-radio-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    [
-                                        dbc.RadioItems(
-                                            id=f"date-radio-{PAGE}-{VIZ_ID}",
-                                            options=[
-                                                {"label": "Trend", "value": "D"},
-                                                {"label": "Week", "value": "W"},
-                                                {"label": "Month", "value": "M"},
-                                                {"label": "Year", "value": "Y"},
-                                            ],
-                                            value="W",
-                                            inline=True,
-                                            className="custom-radio-buttons",
-                                        ),
-                                    ],
-                                    className="me-2",
-                                    width=4,
-                                ),
-                            ],
-                            align="center",
-                        ),
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Total Assignments Required:",
-                                    html_for=f"assignments-required-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id=f"assignments-required-{PAGE}-{VIZ_ID}",
-                                        type="number",
-                                        min=1,
-                                        max=250,
-                                        step=1,
-                                        value=10,
-                                        size="sm",
-                                        className="dark-input",
-                                    ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                                dbc.Alert(
-                                    children="No contributors in date range meet assignment requirement",
-                                    id=f"check-alert-{PAGE}-{VIZ_ID}",
-                                    dismissable=True,
-                                    fade=False,
-                                    is_open=False,
-                                    color="warning",
-                                ),
-                                dbc.Col(
-                                    dcc.DatePickerRange(
-                                        id=f"date-picker-range-{PAGE}-{VIZ_ID}",
-                                        min_date_allowed=dt.date(2005, 1, 1),
-                                        max_date_allowed=dt.date.today(),
-                                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
-                                        start_date=dt.date(
-                                            dt.date.today().year - 2,
-                                            dt.date.today().month,
-                                            dt.date.today().day,
-                                        ),
-                                        clearable=True,
-                                        className="dark-date-picker",
-                                    ),
-                                    width=7,
-                                ),
-                            ],
-                            align="center",
-                            justify="between",
-                        ),
-                    ]
+                    className="me-2",
+                    width=4,
                 ),
             ],
-            style={"padding": "1.5rem"},
-        )
+            align="center",
+        ),
+        dbc.Row(
+            [
+                dbc.Label(
+                    "Total Assignments Required:",
+                    html_for=f"assignments-required-{PAGE}-{VIZ_ID}",
+                    width={"size": "auto"},
+                ),
+                dbc.Col(
+                    dbc.Input(
+                        id=f"assignments-required-{PAGE}-{VIZ_ID}",
+                        type="number",
+                        min=1,
+                        max=250,
+                        step=1,
+                        value=10,
+                        size="sm",
+                        className="dark-input",
+                    ),
+                    className="me-2",
+                    width=2,
+                ),
+                dbc.Alert(
+                    children="No contributors in date range meet assignment requirement",
+                    id=f"check-alert-{PAGE}-{VIZ_ID}",
+                    dismissable=True,
+                    fade=False,
+                    is_open=False,
+                    color="warning",
+                ),
+                dbc.Col(
+                    dcc.DatePickerRange(
+                        id=f"date-picker-range-{PAGE}-{VIZ_ID}",
+                        min_date_allowed=dt.date(2005, 1, 1),
+                        max_date_allowed=dt.date.today(),
+                        initial_visible_month=dt.date(dt.date.today().year, 1, 1),
+                        start_date=dt.date(
+                            dt.date.today().year - 2,
+                            dt.date.today().month,
+                            dt.date.today().day,
+                        ),
+                        clearable=True,
+                        className="dark-date-picker",
+                    ),
+                    width=7,
+                ),
+            ],
+            align="center",
+            justify="between",
+        ),
     ],
-    className="dark-card",
+    class_name="dark-card",
     id="cntrib-pr-assignment",
 )
-
-
-# callback for graph info popover
-@callback(
-    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
-    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
-    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
-)
-def toggle_popover(n, is_open):
-    if n:
-        return not is_open
-    return is_open
 
 
 # callback for pull request review assignment graph

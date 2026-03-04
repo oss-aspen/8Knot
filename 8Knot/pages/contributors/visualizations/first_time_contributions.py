@@ -1,8 +1,5 @@
-from dash import html, dcc
-import dash
-import dash_bootstrap_components as dbc
 from dash import callback
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output
 import pandas as pd
 import logging
 import plotly.express as px
@@ -13,74 +10,22 @@ from pages.utils.job_utils import nodata_graph
 import app
 import pages.utils.preprocessing_utils as preproc_utils
 import cache_manager.cache_facade as cf
+from components.visualization import VisualizationAIO
 
 PAGE = "contributors"
 VIZ_ID = "first-time-contribution"
 
-gc_first_time_contributions = dbc.Card(
-    [
-        dbc.CardBody(
-            [
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            html.H3(
-                                "First Time Contributors Per Quarter",
-                                className="card-title",
-                                style={"textAlign": "center"},
-                            ),
-                        ),
-                        dbc.Col(
-                            dbc.Button(
-                                "About Graph",
-                                id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                color="outline-secondary",
-                                size="sm",
-                                className="about-graph-button",
-                            ),
-                            width="auto",
-                        ),
-                    ],
-                    align="center",
-                    justify="between",
-                    className="mb-3",
-                ),
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody(
-                            """
-                            Visualizes the arrival of net-new contributors to a project\n
-                            and differentiates them by their first in-project action.
-                            """
-                        ),
-                    ],
-                    id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",
-                    placement="top",
-                    is_open=False,
-                ),
-                dcc.Loading(
-                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-                ),
-            ]
-        ),
-    ],
-    className="dark-card",
+gc_first_time_contributions = VisualizationAIO(
+    PAGE,
+    VIZ_ID,
+    title="First Time Contributors Per Quarter",
+    graph_info="""
+    Visualizes the arrival of net-new contributors to a project\n
+    and differentiates them by their first in-project action.
+    """,
+    class_name="dark-card",
     id="first-time-contributors",
 )
-
-
-# callback for graph info popover
-@callback(
-    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
-    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
-    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
-)
-def toggle_popover(n, is_open):
-    if n:
-        return not is_open
-    return is_open
 
 
 @callback(

@@ -1,7 +1,6 @@
-from dash import html, dcc, callback
-import dash
+from dash import callback
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output
 import plotly.graph_objects as go
 import pandas as pd
 import logging
@@ -15,105 +14,44 @@ import cache_manager.cache_facade as cf
 from pages.utils.job_utils import nodata_graph
 import time
 import app
+from components.visualization import VisualizationAIO
 
 PAGE = "contributions"
 VIZ_ID = "pr-first-response"
 
-gc_pr_first_response = dbc.Card(
-    [
-        dbc.CardBody(
-            [
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            html.H3(
-                                "Pull Request Time to First Response",
-                                className="card-title",
-                            ),
-                        ),
-                        dbc.Col(
-                            dbc.Button(
-                                "About Graph",
-                                id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                color="outline-secondary",
-                                size="sm",
-                                className="about-graph-button",
-                            ),
-                            width="auto",
-                        ),
-                    ],
-                    align="center",
-                    justify="between",
-                    className="mb-3",
-                ),
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody(
-                            """
-                            Compares the volume of PRs being opened against the number of those PRs that \n
-                            receive at least one response within the parameterized timeframe after being opened.
-                            """
-                        ),
-                    ],
-                    id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",
-                    placement="top",
-                    is_open=False,
-                ),
-                dcc.Loading(
-                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-                    style={"marginBottom": "1rem"},
-                ),
-                html.Hr(className="card-split"),  # Divider between graph and controls
-                dbc.Form(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Response Days:",
-                                    html_for=f"response-days-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.Input(
-                                        id=f"response-days-{PAGE}-{VIZ_ID}",
-                                        type="number",
-                                        min=1,
-                                        max=120,
-                                        step=1,
-                                        value=2,
-                                        size="sm",
-                                        style={"width": "80px"},
-                                        className="dark-input",
-                                    ),
-                                    className="me-2",
-                                    width=2,
-                                ),
-                            ],
-                            align="center",
-                        ),
-                    ]
-                ),
-            ],
-            style={"padding": "1.5rem"},
-        )
+gc_pr_first_response = VisualizationAIO(
+    PAGE,
+    VIZ_ID,
+    title="Pull Request Time to First Response",
+    graph_info="""
+    Compares the volume of PRs being opened against the number of those PRs that \n
+    receive at least one response within the parameterized timeframe after being opened.
+    """,
+    controls=[
+        dbc.Label(
+            "Response Days:",
+            html_for=f"response-days-{PAGE}-{VIZ_ID}",
+            width={"size": "auto"},
+        ),
+        dbc.Col(
+            dbc.Input(
+                id=f"response-days-{PAGE}-{VIZ_ID}",
+                type="number",
+                min=1,
+                max=120,
+                step=1,
+                value=2,
+                size="sm",
+                style={"width": "80px"},
+                className="dark-input",
+            ),
+            className="me-2",
+            width=2,
+        ),
     ],
-    className="dark-card",
+    class_name="dark-card",
     id="pr-first-response",
 )
-
-
-# callback for graph info popover
-@callback(
-    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
-    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
-    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
-)
-def toggle_popover(n, is_open):
-    if n:
-        return not is_open
-    return is_open
 
 
 # callback for pr first response graph

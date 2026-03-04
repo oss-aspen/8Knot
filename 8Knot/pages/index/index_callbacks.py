@@ -254,8 +254,8 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
 
         # First, the search goes through the client-side cache if available
         if cached_options:
-            cache_matches = fuzzy_search(search_query, cached_options, threshold=search_threshold)
-            logging.info(f"Cache search found {len(cache_matches)} matches (threshold={search_threshold})")
+            cache_matches = fuzzy_search(search_query, cached_options, threshold=search_threshold, limit=1000)
+            logging.info(f"Cache search found {len(cache_matches)} matches (threshold={search_threshold}, limit=1000)")
 
         # Always also search server for comprehensive results (especially for longer queries)
         if len(search_query) >= 3:
@@ -276,8 +276,10 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
                     except redis.exceptions.ConnectionError as e:
                         logging.error(f"SERVER SEARCH: Could not connect to users-cache. Error: {str(e)}")
 
-                server_matches = fuzzy_search(search_query, server_options, threshold=search_threshold)
-                logging.info(f"Server search found {len(server_matches)} matches (threshold={search_threshold})")
+                server_matches = fuzzy_search(search_query, server_options, threshold=search_threshold, limit=1000)
+                logging.info(
+                    f"Server search found {len(server_matches)} matches (threshold={search_threshold}, limit=1000)"
+                )
 
             except Exception as e:
                 logging.error(f"Server search failed: {str(e)}")
@@ -680,9 +682,10 @@ def initialize_cache(_):
                 logging.error(f"CACHE INIT: Could not connect to users-cache. Error: {str(e)}")
 
         # Get configuration from environment variables with defaults
+        # Larger cache = faster search results (browser sessionStorage handles 20,000+ items easily)
         sort_method = os.getenv("EIGHTKNOT_SEARCHBAR_OPTS_SORT", "shortest").lower()
-        max_total_results = int(os.getenv("EIGHTKNOT_SEARCHBAR_OPTS_MAX_RESULTS", "2000"))
-        max_repos = int(os.getenv("EIGHTKNOT_SEARCHBAR_OPTS_MAX_REPOS", "1500"))
+        max_total_results = int(os.getenv("EIGHTKNOT_SEARCHBAR_OPTS_MAX_RESULTS", "20000"))
+        max_repos = int(os.getenv("EIGHTKNOT_SEARCHBAR_OPTS_MAX_REPOS", "19500"))
 
         # Sort options based on configuration
         if sort_method == "shortest":
@@ -860,3 +863,41 @@ def hide_loading_on_landing(pathname):
 
 
 # Note: Landing page callbacks moved to pages/landing/landing_callbacks.py
+
+
+# ============================================================================
+# Callback to change pill color when search is clicked
+#
+# This callback implements dynamic pill coloring:
+# - When user selects repos/orgs: pills are grey (pending)
+# - When user clicks search icon: pills turn blue (active search)
+# - Default selection (chaoss) starts blue since search is auto-triggered
+#
+# Works in conjunction with CSS in main_layout.css
+# ============================================================================
+@callback(
+    Output("projects", "className"),
+    [Input("search", "n_clicks"), Input("projects", "value")],
+    prevent_initial_call=True,
+)
+def update_pill_color_on_search(_, selected_repos_orgs):
+    """Update pill color based on search action.
+
+    When search icon is clicked, add 'searching' class to turn pills blue.
+    When values change (user is selecting), remove 'searching' class to keep pills grey.
+    """
+    if not dash.ctx.triggered:
+        return dash.no_update
+
+    triggered_id = dash.ctx.triggered_id
+
+    if triggered_id == "search":
+        # Search button clicked - add 'searching' class to turn pills blue
+        logging.info(f"PILL COLOR: Search clicked - turning pills BLUE")
+        return "searchbar-dropdown searching"
+    if triggered_id == "projects":
+        # Values changed (user selecting) - remove 'searching' class to keep pills grey
+        logging.info(f"PILL COLOR: Values changed - turning pills GREY. Selected: {selected_repos_orgs}")
+        return "searchbar-dropdown"
+
+    return dash.no_update

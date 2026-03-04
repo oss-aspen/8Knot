@@ -1,8 +1,6 @@
-from dash import html, dcc, callback
-import dash
+from dash import callback
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output, State
-import plotly.graph_objects as go
+from dash.dependencies import Input, Output
 import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
@@ -12,109 +10,47 @@ from queries.commits_query import commits_query as cmq
 import cache_manager.cache_facade as cf
 from pages.utils.job_utils import nodata_graph
 import time
+from components.visualization import VisualizationAIO
 
 PAGE = "contributors"
 VIZ_ID = "contrib-activity-cycle"
 
 
-gc_contrib_activity_cycle = dbc.Card(
-    [
-        dbc.CardBody(
-            [
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            html.H3(
-                                "Contributor Activity Cycle",
-                                className="card-title",
-                            ),
-                        ),
-                        dbc.Col(
-                            dbc.Button(
-                                "About Graph",
-                                id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                color="outline-secondary",
-                                size="sm",
-                                className="about-graph-button",
-                            ),
-                            width="auto",
-                        ),
-                    ],
-                    align="center",
-                    justify="between",
-                    className="mb-3",
-                ),
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Graph Info:"),
-                        dbc.PopoverBody(
-                            """
-                            Visualizes the distribution of Commit timestamps by Weekday or Hour.\n
-                            Helps to describe operating-hours of community code contributions.
-                            """
-                        ),
-                    ],
-                    id=f"popover-{PAGE}-{VIZ_ID}",
-                    target=f"popover-target-{PAGE}-{VIZ_ID}",  # needs to be the same as dbc.Button id
-                    placement="top",
-                    is_open=False,
-                ),
-                dcc.Loading(
-                    dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-                    style={"marginBottom": "1rem"},
-                ),
-                html.Hr(className="card-split"),  # Divider between graph and controls
-                dbc.Form(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Label(
-                                    "Date Interval:",
-                                    html_for=f"date-interval-{PAGE}-{VIZ_ID}",
-                                    width={"size": "auto"},
-                                ),
-                                dbc.Col(
-                                    dbc.RadioItems(
-                                        id=f"date-interval-{PAGE}-{VIZ_ID}",
-                                        options=[
-                                            {
-                                                "label": "Weekday",
-                                                "value": "D",
-                                            },
-                                            {"label": "Hourly", "value": "H"},
-                                        ],
-                                        value="D",
-                                        inline=True,
-                                        className="custom-radio-buttons",
-                                    ),
-                                    className="me-2",
-                                    width=4,
-                                ),
-                            ],
-                            align="center",
-                            justify="start",
-                        ),
-                    ]
-                ),
-            ],
-            style={"padding": "1.5rem"},
-        )
+gc_contrib_activity_cycle = VisualizationAIO(
+    PAGE,
+    VIZ_ID,
+    title="Contributor Activity Cycle",
+    graph_info="""
+    Visualizes the distribution of Commit timestamps by Weekday or Hour.\n
+    Helps to describe operating-hours of community code contributions.
+    """,
+    controls=[
+        dbc.Label(
+            "Date Interval:",
+            html_for=f"date-interval-{PAGE}-{VIZ_ID}",
+            width={"size": "auto"},
+        ),
+        dbc.Col(
+            dbc.RadioItems(
+                id=f"date-interval-{PAGE}-{VIZ_ID}",
+                options=[
+                    {
+                        "label": "Weekday",
+                        "value": "D",
+                    },
+                    {"label": "Hourly", "value": "H"},
+                ],
+                value="D",
+                inline=True,
+                className="custom-radio-buttons",
+            ),
+            className="me-2",
+            width=4,
+        ),
     ],
-    className="dark-card",
+    class_name="dark-card",
     id="contributor-activity-cycle",
 )
-
-
-# callback for graph info popover
-@callback(
-    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
-    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
-    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
-)
-def toggle_popover(n, is_open):
-    if n:
-        return not is_open
-    return is_open
 
 
 # callback for VIZ TITLE graph

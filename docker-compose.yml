@@ -59,15 +59,15 @@ services:
       - .env
     environment:
       - EIGHTKNOT_SEARCHBAR_OPTS_SORT=shortest  # Try different options: shortest, longest, alphabetical
-      - EIGHTKNOT_SEARCHBAR_OPTS_MAX_RESULTS=5500  # Maximum number of results to return (org and repo)
-      - EIGHTKNOT_SEARCHBAR_OPTS_MAX_REPOS=5000  # Max number of repos
+      - EIGHTKNOT_SEARCHBAR_OPTS_MAX_RESULTS=20000  # Maximum number of results to return (org and repo)
+      - EIGHTKNOT_SEARCHBAR_OPTS_MAX_REPOS=19500  # Max number of repos
     restart: always
 
   worker-callback:
     build:
       context: .
       dockerfile: ./docker/Dockerfile
-    command: ["celery", "-A", "app:celery_app", "worker", "--loglevel=INFO", "--concurrency=1", "--time-limit=300", "--soft-time-limit=240"]
+    command: ["celery", "-A", "app:celery_app", "worker", "--loglevel=INFO", "--concurrency=1", "--time-limit=700", "--soft-time-limit=630"]
     depends_on:
       - redis-cache
       - redis-users
