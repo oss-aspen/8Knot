@@ -1,6 +1,7 @@
 from dash import callback
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
+from typing import List, Optional, Tuple, Union
 import plotly.graph_objects as go
 import pandas as pd
 import logging
@@ -8,9 +9,8 @@ from dateutil.relativedelta import *  # type: ignore
 from pages.utils.graph_utils import baby_blue
 from queries.pr_response_query import pr_response_query as prr
 from pages.utils.job_utils import nodata_graph
-import time
+from pages.utils.query_status import load_query_data
 import app
-import cache_manager.cache_facade as cf
 from components.visualization import VisualizationAIO
 
 PAGE = "contributions"
@@ -62,23 +62,10 @@ gc_pr_review_response = VisualizationAIO(
     ],
     background=True,
 )
-def pr_review_response_graph(repolist, num_days, bot_switch):
-    while not_cached := cf.get_uncached(func_name=prr.__name__, repolist=repolist):
-        logging.warning(f"PR_FIRST_RESPONSE - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
-
-    start = time.perf_counter()
-    logging.warning(f"{VIZ_ID}- START")
-
-    # GET ALL DATA FROM POSTGRES CACHE
-    df = cf.retrieve_from_cache(
-        tablename=prr.__name__,
-        repolist=repolist,
-    )
-
-    # test if there is data
-    if df.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
+def pr_review_response_graph(repolist: List[int], num_days, bot_switch: bool) -> Tuple[go.Figure, bool]:
+    # Wait for and load query data (includes timeout, error handling, and validation)
+    df = load_query_data(prr, repolist, VIZ_ID)
+    if df is None:
         return nodata_graph
 
     # remove bot data
@@ -88,8 +75,6 @@ def pr_review_response_graph(repolist, num_days, bot_switch):
     df = process_data(df, num_days)
 
     fig = create_figure(df, num_days)
-
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
 
@@ -130,7 +115,7 @@ def process_data(df: pd.DataFrame, num_days):
     return df_pr_responses
 
 
-def create_figure(df: pd.DataFrame, num_days):
+def create_figure(df: pd.DataFrame, num_days) -> go.Figure:
     fig = go.Figure(
         [
             go.Scatter(

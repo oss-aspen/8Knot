@@ -1,16 +1,17 @@
 from dash import dcc, callback
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
+from typing import List, Optional, Tuple, Union
 import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
+import plotly.graph_objects as go
 from pages.utils.graph_utils import baby_blue
 from queries.commits_query import commits_query as cmq
 from pages.utils.job_utils import nodata_graph
-import time
+from pages.utils.query_status import load_query_data
 import datetime as dt
-import cache_manager.cache_facade as cf
 from components.visualization import VisualizationAIO
 
 PAGE = "affiliation"
@@ -75,36 +76,22 @@ gc_commit_domains = VisualizationAIO(
     ],
     background=True,
 )
-def commit_domains_graph(repolist, num, start_date, end_date):
-    # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=cmq.__name__, repolist=repolist):
-        logging.warning(f"COMMITS_OVER_TIME_VIZ - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
-
-    start = time.perf_counter()
-    logging.warning(f"{VIZ_ID}- START")
-
-    # GET ALL DATA FROM POSTGRES CACHE
-    df = cf.retrieve_from_cache(
-        tablename=cmq.__name__,
-        repolist=repolist,
-    )
-
-    # test if there is data
-    if df.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
+def commit_domains_graph(
+    repolist: List[int], num, start_date: Optional[str], end_date: Optional[str]
+) -> Tuple[go.Figure, bool]:
+    # Wait for and load query data (includes timeout, error handling, and validation)
+    df = load_query_data(cmq, repolist, VIZ_ID)
+    if df is None:
         return nodata_graph
 
     # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
     df = process_data(df, num, start_date, end_date)
 
     fig = create_figure(df)
-
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
 
-def process_data(df: pd.DataFrame, num, start_date, end_date):
+def process_data(df: pd.DataFrame, num, start_date: Optional[str], end_date: Optional[str]) -> pd.DataFrame:
     # TODO: create docstring
 
     # convert to datetime objects rather than strings
@@ -148,7 +135,7 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
     return df
 
 
-def create_figure(df: pd.DataFrame):
+def create_figure(df: pd.DataFrame) -> go.Figure:
     # graph generation
     fig = px.pie(df, names="domains", values="occurrences", color_discrete_sequence=baby_blue)
     fig.update_traces(

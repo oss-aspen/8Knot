@@ -2,15 +2,16 @@ from dash import html, dcc, callback
 import dash
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
+from typing import List, Optional, Tuple, Union
 import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 from queries.ossf_score_query import ossf_score_query as osq
 import io
-import cache_manager.cache_facade as cf
 from pages.utils.job_utils import nodata_graph
-import time
+from pages.utils.query_status import wait_for_query_data
 from datetime import datetime
+import cache_manager.cache_facade as cf
 
 PAGE = "repo_info"
 VIZ_ID = "ossf-scorecard"
@@ -102,13 +103,8 @@ def ossf_scorecard(repo: str):
     if repo is not None:
         repo = int(repo)
 
-    # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=osq.__name__, repolist=[repo]):
-        logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
-
-    logging.warning(f"{VIZ_ID} - START")
-    start = time.perf_counter()
+    if not wait_for_query_data(osq, [repo], timeout=600, poll_interval=0.5):
+        return dbc.Table.from_dataframe(pd.DataFrame(), striped=True, bordered=True, hover=True), dbc.Label("No data")
 
     # GET ALL DATA FROM POSTGRES CACHE
     df = cf.retrieve_from_cache(
@@ -118,7 +114,6 @@ def ossf_scorecard(repo: str):
 
     # test if there is data
     if df.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return dbc.Table.from_dataframe(df, striped=True, bordered=True, hover=True), dbc.Label("No data")
 
     # repo id not needed for table
@@ -142,6 +137,4 @@ def ossf_scorecard(repo: str):
         logging.warning(f"{VIZ_ID} - MORE THAN ONE DATA COLLECTION DATE")
 
     updated_date = pd.to_datetime(str(unique_updated_times[-1])).strftime("%d/%m/%Y")
-
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return table, dbc.Label(updated_date)

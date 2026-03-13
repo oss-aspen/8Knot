@@ -1,14 +1,15 @@
 import dash_bootstrap_components as dbc
 from dash import callback
 from dash.dependencies import Input, Output
+from typing import List, Optional, Tuple, Union
 import pandas as pd
 import logging
 import plotly.express as px
+import plotly.graph_objects as go
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from queries.commits_query import commits_query as cmq
 from pages.utils.job_utils import nodata_graph
-import time
-import cache_manager.cache_facade as cf
+from pages.utils.query_status import load_query_data
 from components.visualization import VisualizationAIO
 
 PAGE = "contributions"
@@ -65,37 +66,20 @@ gc_commits_over_time = VisualizationAIO(
     ],
     background=True,
 )
-def commits_over_time_graph(repolist, interval):
-    # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=cmq.__name__, repolist=repolist):
-        logging.warning(f"COMMITS_OVER_TIME_VIZ - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
-
-    # data ready.
-    start = time.perf_counter()
-    logging.warning("COMMITS_OVER_TIME_VIZ - START")
-
-    # GET ALL DATA FROM POSTGRES CACHE
-    df = cf.retrieve_from_cache(
-        tablename=cmq.__name__,
-        repolist=repolist,
-    )
-
-    # test if there is data
-    if df.empty:
-        logging.warning("COMMITS OVER TIME - NO DATA AVAILABLE")
+def commits_over_time_graph(repolist: List[int], interval: str) -> Tuple[go.Figure, bool]:
+    # Wait for and load query data (includes timeout, error handling, and validation)
+    df = load_query_data(cmq, repolist, VIZ_ID)
+    if df is None:
         return nodata_graph
 
     # function for all data pre processing
     df_created = process_data(df, interval)
 
     fig = create_figure(df_created, interval)
-
-    logging.warning(f"COMMITS_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
     return fig
 
 
-def process_data(df: pd.DataFrame, interval):
+def process_data(df: pd.DataFrame, interval: str) -> pd.DataFrame:
     # convert to datetime objects with consistent column name
     # incoming value should be a posix integer.
     df["author_date"] = pd.to_datetime(df["author_date"], utc=True)
@@ -122,7 +106,7 @@ def process_data(df: pd.DataFrame, interval):
     return df_created
 
 
-def create_figure(df_created: pd.DataFrame, interval):
+def create_figure(df_created: pd.DataFrame, interval) -> go.Figure:
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 

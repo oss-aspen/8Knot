@@ -1,6 +1,7 @@
 from dash import dcc, callback
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
+from typing import List, Optional, Tuple, Union
 import plotly.graph_objects as go
 import pandas as pd
 import logging
@@ -9,10 +10,9 @@ import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from queries.pr_assignee_query import pr_assignee_query as praq
 from pages.utils.job_utils import nodata_graph
-import time
+from pages.utils.query_status import load_query_data
 import datetime as dt
 import app
-import cache_manager.cache_facade as cf
 from components.visualization import VisualizationAIO
 
 PAGE = "contributions"
@@ -125,29 +125,15 @@ gc_cntrib_pr_assignment = VisualizationAIO(
     ],
     background=True,
 )
-def cntrib_pr_assignment_graph(repolist, interval, assign_req, start_date, end_date, bot_switch):
-    # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=praq.__name__, repolist=repolist):
-        logging.warning(f"{VIZ_ID} - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
-
-    # data ready.
-    start = time.perf_counter()
-    logging.warning(f"{VIZ_ID}- START")
-
-    # GET ALL DATA FROM POSTGRES CACHE
-    df = cf.retrieve_from_cache(
-        tablename=praq.__name__,
-        repolist=repolist,
-    )
-
-    start = time.perf_counter()
-    logging.warning(f"{VIZ_ID}- START")
-
-    # test if there is data
-    if df.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
+def cntrib_pr_assignment_graph(
+    repolist: List[int], interval, assign_req, start_date: Optional[str], end_date, bot_switch: bool
+) -> Tuple[go.Figure, bool]:
+    # Wait for and load query data (includes timeout, error handling, and validation)
+    df = load_query_data(praq, repolist, VIZ_ID)
+    if df is None:
         return nodata_graph, False
+
+    # data ready., False
 
     # remove bot data
     if bot_switch:
@@ -161,12 +147,12 @@ def cntrib_pr_assignment_graph(repolist, interval, assign_req, start_date, end_d
         return nodata_graph, True
 
     fig = create_figure(df, interval)
-
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig, False
 
 
-def process_data(df: pd.DataFrame, interval, assign_req, start_date, end_date):
+def process_data(
+    df: pd.DataFrame, interval, assign_req, start_date: Optional[str], end_date: Optional[str]
+) -> pd.DataFrame:
     # convert to datetime objects rather than strings
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
     df["closed_at"] = pd.to_datetime(df["closed_at"], utc=True)
@@ -237,7 +223,7 @@ def process_data(df: pd.DataFrame, interval, assign_req, start_date, end_date):
     return df_assign
 
 
-def create_figure(df: pd.DataFrame, interval):
+def create_figure(df: pd.DataFrame, interval) -> go.Figure:
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 

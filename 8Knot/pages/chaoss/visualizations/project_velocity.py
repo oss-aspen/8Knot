@@ -2,6 +2,7 @@ from dash import html, dcc, callback
 import dash
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
+from typing import List, Optional, Tuple, Union
 import plotly.graph_objects as go
 import pandas as pd
 import logging
@@ -10,13 +11,12 @@ import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from queries.contributors_query import contributors_query as ctq
 from pages.utils.job_utils import nodata_graph
-import time
+from pages.utils.query_status import load_query_data
 import datetime as dt
 import math
 import numpy as np
 import app
 import pages.utils.preprocessing_utils as preproc_utils
-import cache_manager.cache_facade as cf
 from components.visualization import VisualizationAIO
 
 PAGE = "chaoss"
@@ -183,26 +183,12 @@ def project_velocity_graph(
     end_date,
     bot_switch,
 ):
-    # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=ctq.__name__, repolist=repolist):
-        logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
-
-    logging.warning(f"{VIZ_ID} - START")
-    start = time.perf_counter()
-
-    # GET ALL DATA FROM POSTGRES CACHE
-    df = cf.retrieve_from_cache(
-        tablename=ctq.__name__,
-        repolist=repolist,
-    )
+    # Wait for and load query data (includes timeout, error handling, and validation)
+    df = load_query_data(ctq, repolist, VIZ_ID)
+    if df is None:
+        return nodata_graph
 
     df = preproc_utils.contributors_df_action_naming(df)
-
-    # test if there is data
-    if df.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
-        return nodata_graph
 
     # remove bot data
     if bot_switch:
@@ -221,8 +207,6 @@ def project_velocity_graph(
     )
 
     fig = create_figure(df, log)
-
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
 
@@ -290,7 +274,7 @@ def process_data(
     return df_consolidated
 
 
-def create_figure(df: pd.DataFrame, log):
+def create_figure(df: pd.DataFrame, log) -> go.Figure:
     y_axis = "prs_issues_actions_weighted"
     y_title = "Weighted PR/Issue Actions"
     if log:

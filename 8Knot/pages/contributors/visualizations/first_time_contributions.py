@@ -1,15 +1,16 @@
 from dash import callback
 from dash.dependencies import Input, Output
+from typing import List, Optional, Tuple, Union
 import pandas as pd
 import logging
 import plotly.express as px
+import plotly.graph_objects as go
 from pages.utils.graph_utils import baby_blue
 from queries.contributors_query import contributors_query as ctq
-import time
 from pages.utils.job_utils import nodata_graph
+from pages.utils.query_status import load_query_data
 import app
 import pages.utils.preprocessing_utils as preproc_utils
-import cache_manager.cache_facade as cf
 from components.visualization import VisualizationAIO
 
 PAGE = "contributors"
@@ -36,27 +37,13 @@ gc_first_time_contributions = VisualizationAIO(
     ],
     background=True,
 )
-def create_first_time_contributors_graph(repolist, bot_switch):
-    # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=ctq.__name__, repolist=repolist):
-        logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
-
-    logging.warning(f"{VIZ_ID} - START")
-    start = time.perf_counter()
-
-    # GET ALL DATA FROM POSTGRES CACHE
-    df = cf.retrieve_from_cache(
-        tablename=ctq.__name__,
-        repolist=repolist,
-    )
+def create_first_time_contributors_graph(repolist: List[int], bot_switch: bool) -> Tuple[go.Figure, bool]:
+    # Wait for and load query data (includes timeout, error handling, and validation)
+    df = load_query_data(ctq, repolist, VIZ_ID)
+    if df is None:
+        return nodata_graph
 
     df = preproc_utils.contributors_df_action_naming(df)
-
-    # test if there is data
-    if df.empty:
-        logging.warning("1ST CONTRIBUTIONS - NO DATA AVAILABLE")
-        return nodata_graph
 
     # remove bot data
     if bot_switch:
@@ -66,8 +53,6 @@ def create_first_time_contributors_graph(repolist, bot_switch):
     df = process_data(df)
 
     fig = create_figure(df)
-
-    logging.warning(f"1ST_CONTRIBUTIONS_VIZ - END - {time.perf_counter() - start}")
     return fig
 
 
@@ -85,7 +70,7 @@ def process_data(df):
     return df
 
 
-def create_figure(df):
+def create_figure(df) -> go.Figure:
     # create plotly express histogram
     fig = px.histogram(df, x="created_at", color="Action", color_discrete_sequence=baby_blue)
 

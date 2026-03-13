@@ -2,6 +2,7 @@ from dash import html, dcc, callback
 import dash
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
+from typing import List, Optional, Tuple, Union
 import plotly.graph_objects as go
 import pandas as pd
 import logging
@@ -10,9 +11,8 @@ import plotly.express as px
 from pages.utils.graph_utils import baby_blue
 from queries.package_version_query import package_version_query as pvq
 from pages.utils.job_utils import nodata_graph
-import time
+from pages.utils.query_status import load_query_data
 import datetime as dt
-import cache_manager.cache_facade as cf
 from components.visualization import VisualizationAIO
 
 PAGE = "repo_info"
@@ -41,23 +41,9 @@ gc_package_version = VisualizationAIO(
     background=True,
 )
 def package_version_graph(repolist):
-    # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=pvq.__name__, repolist=repolist):
-        logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
-
-    start = time.perf_counter()
-    logging.warning(f"{VIZ_ID}- START")
-
-    # GET ALL DATA FROM POSTGRES CACHE
-    df = cf.retrieve_from_cache(
-        tablename=pvq.__name__,
-        repolist=repolist,
-    )
-
-    # test if there is data
-    if df.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
+    # Wait for and load query data (includes timeout, error handling, and validation)
+    df = load_query_data(pvq, repolist, VIZ_ID)
+    if df is None:
         return nodata_graph
 
     # count the number of each package grouping
@@ -73,6 +59,4 @@ def package_version_graph(repolist):
 
     # add legend title
     fig["layout"]["legend_title"] = "Date Range"
-
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig

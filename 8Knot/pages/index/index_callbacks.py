@@ -36,10 +36,55 @@ import redis
 import flask
 from .search_utils import fuzzy_search
 from .search_utils import clean_repo_name
+from .query_constants import (
+    QUERY_STATUS_CACHED,
+    PAGE_STATUS_IDLE,
+    PAGE_STATUS_READY,
+    PAGE_STATUS_FAILED,
+    PAGE_STATUS_TIMEOUT,
+    CURRENT_PAGE_POLL_INTERVAL,
+    MAX_QUERY_WAIT_TIME,
+    BADGE_TEXT_NO_DATA,
+    BADGE_TEXT_ALL_READY,
+    BADGE_TEXT_PAGE_READY,
+    BADGE_TEXT_PAGE_FAILED,
+    BADGE_TEXT_PAGE_TIMEOUT,
+    BADGE_TEXT_DATA_READY,
+    BADGE_TEXT_TIMEOUT_RETRY,
+    BADGE_TEXT_DATA_INCOMPLETE,
+    BADGE_COLOR_READY,
+    BADGE_COLOR_LOADING,
+    BADGE_COLOR_ERROR,
+    BADGE_COLOR_WARNING,
+    BADGE_COLOR_SECONDARY,
+)
+from .query_job_utils import (
+    create_async_results_from_metadata,
+    check_all_jobs_complete,
+    wait_for_job_completion,
+)
 
 # list of queries to be run
 # QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq] - codebase page disabled
 QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, rlq, pvq, rrq, osq, riq]
+
+# Map pages to their required queries for priority loading
+PAGE_QUERIES = {
+    "/home": [cq, iq, prq],
+    "/repo_overview": [rlq, pvq, rrq, osq, riq],
+    "/contributions": [iq, cq, prq, iaq, praq, prr],
+    "/contributors/behavior": [cq, cnq],
+    "/contributors/contribution_types": [cq, cnq],
+    "/affiliation": [aq, cq],
+    "/chaoss": [cnq],
+}
+
+
+# Helper function to get query names for a page
+def get_page_query_names(page_path):
+    """Get list of query function names for a given page path."""
+    queries = PAGE_QUERIES.get(page_path, [])
+    return [q.__name__ for q in queries]
 
 
 # check if login has been enabled in config
@@ -553,61 +598,126 @@ def show_repolist_alert(n_clicks, openness, repo_ids):
 
 @callback(
     [Output("data-badge", "children"), Output("data-badge", "color")],
-    Input("job-ids", "data"),
+    [Input("job-ids", "data"), Input("current-page-status", "data"), Input("current-page", "data")],
     background=True,
 )
-def wait_queries(job_ids):
-    # TODO add docstring to function
+def wait_queries(job_metadata, page_status, current_page):
+    """
+    Wait for all queries to complete and update the global data badge.
 
-    jobs = [AsyncResult(j_id) for j_id in job_ids]
+    Shows priority status for current page first, then global status.
+    Refactored to use helper utilities following SRP and DRY principles.
 
-    # Add timeout protection to prevent infinite waiting
-    start_time = time.time()
-    max_wait_time = 600  # 10 minutes timeout
+    Args:
+        job_metadata: Dict mapping {query_name: job_id}
+        page_status: Status of current page queries (ready/failed/timeout/idle)
+        current_page: Current page path (used for context in logging)
 
-    # default 'result_expires' for celery config is 86400 seconds.
-    # so we don't have to check if the jobs exist. if this tasks
-    # is enqueued 24 hours after the query-worker tasks finish
-    # then we have a big problem. However, we should 'forget' all
-    # results before we exit.
+    Returns:
+        Tuple of (badge_text, badge_color)
+    """
+    if not job_metadata:
+        return BADGE_TEXT_NO_DATA, BADGE_COLOR_SECONDARY
 
-    while True:
-        # Check for timeout to prevent SoftTimeLimitExceeded
-        if time.time() - start_time > max_wait_time:
-            logging.warning(f"wait_queries: Timeout after {max_wait_time}s - returning timeout status")
-            jobs = [j.forget() for j in jobs]
-            return "Timeout - Retry", "warning"
+    # If current page is ready, show page-specific status
+    if page_status == PAGE_STATUS_READY:
+        # Check if ALL queries are done for global status
+        if check_all_jobs_complete(job_metadata):
+            return BADGE_TEXT_ALL_READY, BADGE_COLOR_READY
+        else:
+            return BADGE_TEXT_PAGE_READY, BADGE_COLOR_LOADING
+    elif page_status == PAGE_STATUS_FAILED:
+        return BADGE_TEXT_PAGE_FAILED, BADGE_COLOR_ERROR
+    elif page_status == PAGE_STATUS_TIMEOUT:
+        return BADGE_TEXT_PAGE_TIMEOUT, BADGE_COLOR_WARNING
 
-        logging.warning([(j.name, j.status) for j in jobs])
+    # Create AsyncResult objects for non-cached jobs
+    jobs, query_names = create_async_results_from_metadata(job_metadata)
 
-        # jobs are either all ready
-        if all(j.successful() for j in jobs):
-            logging.warning([(j.name, j.status) for j in jobs])
-            jobs = [j.forget() for j in jobs]
-            return "Data Ready", "#0F5880"
+    # If all queries were cached, we're done
+    if not jobs:
+        return BADGE_TEXT_DATA_READY, BADGE_COLOR_READY
 
-        # or one of them has failed
-        if any(j.failed() for j in jobs):
-            # if a job fails, we need to wait for the others to finish before
-            # we can 'forget' them. otherwise to-be-successful jobs will always
-            # be forgotten if one fails.
+    # Wait for all jobs to complete
+    status, message = wait_for_job_completion(jobs, query_names, context="wait_queries")
 
-            # tasks need to have either failed or succeeded before being forgotten.
-            while True:
-                num_succeeded = [j.successful() for j in jobs].count(True)
-                num_failed = [j.failed() for j in jobs].count(True)
-                num_total = num_failed + num_succeeded
+    # Note: We don't forget jobs here because wait_current_page_queries might still need them
+    # Celery will clean them up automatically based on result_expires config (24 hours)
 
-                if num_total == len(jobs):
-                    break
+    # Map status to badge text and color
+    if status == PAGE_STATUS_READY:
+        return BADGE_TEXT_DATA_READY, BADGE_COLOR_READY
+    elif status == PAGE_STATUS_FAILED:
+        return BADGE_TEXT_DATA_INCOMPLETE, BADGE_COLOR_ERROR
+    elif status == PAGE_STATUS_TIMEOUT:
+        return BADGE_TEXT_TIMEOUT_RETRY, BADGE_COLOR_WARNING
+    else:
+        return BADGE_TEXT_NO_DATA, BADGE_COLOR_SECONDARY
 
-                time.sleep(4.0)
 
-            jobs = [j.forget() for j in jobs]
-            return "Data Incomplete- Retry", "danger"
+@callback(
+    Output("current-page", "data"),
+    Input("url", "pathname"),
+)
+def track_current_page(pathname):
+    """Track which page the user is currently on for priority loading."""
+    return pathname
 
-        # pause to let something change
-        time.sleep(2.0)
+
+@callback(
+    Output("current-page-status", "data"),
+    [Input("current-page", "data"), Input("job-ids", "data"), Input("repo-choices", "data")],
+    background=True,
+)
+def wait_current_page_queries(current_page, job_metadata, repos):
+    """
+    Wait for the current page's queries to complete with high priority.
+
+    This runs in the background and aggressively polls only the queries needed
+    for the current page, enabling faster page load times.
+    Refactored to use helper utilities following SRP and DRY principles.
+
+    Args:
+        current_page: URL path of current page (e.g., "/contributions")
+        job_metadata: Dict mapping {query_name: job_id}
+        repos: List of repo IDs being queried
+
+    Returns:
+        Status string: "idle", "ready", "failed", or "timeout"
+    """
+    if not current_page or not job_metadata or not repos:
+        return PAGE_STATUS_IDLE
+
+    # Get the queries needed for the current page
+    page_query_names = get_page_query_names(current_page)
+
+    if not page_query_names:
+        logging.info(f"No queries mapped for page: {current_page}")
+        return PAGE_STATUS_IDLE
+
+    # Create AsyncResult objects for current page queries only
+    jobs, query_names = create_async_results_from_metadata(job_metadata, page_query_names)
+
+    # If all current page queries are cached
+    if not jobs:
+        logging.info(f"All queries for {current_page} are cached")
+        return PAGE_STATUS_READY
+
+    logging.info(f"Waiting for {len(jobs)} queries for page: {current_page}")
+
+    # Wait with aggressive polling for current page (faster than background queries)
+    status, message = wait_for_job_completion(
+        jobs,
+        query_names,
+        poll_interval=CURRENT_PAGE_POLL_INTERVAL,  # 0.5s - faster polling
+        max_wait_time=MAX_QUERY_WAIT_TIME,
+        context=current_page,
+    )
+
+    # Note: We don't forget jobs here as they may still be needed by wait_queries()
+    # Celery will clean them up automatically based on result_expires config
+
+    return status
 
 
 @callback(
@@ -619,6 +729,8 @@ def run_queries(repos):
     Executes queries defined in /queries against Augur
     instance for input Repos; caches results in Postgres.
 
+    Returns a dict mapping query names to job IDs for tracking.
+
     Args:
         repos ([int]): repositories we collect data for.
     """
@@ -629,23 +741,26 @@ def run_queries(repos):
     # list of queries to process
     funcs = QUERIES
 
-    # list of job promises
-    jobs = []
+    # dict to store job metadata: {query_name: job_id}
+    job_metadata = {}
 
     for f in funcs:
         # only download repos that aren't currently in cache
         not_ready = cf.get_uncached(f.__name__, repos)
         if len(not_ready) == 0:
             logging.warning(f"{f.__name__} - NO DISPATCH - ALL REPOS IN CACHE")
+            # Mark as cached/complete
+            job_metadata[f.__name__] = QUERY_STATUS_CACHED
             continue
 
         # add job to queue
         j = f.apply_async(args=[not_ready], queue="data")
 
-        # add job promise to local promise list
-        jobs.append(j)
+        # store job ID with query name
+        job_metadata[f.__name__] = j.id
+        logging.info(f"{f.__name__} - DISPATCHED - Job ID: {j.id}")
 
-    return [j.id for j in jobs]
+    return job_metadata
 
 
 # Add a cache initialization callback that runs on page load

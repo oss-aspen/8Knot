@@ -2,6 +2,7 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 from dash import callback
 from dash.dependencies import Input, Output, State
+from typing import List, Optional, Tuple, Union
 import pandas as pd
 import numpy as np
 import logging

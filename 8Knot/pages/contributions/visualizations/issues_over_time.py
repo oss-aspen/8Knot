@@ -1,14 +1,14 @@
 from dash import dcc, callback
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
+from typing import List, Optional, Tuple, Union
 import plotly.graph_objects as go
 import pandas as pd
 import logging
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from pages.utils.job_utils import nodata_graph
+from pages.utils.query_status import load_query_data
 from queries.issues_query import issues_query as iq
-import time
-import cache_manager.cache_facade as cf
 import datetime as dt
 from components.visualization import VisualizationAIO
 
@@ -92,25 +92,12 @@ gc_issues_over_time = VisualizationAIO(
     ],
     background=True,
 )
-def issues_over_time_graph(repolist, interval, start_date, end_date):
-    # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=iq.__name__, repolist=repolist):
-        logging.warning(f"ISSUES OVER TIME - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
-
-    # data ready.
-    start = time.perf_counter()
-    logging.warning("ISSUES OVER TIME - START")
-
-    # GET ALL DATA FROM POSTGRES CACHE
-    df = cf.retrieve_from_cache(
-        tablename=iq.__name__,
-        repolist=repolist,
-    )
-
-    # test if there is data
-    if df.empty:
-        logging.warning("ISSUES OVER TIME - NO DATA AVAILABLE")
+def issues_over_time_graph(
+    repolist: List[int], interval, start_date: Optional[str], end_date: Optional[str]
+) -> Tuple[go.Figure, bool]:
+    # Wait for and load query data (includes timeout, error handling, and validation)
+    df = load_query_data(iq, repolist, VIZ_ID)
+    if df is None:
         return nodata_graph
 
     # function for all data pre processing
@@ -118,12 +105,10 @@ def issues_over_time_graph(repolist, interval, start_date, end_date):
 
     fig = create_figure(df_created, df_closed, df_open, interval)
 
-    logging.warning(f"ISSUES_OVER_TIME_VIZ - END - {time.perf_counter() - start}")
-
     return fig
 
 
-def process_data(df: pd.DataFrame, interval, start_date, end_date):
+def process_data(df: pd.DataFrame, interval, start_date: Optional[str], end_date: Optional[str]) -> pd.DataFrame:
     # convert to datetime objects rather than strings
     df["created_at"] = pd.to_datetime(df["created_at"], utc=False)
     df["closed_at"] = pd.to_datetime(df["closed_at"], utc=False)
@@ -192,7 +177,7 @@ def process_data(df: pd.DataFrame, interval, start_date, end_date):
     return df_created, df_closed, df_open
 
 
-def create_figure(df_created: pd.DataFrame, df_closed: pd.DataFrame, df_open: pd.DataFrame, interval):
+def create_figure(df_created: pd.DataFrame, df_closed: pd.DataFrame, df_open: pd.DataFrame, interval) -> go.Figure:
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 

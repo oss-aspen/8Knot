@@ -2,10 +2,10 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 from dash import callback
 from dash.dependencies import Input, Output, State
+from typing import List, Optional, Tuple, Union
 from db_manager.augur_manager import AugurManager
 import numpy as np
 import pandas as pd
-
 
 # card for number of open issues in the selected repo set
 issue_open = dbc.Card(
@@ -86,7 +86,6 @@ issue_closed_age = dbc.Card(
     ],
     className="box_emissions",
 )
-
 
 gc_issue_metrics = dbc.Card(
     [

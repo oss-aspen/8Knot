@@ -1,18 +1,19 @@
 from dash import dcc, callback
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
+from typing import List, Optional, Tuple, Union
 import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
+import plotly.graph_objects as go
 from pages.utils.graph_utils import baby_blue
 from queries.affiliation_query import affiliation_query as aq
 from pages.utils.job_utils import nodata_graph
-import time
+from pages.utils.query_status import load_query_data
 import datetime as dt
 from rapidfuzz import fuzz
 import app
-import cache_manager.cache_facade as cf
 from components.visualization import VisualizationAIO
 
 PAGE = "affiliation"
@@ -76,23 +77,12 @@ gc_gh_org_affiliation = VisualizationAIO(
     ],
     background=True,
 )
-def gh_org_affiliation_graph(repolist, num, start_date, end_date, bot_switch):
-    # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=aq.__name__, repolist=repolist):
-        logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
-
-    start = time.perf_counter()
-    logging.warning(f"{VIZ_ID}- START")
-
-    # GET ALL DATA FROM POSTGRES CACHE
-    df = cf.retrieve_from_cache(
-        tablename=aq.__name__,
-        repolist=repolist,
-    )
-    # test if there is data
-    if df.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
+def gh_org_affiliation_graph(
+    repolist: List[int], num, start_date: Optional[str], end_date, bot_switch: bool
+) -> Tuple[go.Figure, bool]:
+    # Wait for and load query data (includes timeout, error handling, and validation)
+    df = load_query_data(aq, repolist, VIZ_ID)
+    if df is None:
         return nodata_graph
 
     # remove bot data
@@ -103,12 +93,10 @@ def gh_org_affiliation_graph(repolist, num, start_date, end_date, bot_switch):
     df = process_data(df, num, start_date, end_date)
 
     fig = create_figure(df)
-
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
 
-def process_data(df: pd.DataFrame, num, start_date, end_date):
+def process_data(df: pd.DataFrame, num, start_date: Optional[str], end_date: Optional[str]) -> pd.DataFrame:
     """Implement your custom data-processing logic in this function.
     The output of this function is the data you intend to create a visualization with,
     requiring no further processing."""
@@ -183,7 +171,7 @@ def fuzzy_match(df, name):
     return [i for i, x in enumerate(matches) if x]
 
 
-def create_figure(df: pd.DataFrame):
+def create_figure(df: pd.DataFrame) -> go.Figure:
     # graph generation
     fig = px.pie(
         df,

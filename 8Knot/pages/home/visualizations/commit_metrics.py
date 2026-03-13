@@ -2,6 +2,7 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 from dash import callback
 from dash.dependencies import Input, Output, State
+from typing import List, Optional, Tuple, Union
 from db_manager.augur_manager import AugurManager
 
 # card for commit total for selected repos
@@ -84,7 +85,6 @@ commit_files = dbc.Card(
     className="box_emissions",
 )
 
-
 gc_commit_metrics = dbc.Card(
     [
         dbc.CardBody(
@@ -107,7 +107,6 @@ gc_commit_metrics = dbc.Card(
         ),
     ],
 )
-
 
 # callbacks below are for the specific queries for these cards
 

@@ -1,17 +1,18 @@
 from dash import dcc, callback
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
+from typing import List, Optional, Tuple, Union
 import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
+import plotly.graph_objects as go
 from pages.utils.graph_utils import baby_blue
 from queries.affiliation_query import affiliation_query as aq
 from pages.utils.job_utils import nodata_graph
-import time
+from pages.utils.query_status import load_query_data
 import datetime as dt
 import app
-import cache_manager.cache_facade as cf
 from components.visualization import VisualizationAIO
 
 PAGE = "affiliation"
@@ -116,7 +117,9 @@ gc_org_associated_activity = VisualizationAIO(
     ],
     background=True,
 )
-def org_associated_activity_graph(repolist, num, start_date, end_date, email_filter, bot_switch):
+def org_associated_activity_graph(
+    repolist: List[int], num, start_date: Optional[str], end_date, email_filter, bot_switch: bool
+) -> Tuple[go.Figure, bool]:
     """Each contribution is associated with a contributor. That contributor can be associated with
 
     more than one different email. Hence each contribution is associated with all of the emails that a contributor has historically used.
@@ -129,24 +132,8 @@ def org_associated_activity_graph(repolist, num, start_date, end_date, email_fil
 
     will have many emails. We acknowledge that this will almost always contribute to an overcount but will never undercount."
     """
-
-    # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=aq.__name__, repolist=repolist):
-        logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
-
-    start = time.perf_counter()
-    logging.warning(f"{VIZ_ID}- START")
-
-    # GET ALL DATA FROM POSTGRES CACHE
-    df = cf.retrieve_from_cache(
-        tablename=aq.__name__,
-        repolist=repolist,
-    )
-
-    # test if there is data
-    if df.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
+    df = load_query_data(aq, repolist, VIZ_ID)
+    if df is None:
         return nodata_graph
 
     # remove bot data
@@ -157,12 +144,10 @@ def org_associated_activity_graph(repolist, num, start_date, end_date, email_fil
     df = process_data(df, num, start_date, end_date, email_filter)
 
     fig = create_figure(df)
-
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
 
-def process_data(df: pd.DataFrame, num, start_date, end_date, email_filter):
+def process_data(df: pd.DataFrame, num, start_date: Optional[str], end_date, email_filter):
     # convert to datetime objects rather than strings
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
 
@@ -214,7 +199,7 @@ def process_data(df: pd.DataFrame, num, start_date, end_date, email_filter):
     return df
 
 
-def create_figure(df: pd.DataFrame):
+def create_figure(df: pd.DataFrame) -> go.Figure:
     # graph generation
     fig = px.bar(df, x="domains", y="occurrences", color_discrete_sequence=[baby_blue[8]])
     fig.update_xaxes(rangeslider_visible=True, range=[-0.5, 15])

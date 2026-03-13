@@ -2,6 +2,7 @@ from dash import callback
 import dash
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
+from typing import List, Optional, Tuple, Union
 import plotly.graph_objects as go
 import pandas as pd
 import logging
@@ -9,11 +10,10 @@ from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from pages.utils.job_utils import nodata_graph
-import time
+from pages.utils.query_status import load_query_data
 import app
 from queries.contributors_query import contributors_query as ctq
 import pages.utils.preprocessing_utils as preproc_utils
-import cache_manager.cache_facade as cf
 from components.visualization import VisualizationAIO
 
 PAGE = "contributors"
@@ -125,7 +125,9 @@ gc_active_drifting_contributors = VisualizationAIO(
     ],
     background=True,
 )
-def active_drifting_contributors_graph(repolist, interval, drift_interval, away_interval, bot_switch):
+def active_drifting_contributors_graph(
+    repolist: List[int], interval, drift_interval: int, away_interval, bot_switch: bool
+) -> Tuple[go.Figure, bool]:
     # conditional for the intervals to be valid options
     if drift_interval is None or away_interval is None:
         return dash.no_update, dash.no_update
@@ -133,26 +135,12 @@ def active_drifting_contributors_graph(repolist, interval, drift_interval, away_
     if drift_interval > away_interval:
         return dash.no_update, True
 
-    # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=ctq.__name__, repolist=repolist):
-        logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
-
-    logging.warning(f"{VIZ_ID} - START")
-    start = time.perf_counter()
-
-    # GET ALL DATA FROM POSTGRES CACHE
-    df = cf.retrieve_from_cache(
-        tablename=ctq.__name__,
-        repolist=repolist,
-    )
+    # Wait for and load query data (includes timeout, error handling, and validation)
+    df = load_query_data(ctq, repolist, VIZ_ID)
+    if df is None:
+        return nodata_graph, False
 
     df = preproc_utils.contributors_df_action_naming(df)
-
-    # test if there is data
-    if df.empty:
-        logging.warning("ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH - NO DATA AVAILABLE")
-        return nodata_graph, False
 
     # remove bot data
     if bot_switch:
@@ -162,12 +150,10 @@ def active_drifting_contributors_graph(repolist, interval, drift_interval, away_
     df_status = process_data(df, interval, drift_interval, away_interval)
 
     fig = create_figure(df_status, interval)
-
-    logging.warning(f"ACTIVE_DRIFTING_CONTRIBUTOR_GROWTH_VIZ - END - {time.perf_counter() - start}")
     return fig, False
 
 
-def process_data(df: pd.DataFrame, interval, drift_interval, away_interval):
+def process_data(df: pd.DataFrame, interval, drift_interval: int, away_interval: int) -> pd.DataFrame:
     # convert to datetime objects with consistent column name
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
     # df.rename(columns={"created_at": "created"}, inplace=True)
@@ -202,7 +188,7 @@ def process_data(df: pd.DataFrame, interval, drift_interval, away_interval):
     return df_status
 
 
-def create_figure(df_status: pd.DataFrame, interval):
+def create_figure(df_status: pd.DataFrame, interval) -> go.Figure:
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 

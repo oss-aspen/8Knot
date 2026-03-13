@@ -2,6 +2,7 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import callback
 from dash.dependencies import Input, Output
+from typing import List, Optional, Tuple, Union
 import plotly.graph_objects as go
 import pandas as pd
 import logging
@@ -9,9 +10,8 @@ from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from pages.utils.job_utils import nodata_graph
+from pages.utils.query_status import load_query_data
 from queries.prs_query import prs_query as prq
-import time
-import cache_manager.cache_facade as cf
 from components.visualization import VisualizationAIO
 
 PAGE = "contributions"
@@ -120,7 +120,7 @@ gc_pr_staleness = VisualizationAIO(
     ],
     background=True,
 )
-def new_staling_prs_graph(repolist, interval, staling_interval, stale_interval):
+def new_staling_prs_graph(repolist: List[int], interval, staling_interval, stale_interval):
     # conditional for the intervals to be valid options
     if staling_interval > stale_interval:
         return dash.no_update, True
@@ -128,31 +128,15 @@ def new_staling_prs_graph(repolist, interval, staling_interval, stale_interval):
     if staling_interval is None or stale_interval is None:
         return dash.no_update, dash.no_update
 
-    # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=prq.__name__, repolist=repolist):
-        logging.warning(f"PULL REQUESTS STALENESS - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
-
-    start = time.perf_counter()
-    logging.warning("PULL REQUEST STALENESS - START")
-
-    # GET ALL DATA FROM POSTGRES CACHE
-    df = cf.retrieve_from_cache(
-        tablename=prq.__name__,
-        repolist=repolist,
-    )
-
-    # test if there is data
-    if df.empty:
-        logging.warning("PULL REQUEST STALENESS  - NO DATA AVAILABLE")
+    # Wait for and load query data (includes timeout, error handling, and validation)
+    df = load_query_data(prq, repolist, VIZ_ID)
+    if df is None:
         return nodata_graph, False
 
     # function for all data pre processing
     df_status = process_data(df, interval, staling_interval, stale_interval)
 
     fig = create_figure(df_status, interval)
-
-    logging.warning(f"PULL REQUEST STALENESS - END - {time.perf_counter() - start}")
     return fig, False
 
 
@@ -193,7 +177,7 @@ def process_data(df: pd.DataFrame, interval, staling_interval, stale_interval):
     return df_status
 
 
-def create_figure(df_status: pd.DataFrame, interval):
+def create_figure(df_status: pd.DataFrame, interval) -> go.Figure:
     # time values for graph
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
