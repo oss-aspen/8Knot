@@ -273,7 +273,7 @@ def _create_application_tables() -> None:
             """
             CREATE UNLOGGED TABLE IF NOT EXISTS pr_file_query(
                 file_path text,
-                pull_request int,
+                pull_request_id int,
                 repo_id int
             )
             """
