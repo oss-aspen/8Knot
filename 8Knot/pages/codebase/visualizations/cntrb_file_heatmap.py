@@ -338,10 +338,20 @@ def create_figure(df: pd.DataFrame):
         color_continuous_scale=heatmap_color_scale,
     )
 
-    fig["layout"]["yaxis"]["tickmode"] = "linear"
-    fig["layout"]["height"] = 700
-    fig["layout"]["coloraxis_colorbar_x"] = -0.15
-    fig["layout"]["yaxis"]["side"] = "right"
+    fig.update_layout(
+        height=700,
+        font=dict(size=14),
+        xaxis_title="Time",
+        yaxis_title="Directory Entries",
+        yaxis=dict(tickmode="linear", side="right"),
+        coloraxis_colorbar_x=-0.15,
+        coloraxis=dict(
+            colorbar=dict(
+                tickfont=dict(color="white"),
+                title=dict(font=dict(color="white")),
+            )
+        ),
+    )
 
     return fig
 
