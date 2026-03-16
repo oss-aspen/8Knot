@@ -7,8 +7,7 @@ import plotly.graph_objects as go
 import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
-import plotly.express as px
-from pages.utils.graph_utils import get_graph_time_values, color_seq, heatmap_color_scale
+from pages.utils.graph_utils import create_heatmap_figure, get_graph_time_values, color_seq
 from queries.contributors_query import contributors_query as cnq
 from queries.cntrb_per_file_query import cntrb_per_file_query as cpfq
 from queries.repo_files_query import repo_files_query as rfq
@@ -332,28 +331,7 @@ def process_data(
 
 
 def create_figure(df: pd.DataFrame):
-    fig = px.imshow(
-        df,
-        labels=dict(x="Time", y="Directory Entries", color="Contributors"),
-        color_continuous_scale=heatmap_color_scale,
-    )
-
-    fig.update_layout(
-        height=700,
-        font=dict(size=14),
-        xaxis_title="Time",
-        yaxis_title="Directory Entries",
-        yaxis=dict(tickmode="linear", side="right"),
-        coloraxis_colorbar_x=-0.15,
-        coloraxis=dict(
-            colorbar=dict(
-                tickfont=dict(color="white"),
-                title=dict(font=dict(color="white")),
-            )
-        ),
-    )
-
-    return fig
+    return create_heatmap_figure(df, color_label="Contributors")
 
 
 def df_file_clean(df_file: pd.DataFrame, df_file_cntbs: pd.DataFrame, bot_switch):

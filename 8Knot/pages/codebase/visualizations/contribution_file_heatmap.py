@@ -7,8 +7,7 @@ import plotly.graph_objects as go
 import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
-import plotly.express as px
-from pages.utils.graph_utils import heatmap_color_scale
+from pages.utils.graph_utils import create_heatmap_figure
 from queries.prs_query import prs_query as prq
 from queries.pr_files_query import pr_file_query as prfq
 from queries.repo_files_query import repo_files_query as rfq
@@ -340,32 +339,8 @@ def process_data(
 
 
 def create_figure(df: pd.DataFrame, graph_view):
-    legend_title = "PRs Opened"
-    if graph_view == "merged_at":
-        legend_title = "PRs Merged"
-
-    fig = px.imshow(
-        df,
-        labels=dict(x="Time", y="Directory Entries", color=legend_title),
-        color_continuous_scale=heatmap_color_scale,
-    )
-
-    fig.update_layout(
-        height=700,
-        font=dict(size=14),
-        xaxis_title="Time",
-        yaxis_title="Directory Entries",
-        yaxis=dict(tickmode="linear", side="right"),
-        coloraxis_colorbar_x=-0.15,
-        coloraxis=dict(
-            colorbar=dict(
-                tickfont=dict(color="white"),
-                title=dict(font=dict(color="white")),
-            )
-        ),
-    )
-
-    return fig
+    color_label = "PRs Merged" if graph_view == "merged_at" else "PRs Opened"
+    return create_heatmap_figure(df, color_label=color_label)
 
 
 def df_file_clean(df_file: pd.DataFrame, df_file_pr: pd.DataFrame):
