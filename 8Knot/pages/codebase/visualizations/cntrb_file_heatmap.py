@@ -8,7 +8,7 @@ import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
-from pages.utils.graph_utils import get_graph_time_values, color_seq
+from pages.utils.graph_utils import get_graph_time_values, color_seq, heatmap_color_scale
 from queries.contributors_query import contributors_query as cnq
 from queries.cntrb_per_file_query import cntrb_per_file_query as cpfq
 from queries.repo_files_query import repo_files_query as rfq
@@ -335,7 +335,7 @@ def create_figure(df: pd.DataFrame):
     fig = px.imshow(
         df,
         labels=dict(x="Time", y="Directory Entries", color="Contributors"),
-        color_continuous_scale=px.colors.sequential.deep,
+        color_continuous_scale=heatmap_color_scale,
     )
 
     fig["layout"]["yaxis"]["tickmode"] = "linear"

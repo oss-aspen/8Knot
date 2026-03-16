@@ -8,6 +8,7 @@ import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
+from pages.utils.graph_utils import heatmap_color_scale
 from queries.prs_query import prs_query as prq
 from queries.pr_files_query import pr_file_query as prfq
 from queries.repo_files_query import repo_files_query as rfq
@@ -346,7 +347,7 @@ def create_figure(df: pd.DataFrame, graph_view):
     fig = px.imshow(
         df,
         labels=dict(x="Time", y="Directory Entries", color=legend_title),
-        color_continuous_scale=px.colors.sequential.deep,
+        color_continuous_scale=heatmap_color_scale,
     )
 
     fig["layout"]["yaxis"]["tickmode"] = "linear"

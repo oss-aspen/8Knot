@@ -25,6 +25,9 @@ baby_blue = [
     "#B54708",  # Yellow 700 - dark yellow
 ]
 
+# Sequential color scale for heatmaps (light -> dark blue, matches app theme)
+heatmap_color_scale = [baby_blue[0], baby_blue[2], baby_blue[4], baby_blue[6], baby_blue[8]]
+
 
 def get_graph_time_values(interval):
     """
