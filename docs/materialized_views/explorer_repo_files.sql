@@ -1,6 +1,6 @@
 /* This is the SQL query that populates the explorer_repo_files materialized view*/
 SELECT
-    rl.repo_id AS id,
+    rl.repo_id,
     r.repo_name,
     r.repo_path,
     rl.rl_analysis_date,

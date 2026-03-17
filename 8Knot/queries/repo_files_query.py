@@ -37,7 +37,7 @@ def repo_files_query(self, repos):
     # Use pre-computed materialized view for faster performance
     query_string = """
                     SELECT
-                        id AS repo_id,
+                        repo_id,
                         repo_name,
                         repo_path,
                         rl_analysis_date,
