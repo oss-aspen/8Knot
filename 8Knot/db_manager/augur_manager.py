@@ -112,7 +112,8 @@ class AugurManager:
         engine = salc.create_engine(
             database_connection_string,
             connect_args={
-                "options": "-csearch_path={}".format(self.schema)
+                "options": "-csearch_path={}".format(self.schema),
+                "application_name": f"8Knot"
             },
             pool_pre_ping=True,
         )
