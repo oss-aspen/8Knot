@@ -111,7 +111,9 @@ class AugurManager:
 
         engine = salc.create_engine(
             database_connection_string,
-            connect_args={"options": "-csearch_path={}".format(self.schema)},
+            connect_args={
+                "options": "-csearch_path={}".format(self.schema)
+            },
             pool_pre_ping=True,
         )
 
