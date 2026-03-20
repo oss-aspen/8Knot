@@ -13,7 +13,7 @@ from queries.contributors_query import contributors_query as cnq
 from queries.cntrb_per_file_query import cntrb_per_file_query as cpfq
 from queries.repo_files_query import repo_files_query as rfq
 from app import augur
-from pages.utils.job_utils import nodata_graph
+from pages.utils.job_utils import nodata_graph, get_default_repo_with_data
 import pages.utils.preprocessing_utils as preproc_u
 import time
 from dash.exceptions import PreventUpdate
@@ -145,9 +145,13 @@ def repo_dropdown(repo_ids):
     # array to hold repo_id and git url pairing for dropdown
     data_array = []
     for repo_id in repo_ids:
-        entry = {"value": repo_id, "label": augur.repo_id_to_git(repo_id)}
+        entry = {"value": str(repo_id), "label": augur.repo_id_to_git(repo_id)}
         data_array.append(entry)
-    return data_array, repo_ids[0]
+
+    # Select first repo with valid cached data as default
+    default = get_default_repo_with_data(repo_ids, rfq.__name__)
+
+    return data_array, default
 
 
 # callback for populating directory drop down
@@ -160,7 +164,11 @@ def repo_dropdown(repo_ids):
     background=True,
 )
 def directory_dropdown(repo_id):
+    # Convert to int since Mantine dropdown returns strings
+    repo_id = int(repo_id)
+
     # wait for data to asynchronously download and become available.
+    logging.warning(f"DIRECTORY DROPDOWN - WAITING FOR DATA TO LOAD")
     while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=[repo_id]):
         logging.warning(f"DIRECTORY DROPDOWN - WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
@@ -235,6 +243,9 @@ def directory_dropdown(repo_id):
 def cntrb_file_heatmap_graph(searchbar_repos, repo_id, directory, bot_switch):
     start = time.perf_counter()
     logging.warning(f"{VIZ_ID}- START")
+
+    # Convert to int since Mantine dropdown returns strings
+    repo_id = int(repo_id)
 
     # get dataframes of data from cache
     df_file, df_actions, df_file_cntbs = multi_query_helper(searchbar_repos, [repo_id])
