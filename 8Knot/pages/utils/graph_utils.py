@@ -1,5 +1,8 @@
 import datetime as dt
 
+import pandas as pd
+import plotly.express as px
+
 # list of graph color hex
 color_seq = [
     "#B5B682",  # sage
@@ -24,6 +27,39 @@ baby_blue = [
     "#FEDF89",  # Yellow 200 - light yellow
     "#B54708",  # Yellow 700 - dark yellow
 ]
+
+# Sequential color scale for heatmaps (light -> dark blue, matches app theme)
+heatmap_color_scale = [baby_blue[0], baby_blue[2], baby_blue[4], baby_blue[6], baby_blue[8]]
+
+
+def create_heatmap_figure(
+    df: pd.DataFrame,
+    color_label: str,
+    x_label: str = "Time",
+    y_label: str = "Directory Entries",
+):
+    """Build heatmap layout shared by codebase heatmaps. Cell NaNs are OK (missing months)."""
+
+    fig = px.imshow(
+        df,
+        labels=dict(x=x_label, y=y_label, color=color_label),
+        color_continuous_scale=heatmap_color_scale,
+    )
+    fig.update_layout(
+        height=700,
+        font=dict(size=14),
+        xaxis_title=x_label,
+        yaxis_title=y_label,
+        yaxis=dict(tickmode="linear", side="right"),
+        coloraxis_colorbar_x=-0.15,
+        coloraxis=dict(
+            colorbar=dict(
+                tickfont=dict(color="white"),
+                title=dict(font=dict(color="white")),
+            )
+        ),
+    )
+    return fig
 
 
 def get_graph_time_values(interval):
