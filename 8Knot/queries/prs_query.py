@@ -32,13 +32,13 @@ def prs_query(self, repos):
                     SELECT
                         r.repo_id,
                         r.repo_name,
-                        pr.pull_request_id AS pull_request,
+                        pr.pull_request_id,
                         pr.pr_src_number,
                         left(pr.pr_augur_contributor_id::text, 15) as cntrb_id,
                         -- values are timestamp not timestamptz
-                        pr.pr_created_at AS created,
-                        pr.pr_closed_at AS closed,
-                        pr.pr_merged_at AS merged
+                        pr.pr_created_at AS created_at,
+                        pr.pr_closed_at AS closed_at,
+                        pr.pr_merged_at AS merged_at
                     FROM
                         repo r,
                         pull_requests pr

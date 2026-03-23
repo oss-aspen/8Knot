@@ -12,7 +12,7 @@ from queries.prs_query import prs_query as prq
 from queries.pr_files_query import pr_file_query as prfq
 from queries.repo_files_query import repo_files_query as rfq
 from app import augur
-from pages.utils.job_utils import nodata_graph
+from pages.utils.job_utils import nodata_graph, get_default_repo_with_data
 import time
 import cache_manager.cache_facade as cf
 from components.visualization import VisualizationAIO
@@ -106,9 +106,13 @@ def repo_dropdown(repo_ids):
     # array to hold repo_id and git url pairing for dropdown
     data_array = []
     for repo_id in repo_ids:
-        entry = {"value": repo_id, "label": augur.repo_id_to_git(repo_id)}
+        entry = {"value": str(repo_id), "label": augur.repo_id_to_git(repo_id)}
         data_array.append(entry)
-    return data_array, repo_ids[0]
+
+    # Select first repo with valid cached data as default
+    default = get_default_repo_with_data(repo_ids, rfq.__name__)
+
+    return data_array, default
 
 
 # callback for populating directory drop down
@@ -349,7 +353,7 @@ def df_file_clean(df_file: pd.DataFrame, df_file_pr: pd.DataFrame):
     df_file_pr.drop(["repo_id"], axis=1, inplace=True)
 
     # create column with list of prs per file path
-    df_file_pr = df_file_pr.groupby("file_path")["pull_request_id"].apply(list)
+    df_file_pr = df_file_pr.groupby("file_path")["pull_request"].apply(list)
 
     # Left join on df_files to only get the files that are currently in the repository
     # and the prs that included edits on the file
@@ -385,7 +389,7 @@ def pr_per_directory_value(directory, df_file):
     df_dynamic_directory = df_file[df_file["file_path"].str.startswith(directory)]
 
     # test if there is any pull requests in the directory
-    if df_dynamic_directory.pull_request_id.isnull().all():
+    if df_dynamic_directory.pull_request.isnull().all():
         return pd.DataFrame()
 
     # get one level up from the directory level
@@ -394,18 +398,18 @@ def pr_per_directory_value(directory, df_file):
     # Groupby the level above the selected directory for all files nested in folders are together.
     # For each, create a list of all of the contributors who have contributed
     df_dynamic_directory = (
-        df_dynamic_directory.groupby(group_column)["pull_request_id"]
+        df_dynamic_directory.groupby(group_column)["pull_request"]
         .sum()
         .reset_index()
         .rename(columns={group_column: "directory_value"})
     )
 
     # reformat 0 to "" for later processing
-    df_dynamic_directory.loc[df_dynamic_directory.pull_request_id == 0, "pull_request_id"] = ""
+    df_dynamic_directory.loc[df_dynamic_directory.pull_request == 0, "pull_request"] = ""
 
     # Set of pull_request to confirm there are no duplicate pull requests
-    df_dynamic_directory["pull_request_id"] = df_dynamic_directory.apply(
-        lambda row: set(row.pull_request_id),
+    df_dynamic_directory["pull_request"] = df_dynamic_directory.apply(
+        lambda row: set(row.pull_request),
         axis=1,
     )
     return df_dynamic_directory
@@ -449,8 +453,8 @@ def pr_to_dates(df_pr: pd.DataFrame, df_dynamic_directory: pd.DataFrame, graph_v
     df_dynamic_directory["created_at"], df_dynamic_directory["merged_at"] = zip(
         *df_dynamic_directory.apply(
             lambda row: [
-                [pr_open[x] for x in row.pull_request_id],
-                [pr_merged[x] for x in row.pull_request_id if (not pd.isnull(pr_merged[x]))],
+                [pr_open[x] for x in row.pull_request],
+                [pr_merged[x] for x in row.pull_request if (not pd.isnull(pr_merged[x]))],
             ],
             axis=1,
         )

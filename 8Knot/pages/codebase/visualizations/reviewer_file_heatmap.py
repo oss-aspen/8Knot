@@ -12,7 +12,7 @@ from queries.contributors_query import contributors_query as cnq
 from queries.cntrb_per_file_query import cntrb_per_file_query as cpfq
 from queries.repo_files_query import repo_files_query as rfq
 from app import augur
-from pages.utils.job_utils import nodata_graph
+from pages.utils.job_utils import nodata_graph, get_default_repo_with_data
 import pages.utils.preprocessing_utils as preproc_u
 import time
 import app
@@ -91,9 +91,13 @@ def repo_dropdown(repo_ids):
     # array to hold repo_id and git url pairing for dropdown
     data_array = []
     for repo_id in repo_ids:
-        entry = {"value": repo_id, "label": augur.repo_id_to_git(repo_id)}
+        entry = {"value": str(repo_id), "label": augur.repo_id_to_git(repo_id)}
         data_array.append(entry)
-    return data_array, repo_ids[0]
+
+    # Select first repo with valid cached data as default
+    default = get_default_repo_with_data(repo_ids, rfq.__name__)
+
+    return data_array, default
 
 
 # callback for populating directory drop down
