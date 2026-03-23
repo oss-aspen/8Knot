@@ -110,12 +110,11 @@ def repo_dropdown(repo_ids):
     background=True,
 )
 def directory_dropdown(repo_id):
-    if repo_id is None:
-        return ["Top Level Directory"], "Top Level Directory"
     # Convert to int since Mantine dropdown returns strings
     repo_id = int(repo_id)
 
     # wait for data to asynchronously download and become available.
+    logging.warning(f"DIRECTORY DROPDOWN - WAITING FOR DATA TO LOAD")
     while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=[repo_id]):
         logging.warning(f"DIRECTORY DROPDOWN - WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
@@ -191,8 +190,6 @@ def reviewer_file_heatmap_graph(searchbar_repos, repo_id, directory, bot_switch)
     start = time.perf_counter()
     logging.warning(f"{VIZ_ID}- START")
 
-    if repo_id is None:
-        return nodata_graph
     # Convert to int since Mantine dropdown returns strings
     repo_id = int(repo_id)
 

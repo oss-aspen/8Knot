@@ -111,7 +111,7 @@ def cache_query_results(
                     )
 
                 logging.warning(f"{target_table} -- CQR COMMITTING TRANSACTION")
-                # TODO: end of context block, on success, should commit. On failure, should rollback. Need to write test for this.
+                cache_conn.commit()
 
         # don't need to commit on primary db
         logging.warning(f"{target_table} -- CQR SUCCESS")
