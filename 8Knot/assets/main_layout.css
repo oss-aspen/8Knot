@@ -473,6 +473,11 @@ button.icon-button.btn:active,
     padding: 0 6px;
 }
 
+.search-submit-button {
+    margin-top: var(--spacing-sm);
+    width: 100%;
+}
+
 .search-controls-stack {
     width: 100%;
     justify-content: center;

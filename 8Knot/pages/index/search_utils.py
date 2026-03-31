@@ -443,14 +443,14 @@ def create_multiselect_styles():
             "margin": "var(--multiselect-item-margin)",
             "color": "var(--color-white)",
         },
-        # Inline styles for grey pill default color (turns blue with "searching" class)
+        # Inline styles for pending pill color (red by default, turns blue with "searching" class)
         "value": {
-            "backgroundColor": "var(--pill-default-bg)",
-            "color": "var(--pill-default-color)",
+            "backgroundColor": "var(--pill-pending-bg)",
+            "color": "var(--pill-pending-color)",
         },
         "pill": {
-            "backgroundColor": "var(--pill-default-bg)",
-            "color": "var(--pill-default-color)",
+            "backgroundColor": "var(--pill-pending-bg)",
+            "color": "var(--pill-pending-color)",
         },
     }
 
@@ -517,13 +517,20 @@ def create_search_input_section(initial_option):
                 ],
                 className="search-input-wrapper",
             ),
+            dbc.Button(
+                "Search",
+                id="search-button",
+                color="primary",
+                size="sm",
+                className="search-submit-button",
+            ),
             create_alert(
                 alert_id="help-alert",
                 children='Please ensure that your spelling is correct. \
                     If your selection definitely isn\'t present, please request that \
                     it be loaded using the help button "REPO/ORG Request" \
                     in the bottom right corner of the screen.  \
-                    The search is only confirmed when you click the search icon and the pill turns blue.',
+                    The search is only confirmed when you click the Search button (or press Enter) and the pill turns blue.',
                 color="info",
             ),
             create_alert(

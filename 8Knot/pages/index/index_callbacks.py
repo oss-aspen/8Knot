@@ -437,10 +437,11 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
     [Output("results-output-container", "children"), Output("repo-choices", "data")],
     [
         Input("search", "n_clicks"),
+        Input("search-button", "n_clicks"),
         State("projects", "value"),
     ],
 )
-def multiselect_values_to_repo_ids(n_clicks, user_vals):
+def multiselect_values_to_repo_ids(n_clicks, search_button_clicks, user_vals):
     if not user_vals:
         logging.warning("NOTHING SELECTED IN SEARCH BAR")
         raise dash.exceptions.PreventUpdate
@@ -867,7 +868,7 @@ def hide_loading_on_landing(pathname):
 # Callback to change pill color when search is clicked
 #
 # This callback implements dynamic pill coloring:
-# - When user selects repos/orgs: pills are grey (pending)
+# - When user selects repos/orgs: pills are red (pending)
 # - When user clicks search icon: pills turn blue (active search)
 # - Default selection (chaoss) starts blue since search is auto-triggered
 #
@@ -875,27 +876,27 @@ def hide_loading_on_landing(pathname):
 # ============================================================================
 @callback(
     Output("projects", "className"),
-    [Input("search", "n_clicks"), Input("projects", "value")],
+    [Input("search", "n_clicks"), Input("search-button", "n_clicks"), Input("projects", "value")],
     prevent_initial_call=True,
 )
-def update_pill_color_on_search(_, selected_repos_orgs):
+def update_pill_color_on_search(_, search_button_clicks, selected_repos_orgs):
     """Update pill color based on search action.
 
     When search icon is clicked, add 'searching' class to turn pills blue.
-    When values change (user is selecting), remove 'searching' class to keep pills grey.
+    When values change (user is selecting), remove 'searching' class to keep pills red.
     """
     if not dash.ctx.triggered:
         return dash.no_update
 
     triggered_id = dash.ctx.triggered_id
 
-    if triggered_id == "search":
+    if triggered_id in ("search", "search-button"):
         # Search button clicked - add 'searching' class to turn pills blue
         logging.info(f"PILL COLOR: Search clicked - turning pills BLUE")
         return "searchbar-dropdown searching"
     if triggered_id == "projects":
-        # Values changed (user selecting) - remove 'searching' class to keep pills grey
-        logging.info(f"PILL COLOR: Values changed - turning pills GREY. Selected: {selected_repos_orgs}")
+        # Values changed (user selecting) - remove 'searching' class to keep pills red
+        logging.info(f"PILL COLOR: Values changed - turning pills RED. Selected: {selected_repos_orgs}")
         return "searchbar-dropdown"
 
     return dash.no_update
