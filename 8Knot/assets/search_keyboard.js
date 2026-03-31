@@ -1,11 +1,11 @@
 /**
  * Cascading Enter key handler for the search bar.
  *
- * When the Mantine MultiSelect dropdown is OPEN, Enter selects the
- * highlighted item (Mantine's default behavior — we do nothing).
+ * When the Mantine MultiSelect dropdown has visible options, Enter
+ * selects the highlighted item (Mantine's default behavior — we do nothing).
  *
- * When the dropdown is CLOSED, Enter triggers the search by clicking
- * the search button, which fires the existing Dash callback chain.
+ * When there are no visible options (dropdown closed or empty), Enter
+ * triggers the search by clicking the search button.
  */
 document.addEventListener("DOMContentLoaded", function () {
     // Use MutationObserver to attach the handler once the MultiSelect input exists
@@ -19,12 +19,14 @@ document.addEventListener("DOMContentLoaded", function () {
         input.addEventListener("keydown", function (e) {
             if (e.key !== "Enter") return;
 
-            // Check if the Mantine dropdown is currently open
-            var dropdown = document.querySelector(
-                ".mantine-MultiSelect-dropdown"
+            // Check if the dropdown has visible selectable options.
+            // Mantine keeps the dropdown element in the DOM while focused,
+            // so we check for actual option elements instead.
+            var options = document.querySelectorAll(
+                ".mantine-MultiSelect-option"
             );
-            if (dropdown) {
-                // Dropdown is open — let Mantine handle the Enter key
+            if (options.length > 0) {
+                // Dropdown has options — let Mantine handle Enter
                 // to select the highlighted item
                 return;
             }
