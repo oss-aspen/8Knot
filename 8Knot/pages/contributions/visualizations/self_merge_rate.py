@@ -1,18 +1,16 @@
 import dash_bootstrap_components as dbc
 from dash import callback
 from dash.dependencies import Input, Output
-import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 import pandas as pd
 import logging
 import time
-
 import cache_manager.cache_facade as cf
-import app  # pylint: disable=unused-import
 from components.visualization import VisualizationAIO
-from pages.utils.graph_utils import get_graph_time_values, baby_blue
-from pages.utils.job_utils import nodata_graph
 from queries.self_merge_rate_query import self_merge_rate_query as smrq
+from pages.utils.graph_utils import get_graph_time_values
+from pages.utils.job_utils import nodata_graph
 
 PAGE = "contributions"
 VIZ_ID = "self-merge-rate"
@@ -22,9 +20,10 @@ gc_self_merge_rate = VisualizationAIO(
     VIZ_ID,
     title="Self Merge Rate",
     graph_info="""
-    Shows PRs merged over time and the PRs merged by the same contributor as the
-    author (self-merge).\n
-    See https://chaoss.community/kb/metric-self-merge-rates/
+    Tracks merged pull requests where the author and the merger are the same contributor.\n
+    The top chart shows total merged PRs vs. self-merged PRs over time.\n
+    The bottom chart shows the self-merge rate as a percentage of all merged PRs.\n
+    CHAOSS metric definition: https://chaoss.community/kb/metric-self-merge-rates/
     """,
     controls=[
         dbc.Label(
@@ -54,39 +53,6 @@ gc_self_merge_rate = VisualizationAIO(
 )
 
 
-def _bucket_merged_prs(df: pd.DataFrame, interval: str) -> pd.DataFrame:
-    """Aggregate merged and self-merged counts by time bucket; add rate (%)."""
-    work = df.copy()
-    work["merged_at"] = pd.to_datetime(work["merged_at"], utc=True)
-    work["cntrb_id"] = work["cntrb_id"].astype(str)
-    work["merger_cntrb_id"] = work["merger_cntrb_id"].fillna("").astype(str)
-    work["is_self_merge"] = (work["cntrb_id"] == work["merger_cntrb_id"]) & (work["merger_cntrb_id"] != "")
-
-    period_slice = 10 if interval == "W" else None
-
-    merged_range = work["merged_at"].dt.to_period(interval).value_counts().sort_index()
-    df_merged = merged_range.to_frame().reset_index().rename(columns={"merged_at": "Date", "count": "total_merged"})
-    df_merged["Date"] = pd.to_datetime(df_merged["Date"].astype(str).str[:period_slice])
-
-    self_merge_range = work.loc[work["is_self_merge"], "merged_at"].dt.to_period(interval).value_counts().sort_index()
-    df_self = self_merge_range.to_frame().reset_index().rename(columns={"merged_at": "Date", "count": "self_merged"})
-    df_self["Date"] = pd.to_datetime(df_self["Date"].astype(str).str[:period_slice])
-
-    df_plot = df_merged.merge(df_self, on="Date", how="outer").fillna(0)
-    df_plot["self_merged"] = df_plot["self_merged"].astype(int)
-    df_plot["total_merged"] = df_plot["total_merged"].astype(int)
-    df_plot["rate_pct"] = (df_plot["self_merged"] / df_plot["total_merged"].replace(0, float("nan")) * 100).round(1)
-
-    if interval == "M":
-        df_plot["Date_str"] = pd.to_datetime(df_plot["Date"]).dt.strftime("%Y-%m-01")
-    elif interval == "Y":
-        df_plot["Date_str"] = pd.to_datetime(df_plot["Date"]).dt.strftime("%Y-01-01")
-    else:
-        df_plot["Date_str"] = pd.to_datetime(df_plot["Date"]).dt.strftime("%Y-%m-%d")
-
-    return df_plot.sort_values("Date").reset_index(drop=True)
-
-
 @callback(
     Output(f"{PAGE}-{VIZ_ID}", "figure"),
     [
@@ -96,10 +62,12 @@ def _bucket_merged_prs(df: pd.DataFrame, interval: str) -> pd.DataFrame:
     background=True,
 )
 def self_merge_rate_graph(repolist, interval):
+    # wait for data to asynchronously download and become available.
     while not_cached := cf.get_uncached(func_name=smrq.__name__, repolist=repolist):
-        logging.warning("SELF MERGE RATE - WAITING ON DATA TO BECOME AVAILABLE")
+        logging.warning(f"SELF MERGE RATE - WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 
+    # data ready.
     start = time.perf_counter()
     logging.warning("SELF MERGE RATE - START")
 
@@ -112,20 +80,60 @@ def self_merge_rate_graph(repolist, interval):
         logging.warning("SELF MERGE RATE - NO DATA AVAILABLE")
         return nodata_graph
 
-    df_plot = _bucket_merged_prs(df, interval)
-    if df_plot.empty:
-        logging.warning("SELF MERGE RATE - NO BUCKETS AFTER PROCESSING")
-        return nodata_graph
+    df_plot = process_data(df, interval)
+    fig = create_figure(df_plot, interval)
 
+    logging.warning(f"SELF MERGE RATE - END - {time.perf_counter() - start}")
+
+    return fig
+
+
+def process_data(df: pd.DataFrame, interval):
+    df["merged_at"] = pd.to_datetime(df["merged_at"], utc=True)
+    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
+
+    # self-merge: author == merger (with safe handling of nulls)
+    df["cntrb_id"] = df["cntrb_id"].astype(str)
+    df["merger_cntrb_id"] = df["merger_cntrb_id"].fillna("").astype(str)
+    df["is_self_merge"] = (df["cntrb_id"] == df["merger_cntrb_id"]) & (df["merger_cntrb_id"] != "")
+
+    # period slice for date formatting
+    period_slice = 10 if interval == "W" else (4 if interval == "Y" else 7)
+
+    # counts per period by merged_at
+    merged_range = df["merged_at"].dt.to_period(interval).value_counts().sort_index()
+    df_merged = merged_range.to_frame().reset_index().rename(columns={"merged_at": "Date", "count": "total_merged"})
+    df_merged["Date"] = pd.to_datetime(df_merged["Date"].astype(str).str[:period_slice])
+
+    self_merge_range = df[df["is_self_merge"]]["merged_at"].dt.to_period(interval).value_counts().sort_index()
+    df_self = self_merge_range.to_frame().reset_index().rename(columns={"merged_at": "Date", "count": "self_merged"})
+    df_self["Date"] = pd.to_datetime(df_self["Date"].astype(str).str[:period_slice])
+
+    df_plot = df_merged.merge(df_self, on="Date", how="outer").fillna(0)
+    df_plot["self_merged"] = df_plot["self_merged"].astype(int)
+    df_plot["rate_pct"] = (df_plot["self_merged"] / df_plot["total_merged"].replace(0, float("nan")) * 100).round(1)
+
+    if interval == "M":
+        df_plot["Date_str"] = pd.to_datetime(df_plot["Date"]).dt.strftime("%Y-%m-01")
+    elif interval == "Y":
+        df_plot["Date_str"] = pd.to_datetime(df_plot["Date"]).dt.strftime("%Y-01-01")
+    else:
+        df_plot["Date_str"] = pd.to_datetime(df_plot["Date"]).dt.strftime("%Y-%m-%d")
+
+    df_plot = df_plot.sort_values("Date").reset_index(drop=True)
+
+    return df_plot
+
+
+def create_figure(df_plot: pd.DataFrame, interval):
     x_r, x_name, hover, period = get_graph_time_values(interval)
 
     fig = make_subplots(
         rows=2,
         cols=1,
         shared_xaxes=True,
+        subplot_titles=("Self Merge Rates", "Self-merge rate (%) over time"),
         vertical_spacing=0.12,
-        subplot_titles=("Merged pull requests", "Self-merge rate (%)"),
-        row_heights=[0.52, 0.48],
     )
 
     fig.add_trace(
@@ -134,8 +142,8 @@ def self_merge_rate_graph(repolist, interval):
             x=df_plot["Date_str"],
             y=df_plot["total_merged"],
             mode="lines",
-            line=dict(color=baby_blue[0]),
-            hovertemplate=hover + "<br>Merged (total): %{y}<extra></extra>",
+            showlegend=True,
+            hovertemplate="Merged (total): %{y}<br>%{x|%b %d, %Y} <extra></extra>",
         ),
         row=1,
         col=1,
@@ -146,54 +154,33 @@ def self_merge_rate_graph(repolist, interval):
             x=df_plot["Date_str"],
             y=df_plot["self_merged"],
             mode="lines",
-            line=dict(color=baby_blue[6]),
-            hovertemplate=hover + "<br>Self-merged: %{y}<extra></extra>",
+            showlegend=True,
+            hovertemplate="Self-merged: %{y}<br>%{x|%b %d, %Y} <extra></extra>",
         ),
         row=1,
         col=1,
     )
     fig.add_trace(
         go.Scatter(
-            name="Self-merge rate (%)",
             x=df_plot["Date_str"],
             y=df_plot["rate_pct"],
             mode="lines",
-            line=dict(color=baby_blue[4]),
-            hovertemplate=hover + "<br>Rate: %{y:.1f}%<extra></extra>",
-            connectgaps=False,
+            name="Self-merge rate (%)",
+            marker=dict(size=6),
+            hovertemplate="%{x}<br>Rate: %{y:.1f}%<extra></extra>",
         ),
         row=2,
         col=1,
     )
 
-    fig.update_xaxes(
-        showgrid=True,
-        ticklabelmode="period",
-        dtick=period,
-        range=x_r,
-        title_text=x_name,
-        row=2,
-        col=1,
-    )
-    fig.update_xaxes(
-        showgrid=True,
-        ticklabelmode="period",
-        dtick=period,
-        range=x_r,
-        row=1,
-        col=1,
-    )
+    fig.update_xaxes(showgrid=True, ticklabelmode="period", dtick=period, range=x_r)
     fig.update_yaxes(title_text="Number of PRs", row=1, col=1)
     fig.update_yaxes(title_text="Self-merge rate (%)", row=2, col=1)
+    fig.update_xaxes(title_text=x_name, row=2, col=1)
 
     fig.update_layout(
-        height=640,
         font=dict(size=14),
-        margin=dict(t=48, b=48),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        showlegend=True,
+        margin_b=40,
     )
-
-    logging.warning(f"SELF MERGE RATE - END - {time.perf_counter() - start}")
 
     return fig

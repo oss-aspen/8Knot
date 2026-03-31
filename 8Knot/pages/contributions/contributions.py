@@ -32,11 +32,11 @@ layout = dbc.Container(
             className="visualization-row",
         ),
         dbc.Row(
-            dbc.Col(gc_self_merge_rate, xl=10),
+            dbc.Col(gc_pr_staleness, xl=10),
             className="visualization-row",
         ),
         dbc.Row(
-            dbc.Col(gc_pr_staleness, xl=10),
+            dbc.Col(gc_self_merge_rate, xl=10),
             className="visualization-row",
         ),
         dbc.Row(
