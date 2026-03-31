@@ -17,6 +17,7 @@ from queries.issues_query import issues_query as iq
 from queries.commits_query import commits_query as cq
 from queries.contributors_query import contributors_query as cnq
 from queries.prs_query import prs_query as prq
+from queries.self_merge_rate_query import self_merge_rate_query as smrq
 from queries.affiliation_query import affiliation_query as aq
 from queries.pr_assignee_query import pr_assignee_query as praq
 from queries.issue_assignee_query import issue_assignee_query as iaq
@@ -37,7 +38,7 @@ from .search_utils import fuzzy_search
 from .search_utils import clean_repo_name
 
 # list of queries to be run (includes codebase page queries for heatmaps)
-QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq]
+QUERIES = [iq, cq, cnq, prq, smrq, aq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq]
 
 
 # check if login has been enabled in config

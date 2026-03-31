@@ -72,6 +72,10 @@ def create_sidebar_navigation():
                         "/contributions#prs-over-time",
                     ),
                     NavItemAIO(
+                        "Self Merge Rate",
+                        "/contributions#self-merge-rate",
+                    ),
+                    NavItemAIO(
                         "PR Activity - Staleness",
                         "/contributions#pr-staleness",
                     ),
