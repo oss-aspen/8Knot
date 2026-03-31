@@ -28,8 +28,15 @@ baby_blue = [
     "#B54708",  # Yellow 700 - dark yellow
 ]
 
-# Sequential color scale for heatmaps (light -> dark blue, matches app theme)
-heatmap_color_scale = [baby_blue[0], baby_blue[2], baby_blue[4], baby_blue[6], baby_blue[8]]
+# Sequential color scale for heatmaps (light -> dark blue with yellow accent, matches app theme)
+# Progression: very light blue -> medium light -> main blue -> dark blue -> yellow accent
+heatmap_color_scale = [
+    baby_blue[0],  # Very light blue (#DFF0FB) - low values
+    baby_blue[2],  # Medium light blue (#76C5EF)
+    baby_blue[4],  # Main baby blue (#199AD6) - mid values
+    baby_blue[6],  # Dark blue (#0F5880)
+    baby_blue[8],  # Yellow accent (#F7B009) - high values/emphasis
+]
 
 
 def create_heatmap_figure(
