@@ -79,8 +79,8 @@ gc_self_merge = VisualizationAIO(
 )
 def graph_title(view):
     if view == "rate":
-        return "Self-Merge Rate (%)"
-    return "Self Merge Rates"
+        return "Pull Request Self Merge Rate (%)"
+    return "Pull Request Self Merge Rates"
 
 
 @callback(
