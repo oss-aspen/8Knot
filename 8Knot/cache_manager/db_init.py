@@ -189,27 +189,12 @@ def _create_application_tables() -> None:
                 cntrb_id text,
                 created_at text,
                 closed_at text,
-                merged_at text
-            )
-            """
-        )
-        logging.warning("CREATED prs TABLE")
-
-        cur.execute(
-            """
-            CREATE UNLOGGED TABLE IF NOT EXISTS self_merge_rate_query(
-                repo_id int,
-                repo_name text,
-                pull_request_id int,
-                pr_src_number int,
-                cntrb_id text,
-                created_at text,
                 merged_at text,
                 merger_cntrb_id text
             )
             """
         )
-        logging.warning("CREATED self_merge_rate_query TABLE")
+        logging.warning("CREATED prs TABLE")
 
         cur.execute(
             """

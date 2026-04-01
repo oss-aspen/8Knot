@@ -8,7 +8,7 @@ import logging
 import time
 import cache_manager.cache_facade as cf
 from components.visualization import VisualizationAIO
-from queries.self_merge_rate_query import self_merge_rate_query as smrq
+from queries.prs_query import prs_query as prq
 from pages.utils.graph_utils import get_graph_time_values
 from pages.utils.job_utils import nodata_graph
 
@@ -63,7 +63,7 @@ gc_self_merge_rate = VisualizationAIO(
 )
 def self_merge_rate_graph(repolist, interval):
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=smrq.__name__, repolist=repolist):
+    while not_cached := cf.get_uncached(func_name=prq.__name__, repolist=repolist):
         logging.warning(f"SELF MERGE RATE - WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 
@@ -72,12 +72,19 @@ def self_merge_rate_graph(repolist, interval):
     logging.warning("SELF MERGE RATE - START")
 
     df = cf.retrieve_from_cache(
-        tablename=smrq.__name__,
+        tablename=prq.__name__,
         repolist=repolist,
     )
 
     if df.empty:
         logging.warning("SELF MERGE RATE - NO DATA AVAILABLE")
+        return nodata_graph
+
+    # filter to only merged PRs for self-merge analysis
+    df = df[df["merged_at"].notna() & (df["merged_at"] != "")]
+
+    if df.empty:
+        logging.warning("SELF MERGE RATE - NO MERGED PRS")
         return nodata_graph
 
     df_plot = process_data(df, interval)
