@@ -9,7 +9,7 @@ from .visualizations.issues_over_time import gc_issues_over_time
 from .visualizations.issue_staleness import gc_issue_staleness
 from .visualizations.pr_staleness import gc_pr_staleness
 from .visualizations.pr_over_time import gc_pr_over_time
-from .visualizations.self_merge_rate import gc_self_merge_rate
+from .visualizations.self_merge_rate import gc_self_merge_counts, gc_self_merge_rate
 from .visualizations.cntrib_issue_assignment import gc_cntrib_issue_assignment
 from .visualizations.issue_assignment import gc_issue_assignment
 from .visualizations.pr_assignment import gc_pr_assignment
@@ -33,6 +33,10 @@ layout = dbc.Container(
         ),
         dbc.Row(
             dbc.Col(gc_pr_staleness, xl=10),
+            className="visualization-row",
+        ),
+        dbc.Row(
+            dbc.Col(gc_self_merge_counts, xl=10),
             className="visualization-row",
         ),
         dbc.Row(
