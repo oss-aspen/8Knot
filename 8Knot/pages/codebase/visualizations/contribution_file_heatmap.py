@@ -5,7 +5,7 @@ from dash.dependencies import Input, Output
 import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
-import plotly.express as px
+from pages.utils.graph_utils import create_heatmap_figure
 from queries.prs_query import prs_query as prq
 from queries.pr_files_query import pr_file_query as prfq
 from queries.repo_files_query import repo_files_query as rfq
@@ -89,6 +89,7 @@ gc_contribution_file_heatmap = VisualizationAIO(
             align="center",
         ),
     ],
+    class_name="dark-card",
 )
 
 
@@ -293,22 +294,8 @@ def process_data(
 
 
 def create_figure(df: pd.DataFrame, graph_view):
-    legend_title = "PRs Opened"
-    if graph_view == "merged_at":
-        legend_title = "PRs Merged"
-
-    fig = px.imshow(
-        df,
-        labels=dict(x="Time", y="Directory Entries", color=legend_title),
-        color_continuous_scale=px.colors.sequential.deep,
-    )
-
-    fig["layout"]["yaxis"]["tickmode"] = "linear"
-    fig["layout"]["height"] = 700
-    fig["layout"]["coloraxis_colorbar_x"] = -0.15
-    fig["layout"]["yaxis"]["side"] = "right"
-
-    return fig
+    color_label = "PRs Merged" if graph_view == "merged_at" else "PRs Opened"
+    return create_heatmap_figure(df, color_label=color_label)
 
 
 def df_file_clean(df_file: pd.DataFrame, df_file_pr: pd.DataFrame):

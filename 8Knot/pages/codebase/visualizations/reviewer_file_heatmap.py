@@ -74,6 +74,7 @@ gc_reviewer_file_heatmap = VisualizationAIO(
             align="center",
         ),
     ],
+    class_name="dark-card",
 )
 
 
