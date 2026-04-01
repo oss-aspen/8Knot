@@ -12,42 +12,25 @@ from pages.utils.graph_utils import get_graph_time_values
 from pages.utils.job_utils import nodata_graph
 
 PAGE = "contributions"
-VIZ_ID_COUNTS = "self-merge-counts"
-VIZ_ID_RATE = "self-merge-rate-pct"
+VIZ_ID = "self-merge"
 
-_interval_controls = [
-    dbc.Label(
-        "Date Interval:",
-        width="auto",
-    ),
-    dbc.Col(
-        dbc.RadioItems(
-            options=[
-                {"label": "Day", "value": "D"},
-                {"label": "Week", "value": "W"},
-                {"label": "Month", "value": "M"},
-                {"label": "Year", "value": "Y"},
-            ],
-            value="M",
-            inline=True,
-            className="custom-radio-buttons",
-        ),
-        className="me-2",
-        width=4,
-    ),
-]
-
-
-def _make_interval_controls(viz_id):
-    return [
+gc_self_merge = VisualizationAIO(
+    PAGE,
+    VIZ_ID,
+    graph_info="""
+    Tracks merged pull requests where the author and the merger are the same contributor.\n
+    Switch graph view to see total vs. self-merged counts over time, or the self-merge rate as a percentage.\n
+    CHAOSS metric definition: https://chaoss.community/kb/metric-self-merge-rates/
+    """,
+    controls=[
         dbc.Label(
             "Date Interval:",
-            html_for=f"date-interval-{PAGE}-{viz_id}",
+            html_for=f"date-interval-{PAGE}-{VIZ_ID}",
             width="auto",
         ),
         dbc.Col(
             dbc.RadioItems(
-                id=f"date-interval-{PAGE}-{viz_id}",
+                id=f"date-interval-{PAGE}-{VIZ_ID}",
                 options=[
                     {"label": "Day", "value": "D"},
                     {"label": "Week", "value": "W"},
@@ -61,39 +44,77 @@ def _make_interval_controls(viz_id):
             className="me-2",
             width=4,
         ),
-    ]
-
-
-gc_self_merge_counts = VisualizationAIO(
-    PAGE,
-    VIZ_ID_COUNTS,
-    title="Self Merge Rates",
-    graph_info="""
-    Tracks merged pull requests where the author and the merger are the same contributor.\n
-    Shows total merged PRs vs. self-merged PRs over time.\n
-    CHAOSS metric definition: https://chaoss.community/kb/metric-self-merge-rates/
-    """,
-    controls=_make_interval_controls(VIZ_ID_COUNTS),
+        dbc.Label(
+            "Graph View:",
+            html_for=f"graph-view-{PAGE}-{VIZ_ID}",
+            width={"size": "auto"},
+        ),
+        dbc.Col(
+            dbc.RadioItems(
+                id=f"graph-view-{PAGE}-{VIZ_ID}",
+                options=[
+                    {
+                        "label": "Counts",
+                        "value": "counts",
+                    },
+                    {
+                        "label": "Rate (%)",
+                        "value": "rate",
+                    },
+                ],
+                value="counts",
+                inline=True,
+                className="custom-radio-buttons",
+            ),
+        ),
+    ],
     class_name="dark-card",
-    id="self-merge-counts",
+    id="self-merge-rate",
 )
 
-gc_self_merge_rate = VisualizationAIO(
-    PAGE,
-    VIZ_ID_RATE,
-    title="Self-Merge Rate (%)",
-    graph_info="""
-    Shows the self-merge rate as a percentage of all merged PRs over time.\n
-    CHAOSS metric definition: https://chaoss.community/kb/metric-self-merge-rates/
-    """,
-    controls=_make_interval_controls(VIZ_ID_RATE),
-    class_name="dark-card",
-    id="self-merge-rate-pct",
+
+@callback(
+    Output(f"graph-title-{PAGE}-{VIZ_ID}", "children"),
+    Input(f"graph-view-{PAGE}-{VIZ_ID}", "value"),
 )
+def graph_title(view):
+    if view == "rate":
+        return "Self-Merge Rate (%)"
+    return "Self Merge Rates"
+
+
+@callback(
+    Output(f"{PAGE}-{VIZ_ID}", "figure"),
+    [
+        Input("repo-choices", "data"),
+        Input(f"date-interval-{PAGE}-{VIZ_ID}", "value"),
+        Input(f"graph-view-{PAGE}-{VIZ_ID}", "value"),
+    ],
+    background=True,
+)
+def self_merge_graph(repolist, interval, view):
+    start = time.perf_counter()
+    logging.warning("SELF MERGE - START")
+
+    df = _load_merged_prs(repolist, "SELF MERGE")
+
+    if df.empty:
+        logging.warning("SELF MERGE - NO DATA AVAILABLE")
+        return nodata_graph
+
+    df_plot = process_data(df, interval)
+
+    if view == "rate":
+        fig = create_rate_figure(df_plot, interval)
+    else:
+        fig = create_counts_figure(df_plot, interval)
+
+    logging.warning(f"SELF MERGE - END - {time.perf_counter() - start}")
+    return fig
 
 
 def _load_merged_prs(repolist, viz_name):
-    """Shared data loading for both self-merge callbacks."""
+    """Shared data loading for self-merge callback."""
     while not_cached := cf.get_uncached(func_name=prq.__name__, repolist=repolist):
         logging.warning(f"{viz_name} - WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
@@ -107,56 +128,6 @@ def _load_merged_prs(repolist, viz_name):
         df = df[df["merged_at"].notna() & (df["merged_at"] != "")]
 
     return df
-
-
-@callback(
-    Output(f"{PAGE}-{VIZ_ID_COUNTS}", "figure"),
-    [
-        Input("repo-choices", "data"),
-        Input(f"date-interval-{PAGE}-{VIZ_ID_COUNTS}", "value"),
-    ],
-    background=True,
-)
-def self_merge_counts_graph(repolist, interval):
-    start = time.perf_counter()
-    logging.warning("SELF MERGE COUNTS - START")
-
-    df = _load_merged_prs(repolist, "SELF MERGE COUNTS")
-
-    if df.empty:
-        logging.warning("SELF MERGE COUNTS - NO DATA AVAILABLE")
-        return nodata_graph
-
-    df_plot = process_data(df, interval)
-    fig = create_counts_figure(df_plot, interval)
-
-    logging.warning(f"SELF MERGE COUNTS - END - {time.perf_counter() - start}")
-    return fig
-
-
-@callback(
-    Output(f"{PAGE}-{VIZ_ID_RATE}", "figure"),
-    [
-        Input("repo-choices", "data"),
-        Input(f"date-interval-{PAGE}-{VIZ_ID_RATE}", "value"),
-    ],
-    background=True,
-)
-def self_merge_rate_graph(repolist, interval):
-    start = time.perf_counter()
-    logging.warning("SELF MERGE RATE - START")
-
-    df = _load_merged_prs(repolist, "SELF MERGE RATE")
-
-    if df.empty:
-        logging.warning("SELF MERGE RATE - NO DATA AVAILABLE")
-        return nodata_graph
-
-    df_plot = process_data(df, interval)
-    fig = create_rate_figure(df_plot, interval)
-
-    logging.warning(f"SELF MERGE RATE - END - {time.perf_counter() - start}")
-    return fig
 
 
 def process_data(df: pd.DataFrame, interval):
