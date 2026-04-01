@@ -96,6 +96,7 @@ def self_merge_rate_graph(repolist, interval):
 
 
 def process_data(df: pd.DataFrame, interval):
+    df = df.drop_duplicates(subset="pull_request_id", keep="first")
     df["merged_at"] = pd.to_datetime(df["merged_at"], utc=True)
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
 

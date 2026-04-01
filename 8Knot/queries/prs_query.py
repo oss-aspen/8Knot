@@ -29,7 +29,7 @@ def prs_query(self, repos):
         return None
 
     query_string = """
-                    SELECT DISTINCT ON (pr.pull_request_id)
+                    SELECT
                         r.repo_id,
                         r.repo_name,
                         pr.pull_request_id,
@@ -51,7 +51,7 @@ def prs_query(self, repos):
                         and (pr.pr_merged_at < now() or pr.pr_merged_at IS NULL)
                         -- have to accept NULL values because PRs could still be open, or unassigned,
                         -- and still be acceptable.
-                    ORDER BY pr.pull_request_id, pr.pr_created_at
+                    ORDER BY pr.pr_created_at
                     """
 
     # used for caching
