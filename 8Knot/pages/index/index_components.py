@@ -76,6 +76,10 @@ def create_sidebar_navigation():
                         "/contributions#pr-staleness",
                     ),
                     NavItemAIO(
+                        "Self Merge Rate",
+                        "/contributions#self-merge-rate",
+                    ),
+                    NavItemAIO(
                         "PR Time to First Response",
                         "/contributions#pr-first-response",
                     ),

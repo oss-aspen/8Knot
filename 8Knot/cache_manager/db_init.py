@@ -189,7 +189,8 @@ def _create_application_tables() -> None:
                 cntrb_id text,
                 created_at text,
                 closed_at text,
-                merged_at text
+                merged_at text,
+                merger_cntrb_id text
             )
             """
         )

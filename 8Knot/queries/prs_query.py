@@ -38,13 +38,14 @@ def prs_query(self, repos):
                         -- values are timestamp not timestamptz
                         pr.pr_created_at AS created_at,
                         pr.pr_closed_at AS closed_at,
-                        pr.pr_merged_at AS merged_at
-                    FROM
-                        repo r,
-                        pull_requests pr
+                        pr.pr_merged_at AS merged_at,
+                        left(pre.cntrb_id::text, 15) AS merger_cntrb_id
+                    FROM repo r
+                    JOIN pull_requests pr ON r.repo_id = pr.repo_id
+                    LEFT JOIN pull_request_events pre
+                        ON pr.pull_request_id = pre.pull_request_id AND pre.action = 'merged'
                     WHERE
-                        r.repo_id = pr.repo_id AND
-                        r.repo_id in %s
+                        r.repo_id IN %s
                         and pr.pr_created_at < now()
                         and (pr.pr_closed_at < now() or pr.pr_closed_at IS NULL)
                         and (pr.pr_merged_at < now() or pr.pr_merged_at IS NULL)
