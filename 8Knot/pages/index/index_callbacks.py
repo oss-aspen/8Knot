@@ -39,6 +39,13 @@ from .search_utils import clean_repo_name
 # list of queries to be run (includes codebase page queries for heatmaps)
 QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq]
 
+# Query monitoring constants
+QUERY_TIMEOUT_SECONDS = 600  # Maximum time to wait for queries (10 minutes)
+QUERY_POLL_INTERVAL_SECONDS = 2.0  # How often to check query status
+TOTAL_QUERIES = len(QUERIES)  # Total number of queries to execute
+
+# Badge color for "Data Ready" state - matches --baby-blue-700 in color.css
+DATA_READY_BADGE_COLOR = "#0F5880"
 
 # check if login has been enabled in config
 login_enabled = os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True"
@@ -550,18 +557,61 @@ def show_repolist_alert(n_clicks, openness, repo_ids):
 
 
 @callback(
-    [Output("data-badge", "children"), Output("data-badge", "color")],
+    [
+        Output("data-badge", "children"),
+        Output("data-badge", "color"),
+        Output("query-progress", "data", allow_duplicate=True),
+    ],
     Input("job-ids", "data"),
+    State("query-progress", "data"),
     background=True,
+    prevent_initial_call=True,
+    running=[
+        # Show/hide progress container using CSS classes (styles defined in main_layout.css)
+        (
+            Output("query-progress-container", "className"),
+            "query-progress-container query-progress-container--visible",
+            "query-progress-container query-progress-container--hidden",
+        ),
+        # Keep progress bar animated while running
+        (Output("query-progress-bar", "animated"), True, False),
+        # Show loading text while running
+        (Output("query-progress-text", "children"), "Loading queries...", ""),
+    ],
 )
-def wait_queries(job_ids):
-    # TODO add docstring to function
+def wait_queries(job_ids, current_progress):
+    """
+    Monitor Celery job completion and update progress.
+
+    This background callback polls job status. Uses 'running' parameter to show
+    loading state while the callback executes.
+
+    Args:
+        job_ids: List of Celery task IDs to monitor
+        current_progress: Current progress state from store
+
+    Returns:
+        tuple: (badge_text, badge_color, progress_data)
+    """
+    # Get cached count from current progress (set by run_queries)
+    cached_count = (current_progress or {}).get("cached", 0)
+    total_queries = (current_progress or {}).get("total", TOTAL_QUERIES)
+
+    # Handle edge case: no jobs to wait for (all cached)
+    if not job_ids:
+        complete_progress = {
+            **(current_progress or {}),
+            "completed": 0,
+            "status": "complete",
+        }
+        return "Data Ready", DATA_READY_BADGE_COLOR, complete_progress
 
     jobs = [AsyncResult(j_id) for j_id in job_ids]
+    total_jobs = len(jobs)
 
     # Add timeout protection to prevent infinite waiting
     start_time = time.time()
-    max_wait_time = 600  # 10 minutes timeout
+    max_wait_time = QUERY_TIMEOUT_SECONDS
 
     # default 'result_expires' for celery config is 86400 seconds.
     # so we don't have to check if the jobs exist. if this tasks
@@ -571,45 +621,85 @@ def wait_queries(job_ids):
 
     while True:
         # Check for timeout to prevent SoftTimeLimitExceeded
-        if time.time() - start_time > max_wait_time:
-            logging.warning(f"wait_queries: Timeout after {max_wait_time}s - returning timeout status")
+        if time.time() - start_time > QUERY_TIMEOUT_SECONDS:
+            logging.warning(f"wait_queries: Timeout after {QUERY_TIMEOUT_SECONDS}s - returning timeout status")
+            num_succeeded = sum(1 for j in jobs if j.successful())
+            num_failed = sum(1 for j in jobs if j.failed())
             jobs = [j.forget() for j in jobs]
-            return "Timeout - Retry", "warning"
 
-        logging.warning([(j.name, j.status) for j in jobs])
+            timeout_progress = {
+                "completed": num_succeeded,
+                "total": total_queries,
+                "dispatched": total_jobs,
+                "cached": cached_count,
+                "failed": num_failed,
+                "status": "timeout",
+            }
+            return "Timeout - Retry", "warning", timeout_progress
+
+        # Count current status
+        num_succeeded = sum(1 for j in jobs if j.successful())
+        num_failed = sum(1 for j in jobs if j.failed())
+
+        logging.warning(f"Query progress: {num_succeeded}/{total_jobs} complete, {num_failed} failed")
+
+        # Build progress data for final return
+        progress_update = {
+            "completed": num_succeeded,
+            "total": total_queries,
+            "dispatched": total_jobs,
+            "cached": cached_count,
+            "failed": num_failed,
+            "status": "running",
+        }
 
         # jobs are either all ready
-        if all(j.successful() for j in jobs):
+        if num_succeeded == total_jobs:
             logging.warning([(j.name, j.status) for j in jobs])
             jobs = [j.forget() for j in jobs]
-            return "Data Ready", "#0F5880"
+            progress_update["status"] = "complete"
+            return "Data Ready", DATA_READY_BADGE_COLOR, progress_update
 
         # or one of them has failed
-        if any(j.failed() for j in jobs):
+        if num_failed > 0:
             # if a job fails, we need to wait for the others to finish before
             # we can 'forget' them. otherwise to-be-successful jobs will always
             # be forgotten if one fails.
 
             # tasks need to have either failed or succeeded before being forgotten.
+            cleanup_start = time.time()
             while True:
-                num_succeeded = [j.successful() for j in jobs].count(True)
-                num_failed = [j.failed() for j in jobs].count(True)
+                num_succeeded = sum(1 for j in jobs if j.successful())
+                num_failed = sum(1 for j in jobs if j.failed())
                 num_total = num_failed + num_succeeded
 
-                if num_total == len(jobs):
+                if num_total == total_jobs:
                     break
 
-                time.sleep(4.0)
+                # Prevent infinite wait during cleanup
+                if time.time() - cleanup_start > QUERY_TIMEOUT_SECONDS / 2:
+                    logging.warning("Cleanup timeout - forcing job forget")
+                    break
+
+                time.sleep(QUERY_POLL_INTERVAL_SECONDS * 2)  # Wait longer for cleanup
 
             jobs = [j.forget() for j in jobs]
-            return "Data Incomplete- Retry", "danger"
+            error_progress = {
+                "completed": num_succeeded,
+                "total": total_queries,
+                "dispatched": total_jobs,
+                "cached": cached_count,
+                "failed": num_failed,
+                "status": "error",
+            }
+            return "Data Incomplete- Retry", "danger", error_progress
 
         # pause to let something change
-        time.sleep(2.0)
+        time.sleep(QUERY_POLL_INTERVAL_SECONDS)
 
 
 @callback(
-    Output("job-ids", "data"),
+    [Output("job-ids", "data"), Output("query-progress", "data")],
     Input("repo-choices", "data"),
 )
 def run_queries(repos):
@@ -619,6 +709,9 @@ def run_queries(repos):
 
     Args:
         repos ([int]): repositories we collect data for.
+
+    Returns:
+        tuple: (job_ids, progress_data) - List of Celery job IDs and initial progress state
     """
 
     # cache manager object
@@ -629,12 +722,14 @@ def run_queries(repos):
 
     # list of job promises
     jobs = []
+    cached_count = 0
 
     for f in funcs:
         # only download repos that aren't currently in cache
         not_ready = cf.get_uncached(f.__name__, repos)
         if len(not_ready) == 0:
             logging.warning(f"{f.__name__} - NO DISPATCH - ALL REPOS IN CACHE")
+            cached_count += 1
             continue
 
         # add job to queue
@@ -643,7 +738,115 @@ def run_queries(repos):
         # add job promise to local promise list
         jobs.append(j)
 
-    return [j.id for j in jobs]
+    # Calculate initial progress state
+    dispatched_count = len(jobs)
+    initial_progress = {
+        "completed": 0,
+        "total": TOTAL_QUERIES,
+        "dispatched": dispatched_count,
+        "cached": cached_count,
+        "failed": 0,
+        "status": "running" if dispatched_count > 0 else "complete",
+    }
+
+    logging.info(
+        f"Query progress initialized: {cached_count}/{TOTAL_QUERIES} cached, " f"{dispatched_count} dispatched"
+    )
+
+    return [j.id for j in jobs], initial_progress
+
+
+@callback(
+    [
+        Output("query-progress-container", "className", allow_duplicate=True),
+        Output("query-progress-bar", "value", allow_duplicate=True),
+        Output("query-progress-bar", "color"),
+        Output("query-progress-bar", "animated", allow_duplicate=True),
+        Output("query-progress-text", "children", allow_duplicate=True),
+        Output("query-progress-details", "children", allow_duplicate=True),
+    ],
+    Input("query-progress", "data"),
+    prevent_initial_call=True,
+)
+def update_progress_ui(progress):
+    """
+    Update the progress bar UI based on query progress state.
+
+    This callback handles the final state updates when the query-progress store
+    is updated by wait_queries. It sets color and animation states that aren't
+    available via set_progress, and handles idle/complete/error states.
+
+    Args:
+        progress: Dict containing progress state:
+            - completed: Number of completed queries
+            - total: Total number of queries
+            - cached: Number of queries served from cache
+            - failed: Number of failed queries
+            - status: 'idle' | 'running' | 'complete' | 'error' | 'timeout'
+
+    Returns:
+        tuple: (container_class, bar_value, bar_color, animated, text, details)
+    """
+    # CSS classes for visibility (styles defined in main_layout.css)
+    hidden_class = "query-progress-container query-progress-container--hidden"
+    visible_class = "query-progress-container query-progress-container--visible"
+
+    if not progress:
+        return hidden_class, 0, "primary", False, "", ""
+
+    status = progress.get("status", "idle")
+    completed = progress.get("completed", 0)
+    total = progress.get("total", 0)
+    cached = progress.get("cached", 0)
+    dispatched = progress.get("dispatched", 0)
+    failed = progress.get("failed", 0)
+
+    # Hide when idle
+    if status == "idle":
+        return hidden_class, 0, "primary", False, "", ""
+
+    # Calculate progress percentage with smooth transitions
+    # Give partial credit (50%) to queries that are currently running
+    # This makes the progress bar move smoothly instead of jumping in large steps
+    running_count = max(0, dispatched - completed - failed)
+
+    # Progress = cached (instant) + completed (done) + running (partial credit)
+    # Partial credit makes the bar advance immediately when a query starts,
+    # then complete when it finishes, creating smooth visual progression
+    total_complete = cached + completed + (running_count * 0.5)
+    pct = (total_complete / total * 100) if total > 0 else 0
+
+    # Determine bar color and animation based on status
+    if status == "complete":
+        bar_color = "success"
+        animated = False
+        text = f"✓ All {total} queries complete"
+        if cached > 0:
+            details = f"{cached} from cache • {dispatched} fetched"
+        else:
+            details = f"All {total} queries fetched successfully"
+    elif status == "error":
+        bar_color = "danger"
+        animated = False
+        text = f"⚠ {failed} queries failed"
+        details = f"{completed}/{dispatched} succeeded • {cached} cached"
+    elif status == "timeout":
+        bar_color = "warning"
+        animated = False
+        text = "⏱ Query timeout"
+        details = f"{completed}/{dispatched} completed before timeout"
+    else:  # running
+        bar_color = "info"
+        animated = True
+        # Show actual completed count (not the smoothed value with partial credit)
+        actual_complete = cached + completed
+        text = f"Loading: {actual_complete}/{total} queries complete ({pct:.0f}%)"
+        if cached > 0:
+            details = f"{cached} cached • {completed}/{dispatched} fetched • {running_count} running"
+        else:
+            details = f"{completed}/{dispatched} fetched • {running_count} running"
+
+    return visible_class, pct, bar_color, animated, text, details
 
 
 # Add a cache initialization callback that runs on page load
@@ -846,18 +1049,32 @@ def adjust_content_area_collapse(is_open):
     [
         Output("results-output-container", "style"),
         Output("data-badge", "style"),
+        Output("query-progress", "data", allow_duplicate=True),
     ],
     Input("url", "pathname"),
-    prevent_initial_call=False,
+    prevent_initial_call="initial_duplicate",  # Required for allow_duplicate with initial call
 )
 def hide_loading_on_landing(pathname):
-    """Hide loading components when on landing page."""
+    """Hide loading components and reset progress when on landing page."""
+    # Default idle progress state
+    idle_progress = {
+        "completed": 0,
+        "total": 0,
+        "cached": 0,
+        "failed": 0,
+        "status": "idle",
+    }
+
     if pathname == "/" or pathname is None:
-        # Hide loading components on landing page
-        return {"display": "none"}, {"display": "none"}
+        # Hide loading components and reset progress on landing page
+        return {"display": "none"}, {"display": "none"}, idle_progress
     else:
-        # Show loading components on other pages
-        return {"display": "block"}, {"marginBottom": ".5%", "display": "inline-block"}
+        # Show loading components on other pages (progress unchanged)
+        return (
+            {"display": "block"},
+            {"marginBottom": ".5%", "display": "inline-block"},
+            dash.no_update,
+        )
 
 
 # Note: Landing page callbacks moved to pages/landing/landing_callbacks.py

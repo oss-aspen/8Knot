@@ -404,6 +404,18 @@ def create_search_storage_components():
         create_store("cached-options", storage_type="session"),
         html.Div(id="cache-init-trigger", className="hidden"),
         create_store("search-cache-init-hidden", storage_type="session"),
+        # Query progress tracking store
+        create_store(
+            "query-progress",
+            storage_type="memory",
+            data={
+                "completed": 0,
+                "total": 0,
+                "cached": 0,
+                "failed": 0,
+                "status": "idle",  # idle | running | complete | error | timeout
+            },
+        ),
     ]
 
 
@@ -581,6 +593,45 @@ def create_search_controls():
     )
 
 
+def create_query_progress_indicator():
+    """
+    Create the query progress indicator component.
+
+    This component provides visual feedback during data loading, showing:
+    - Number of completed queries vs total
+    - Number of queries served from cache
+    - Status messages for different states (loading, complete, error, timeout)
+
+    Returns:
+        html.Div containing the progress indicator components
+    """
+    return html.Div(
+        id="query-progress-container",
+        # Hidden by default via CSS class, shown when queries run (see main_layout.css)
+        className="query-progress-container query-progress-container--hidden",
+        children=[
+            html.Div(
+                id="query-progress-text",
+                className="query-progress-text",
+                children="Preparing queries...",
+            ),
+            dbc.Progress(
+                id="query-progress-bar",
+                value=0,
+                striped=True,
+                animated=True,
+                # Height is set in main_layout.css via .query-progress-bar
+                className="query-progress-bar",
+            ),
+            html.Div(
+                id="query-progress-details",
+                className="query-progress-details",
+                children="",
+            ),
+        ],
+    )
+
+
 def create_search_bar(initial_option):
     """
     Create the complete search bar component with all sub-components.
@@ -606,6 +657,8 @@ def create_search_bar(initial_option):
             ),
             create_search_input_section(initial_option),
             create_search_controls(),
+            # Query progress indicator - shows loading progress when fetching data
+            create_query_progress_indicator(),
         ],
         className="search-bar-wrapper",
     )

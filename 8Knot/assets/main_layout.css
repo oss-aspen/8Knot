@@ -8,6 +8,11 @@
     - Layout containers
 
     Uses global CSS variables from color.css
+
+    NOTE ON !important DECLARATIONS (Query Progress Bar):
+    The progress bar uses Bootstrap's .bg-info, .bg-success, etc. classes.
+    !important is required to override Bootstrap's default background colors
+    with our custom gradient styling.
 */
 
 
@@ -164,6 +169,91 @@ a.sidebar-section-text {
 
 .data-badge--hidden {
     display: none;
+}
+
+
+/* ==== QUERY PROGRESS INDICATOR ==== */
+
+.query-progress-container {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: rgba(64, 64, 64, 0.3);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--bg-tertiary);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.query-progress-container--visible {
+    display: block;
+}
+
+.query-progress-container--hidden {
+    display: none;
+}
+
+.query-progress-container[style*="display: none"] {
+    opacity: 0;
+    transform: translateY(-8px);
+}
+
+.query-progress-container[style*="display: block"] {
+    animation: progressFadeIn 0.3s ease forwards;
+}
+
+.query-progress-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-white);
+    margin-bottom: var(--spacing-sm);
+}
+
+.query-progress-bar {
+    height: 6px !important;
+    border-radius: 3px;
+    background-color: var(--bg-tertiary);
+    overflow: hidden;
+}
+
+.query-progress-bar .progress-bar {
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 3px;
+}
+
+.query-progress-details {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    margin-top: var(--spacing-xs);
+    opacity: 0.8;
+}
+
+
+/* Progress bar state colors - !important overrides Bootstrap .bg-* defaults */
+
+.query-progress-bar .progress-bar.bg-info {
+    background: linear-gradient(90deg, var(--progress-info-start), var(--progress-info-end)) !important;
+}
+
+.query-progress-bar .progress-bar.bg-success {
+    background: linear-gradient(90deg, var(--progress-success-start), var(--progress-success-end)) !important;
+}
+
+.query-progress-bar .progress-bar.bg-danger {
+    background: linear-gradient(90deg, var(--progress-danger-start), var(--progress-danger-end)) !important;
+}
+
+.query-progress-bar .progress-bar.bg-warning {
+    background: linear-gradient(90deg, var(--progress-warning-start), var(--progress-warning-end)) !important;
+}
+
+@keyframes progressFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 
@@ -980,36 +1070,45 @@ input.dark-input:focus,
    DCC.DROPDOWN dark-dropdown styling
 ============================================================================= */
 
-
 .dark-dropdown {
     border-radius: var(--border-radius-lg);
     background-color: var(--bg-primary);
     border: 1px solid var(--border-color-dark);
 }
 
+
 /* removes the white boarder  */
+
 .dark-dropdown .Select-control {
     border-color: var(--multiselect-hover-bg) !important;
 }
 
+
 /* prevent the weird bar color mismatch */
+
 .dark-dropdown .Select-value,
 .dark-dropdown .Select-placeholder {
-    background-color: #404040 ;
+    background-color: #404040;
     color: var(--bs-body-color);
 }
 
+
 /* dropdown menu options */
+
 .dark-dropdown .VirtualizedSelectOption {
     background-color: #404040;
     color: var(--bs-body-color);
-  }
+}
+
 
 /* dropdown menu hover effect */
+
 .dark-dropdown .VirtualizedSelectFocusedOption {
-    background-color: var(--color-border);;
+    background-color: var(--color-border);
+    ;
     color: white;
-  }
+}
+
 
 /* ==== CARD DIVIDER (card-split) ==== */
 
