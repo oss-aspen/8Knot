@@ -404,6 +404,7 @@ def create_search_storage_components():
         create_store("cached-options", storage_type="session"),
         html.Div(id="cache-init-trigger", className="hidden"),
         create_store("search-cache-init-hidden", storage_type="session"),
+        create_store("search-trigger", storage_type="memory", data=0),
     ]
 
 
