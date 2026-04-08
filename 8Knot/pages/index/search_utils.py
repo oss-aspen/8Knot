@@ -446,11 +446,11 @@ def create_multiselect_styles():
         # Inline styles for pending pill color (red by default, turns blue with "searching" class)
         "value": {
             "backgroundColor": "var(--pill-pending-bg)",
-            "color": "var(--pill-pending-color)",
+            "color": "var(--pill-text-color)",
         },
         "pill": {
             "backgroundColor": "var(--pill-pending-bg)",
-            "color": "var(--pill-pending-color)",
+            "color": "var(--pill-text-color)",
         },
     }
 

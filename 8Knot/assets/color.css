@@ -60,10 +60,8 @@
     --button-text-light: #fff9f9;
 
     /* MultiSelect pill colors */
-    --pill-default-bg: #555555;
-    --pill-default-color: #ffffff;
     --pill-pending-bg: #B03A2E;
-    --pill-pending-color: #ffffff;
+    --pill-text-color: #ffffff;
 
     /* Table colors */
     --table-bg-dark: #222;
@@ -91,13 +89,13 @@
 .mantine-MultiSelect-pill,
 .mantine-MultiSelect-value {
     background-color: var(--pill-pending-bg);
-    color: var(--pill-pending-color);
+    color: var(--pill-text-color);
 }
 
 .searchbar-dropdown .mantine-MultiSelect-pill,
 .searchbar-dropdown .mantine-MultiSelect-value {
     background-color: var(--pill-pending-bg);
-    color: var(--pill-pending-color);
+    color: var(--pill-text-color);
 }
 
 
