@@ -867,7 +867,7 @@ def hide_loading_on_landing(pathname):
 # Callback to change pill color when search is clicked
 #
 # This callback implements dynamic pill coloring:
-# - When user selects repos/orgs: pills are grey (pending)
+# - When user selects repos/orgs: pills are red (pending)
 # - When user clicks search icon: pills turn blue (active search)
 # - Default selection (chaoss) starts blue since search is auto-triggered
 #
@@ -882,7 +882,7 @@ def update_pill_color_on_search(_, selected_repos_orgs):
     """Update pill color based on search action.
 
     When search icon is clicked, add 'searching' class to turn pills blue.
-    When values change (user is selecting), remove 'searching' class to keep pills grey.
+    When values change (user is selecting), remove 'searching' class to keep pills red.
     """
     if not dash.ctx.triggered:
         return dash.no_update
@@ -894,8 +894,8 @@ def update_pill_color_on_search(_, selected_repos_orgs):
         logging.info(f"PILL COLOR: Search clicked - turning pills BLUE")
         return "searchbar-dropdown searching"
     if triggered_id == "projects":
-        # Values changed (user selecting) - remove 'searching' class to keep pills grey
-        logging.info(f"PILL COLOR: Values changed - turning pills GREY. Selected: {selected_repos_orgs}")
+        # Values changed (user selecting) - remove 'searching' class to keep pills red
+        logging.info(f"PILL COLOR: Values changed - turning pills RED. Selected: {selected_repos_orgs}")
         return "searchbar-dropdown"
 
     return dash.no_update

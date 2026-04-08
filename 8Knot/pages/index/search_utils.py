@@ -443,14 +443,14 @@ def create_multiselect_styles():
             "margin": "var(--multiselect-item-margin)",
             "color": "var(--color-white)",
         },
-        # Inline styles for grey pill default color (turns blue with "searching" class)
+        # Inline styles for pending pill color (red by default, turns blue with "searching" class)
         "value": {
-            "backgroundColor": "var(--pill-default-bg)",
-            "color": "var(--pill-default-color)",
+            "backgroundColor": "var(--pill-pending-bg)",
+            "color": "var(--pill-pending-color)",
         },
         "pill": {
-            "backgroundColor": "var(--pill-default-bg)",
-            "color": "var(--pill-default-color)",
+            "backgroundColor": "var(--pill-pending-bg)",
+            "color": "var(--pill-pending-color)",
         },
     }
 
