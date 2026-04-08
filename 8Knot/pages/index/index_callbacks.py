@@ -436,11 +436,13 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
 @callback(
     [Output("results-output-container", "children"), Output("repo-choices", "data")],
     [
-        Input("search", "n_clicks"),
+        Input("search-button", "n_clicks"),
         State("projects", "value"),
     ],
 )
-def multiselect_values_to_repo_ids(n_clicks, user_vals):
+def multiselect_values_to_repo_ids(search_button_clicks, user_vals):
+    if dash.ctx.triggered_id != "search-button":
+        raise dash.exceptions.PreventUpdate
     if not user_vals:
         logging.warning("NOTHING SELECTED IN SEARCH BAR")
         raise dash.exceptions.PreventUpdate
@@ -875,10 +877,10 @@ def hide_loading_on_landing(pathname):
 # ============================================================================
 @callback(
     Output("projects", "className"),
-    [Input("search", "n_clicks"), Input("projects", "value")],
+    [Input("search-button", "n_clicks"), Input("projects", "value")],
     prevent_initial_call=True,
 )
-def update_pill_color_on_search(_, selected_repos_orgs):
+def update_pill_color_on_search(search_button_clicks, selected_repos_orgs):
     """Update pill color based on search action.
 
     When search icon is clicked, add 'searching' class to turn pills blue.
@@ -889,7 +891,7 @@ def update_pill_color_on_search(_, selected_repos_orgs):
 
     triggered_id = dash.ctx.triggered_id
 
-    if triggered_id == "search":
+    if triggered_id == "search-button":
         # Search button clicked - add 'searching' class to turn pills blue
         logging.info(f"PILL COLOR: Search clicked - turning pills BLUE")
         return "searchbar-dropdown searching"
