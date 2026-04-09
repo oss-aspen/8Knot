@@ -15,7 +15,7 @@ A clear and concise description of the type of graph or metric thats to be creat
 
 **Acceptance criteria for the issue and visualization to be complete**
 - [ ] Take the concept -> high level overview of what the visualization will be and detail it in the issue 
-- [ ] Review current set of queries to see if one already gathers the information needed or a small edit could get it there 
+- [ ] Review current set of queries to see if one already gathers the information needed or a small edit could get it there
 - [ ] Create visualization notebook in the [CHAOSS DS WG](https://github.com/chaoss/wg-data-science) [ISSUE](url)
 - [ ] Visualization notebook -> 8Knot PR for visualization following the visualization template
 - [ ] Create 8Knot visualization PR from the notebook using the [visualization template](https://github.com/oss-aspen/8Knot/blob/dev/8Knot/pages/visualization_template/viz_template.py)
