@@ -129,8 +129,9 @@ def process_data(df, interval, contribs):
     # remove null contrib ids
     df.dropna(inplace=True)
 
-    # create column for identifying Drive by and Repeat Contributors
-    contributors = df["cntrb_id"][df["rank"] == contribs].to_list()
+    # repeat contributors: >= contribs actions in at least one repo (same partition as rank in explorer_contributor_actions)
+    action_counts = df.groupby(["cntrb_id", "repo_id"], sort=False).size()
+    contributors = action_counts[action_counts >= contribs].index.get_level_values("cntrb_id").unique().tolist()
 
     # dfs for drive by and repeat contributors
     df_drive_temp = df.loc[~df["cntrb_id"].isin(contributors)]

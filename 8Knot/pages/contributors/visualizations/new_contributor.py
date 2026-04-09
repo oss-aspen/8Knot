@@ -109,8 +109,8 @@ def process_data(df, interval):
         date.
     """
 
-    # keep only first contributions
-    df = df[df["rank"] == 1]
+    # one row per contributor: earliest action in the selected data
+    df = df.sort_values("created_at", ascending=True).drop_duplicates(subset=["cntrb_id"], keep="first")
 
     # get all of the unique entries by contributor ID
     df.drop_duplicates(subset=["cntrb_id"], inplace=True)

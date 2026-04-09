@@ -76,8 +76,8 @@ def process_data(df):
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
     # df.rename(columns={"created_at": "created"}, inplace=True)
 
-    # selection for 1st contribution only
-    df = df[df["rank"] == 1]
+    # one row per contributor: earliest action in the selected data
+    df = df.sort_values("created_at", ascending=True).drop_duplicates(subset=["cntrb_id"], keep="first")
 
     # reset index to be ready for plotly
     df = df.reset_index()
