@@ -147,8 +147,9 @@ def process_data(df, view, contribs):
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
     # df.rename(columns={"created_at": "created"}, inplace=True)
 
-    # graph on contribution subset
-    contributors = df["cntrb_id"][df["rank"] == contribs].to_list()
+    # repeat contributors: >= contribs actions in at least one repo (same partition as rank in explorer_contributor_actions)
+    action_counts = df.groupby(["cntrb_id"], sort=False).size()
+    contributors = action_counts[action_counts >= contribs].index.get_level_values("cntrb_id").unique().tolist()
     df_cont_subset = pd.DataFrame(df)
 
     # filtering data by view
