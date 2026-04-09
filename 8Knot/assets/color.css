@@ -60,8 +60,8 @@
     --button-text-light: #fff9f9;
 
     /* MultiSelect pill colors */
-    --pill-default-bg: #555555;
-    --pill-default-color: #ffffff;
+    --pill-pending-bg: #B03A2E;
+    --pill-text-color: #ffffff;
 
     /* Table colors */
     --table-bg-dark: #222;
@@ -84,18 +84,18 @@
    The .searching class is toggled by a callback in index_callbacks.py
 
 
-/* Style for filter pills (grey by default when selected) */
+/* Style for filter pills (red by default when selected but search not executed) */
 
 .mantine-MultiSelect-pill,
 .mantine-MultiSelect-value {
-    background-color: var(--gray-medium);
-    color: var(--color-white);
+    background-color: var(--pill-pending-bg);
+    color: var(--pill-text-color);
 }
 
 .searchbar-dropdown .mantine-MultiSelect-pill,
 .searchbar-dropdown .mantine-MultiSelect-value {
-    background-color: var(--gray-medium);
-    color: var(--color-white);
+    background-color: var(--pill-pending-bg);
+    color: var(--pill-text-color);
 }
 
 
