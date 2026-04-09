@@ -130,7 +130,7 @@ def process_data(df, interval, contribs):
     df.dropna(inplace=True)
 
     # repeat contributors: >= contribs actions in at least one repo (same partition as rank in explorer_contributor_actions)
-    action_counts = df.groupby(["cntrb_id", "repo_id"], sort=False).size()
+    action_counts = df.groupby(["cntrb_id"], sort=False).size()
     contributors = action_counts[action_counts >= contribs].index.get_level_values("cntrb_id").unique().tolist()
 
     # dfs for drive by and repeat contributors
