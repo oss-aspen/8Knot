@@ -461,8 +461,9 @@ button.icon-button.btn:active,
 
 .search-button-wrapper {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
+    gap: var(--spacing-md);
     margin-top: var(--spacing-sm);
 }
 

@@ -501,7 +501,6 @@ def create_search_input_section(initial_option):
             ),
             html.Div(
                 [
-                    create_search_controls(),
                     dbc.Button(
                         "Search",
                         id="search-button",
@@ -509,6 +508,7 @@ def create_search_input_section(initial_option):
                         size="sm",
                         className="about-graph-button",
                     ),
+                    create_search_controls(),
                 ],
                 className="search-button-wrapper",
             ),
