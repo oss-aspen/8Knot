@@ -500,13 +500,16 @@ def create_search_input_section(initial_option):
                 className="search-input-wrapper",
             ),
             html.Div(
-                dbc.Button(
-                    "Search",
-                    id="search-button",
-                    color="outline-secondary",
-                    size="sm",
-                    className="about-graph-button",
-                ),
+                [
+                    create_search_controls(),
+                    dbc.Button(
+                        "Search",
+                        id="search-button",
+                        color="outline-secondary",
+                        size="sm",
+                        className="about-graph-button",
+                    ),
+                ],
                 className="search-button-wrapper",
             ),
             create_alert(
@@ -597,7 +600,6 @@ def create_search_bar(initial_option):
                 className="search-bar-component",
             ),
             create_search_input_section(initial_option),
-            create_search_controls(),
         ],
         className="search-bar-wrapper",
     )

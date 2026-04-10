@@ -461,14 +461,13 @@ button.icon-button.btn:active,
 
 .search-button-wrapper {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
     margin-top: var(--spacing-sm);
 }
 
 .search-controls-stack {
-    width: 100%;
-    justify-content: center;
-    margin-top: var(--spacing-md);
+    align-items: center;
 }
 
 .search-bar-wrapper {
