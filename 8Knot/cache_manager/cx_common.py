@@ -26,7 +26,7 @@ env_host = os.getenv("CACHE_HOST", "postgres-cache")
 env_user = os.getenv("CACHE_USER", "postgres")
 env_password = os.getenv("POSTGRES_PASSWORD", "password")
 env_port = os.getenv("CACHE_PORT", "5432")
-env_schema = os.getenv("CACHE_SCHEMA", "augur_data")
+env_schema = os.getenv("CACHE_SCHEMA", env_augur_schema)
 
 
 # purely initial startup string

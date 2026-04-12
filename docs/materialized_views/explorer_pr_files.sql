@@ -4,8 +4,8 @@ SELECT
     pr.pull_request_id AS pull_request_id,
     pr.repo_id as repo_id
 FROM
-    augur_data.pull_requests pr
+    pull_requests pr
 INNER JOIN
-    augur_data.pull_request_files prf
+    pull_request_files prf
 ON
     pr.pull_request_id = prf.pull_request_id
