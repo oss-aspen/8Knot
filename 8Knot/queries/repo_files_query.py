@@ -44,7 +44,7 @@ def repo_files_query(self, repos):
                         file_path,
                         file_name
                     FROM
-                        augur_data.explorer_repo_files
+                        explorer_repo_files
                     WHERE
                         id IN %s
                         AND repo_name IS NOT NULL
