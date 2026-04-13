@@ -1,4 +1,4 @@
-### Pull Request Change Description 
+### Pull Request Change Description
 <!-- Please give a thorough descriptions of the intended changes made by this PR -->
 
 ### Generative AI disclosure
