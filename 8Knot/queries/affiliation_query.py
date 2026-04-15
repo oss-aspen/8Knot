@@ -42,7 +42,16 @@ def affiliation_query(self, repos):
                         c.action,
                         c.rank,
                         con.cntrb_company,
-                        string_agg(ca.alias_email, ' , ' order by ca.alias_email) as email_list
+                        array_to_string(
+                            ARRAY(
+                                SELECT DISTINCT e
+                                FROM unnest(
+                                    array_agg(ca.alias_email) ||
+                                    ARRAY[con.cntrb_email, con.cntrb_canonical]
+                                ) AS e
+                                WHERE e IS NOT NULL AND e != ''
+                            ), ' , '
+                        ) AS email_list
                     FROM
                         explorer_contributor_actions c
                     JOIN contributors_aliases ca
@@ -53,7 +62,7 @@ def affiliation_query(self, repos):
                         c.repo_id in %s
                         and timezone('utc', c.created_at) < now() -- created_at is a timestamptz value
                         -- don't need to check non-null for created_at because it's non-null by definition.
-                    GROUP BY c.cntrb_id, c.created_at, c.repo_id, c.login, c.action, c.rank, con.cntrb_company
+                    GROUP BY c.cntrb_id, c.created_at, c.repo_id, c.login, c.action, c.rank, con.cntrb_company, con.cntrb_email, con.cntrb_canonical
                     ORDER BY
                         c.created_at
                     """
