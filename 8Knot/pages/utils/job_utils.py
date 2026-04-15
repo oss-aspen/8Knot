@@ -1,4 +1,5 @@
 import plotly.graph_objects as go
+import cache_manager.cache_facade as cf
 
 columns = ["1", "2", "3"]
 
@@ -39,3 +40,31 @@ timeout_graph.update_layout(
     },
     font=dict(size=18, color="orange"),
 )
+
+
+def get_default_repo_with_data(repo_ids, cache_tablename):
+    """
+    Find the first repo that has valid cached data.
+
+    Args:
+        repo_ids: List of repo IDs to check
+        cache_tablename: Name of the cache table to query
+
+    Returns:
+        str: The first repo_id (as string) that has cached data, or repo_ids[0] as fallback
+    """
+
+    df = cf.retrieve_from_cache(tablename=cache_tablename, repolist=repo_ids)
+
+    if df.empty:
+        return str(repo_ids[0])
+
+    # Get set of repo_ids that have data
+    repos_with_data = set(df["repo_id"].unique())
+
+    # Return first repo with data (preserving original order)
+    for repo_id in repo_ids:
+        if repo_id in repos_with_data:
+            return str(repo_id)
+
+    return str(repo_ids[0])

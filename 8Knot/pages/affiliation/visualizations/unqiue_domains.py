@@ -6,7 +6,7 @@ import logging
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import baby_blue
-from queries.affiliation_query import affiliation_query as aq
+from queries.commits_query import commits_query as cmq
 from pages.utils.job_utils import nodata_graph
 import time
 import datetime as dt
@@ -20,12 +20,12 @@ VIZ_ID = "unique-domains"
 gc_unique_domains = VisualizationAIO(
     PAGE,
     VIZ_ID,
-    title="Unique Contributor Email Domains",
+    title="Unique Commit Email Domains",
     graph_info="""
-    Visualizes the population of unique commit email addresses per represented domain.\n
-    e.g. if there are 100 distinct commit contributors and 50 use an '@gmail.com' email address,\n
-    and another 50 use an '@redhat.com' email address, 50 percent of of emails wll be '@gmail.com'\n
-    and 50% will be '@redhat.com'.
+    Visualizes the proportion of commit activity associated with specific author email domains.\n
+    e.g. if there are 100 commits and 50 were authored with an '@gmail.com' address and 50 with\n
+    '@redhat.com', each domain will represent half of the chart. This uses the same commit data\n
+    as Commit Activity by Domain.
     """,
     controls=[
         dbc.Label(
@@ -63,7 +63,6 @@ gc_unique_domains = VisualizationAIO(
 )
 
 
-# callback for Company Affiliation by Github Account Info graph
 @callback(
     Output(f"{PAGE}-{VIZ_ID}", "figure"),
     [
@@ -77,7 +76,7 @@ gc_unique_domains = VisualizationAIO(
 )
 def unique_domains_graph(repolist, num, start_date, end_date, bot_switch):
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=aq.__name__, repolist=repolist):
+    while not_cached := cf.get_uncached(func_name=cmq.__name__, repolist=repolist):
         logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 
@@ -86,7 +85,7 @@ def unique_domains_graph(repolist, num, start_date, end_date, bot_switch):
 
     # GET ALL DATA FROM POSTGRES CACHE
     df = cf.retrieve_from_cache(
-        tablename=aq.__name__,
+        tablename=cmq.__name__,
         repolist=repolist,
     )
 
@@ -94,10 +93,6 @@ def unique_domains_graph(repolist, num, start_date, end_date, bot_switch):
     if df.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return nodata_graph
-
-    # remove bot data
-    if bot_switch:
-        df = df[~df["cntrb_id"].isin(app.bots_list)]
 
     # function for all data pre processing, COULD HAVE ADDITIONAL INPUTS AND OUTPUTS
     df = process_data(df, num, start_date, end_date)
@@ -110,22 +105,22 @@ def unique_domains_graph(repolist, num, start_date, end_date, bot_switch):
 
 def process_data(df: pd.DataFrame, num, start_date, end_date):
     # convert to datetime objects rather than strings
-    df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
+    df["author_timestamp"] = pd.to_datetime(df["author_timestamp"], utc=True)
 
-    # order values chronologically by COLUMN_TO_SORT_BY date
-    df = df.sort_values(by="created_at", axis=0, ascending=True)
+    # order values chronologically by author_timestamp date earliest to latest
+    df = df.sort_values(by="author_timestamp", axis=0, ascending=True)
 
     # filter values based on date picker
     if start_date is not None:
-        df = df[df.created_at >= start_date]
+        df = df[df.author_timestamp >= start_date]
     if end_date is not None:
-        df = df[df.created_at <= end_date]
+        df = df[df.author_timestamp <= end_date]
 
-    # creates list of unique emails and flattens list result
-    emails = df.email_list.str.split(" , ").explode("email_list").unique().tolist()
+    # one author email per commit
+    emails = df.author_email.tolist()
 
     # remove any entries not in email format and put all emails in lowercase
-    emails = [x.lower() for x in emails if "@" in x]
+    emails = [x.lower() for x in emails if isinstance(x, str) and "@" in x]
 
     # creates list of email domains from the emails list
     email_domains = [x[x.rindex("@") + 1 :] for x in emails]
@@ -133,17 +128,17 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
     # creates df of domains and counts
     df = pd.DataFrame(email_domains, columns=["domains"]).value_counts().to_frame().reset_index()
 
-    df = df.rename(columns={"count": "occurences"})
+    df = df.rename(columns={"count": "occurrences"})
 
     # changes the name of the company if under a certain threshold
-    df.loc[df.occurences <= num, "domains"] = "Other"
+    df.loc[df["occurrences"] <= num, "domains"] = "Other"
 
     # groups others together for final counts
     df = (
-        df.groupby(by="domains")["occurences"]
+        df.groupby(by="domains")["occurrences"]
         .sum()
         .reset_index()
-        .sort_values(by=["occurences"], ascending=False)
+        .sort_values(by=["occurrences"], ascending=False)
         .reset_index(drop=True)
     )
 
@@ -152,7 +147,7 @@ def process_data(df: pd.DataFrame, num, start_date, end_date):
 
 def create_figure(df: pd.DataFrame):
     # graph generation
-    fig = px.pie(df, names="domains", values="occurences", color_discrete_sequence=baby_blue)
+    fig = px.pie(df, names="domains", values="occurrences", color_discrete_sequence=baby_blue)
     fig.update_traces(
         textposition="inside",
         textinfo="percent+label",

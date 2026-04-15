@@ -1,152 +1,96 @@
-from dash import html, dcc, callback
-import dash
+from dash import callback
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
-from dash.dependencies import Input, Output, State
-import plotly.graph_objects as go
+from dash.dependencies import Input, Output
 import pandas as pd
 import logging
 from dateutil.relativedelta import *  # type: ignore
-import plotly.express as px
+from pages.utils.graph_utils import create_heatmap_figure
 from queries.prs_query import prs_query as prq
 from queries.pr_files_query import pr_file_query as prfq
 from queries.repo_files_query import repo_files_query as rfq
 from app import augur
-import io
-from pages.utils.job_utils import nodata_graph
+from pages.utils.job_utils import nodata_graph, get_default_repo_with_data
 import time
-from dash.exceptions import PreventUpdate
-import app
 import cache_manager.cache_facade as cf
+from components.visualization import VisualizationAIO
 
 PAGE = "codebase"
 VIZ_ID = "contribution-file-heatmap"
 
-# div to hold all objects to wait for loading to render
-graph_loading = html.Div(
-    [
-        dbc.Popover(
+gc_contribution_file_heatmap = VisualizationAIO(
+    PAGE,
+    VIZ_ID,
+    title="Contribution File Heatmap",
+    graph_info="""
+    This visualization analyzes the activity of the open or merged pull requests to sub-sections
+    (files or folders) of a repository.
+    """,
+    controls=[
+        dbc.Row(
             [
-                dbc.PopoverHeader("Graph Info:"),
-                dbc.PopoverBody(
-                    """
-                    This visualization analyzes the activity of the open or merged pull requests to sub-sections
-                    (files or folders) of a repository.
-                    """
+                dbc.Label(
+                    "Select Repository:",
+                    html_for=f"repo-{PAGE}-{VIZ_ID}",
+                    width="auto",
+                ),
+                dbc.Col(
+                    [
+                        dmc.Select(
+                            id=f"repo-{PAGE}-{VIZ_ID}",
+                            placeholder="Repo for Heatmap",
+                            classNames={"values": "dmc-multiselect-custom"},
+                            searchable=True,
+                            clearable=True,
+                        ),
+                    ],
+                    className="me-2",
+                ),
+                dbc.Label(
+                    "Select Directory:",
+                    html_for=f"patterns-{PAGE}-{VIZ_ID}",
+                    width="auto",
+                ),
+                dbc.Col(
+                    [
+                        dmc.Select(
+                            id=f"directory-{PAGE}-{VIZ_ID}",
+                            classNames={"values": "dmc-multiselect-custom"},
+                            searchable=True,
+                            clearable=False,
+                        ),
+                    ],
+                    className="me-2",
                 ),
             ],
-            id=f"popover-{PAGE}-{VIZ_ID}",
-            target=f"popover-target-{PAGE}-{VIZ_ID}",
-            placement="top",
-            is_open=False,
+            align="center",
         ),
-        dcc.Graph(id=f"{PAGE}-{VIZ_ID}"),
-        dbc.Form(
+        dbc.Row(
             [
-                dbc.Row(
-                    [
-                        dbc.Label(
-                            "Select Repository:",
-                            html_for=f"repo-{PAGE}-{VIZ_ID}",
-                            width="auto",
-                        ),
-                        dbc.Col(
-                            [
-                                dmc.Select(
-                                    id=f"repo-{PAGE}-{VIZ_ID}",
-                                    placeholder="Repo for Heatmap",
-                                    classNames={"values": "dmc-multiselect-custom"},
-                                    searchable=True,
-                                    clearable=True,
-                                ),
-                            ],
-                            className="me-2",
-                        ),
-                        dbc.Label(
-                            "Select Directory:",
-                            html_for=f"patterns-{PAGE}-{VIZ_ID}",
-                            width="auto",
-                        ),
-                        dbc.Col(
-                            [
-                                dmc.Select(
-                                    id=f"directory-{PAGE}-{VIZ_ID}",
-                                    classNames={"values": "dmc-multiselect-custom"},
-                                    searchable=True,
-                                    clearable=False,
-                                ),
-                            ],
-                            className="me-2",
-                        ),
-                    ],
-                    align="center",
+                dbc.Label(
+                    "Graph View:",
+                    html_for=f"graph-view-{PAGE}-{VIZ_ID}",
+                    width="auto",
                 ),
-                dbc.Row(
+                dbc.Col(
                     [
-                        dbc.Label(
-                            "Graph View:",
-                            html_for=f"graph-view-{PAGE}-{VIZ_ID}",
-                            width="auto",
+                        dbc.RadioItems(
+                            id=f"graph-view-{PAGE}-{VIZ_ID}",
+                            options=[
+                                {"label": "PR Opened", "value": "created_at"},
+                                {"label": "PR Merged", "value": "merged_at"},
+                            ],
+                            value="created_at",
+                            inline=True,
                         ),
-                        dbc.Col(
-                            [
-                                dbc.RadioItems(
-                                    id=f"graph-view-{PAGE}-{VIZ_ID}",
-                                    options=[
-                                        {"label": "PR Opened", "value": "created_at"},
-                                        {"label": "PR Merged", "value": "merged_at"},
-                                    ],
-                                    value="created_at",
-                                    inline=True,
-                                ),
-                            ]
-                        ),
-                        dbc.Col(
-                            dbc.Button(
-                                "About Graph",
-                                id=f"popover-target-{PAGE}-{VIZ_ID}",
-                                color="secondary",
-                                size="sm",
-                            ),
-                            width="auto",
-                            style={"paddingTop": ".5em"},
-                        ),
-                    ],
-                    align="center",
+                    ]
                 ),
-            ]
+            ],
+            align="center",
         ),
     ],
+    class_name="dark-card",
 )
-
-gc_contribution_file_heatmap = dbc.Card(
-    [
-        dbc.CardBody(
-            [
-                html.H3(
-                    "Contribution File Heatmap",
-                    className="card-title",
-                    style={"textAlign": "center"},
-                ),
-                dcc.Loading(
-                    children=graph_loading,
-                ),
-            ]
-        )
-    ],
-)
-
-
-# callback for graph info popover
-@callback(
-    Output(f"popover-{PAGE}-{VIZ_ID}", "is_open"),
-    [Input(f"popover-target-{PAGE}-{VIZ_ID}", "n_clicks")],
-    [State(f"popover-{PAGE}-{VIZ_ID}", "is_open")],
-)
-def toggle_popover(n, is_open):
-    if n:
-        return not is_open
-    return is_open
 
 
 # callback for populating repo drop down
@@ -161,9 +105,13 @@ def repo_dropdown(repo_ids):
     # array to hold repo_id and git url pairing for dropdown
     data_array = []
     for repo_id in repo_ids:
-        entry = {"value": repo_id, "label": augur.repo_id_to_git(repo_id)}
+        entry = {"value": str(repo_id), "label": augur.repo_id_to_git(repo_id)}
         data_array.append(entry)
-    return data_array, repo_ids[0]
+
+    # Select first repo with valid cached data as default
+    default = get_default_repo_with_data(repo_ids, rfq.__name__)
+
+    return data_array, default
 
 
 # callback for populating directory drop down
@@ -176,7 +124,11 @@ def repo_dropdown(repo_ids):
     background=True,
 )
 def directory_dropdown(repo_id):
+    # Convert to int since Mantine dropdown returns strings
+    repo_id = int(repo_id)
+
     # wait for data to asynchronously download and become available.
+    logging.warning(f"DIRECTORY DROPDOWN - WAITING FOR DATA TO LOAD")
     while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=[repo_id]):
         logging.warning(f"DIRECTORY DROPDOWN - WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
@@ -246,6 +198,9 @@ def directory_dropdown(repo_id):
 def cntrb_file_heatmap_graph(repo_id, directory, graph_view):
     start = time.perf_counter()
     logging.warning(f"{VIZ_ID}- START")
+
+    # Convert to int since Mantine dropdown returns strings
+    repo_id = int(repo_id)
 
     # get dataframes of data from cache
     df_file, df_file_pr, df_pr = multi_query_helper([repo_id])
@@ -339,22 +294,8 @@ def process_data(
 
 
 def create_figure(df: pd.DataFrame, graph_view):
-    legend_title = "PRs Opened"
-    if graph_view == "merged_at":
-        legend_title = "PRs Merged"
-
-    fig = px.imshow(
-        df,
-        labels=dict(x="Time", y="Directory Entries", color=legend_title),
-        color_continuous_scale=px.colors.sequential.deep,
-    )
-
-    fig["layout"]["yaxis"]["tickmode"] = "linear"
-    fig["layout"]["height"] = 700
-    fig["layout"]["coloraxis_colorbar_x"] = -0.15
-    fig["layout"]["yaxis"]["side"] = "right"
-
-    return fig
+    color_label = "PRs Merged" if graph_view == "merged_at" else "PRs Opened"
+    return create_heatmap_figure(df, color_label=color_label)
 
 
 def df_file_clean(df_file: pd.DataFrame, df_file_pr: pd.DataFrame):
@@ -394,7 +335,7 @@ def df_file_clean(df_file: pd.DataFrame, df_file_pr: pd.DataFrame):
     df_file_pr.drop(["repo_id"], axis=1, inplace=True)
 
     # create column with list of prs per file path
-    df_file_pr = df_file_pr.groupby("file_path")["pull_request_id"].apply(list)
+    df_file_pr = df_file_pr.groupby("file_path")["pull_request"].apply(list)
 
     # Left join on df_files to only get the files that are currently in the repository
     # and the prs that included edits on the file
@@ -430,7 +371,7 @@ def pr_per_directory_value(directory, df_file):
     df_dynamic_directory = df_file[df_file["file_path"].str.startswith(directory)]
 
     # test if there is any pull requests in the directory
-    if df_dynamic_directory.pull_request_id.isnull().all():
+    if df_dynamic_directory.pull_request.isnull().all():
         return pd.DataFrame()
 
     # get one level up from the directory level
@@ -439,18 +380,18 @@ def pr_per_directory_value(directory, df_file):
     # Groupby the level above the selected directory for all files nested in folders are together.
     # For each, create a list of all of the contributors who have contributed
     df_dynamic_directory = (
-        df_dynamic_directory.groupby(group_column)["pull_request_id"]
+        df_dynamic_directory.groupby(group_column)["pull_request"]
         .sum()
         .reset_index()
         .rename(columns={group_column: "directory_value"})
     )
 
     # reformat 0 to "" for later processing
-    df_dynamic_directory.loc[df_dynamic_directory.pull_request_id == 0, "pull_request_id"] = ""
+    df_dynamic_directory.loc[df_dynamic_directory.pull_request == 0, "pull_request"] = ""
 
     # Set of pull_request to confirm there are no duplicate pull requests
-    df_dynamic_directory["pull_request_id"] = df_dynamic_directory.apply(
-        lambda row: set(row.pull_request_id),
+    df_dynamic_directory["pull_request"] = df_dynamic_directory.apply(
+        lambda row: set(row.pull_request),
         axis=1,
     )
     return df_dynamic_directory
@@ -494,8 +435,8 @@ def pr_to_dates(df_pr: pd.DataFrame, df_dynamic_directory: pd.DataFrame, graph_v
     df_dynamic_directory["created_at"], df_dynamic_directory["merged_at"] = zip(
         *df_dynamic_directory.apply(
             lambda row: [
-                [pr_open[x] for x in row.pull_request_id],
-                [pr_merged[x] for x in row.pull_request_id if (not pd.isnull(pr_merged[x]))],
+                [pr_open[x] for x in row.pull_request],
+                [pr_merged[x] for x in row.pull_request if (not pd.isnull(pr_merged[x]))],
             ],
             axis=1,
         )

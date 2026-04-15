@@ -76,6 +76,10 @@ def create_sidebar_navigation():
                         "/contributions#pr-staleness",
                     ),
                     NavItemAIO(
+                        "Self Merge Rate",
+                        "/contributions#self-merge-rate",
+                    ),
+                    NavItemAIO(
                         "PR Time to First Response",
                         "/contributions#pr-first-response",
                     ),
@@ -203,6 +207,25 @@ def create_sidebar_navigation():
                 "/assets/chaoss_small.svg",
                 "CHAOSS",
                 "/chaoss",
+            ),
+            DropdownNavItemAIO(
+                [
+                    NavItemAIO(
+                        "PR File Heatmap",
+                        "/codebase#contribution-file-heatmap",
+                    ),
+                    NavItemAIO(
+                        "Contributor File Heatmap",
+                        "/codebase#cntrb-file-heatmap",
+                    ),
+                    NavItemAIO(
+                        "Reviewer File Heatmap",
+                        "/codebase#reviewer-file-heatmap",
+                    ),
+                ],
+                "/assets/codebase.svg",
+                "Codebase",
+                "/codebase",
             ),
         ],
         vertical=True,

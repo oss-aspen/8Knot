@@ -30,15 +30,13 @@ def pr_file_query(self, repos):
 
     query_string = """
                     SELECT
-                        prf.pr_file_path as file_path,
-                        pr.pull_request_id AS pull_request,
-                        pr.repo_id as id
+                        file_path,
+                        pull_request_id AS pull_request,
+                        repo_id
                     FROM
-                        pull_requests pr,
-                        pull_request_files prf
+                        augur_data.explorer_pr_files
                     WHERE
-                        pr.pull_request_id = prf.pull_request_id AND
-                        pr.repo_id in %s
+                        repo_id IN %s
                 """
 
     func_name = pr_file_query.__name__

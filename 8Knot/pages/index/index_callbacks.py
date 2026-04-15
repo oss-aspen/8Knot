@@ -22,10 +22,9 @@ from queries.pr_assignee_query import pr_assignee_query as praq
 from queries.issue_assignee_query import issue_assignee_query as iaq
 from queries.user_groups_query import user_groups_query as ugq
 from queries.pr_response_query import pr_response_query as prr
-
-# from queries.cntrb_per_file_query import cntrb_per_file_query as cpfq - codebase page disabled
-# from queries.repo_files_query import repo_files_query as rfq - codebase page disabled
-# from queries.pr_files_query import pr_file_query as prfq - codebase page disabled
+from queries.cntrb_per_file_query import cntrb_per_file_query as cpfq
+from queries.repo_files_query import repo_files_query as rfq
+from queries.pr_files_query import pr_file_query as prfq
 from queries.repo_languages_query import repo_languages_query as rlq
 from queries.package_version_query import package_version_query as pvq
 from queries.repo_releases_query import repo_releases_query as rrq
@@ -37,9 +36,8 @@ import flask
 from .search_utils import fuzzy_search
 from .search_utils import clean_repo_name
 
-# list of queries to be run
-# QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq] - codebase page disabled
-QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, rlq, pvq, rrq, osq, riq]
+# list of queries to be run (includes codebase page queries for heatmaps)
+QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq]
 
 
 # check if login has been enabled in config
@@ -869,7 +867,7 @@ def hide_loading_on_landing(pathname):
 # Callback to change pill color when search is clicked
 #
 # This callback implements dynamic pill coloring:
-# - When user selects repos/orgs: pills are grey (pending)
+# - When user selects repos/orgs: pills are red (pending)
 # - When user clicks search icon: pills turn blue (active search)
 # - Default selection (chaoss) starts blue since search is auto-triggered
 #
@@ -884,7 +882,7 @@ def update_pill_color_on_search(_, selected_repos_orgs):
     """Update pill color based on search action.
 
     When search icon is clicked, add 'searching' class to turn pills blue.
-    When values change (user is selecting), remove 'searching' class to keep pills grey.
+    When values change (user is selecting), remove 'searching' class to keep pills red.
     """
     if not dash.ctx.triggered:
         return dash.no_update
@@ -896,8 +894,8 @@ def update_pill_color_on_search(_, selected_repos_orgs):
         logging.info(f"PILL COLOR: Search clicked - turning pills BLUE")
         return "searchbar-dropdown searching"
     if triggered_id == "projects":
-        # Values changed (user selecting) - remove 'searching' class to keep pills grey
-        logging.info(f"PILL COLOR: Values changed - turning pills GREY. Selected: {selected_repos_orgs}")
+        # Values changed (user selecting) - remove 'searching' class to keep pills red
+        logging.info(f"PILL COLOR: Values changed - turning pills RED. Selected: {selected_repos_orgs}")
         return "searchbar-dropdown"
 
     return dash.no_update
