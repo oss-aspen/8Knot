@@ -44,16 +44,12 @@ def affiliation_query(self, repos):
                         con.cntrb_company,
                         array_to_string(
                             ARRAY(
-                                SELECT DISTINCT unnest(
-                                    array_remove(
-                                        array_remove(
-                                            array_agg(ca.alias_email) ||
-                                            ARRAY[con.cntrb_email, con.cntrb_canonical],
-                                            NULL
-                                        ),
-                                        ''
-                                    )
-                                )
+                                SELECT DISTINCT e
+                                FROM unnest(
+                                    array_agg(ca.alias_email) ||
+                                    ARRAY[con.cntrb_email, con.cntrb_canonical]
+                                ) AS e
+                                WHERE e IS NOT NULL AND e != ''
                             ), ' , '
                         ) AS email_list
                     FROM
