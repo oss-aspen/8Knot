@@ -441,8 +441,6 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
     ],
 )
 def multiselect_values_to_repo_ids(search_button_clicks, user_vals):
-    if dash.ctx.triggered_id != "search-button":
-        raise dash.exceptions.PreventUpdate
     if not user_vals:
         logging.warning("NOTHING SELECTED IN SEARCH BAR")
         raise dash.exceptions.PreventUpdate
