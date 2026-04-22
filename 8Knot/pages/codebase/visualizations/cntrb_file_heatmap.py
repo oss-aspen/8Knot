@@ -432,7 +432,7 @@ def cntrb_to_last_activity(df_actions: pd.DataFrame, df_dynamic_directory: pd.Da
     # drop unneccessary columns not needed after preprocessing steps
     df_actions = df_actions.reset_index()
     df_actions.drop(
-        ["index", "repo_id", "repo_name", "login", "Action", "rank"],
+        ["index", "repo_id", "repo_name", "login", "Action"],
         axis=1,
         inplace=True,
     )

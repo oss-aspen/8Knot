@@ -204,7 +204,6 @@ def _create_application_tables() -> None:
                 repo_id int,
                 login text,
                 action text,
-                rank int,
                 cntrb_company text,
                 email_list text
             )
@@ -220,8 +219,7 @@ def _create_application_tables() -> None:
                 cntrb_id text,
                 created_at text,
                 login text,
-                action text,
-                rank int
+                action text
             )
             """
         )

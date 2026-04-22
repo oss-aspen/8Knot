@@ -35,12 +35,11 @@ def affiliation_query(self, repos):
 
     query_string = f"""
                     SELECT
-                        left(c.cntrb_id::text, 15), -- first 15 characters of the uuid
+                        left(ca.cntrb_id::text, 15) as cntrb_id, -- first 15 characters of the uuid
                         timezone('utc', c.created_at) AS created_at,
                         c.repo_id,
                         c.login,
                         c.action,
-                        c.rank,
                         con.cntrb_company,
                         array_to_string(
                             ARRAY(
@@ -62,7 +61,7 @@ def affiliation_query(self, repos):
                         c.repo_id in %s
                         and timezone('utc', c.created_at) < now() -- created_at is a timestamptz value
                         -- don't need to check non-null for created_at because it's non-null by definition.
-                    GROUP BY c.cntrb_id, c.created_at, c.repo_id, c.login, c.action, c.rank, con.cntrb_company, con.cntrb_email, con.cntrb_canonical
+                    GROUP BY c.cntrb_id, c.created_at, c.repo_id, c.login, c.action, con.cntrb_company, con.cntrb_email, con.cntrb_canonical
                     ORDER BY
                         c.created_at
                     """
