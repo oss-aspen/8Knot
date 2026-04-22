@@ -35,6 +35,7 @@ import redis
 import flask
 from .search_utils import fuzzy_search
 from .search_utils import clean_repo_name
+from pages.utils.url_state import parse_url_params, build_url_params, resolve_url_state
 
 # list of queries to be run (includes codebase page queries for heatmaps)
 QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq]
@@ -873,6 +874,117 @@ def hide_loading_on_landing(pathname):
 #
 # Works in conjunction with CSS in main_layout.css
 # ============================================================================
+# =============================================================================
+# URL STATE — SHAREABLE LINKS  (Step 1: global selection state)
+#
+# Three callbacks wire dcc.Location.search to the search-bar selection:
+#
+#   1. parse_url_to_store   — url.search  → url-control-state (parse once)
+#   2. hydrate_from_url     — url-control-state → projects.value,
+#                             bot-switch.value, repo-choices.data
+#   3. serialize_to_url     — search-button click → url.search
+#
+# The copy-link button (in search_utils.py) copies window.location.href
+# directly from JS, so it always captures the latest serialized URL.
+# =============================================================================
+
+
+@callback(
+    Output("url-control-state", "data"),
+    Input("url", "search"),
+    prevent_initial_call=False,
+)
+def parse_url_to_store(search):
+    """Parse the URL query string into the url-control-state store.
+
+    Fires once on page load (and again if search changes, e.g. after
+    the serialize callback updates it). Returns {} when no params present
+    so downstream hydration callbacks safely no-op.
+    """
+    parsed = parse_url_params(search or "")
+    return parsed if parsed else dash.no_update
+
+
+@callback(
+    [
+        Output("projects", "value", allow_duplicate=True),
+        Output("projects", "className", allow_duplicate=True),
+        Output("bot-switch", "value", allow_duplicate=True),
+        Output("repo-choices", "data", allow_duplicate=True),
+    ],
+    Input("url-control-state", "data"),
+    prevent_initial_call=True,
+)
+def hydrate_from_url(url_state):
+    """Hydrate the search bar and trigger data loading from URL params.
+
+    Translates repo slugs → augur repo IDs and org names → validates them
+    against the current Augur instance. Unknown slugs are logged but do not
+    block the rest of the selection from loading.
+
+    Sets the multiselect value, turns pills blue, syncs the bot switch, and
+    writes repo-choices so the existing data-loading pipeline fires naturally.
+    """
+    if not url_state:
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+
+    values, unknown = resolve_url_state(url_state, augur)
+
+    if unknown:
+        logging.warning(
+            f"URL_HYDRATE: {len(unknown)} item(s) not found in this Augur " f"instance and were skipped: {unknown}"
+        )
+
+    if not values:
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+
+    # Resolve repo_ids for repo-choices (same logic as multiselect_values_to_repo_ids)
+    repos = [int(v) for v in values if SearchItem.from_id(v) == SearchItem.REPO]
+    org_names = [v for v in values if SearchItem.from_id(v) == SearchItem.ORG]
+    org_repos = [augur.org_to_repos(o) for o in org_names if augur.is_org(o)]
+    org_repos = [rid for sublist in org_repos for rid in sublist]
+    all_repo_ids = list(set(repos + org_repos))
+
+    bots_on = url_state.get("bots", dash.no_update)
+
+    return (
+        values,  # projects.value  — shows the pills
+        "searchbar-dropdown searching",  # projects.className — blue pills
+        bots_on,  # bot-switch.value
+        all_repo_ids,  # repo-choices.data — triggers queries
+    )
+
+
+@callback(
+    Output("url", "search"),
+    Input("search-button", "n_clicks"),
+    [
+        State("projects", "value"),
+        State("bot-switch", "value"),
+    ],
+    prevent_initial_call=True,
+)
+def serialize_to_url(n_clicks, projects_val, bots_on):
+    """Write current selection state into the URL query string.
+
+    Fires when the user clicks Search. Encodes repos/orgs/bots so the URL
+    can be copy-pasted to reproduce the exact selection in any browser.
+
+    Only encodes non-default values (bot=on is the default and is omitted).
+    Org names that are private user groups are skipped (not resolvable by
+    other users).
+    """
+    if not projects_val:
+        return dash.no_update
+
+    repo_ids = [int(v) for v in projects_val if SearchItem.from_id(v) == SearchItem.REPO]
+    # Only include real augur orgs; private user groups are not portable
+    org_names = [v for v in projects_val if SearchItem.from_id(v) == SearchItem.ORG and augur.is_org(v)]
+
+    search = build_url_params(repo_ids, org_names, bool(bots_on), augur)
+    return search if search else dash.no_update
+
+
 @callback(
     Output("projects", "className"),
     [Input("search-button", "n_clicks"), Input("projects", "value")],
@@ -899,3 +1011,42 @@ def update_pill_color_on_search(search_button_clicks, selected_repos_orgs):
         return "searchbar-dropdown"
 
     return dash.no_update
+
+
+# =============================================================================
+# Copy-link button — clientside clipboard write
+#
+# Uses navigator.clipboard.writeText to copy the current URL, then opens the
+# "Link copied!" tooltip briefly. Pure JS: no round-trip to the server.
+# =============================================================================
+
+dash.clientside_callback(
+    """
+    function(n_clicks) {
+        if (!n_clicks) {
+            return window.dash_clientside.no_update;
+        }
+        var url = window.location.href;
+        function copyFallback(text) {
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            try { document.execCommand('copy'); } catch (_e) {}
+            document.body.removeChild(ta);
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).catch(function() { copyFallback(url); });
+        } else {
+            copyFallback(url);
+        }
+        return n_clicks;
+    }
+    """,
+    Output("copy-link-sink", "children"),
+    Input("copy-link-btn", "n_clicks"),
+    prevent_initial_call=True,
+)

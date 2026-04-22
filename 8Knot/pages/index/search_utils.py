@@ -548,12 +548,48 @@ def create_bot_filter_switch():
     )
 
 
+def create_copy_link_button():
+    """
+    Create the copy-link button with a tooltip that confirms the copy.
+
+    Clicking it copies window.location.href to the clipboard via a
+    clientside callback registered in index_callbacks.py.
+    The tooltip uses trigger="click" so it auto-toggles on the button
+    click with no server round-trip needed.
+
+    Returns:
+        html.Div wrapping the button and its confirmation tooltip
+    """
+    return html.Div(
+        [
+            dbc.Button(
+                html.I(className="fas fa-link"),
+                id="copy-link-btn",
+                color="link",
+                size="sm",
+                title="Copy shareable link",
+                className="icon-button",
+                n_clicks=0,
+            ),
+            dbc.Tooltip(
+                "Link copied!",
+                target="copy-link-btn",
+                trigger="click",
+                placement="top",
+            ),
+            # Hidden sink for the clientside clipboard callback's required Output
+            html.Div(id="copy-link-sink", style={"display": "none"}),
+        ],
+        style={"display": "inline-block"},
+    )
+
+
 def create_search_controls():
     """
     Create the search control buttons and switches section.
 
     Returns:
-        dbc.Stack component with help, repo list, and bot filter controls
+        dbc.Stack component with help, repo list, bot filter, and copy-link controls
     """
     return dbc.Stack(
         [
@@ -569,6 +605,7 @@ def create_search_controls():
                 title="Repo List",
                 custom_class="icon-button",
             ),
+            create_copy_link_button(),
             create_bot_filter_switch(),
         ],
         direction="horizontal",
