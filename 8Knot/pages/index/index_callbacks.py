@@ -35,6 +35,7 @@ import redis
 import flask
 from .search_utils import fuzzy_search
 from .search_utils import clean_repo_name
+from pages.utils.url_state import build_url_params
 
 # list of queries to be run (includes codebase page queries for heatmaps)
 QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq]
@@ -899,3 +900,38 @@ def update_pill_color_on_search(search_button_clicks, selected_repos_orgs):
         return "searchbar-dropdown"
 
     return dash.no_update
+
+
+# =============================================================================
+# Serialize current repo selection into the URL query string.
+#
+# Fires on Search click and on page navigation (nav-links clear the query
+# string, so we re-write it to keep ?repos=... alive across page switches).
+#
+# This is a one-way write — nothing in the app listens to url.search, so
+# there is no feedback loop and no impact on search, pills, or data loading.
+# =============================================================================
+@callback(
+    Output("url", "search"),
+    Input("search-button", "n_clicks"),
+    Input("url", "pathname"),
+    State("projects", "value"),
+    State("bot-switch", "value"),
+    State("repo-choices", "data"),
+    prevent_initial_call=True,
+)
+def serialize_to_url(n_clicks, pathname, projects_val, bots_on, repo_choices):
+    """Write current selection into the URL query string.
+
+    Guards: no-ops when nothing has been searched yet (repo_choices empty).
+    Only encodes non-default values — bots=on is the default and is omitted.
+    Private user groups are skipped; they are not resolvable by other users.
+    """
+    if not repo_choices or not projects_val:
+        return dash.no_update
+
+    repo_ids = [int(v) for v in projects_val if SearchItem.from_id(v) == SearchItem.REPO]
+    org_names = [v for v in projects_val if SearchItem.from_id(v) == SearchItem.ORG and augur.is_org(v)]
+
+    search = build_url_params(repo_ids, org_names, bool(bots_on), augur)
+    return search if search else dash.no_update
