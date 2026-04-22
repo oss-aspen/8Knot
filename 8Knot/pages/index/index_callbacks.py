@@ -908,7 +908,6 @@ def parse_url_to_store(search):
 @callback(
     [
         Output("projects", "value", allow_duplicate=True),
-        Output("projects", "className", allow_duplicate=True),
         Output("bot-switch", "value", allow_duplicate=True),
         Output("repo-choices", "data", allow_duplicate=True),
     ],
@@ -922,11 +921,14 @@ def hydrate_from_url(url_state):
     against the current Augur instance. Unknown slugs are logged but do not
     block the rest of the selection from loading.
 
-    Sets the multiselect value, turns pills blue, syncs the bot switch, and
-    writes repo-choices so the existing data-loading pipeline fires naturally.
+    Sets the multiselect value, syncs the bot switch, and writes repo-choices
+    so the existing data-loading pipeline fires naturally.
+
+    Intentionally does NOT touch projects.className — pill color is owned
+    entirely by update_pill_color_on_search, which is unchanged from before.
     """
     if not url_state:
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+        return dash.no_update, dash.no_update, dash.no_update
 
     values, unknown = resolve_url_state(url_state, augur)
 
@@ -936,7 +938,7 @@ def hydrate_from_url(url_state):
         )
 
     if not values:
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+        return dash.no_update, dash.no_update, dash.no_update
 
     # Resolve repo_ids for repo-choices (same logic as multiselect_values_to_repo_ids)
     repos = [int(v) for v in values if SearchItem.from_id(v) == SearchItem.REPO]
@@ -949,7 +951,6 @@ def hydrate_from_url(url_state):
 
     return (
         values,  # projects.value  — shows the pills
-        "searchbar-dropdown searching",  # projects.className — blue pills
         bots_on,  # bot-switch.value
         all_repo_ids,  # repo-choices.data — triggers queries
     )
@@ -957,24 +958,34 @@ def hydrate_from_url(url_state):
 
 @callback(
     Output("url", "search"),
-    Input("search-button", "n_clicks"),
+    [
+        Input("search-button", "n_clicks"),  # explicit search
+        Input("url", "pathname"),  # page navigation — re-writes params after nav-link clears them
+    ],
     [
         State("projects", "value"),
         State("bot-switch", "value"),
+        State("repo-choices", "data"),
     ],
     prevent_initial_call=True,
 )
-def serialize_to_url(n_clicks, projects_val, bots_on):
+def serialize_to_url(n_clicks, pathname, projects_val, bots_on, repo_choices):
     """Write current selection state into the URL query string.
 
-    Fires when the user clicks Search. Encodes repos/orgs/bots so the URL
-    can be copy-pasted to reproduce the exact selection in any browser.
+    Fires on two events so the URL is always current:
+      - explicit Search button click
+      - page navigation (so params survive nav-link clicks that clear search)
 
-    Only encodes non-default values (bot=on is the default and is omitted).
-    Org names that are private user groups are skipped (not resolvable by
-    other users).
+    repo-choices is intentionally NOT an Input (only a State) to avoid a
+    feedback loop: if it were an Input, search → repo-choices → url.search
+    → url-control-state → hydrate_from_url → projects.value would cause
+    update_pill_color_on_search to turn pills red after every search.
+
+    Guard: no-ops when nothing is loaded yet (repo_choices empty).
+    Only encodes non-default values (bots=on is the default — omitted).
+    Private user groups are skipped; not portable across sessions.
     """
-    if not projects_val:
+    if not repo_choices or not projects_val:
         return dash.no_update
 
     repo_ids = [int(v) for v in projects_val if SearchItem.from_id(v) == SearchItem.REPO]
@@ -1013,40 +1024,5 @@ def update_pill_color_on_search(search_button_clicks, selected_repos_orgs):
     return dash.no_update
 
 
-# =============================================================================
-# Copy-link button — clientside clipboard write
-#
-# Uses navigator.clipboard.writeText to copy the current URL, then opens the
-# "Link copied!" tooltip briefly. Pure JS: no round-trip to the server.
-# =============================================================================
-
-dash.clientside_callback(
-    """
-    function(n_clicks) {
-        if (!n_clicks) {
-            return window.dash_clientside.no_update;
-        }
-        var url = window.location.href;
-        function copyFallback(text) {
-            var ta = document.createElement('textarea');
-            ta.value = text;
-            ta.style.position = 'fixed';
-            ta.style.opacity = '0';
-            document.body.appendChild(ta);
-            ta.focus();
-            ta.select();
-            try { document.execCommand('copy'); } catch (_e) {}
-            document.body.removeChild(ta);
-        }
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(url).catch(function() { copyFallback(url); });
-        } else {
-            copyFallback(url);
-        }
-        return n_clicks;
-    }
-    """,
-    Output("copy-link-sink", "children"),
-    Input("copy-link-btn", "n_clicks"),
-    prevent_initial_call=True,
-)
+# Note: per-graph copy-link clientside callback is registered in
+# components/visualization.py using the MATCH pattern-matching ID.
