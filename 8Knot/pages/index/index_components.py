@@ -271,9 +271,6 @@ def create_app_stores():
         dcc.Store(id="repo-choices", storage_type="session", data=[]),
         dcc.Store(id="job-ids", storage_type="session", data=[]),
         dcc.Store(id="user-group-loading-signal", data="", storage_type="memory"),
-        # Parsed URL query params — populated on load, read by hydration callbacks.
-        # memory storage: cleared on refresh (URL is re-parsed fresh each time).
-        dcc.Store(id="url-control-state", storage_type="memory"),
         dcc.Location(id="url"),
     ]
 
