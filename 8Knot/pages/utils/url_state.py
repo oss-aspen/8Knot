@@ -20,19 +20,60 @@ Usage:
 """
 
 import logging
+import os
 from typing import Optional
 from urllib.parse import urlencode, parse_qs
+
+# =============================================================================
+# Constants
+# =============================================================================
+
+# Bot filter URL parameter values
+BOTS_FILTER_OFF = "off"
+BOTS_FILTER_ON = "on"
+
+# URL parameter names
+PARAM_REPOS = "repos"
+PARAM_ORGS = "orgs"
+PARAM_BOTS = "bots"
 
 # ---------------------------------------------------------------------------
 # Slug ↔ repo_id helpers
 # ---------------------------------------------------------------------------
 
-_KNOWN_PREFIXES = [
+# Default platform URL prefixes for slug conversion
+# To add support for additional platforms (e.g., Bitbucket, Gitea):
+# 1. Add the platform prefix to this list, OR
+# 2. Set GIT_PLATFORM_PREFIXES environment variable with comma-separated prefixes:
+#    export GIT_PLATFORM_PREFIXES="https://github.com/,https://gitlab.com/,https://bitbucket.org/"
+_DEFAULT_PREFIXES = [
     "https://github.com/",
     "https://gitlab.com/",
     "http://github.com/",
     "http://gitlab.com/",
 ]
+
+
+def _get_known_prefixes() -> list[str]:
+    """Get the list of known git platform prefixes.
+
+    Checks for GIT_PLATFORM_PREFIXES environment variable first,
+    falls back to default prefixes if not set.
+
+    Returns:
+        List of URL prefixes (e.g., ["https://github.com/", ...])
+    """
+    env_prefixes = os.getenv("GIT_PLATFORM_PREFIXES")
+    if env_prefixes:
+        # Parse comma-separated list, strip whitespace, ensure trailing slash
+        prefixes = [p.strip() for p in env_prefixes.split(",") if p.strip()]
+        # Normalize: ensure each prefix ends with /
+        return [p if p.endswith("/") else p + "/" for p in prefixes]
+    return _DEFAULT_PREFIXES
+
+
+# Cache the prefix list (computed once at module load)
+_KNOWN_PREFIXES = _get_known_prefixes()
 
 
 def git_url_to_slug(git_url: str) -> Optional[str]:
@@ -100,19 +141,19 @@ def parse_url_params(search: str) -> dict:
     result = {}
 
     # repos — csv split, strip whitespace, drop empties
-    raw_repos = params.get("repos", [None])[0]
+    raw_repos = params.get(PARAM_REPOS, [None])[0]
     if raw_repos:
-        result["repos"] = [s.strip() for s in raw_repos.split(",") if s.strip()]
+        result[PARAM_REPOS] = [s.strip() for s in raw_repos.split(",") if s.strip()]
 
     # orgs — csv split
-    raw_orgs = params.get("orgs", [None])[0]
+    raw_orgs = params.get(PARAM_ORGS, [None])[0]
     if raw_orgs:
-        result["orgs"] = [s.strip() for s in raw_orgs.split(",") if s.strip()]
+        result[PARAM_ORGS] = [s.strip() for s in raw_orgs.split(",") if s.strip()]
 
-    # bots — "off" is the only falsy value; everything else (incl. missing) = True
-    raw_bots = params.get("bots", [None])[0]
+    # bots — BOTS_FILTER_OFF is the only falsy value; everything else (incl. missing) = True
+    raw_bots = params.get(PARAM_BOTS, [None])[0]
     if raw_bots is not None:
-        result["bots"] = raw_bots.lower() != "off"
+        result[PARAM_BOTS] = raw_bots.lower() != BOTS_FILTER_OFF
 
     return result
 
@@ -149,15 +190,15 @@ def build_url_params(repo_ids: list, org_names: list, bots_on: bool, augur) -> s
             else:
                 logging.warning(f"URL_STATE: unrecognised git URL format: {git_url!r}")
     if slugs:
-        params["repos"] = ",".join(slugs)
+        params[PARAM_REPOS] = ",".join(slugs)
 
     # orgs: already human-readable strings
     if org_names:
-        params["orgs"] = ",".join(org_names)
+        params[PARAM_ORGS] = ",".join(org_names)
 
     # bots: only encode when the filter is OFF (on is the default — skip it)
     if not bots_on:
-        params["bots"] = "off"
+        params[PARAM_BOTS] = BOTS_FILTER_OFF
 
     if not params:
         return ""
@@ -191,7 +232,7 @@ def resolve_url_state(parsed: dict, augur) -> tuple[list, list]:
     values = []
     unknown_slugs = []
 
-    for slug in parsed.get("repos", []):
+    for slug in parsed.get(PARAM_REPOS, []):
         repo_id = slug_to_repo_id(slug, augur)
         if repo_id is not None:
             values.append(str(repo_id))
@@ -199,7 +240,7 @@ def resolve_url_state(parsed: dict, augur) -> tuple[list, list]:
             unknown_slugs.append(slug)
             logging.warning(f"URL_STATE: slug not found in Augur: {slug!r}")
 
-    for org in parsed.get("orgs", []):
+    for org in parsed.get(PARAM_ORGS, []):
         if augur.is_org(org):
             values.append(org)
         else:

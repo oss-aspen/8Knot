@@ -599,6 +599,11 @@ def create_search_bar(initial_option):
                 ),
                 className="search-bar-component",
             ),
+            # Feedback for URL restoration (unknown repos/orgs)
+            html.Div(
+                id="restore-feedback",
+                className="search-bar-component",
+            ),
             create_search_input_section(initial_option),
         ],
         className="search-bar-wrapper",

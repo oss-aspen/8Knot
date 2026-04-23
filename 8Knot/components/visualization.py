@@ -145,44 +145,19 @@ class VisualizationAIO(dbc.Card):
 # VisualizationAIO card without repeating callback code.
 #
 # The button's pattern-matching index IS the card's anchor id (e.g.
-# "commits-over-time"). The JS reads that index and builds:
-#   origin + pathname + search + "#" + anchor
+# "commits-over-time"). The JS implementation is in assets/copy_link.js
+# for better maintainability, linting, and separation of concerns.
+#
+# The JS function builds: origin + pathname + search + "#" + anchor
 # so the copied URL points directly to this graph with the current
 # repo selection already encoded in the query string.
 # =============================================================================
 
 dash.clientside_callback(
-    """
-    function(n_clicks, btn_id) {
-        if (!n_clicks) {
-            return window.dash_clientside.no_update;
-        }
-        var anchor = btn_id["index"];
-        var url = window.location.origin
-                + window.location.pathname
-                + window.location.search
-                + "#" + anchor;
-
-        function copyFallback(text) {
-            var ta = document.createElement("textarea");
-            ta.value = text;
-            ta.style.position = "fixed";
-            ta.style.opacity = "0";
-            document.body.appendChild(ta);
-            ta.focus();
-            ta.select();
-            try { document.execCommand("copy"); } catch (_e) {}
-            document.body.removeChild(ta);
-        }
-
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(url).catch(function() { copyFallback(url); });
-        } else {
-            copyFallback(url);
-        }
-        return n_clicks;
-    }
-    """,
+    dash.ClientsideFunction(
+        namespace="clientside",
+        function_name="copy_link_to_clipboard",
+    ),
     Output({"type": "copy-link-sink", "index": MATCH}, "children"),
     Input({"type": "copy-link-btn", "index": MATCH}, "n_clicks"),
     State({"type": "copy-link-btn", "index": MATCH}, "id"),
