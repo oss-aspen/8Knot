@@ -1,7 +1,9 @@
-# graphify — machine-specific, not needed by other contributors
+# graphify — local-only files, graph.html and graph.json are the shareable outputs
 graphify-out/.graphify_python
 graphify-out/cache/
 graphify-out/cost.json
+graphify-out/GRAPH_REPORT.md
+graphify-out/manifest.json
 
 # Other stuff
 dictionary.dic
