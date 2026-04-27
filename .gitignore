@@ -1,3 +1,8 @@
+# graphify — machine-specific, not needed by other contributors
+graphify-out/.graphify_python
+graphify-out/cache/
+graphify-out/cost.json
+
 # Other stuff
 dictionary.dic
 tmp
