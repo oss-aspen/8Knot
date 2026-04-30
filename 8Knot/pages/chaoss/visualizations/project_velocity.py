@@ -266,10 +266,10 @@ def process_data(
     # replace all nan to 0
     df_consolidated.fillna(value=0, inplace=True)
 
-    # log of commits and contribs if values are not 0
-    df_consolidated["log_num_commits"] = df_consolidated["Commit"].apply(lambda x: math.log(x) if x != 0 else 0)
+    # log10 of commits and contribs if values are not 0 (base-10 for intuitive decade-based reasoning)
+    df_consolidated["log_num_commits"] = df_consolidated["Commit"].apply(lambda x: math.log10(x) if x != 0 else 0)
     df_consolidated["log_num_contrib"] = df_consolidated["num_unique_contributors"].apply(
-        lambda x: math.log(x) if x != 0 else 0
+        lambda x: math.log10(x) if x != 0 else 0
     )
 
     # column to hold the weighted values of pr and issues actions summed together
@@ -284,44 +284,63 @@ def process_data(
     # after weighting replace 0 with nan for log
     df_consolidated["prs_issues_actions_weighted"].replace(0, np.nan, inplace=True)
 
-    # column for log value of pr and issue actions
-    df_consolidated["log_prs_issues_actions_weighted"] = df_consolidated["prs_issues_actions_weighted"].apply(math.log)
+    # column for log10 value of pr and issue actions (base-10 for intuitive decade-based reasoning)
+    df_consolidated["log_prs_issues_actions_weighted"] = df_consolidated["prs_issues_actions_weighted"].apply(math.log10)
 
     return df_consolidated
 
 
 def create_figure(df: pd.DataFrame, log):
+    # Use actual values instead of pre-calculated log values
     y_axis = "prs_issues_actions_weighted"
     y_title = "Weighted PR/Issue Actions"
+    
+    # For logarithmic scale, use actual values and set axis type to 'log'
+    # This shows linear tick values (1, 10, 100, 1000) which are more intuitive
+    x_axis = "Commit"
+    x_title = "Commits"
+    size_axis = "num_unique_contributors"
+    
     if log:
-        y_axis = "log_prs_issues_actions_weighted"
-        y_title = "Log of Weighted PR/Issue Actions"
+        y_title = "Weighted PR/Issue Actions (log scale)"
+        x_title = "Commits (log scale)"
 
     # graph generation
     fig = px.scatter(
         df,
-        x="log_num_commits",
+        x=x_axis,
         y=y_axis,
         color="repo_name",
-        size="log_num_contrib",
+        size=size_axis,
         hover_data=[
             "repo_name",
             "Commit",
+            "log_num_commits",
             "PR Opened",
             "Issue Opened",
             "num_unique_contributors",
+            "log_num_contrib",
+            "prs_issues_actions_weighted",
+            "log_prs_issues_actions_weighted",
         ],
         color_discrete_sequence=baby_blue,
+        log_x=log,
+        log_y=log,
     )
 
     fig.update_traces(
-        hovertemplate="Repo: %{customdata[0]} <br>Commits: %{customdata[1]} <br>Total PRs: %{customdata[2]}"
-        + "<br>Total Issues: %{customdata[3]} <br>Total Contributors: %{customdata[4]}<br><extra></extra>",
+        hovertemplate="Repo: %{customdata[0]}"
+        + "<br>Commits: %{customdata[1]} (log10: %{customdata[2]:.2f})"
+        + "<br>Total PRs: %{customdata[3]}"
+        + "<br>Total Issues: %{customdata[4]}"
+        + "<br>Contributors: %{customdata[5]} (log10: %{customdata[6]:.2f})"
+        + "<br>Weighted Actions: %{customdata[7]:.1f} (log10: %{customdata[8]:.2f})"
+        + "<br><extra></extra>",
     )
 
     # layout styling
     fig.update_layout(
-        xaxis_title="Logarithmic Commits",
+        xaxis_title=x_title,
         yaxis_title=y_title,
         margin_b=40,
         font=dict(size=14),
