@@ -1,3 +1,6 @@
+# min_db generated data (user-supplied, never committed)
+docker/augur-db/init/03_data.sql
+
 # Other stuff
 dictionary.dic
 tmp
