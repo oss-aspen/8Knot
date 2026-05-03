@@ -2,7 +2,8 @@ services:
 
   # ── min_db: local Augur database with pre-loaded data ────────────────────────
   # To use the local min_db container instead of a remote Augur instance:
-  #   1. Place your 03_data.sql in docker/augur-db/init/ before building.
+  #   1. Obtain the Augur data dump (dump.sql) and copy it to:
+  #      docker/augur-db/init/03_data.sql  (gitignored, never commit this file)
   #   2. Uncomment the augur-db service below.
   #   3. In .env, set:  AUGUR_HOST=augur-db  AUGUR_PORT=5432
   #                     AUGUR_DATABASE=augur  AUGUR_USERNAME=augur  AUGUR_PASSWORD=augur
