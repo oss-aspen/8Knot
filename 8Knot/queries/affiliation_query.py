@@ -35,7 +35,7 @@ def affiliation_query(self, repos):
 
     query_string = f"""
                     SELECT
-                        left(ca.cntrb_id::text, 15) as cntrb_id, -- first 15 characters of the uuid
+                        left(c.cntrb_id::text, 15) as cntrb_id, -- first 15 characters of the uuid
                         timezone('utc', c.created_at) AS created_at,
                         c.repo_id,
                         c.login,
