@@ -266,8 +266,8 @@ def process_data(
     # replace all nan to 0
     df_consolidated.fillna(value=0, inplace=True)
 
-    # log of commits and contribs if values are not 0
-    df_consolidated["log_num_commits"] = df_consolidated["Commit"].apply(lambda x: math.log(x) if x != 0 else 0)
+    # log of pr_open and contribs if values are not 0
+    df_consolidated["log_num_pr_open"] = df_consolidated["PR Opened"].apply(lambda x: math.log(x) if x != 0 else 0)
     df_consolidated["log_num_contrib"] = df_consolidated["num_unique_contributors"].apply(
         lambda x: math.log(x) if x != 0 else 0
     )
@@ -300,13 +300,12 @@ def create_figure(df: pd.DataFrame, log):
     # graph generation
     fig = px.scatter(
         df,
-        x="log_num_commits",
+        x="log_num_pr_open",
         y=y_axis,
         color="repo_name",
         size="log_num_contrib",
         hover_data=[
             "repo_name",
-            "Commit",
             "PR Opened",
             "Issue Opened",
             "num_unique_contributors",
@@ -315,13 +314,13 @@ def create_figure(df: pd.DataFrame, log):
     )
 
     fig.update_traces(
-        hovertemplate="Repo: %{customdata[0]} <br>Commits: %{customdata[1]} <br>Total PRs: %{customdata[2]}"
-        + "<br>Total Issues: %{customdata[3]} <br>Total Contributors: %{customdata[4]}<br><extra></extra>",
+        hovertemplate="Repo: %{customdata[0]}  <br>Total PRs: %{customdata[2]} <br>Total Issues: %{customdata[3]} "
+        + "<br>Total Contributors: %{customdata[4]}<br><extra></extra>",
     )
 
     # layout styling
     fig.update_layout(
-        xaxis_title="Logarithmic Commits",
+        xaxis_title="Logarithmic PRs Opened",
         yaxis_title=y_title,
         margin_b=40,
         font=dict(size=14),

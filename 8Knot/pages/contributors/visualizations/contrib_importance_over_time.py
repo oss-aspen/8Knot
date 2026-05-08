@@ -207,7 +207,6 @@ def process_data(df, threshold, window_width, step_size):
 
     # dynamically calculate the contributor prolificacy over time for each of the action times and store results in df_final
     (
-        df_final["Commit"],
         df_final["Issue Opened"],
         df_final["Issue Comment"],
         df_final["Issue Closed"],
@@ -248,20 +247,10 @@ def create_figure(df_final, threshold, step_size):
     fig = go.Figure(
         [
             go.Scatter(
-                name="Commit",
-                x=df_final["period_from"],
-                y=df_final["Commit"],
-                text=action_types[0],
-                customdata=customdata,
-                mode="lines",
-                showlegend=True,
-                marker=dict(color=baby_blue[0]),
-            ),
-            go.Scatter(
                 name="Issue Opened",
                 x=df_final["period_from"],
                 y=df_final["Issue Opened"],
-                text=action_types[1],
+                text=action_types[0],
                 customdata=customdata,
                 mode="lines",
                 showlegend=True,
@@ -271,7 +260,7 @@ def create_figure(df_final, threshold, step_size):
                 name="Issue Comment",
                 x=df_final["period_from"],
                 y=df_final["Issue Comment"],
-                text=action_types[2],
+                text=action_types[1],
                 customdata=customdata,
                 mode="lines",
                 showlegend=True,
@@ -281,7 +270,7 @@ def create_figure(df_final, threshold, step_size):
                 name="Issue Closed",
                 x=df_final["period_from"],
                 y=df_final["Issue Closed"],
-                text=action_types[3],
+                text=action_types[2],
                 customdata=customdata,
                 mode="lines",
                 showlegend=True,
@@ -291,7 +280,7 @@ def create_figure(df_final, threshold, step_size):
                 name="PR Opened",
                 x=df_final["period_from"],
                 y=df_final["PR Opened"],
-                text=action_types[4],
+                text=action_types[3],
                 customdata=customdata,
                 mode="lines",
                 showlegend=True,
@@ -301,7 +290,7 @@ def create_figure(df_final, threshold, step_size):
                 name="PR Comment",
                 x=df_final["period_from"],
                 y=df_final["PR Comment"],
-                text=action_types[5],
+                text=action_types[4],
                 customdata=customdata,
                 mode="lines",
                 showlegend=True,
@@ -311,7 +300,7 @@ def create_figure(df_final, threshold, step_size):
                 name="PR Review",
                 x=df_final["period_from"],
                 y=df_final["PR Review"],
-                text=action_types[6],
+                text=action_types[5],
                 customdata=customdata,
                 mode="lines",
                 showlegend=True,
@@ -359,8 +348,7 @@ def cntrb_prolificacy_over_time(df, period_from, period_to, window_width, thresh
     df_in_range = df.loc[time_mask]
 
     # initialize varibles to store contributor prolificacy accoding to action type
-    commit, issueOpened, issueComment, issueClosed, prOpened, prReview, prComment = (
-        None,
+    issueOpened, issueComment, issueClosed, prOpened, prReview, prComment = (
         None,
         None,
         None,
@@ -376,7 +364,6 @@ def cntrb_prolificacy_over_time(df, period_from, period_to, window_width, thresh
     # pivot df such that the column names correspond to the different action types, index is the cntrb_ids, and the values are the number of contributions of each contributor
     df_count_cntrbs = df_count_cntrbs.pivot(index="cntrb_id", columns="Action", values="count")
 
-    commit = calc_lottery_factor(df_count_cntrbs, "Commit", threshold)
     issueOpened = calc_lottery_factor(df_count_cntrbs, "Issue Opened", threshold)
     issueComment = calc_lottery_factor(df_count_cntrbs, "Issue Comment", threshold)
     issueClosed = calc_lottery_factor(df_count_cntrbs, "Issue Closed", threshold)
@@ -384,7 +371,7 @@ def cntrb_prolificacy_over_time(df, period_from, period_to, window_width, thresh
     prReview = calc_lottery_factor(df_count_cntrbs, "PR Review", threshold)
     prComment = calc_lottery_factor(df_count_cntrbs, "PR Comment", threshold)
 
-    return commit, issueOpened, issueComment, issueClosed, prOpened, prReview, prComment
+    return issueOpened, issueComment, issueClosed, prOpened, prReview, prComment
 
 
 def calc_lottery_factor(df, action_type, threshold):
