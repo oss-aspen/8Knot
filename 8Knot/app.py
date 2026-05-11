@@ -13,7 +13,6 @@ the neighbor 'app_callbacks.py' file.
 """
 
 import os
-import sys
 import logging
 import dash
 import pandas as pd
@@ -41,9 +40,9 @@ try:
     engine = augur.get_engine()
 
 except KeyError:
-    sys.exit(1)
+    raise SystemExit(1)
 except SQLAlchemyError:
-    sys.exit(1)
+    raise SystemExit(1)
 
 # grab list of projects and orgs from Augur database.
 augur.multiselect_startup()
