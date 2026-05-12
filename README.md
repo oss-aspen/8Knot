@@ -340,7 +340,7 @@ docker compose down --volumes
 
 8Knot is a multi-container application.
 
-The app-server, worker-pools, redis-cache, and postgres-cache containers communicate with one another via docker networking.
+The app-server, worker-pools, redis-broker, and postgres-cache containers communicate with one another via docker networking.
 
 All of the build/tear-down is done with `docker compose`.
 

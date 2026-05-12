@@ -11,7 +11,6 @@ from dash import callback, html
 from dash.dependencies import Input, Output, State, MATCH
 from app import augur
 from flask_login import current_user
-from cache_manager.cache_manager import CacheManager as cm
 import cache_manager.cache_facade as cf
 from queries.issues_query import issues_query as iq
 from queries.commits_query import commits_query as cq
@@ -620,9 +619,6 @@ def run_queries(repos):
     Args:
         repos ([int]): repositories we collect data for.
     """
-
-    # cache manager object
-    cache = cm()
 
     # list of queries to process
     funcs = QUERIES

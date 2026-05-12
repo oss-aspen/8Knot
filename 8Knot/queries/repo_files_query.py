@@ -2,10 +2,6 @@ import logging
 import pandas as pd
 from db_manager.augur_manager import AugurManager
 from app import celery_app
-from cache_manager.cache_manager import CacheManager as cm
-import io
-import datetime as dt
-from sqlalchemy.exc import SQLAlchemyError
 import cache_manager.cache_facade as cf
 
 
