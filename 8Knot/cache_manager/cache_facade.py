@@ -22,6 +22,7 @@ happy to be proven wrong about the apparent performance tradeoff.
 """
 
 import logging
+import time
 from uuid import uuid4
 import psycopg2 as pg
 from psycopg2.extras import execute_values
@@ -33,6 +34,35 @@ import pandas as pd
 # .cx_common- interpreter is invoked at a higher level, so relative
 # import required.
 from .cx_common import db_cx_string, env_augur_schema, cache_cx_string
+
+
+def wait_for_cache(func_name: str, repolist: list[int], timeout: int = 600, caller: str = "") -> None:
+    """Wait for data to appear in cache with exponential backoff.
+
+    Replaces the per-visualization `while not_cached := get_uncached(...): time.sleep(0.5)`
+    polling loops. Uses exponential backoff (1s → 2s → 4s, capped at 5s) to reduce
+    load on postgres-cache while queries are running.
+
+    Args:
+        func_name: name of the query function (used for bookkeeping lookup).
+        repolist: repo IDs expected in cache.
+        timeout: max seconds to wait before raising TimeoutError.
+        caller: optional label for log messages.
+    """
+    label = caller or func_name
+    delay = 1.0
+    max_delay = 5.0
+    elapsed = 0.0
+
+    while not_cached := get_uncached(func_name=func_name, repolist=repolist):
+        if elapsed >= timeout:
+            raise TimeoutError(
+                f"{label}: timed out after {timeout}s waiting for {len(not_cached)} repos in {func_name}"
+            )
+        logging.warning(f"{label} - waiting on {len(not_cached)} repos for {func_name} (elapsed {elapsed:.0f}s)")
+        time.sleep(delay)
+        elapsed += delay
+        delay = min(delay * 2, max_delay)
 
 
 def cache_query_results(

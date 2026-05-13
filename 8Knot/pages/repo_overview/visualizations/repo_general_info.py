@@ -212,14 +212,10 @@ def multi_query_helper(repos: list[int]):
         time.sleep(0.5)"""  # comment out until query is fixed
 
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=riq.__name__, repolist=repos):
-        logging.warning(f"REPO GENERAL INFO - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
+    cf.wait_for_cache(func_name=riq.__name__, repolist=repos, caller="REPO GENERAL INFO")
 
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=rrq.__name__, repolist=repos):
-        logging.warning(f"REPO GENERAL INFO - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
+    cf.wait_for_cache(func_name=rrq.__name__, repolist=repos, caller="REPO GENERAL INFO")
 
     # GET ALL DATA FROM POSTGRES CACHE
     """df_file = cf.retrieve_from_cache(
