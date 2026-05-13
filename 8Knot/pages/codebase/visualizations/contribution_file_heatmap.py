@@ -129,9 +129,7 @@ def directory_dropdown(repo_id):
 
     # wait for data to asynchronously download and become available.
     logging.warning(f"DIRECTORY DROPDOWN - WAITING FOR DATA TO LOAD")
-    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=[repo_id]):
-        logging.warning(f"DIRECTORY DROPDOWN - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
+    cf.wait_for_cache(func_name=rfq.__name__, repolist=[repo_id], caller="DIRECTORY DROPDOWN")
 
     logging.warning(f"DIRECTORY DROPDOWN - RETRIEVING FROM CACHE")
     df = cf.retrieve_from_cache(
@@ -231,19 +229,13 @@ def multi_query_helper(repos):
     """
 
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=repos):
-        logging.warning(f"CONTRIBUTION FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
+    cf.wait_for_cache(func_name=rfq.__name__, repolist=repos, caller="CONTRIBUTION FILE HEATMAP")
 
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=prfq.__name__, repolist=repos):
-        logging.warning(f"CONTRIBUTION FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
+    cf.wait_for_cache(func_name=prfq.__name__, repolist=repos, caller="CONTRIBUTION FILE HEATMAP")
 
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=prq.__name__, repolist=repos):
-        logging.warning(f"CONTRIBUTION FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
+    cf.wait_for_cache(func_name=prq.__name__, repolist=repos, caller="CONTRIBUTION FILE HEATMAP")
 
     # GET ALL DATA FROM POSTGRES CACHE
     df_file = cf.retrieve_from_cache(
