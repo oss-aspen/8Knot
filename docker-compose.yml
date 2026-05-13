@@ -7,6 +7,10 @@ services:
     depends_on:
       postgres-cache:
         condition: service_healthy  # to ensure that postgres is indeed initialized before this starts
+      redis-broker:
+        condition: service_started
+      redis-users:
+        condition: service_started
     env_file:
       - .env
     # sometimes, postgres-cache isn't spun up before this starts.
