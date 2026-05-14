@@ -89,7 +89,7 @@ services:
         "--loglevel=INFO",
         "-Q",
         "data",
-        "--concurrency=1",
+        "--concurrency=8",
         "--time-limit=600",
         "--soft-time-limit=540"
       ]

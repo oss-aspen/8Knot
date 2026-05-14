@@ -36,7 +36,9 @@ from .search_utils import fuzzy_search
 from .search_utils import clean_repo_name
 
 # list of queries to be run (includes codebase page queries for heatmaps)
-QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq]
+# affiliation_query is last because its 3-way JOIN + GROUP BY is the slowest query;
+# keeping it at the end lets the faster queries finish without being blocked.
+QUERIES = [iq, cq, cnq, prq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq, aq]
 
 
 # check if login has been enabled in config
