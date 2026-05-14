@@ -61,7 +61,9 @@ Generally, 'int' is good for integers,
 
 import logging
 import sys
+import os
 import psycopg2 as pg
+import redis
 import time
 
 # doesn't use relative import syntax "import .cx_common" because
@@ -394,6 +396,35 @@ def _create_application_tables() -> None:
     logging.warning("ALL TABLES COMMITTED SUCCESSFULLY")
 
 
+def _flush_redis_broker() -> None:
+    """
+    Flush the Redis broker so it stays in sync with postgres-cache.
+
+    postgres-cache uses UNLOGGED tables, so all cached data is lost on
+    restart. If Redis still holds stale Celery task messages or results
+    from a previous run, workers pick them up and poll for data that no
+    longer exists, causing deadlocks. Flushing here guarantees a clean
+    broker state every time the cache is (re)initialized.
+    """
+    broker_host = os.getenv("REDIS_SERVICE_HOST", "redis-broker")
+    broker_port = int(os.getenv("REDIS_SERVICE_PORT", "6379"))
+    broker_password = os.getenv("REDIS_PASSWORD", "")
+
+    users_host = os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users")
+    users_port = int(os.getenv("REDIS_SERVICE_USERS_PORT", "6379"))
+
+    for name, host, port in [
+        ("redis-broker", broker_host, broker_port),
+        ("redis-users", users_host, users_port),
+    ]:
+        try:
+            r = redis.StrictRedis(host=host, port=port, password=broker_password)
+            r.flushall()
+            logging.warning(f"db_init: FLUSHED {name} ({host}:{port})")
+        except Exception as e:
+            logging.warning(f"db_init: could not flush {name}: {e}")
+
+
 def db_init() -> int:
     try:
         # don't need to check return values- errors propogate as exceptions,
@@ -404,6 +435,9 @@ def db_init() -> int:
 
         # add tables to augur_cache db if they don't already exist.
         _create_application_tables()
+
+        # flush redis so broker state matches the fresh postgres-cache.
+        _flush_redis_broker()
 
         logging.warning("db_init: POSTGRES CACHE SUCCESSFULLY INITIALIZED")
 
