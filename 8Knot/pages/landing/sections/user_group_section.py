@@ -25,7 +25,7 @@ layout = html.Div(
                             className="figma-body-text",
                             children=[
                                 html.P(
-                                    "User groups are customizable groups of organization or repositories that are accessible each time you log in. Adding repositories and organizations to a user group also triggers collection if they are not already populated in Augur. These instructions assume you are logged in to your Augur account."
+                                    "User groups are customizable groups of organizations or repositories that are accessible each time you log in. Adding repositories and organizations to a user group also triggers collection if they are not already populated in Augur. If Augur login is disabled, use the Repo/Org Request link at the bottom of 8Knot to request collection for repositories that are not yet available."
                                 ),
                             ],
                         ),
@@ -130,7 +130,7 @@ layout = html.Div(
                                     className="figma-feature-body",
                                     children=[
                                         html.P(
-                                            'Once you add your new group, you can now select it in the "group name" dropdown. Once selected, now add the repositories and organizations you want in your group and click "add". Note: if the repository or organization does not already exist in the database, adding it to a group will trigger collection but will not automatically show up in 8Knot.'
+                                            'Once you add your new group, you can select it in the "group name" dropdown, add the repositories and organizations you want in your group, and click "add". If a repository or organization does not already exist in the database, adding it to a group triggers collection but it will not automatically show up in 8Knot until collection finishes. When login is disabled, submit the repository through the Repo/Org Request link instead.'
                                         ),
                                     ],
                                 ),

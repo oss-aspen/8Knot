@@ -117,6 +117,11 @@ We are incredibly happy to have people try our application in any state, and we 
 We would seriously recommend, however, that any conclusions drawn from this app, either realized from our deployed application or
 from a local instance, be scrutinized heavily until we make a proper, stable, >1.0 release.
 
+8Knot is currently pre-1.0, active-development software. The hosted instance is
+usable for exploration and bug reports, but deployments can still expose known
+bugs or temporary data gaps while the project moves toward a production-ready
+release.
+
 ---
 
 ## Communication
@@ -129,7 +134,7 @@ We would prefer any initial communication be through Matrix but if you would pre
 
 ## Usage Examples
 
-If you would like to see the current state of our application, we would love any user-stories or bug-reports from visiting our alpha-deployment!
+If you would like to see the current state of our application, we would love any user-stories or bug-reports from visiting our current deployment!
 
 [8Knot](https://eightknot.osci.io/)
 
@@ -236,12 +241,13 @@ We use Docker's Compose feature to spin up all application resources together. P
 
 #### Using Podman
 
-If you're using Podman, you can use either `podman compose` or `docker compose` (thanks to the compatibility layer). Here are both options:
-
-Using podman-compose directly:
+If you're using Podman, run the compose lifecycle with `podman compose`:
 ```bash
 # Start the application
 podman compose up --build
+
+# If SELinux blocks the nginx config bind mount, include the Podman override
+podman compose -f docker-compose.yml -f docker-compose.podman.yml up --build
 
 # Scale worker pools (recommended)
 podman compose up --build --scale worker-query=2 --scale worker-callback=2
@@ -253,7 +259,8 @@ ctrl-c
 podman compose down --volumes
 ```
 
-Using docker compose with Podman:
+If you have explicitly enabled Podman's Docker compatibility layer, the equivalent
+`docker compose` commands can also target the Podman machine:
 ```bash
 # The same Docker Compose commands work with Podman if you've set up the compatibility layer
 docker compose up --build
@@ -342,38 +349,20 @@ docker compose down --volumes
 
 The app-server, worker-pools, redis-cache, and postgres-cache containers communicate with one another via docker networking.
 
-All of the build/tear-down is done with `docker compose`.
-
-To start the application, run at the top-level of the 8Knot directory:
-
-```bash
-podman compose up --build
-```
-
-Due to a known deadlock, we recommend scaling-up the number of worker-pool pods deployed.
-There need to be (#visualizations + 1) celery threads available for the callback_worker pool.
-
-A concrete example: I have 6 CPU's allocated to my Docker runtime, so Celery workers will default to a concurrency of 6 processes.
-However, there are 7 visualizations on the Overview page. Therefore, I will scale the 'callback_worker' pod to 2 instances,
-guaranteeing that there are (2 \* #CPUs = 12) available processing celery threads, ensuring that the known deadlock will be avoided.
-
-```bash
-podman compose up --build --scale worker-query=2 --scale worker-callback=2
-```
-
-To stop the application:
-
-```bash
-ctrl-c
-```
-
-To clean up the stopped containers, run:
-
-```bash
-podman compose down --volumes
-```
+Use the compose command for the container runtime you selected above. For Podman,
+that is `podman compose`; for Docker, that is `docker compose`.
 
 The application should be available locally at 'http://localhost:8080'
+
+If Redis contains stale Celery work from a previous local run, start once with
+`CELERY_PURGE_STALE_TASKS_ON_STARTUP=True` to clear broker tasks before the
+workers begin consuming new query jobs.
+
+Useful contributor references:
+
+- [Augur schema references](docs/augur_schema.md)
+- [Edge-case repositories for pull request testing](docs/testing_repositories.md)
+- [End-of-life source investigation](docs/end_of_life_sources.md)
 
 ---
 

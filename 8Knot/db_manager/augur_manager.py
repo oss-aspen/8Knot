@@ -129,13 +129,15 @@ class AugurManager:
 
         return engine
 
-    def run_query(self, query_string: str) -> pd.DataFrame:
+    def run_query(self, query_string: str, parse_dates=None) -> pd.DataFrame:
         """
         Runs SQL query against our Augur database.
 
         Args:
         -----
             query_string (str): SQL query to run.
+            parse_dates: Optional pandas parse_dates argument forwarded to
+                read_sql for timestamp/date columns.
 
         Returns:
         --------
@@ -151,7 +153,7 @@ class AugurManager:
 
         try:
             with self.engine.connect() as conn:
-                result_df = pd.read_sql(query, con=conn)
+                result_df = pd.read_sql(query, con=conn, parse_dates=parse_dates)
         except:
             raise Exception("DB Read Failure")
 

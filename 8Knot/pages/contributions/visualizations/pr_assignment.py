@@ -237,18 +237,18 @@ def pr_assignment(df, start_date, end_date):
     # number of prs open in time interval
     num_prs_open = df_in_range["pull_request_id"].nunique()
 
-    # get all pr review unassignments and drop rows that have been unassigned more recent than the end date
-    num_unassigned_actions = df_in_range[
-        (df_in_range["assignment_action"] == "unassigned") & (df_in_range["assign_date"] <= end_date)
-    ].shape[0]
+    assignment_events = df_in_range[
+        df_in_range["assignment_action"].isin(["assigned", "unassigned"])
+        & (df_in_range["assign_date"] <= end_date)
+    ].copy()
+    assignment_events["assignment_delta"] = assignment_events["assignment_action"].map(
+        {"assigned": 1, "unassigned": -1}
+    )
+    active_assignments_by_pr = assignment_events.groupby("pull_request_id")["assignment_delta"].sum()
 
-    # get all issue assignments and drop rows that have been assigned more recent than the end date
-    num_assigned_actions = df_in_range[
-        (df_in_range["assignment_action"] == "assigned") & (df_in_range["assign_date"] <= end_date)
-    ].shape[0]
-
-    # number of assigned prs during the time interval
-    num_prs_assigned = num_assigned_actions - num_unassigned_actions
+    # Count assigned PRs, not assignment events, so a PR with multiple reviewers
+    # still contributes one assigned PR to the status count.
+    num_prs_assigned = active_assignments_by_pr[active_assignments_by_pr > 0].shape[0]
 
     # number of unassigned prs during the time interval
     num_prs_unassigned = num_prs_open - num_prs_assigned

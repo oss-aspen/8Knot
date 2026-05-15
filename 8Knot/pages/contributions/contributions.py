@@ -24,6 +24,17 @@ dash.register_page(__name__, path="/contributions")
 layout = dbc.Container(
     [
         dbc.Row(
+            dbc.Col(
+                dbc.Alert(
+                    "Contribution visualizations group commits, issues, pull requests, reviews, and response-time metrics for the selected repositories.",
+                    color="secondary",
+                    className="mb-3",
+                ),
+                xl=10,
+            ),
+            className="visualization-row",
+        ),
+        dbc.Row(
             dbc.Col(gc_commits_over_time, xl=10),
             className="visualization-row",
         ),

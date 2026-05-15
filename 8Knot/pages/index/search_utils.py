@@ -15,6 +15,7 @@ Search-Specific Functions:
 """
 
 from typing import List, Dict, Any, Optional, Union
+import os
 import re
 
 # Going with rapidfuzz instead of fuzzywuzzy
@@ -410,7 +411,7 @@ def create_search_storage_components():
 def create_multiselect_styles():
     """
     Create the style configuration for the MultiSelect component.
-    Uses CSS variables from color.css and main_layout.css.
+    Uses CSS variables from color_tokens.css and main_layout.css.
 
     Note: DMC MultiSelect requires inline styles via the 'styles' prop.
     This is a component-specific API, not regular inline styling.
@@ -608,7 +609,7 @@ def create_search_bar(initial_option):
 def create_bottom_navbar():
     """
     Create the bottom navigation bar with request links.
-    Uses CSS variables from color.css and main_layout.css.
+    Uses CSS variables from color_tokens.css and main_layout.css.
 
     Returns:
         dbc.NavbarSimple component with visualization, bug, and repo request links
@@ -640,13 +641,30 @@ def create_bottom_navbar():
         )
         for item in nav_items
     ]
+    version_label = app_version_label()
 
     return dbc.NavbarSimple(
         children=children,
-        brand="",
+        brand=version_label,
         brand_href="#",
         fluid=True,
         fixed="bottom",
         color="var(--bg-primary)",
         dark=True,
     )
+
+
+def app_version_label():
+    version = os.getenv("APP_VERSION", "").strip()
+    commit = (
+        os.getenv("GIT_COMMIT", "")
+        or os.getenv("SOURCE_COMMIT", "")
+        or os.getenv("VERCEL_GIT_COMMIT_SHA", "")
+        or os.getenv("RENDER_GIT_COMMIT", "")
+    ).strip()
+    if commit:
+        short_commit = commit[:7]
+        return f"8Knot {version} ({short_commit})" if version else f"8Knot {short_commit}"
+    if version:
+        return f"8Knot {version}"
+    return ""

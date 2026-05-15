@@ -124,6 +124,10 @@ def repo_dropdown(repo_ids):
     background=True,
 )
 def directory_dropdown(repo_id):
+    if not repo_id:
+        logging.warning(f"{VIZ_ID} DROPDOWN- NO REPOSITORY SELECTED")
+        return ["Top Level Directory"], "Top Level Directory"
+
     # Convert to int since Mantine dropdown returns strings
     repo_id = int(repo_id)
 
@@ -198,6 +202,10 @@ def directory_dropdown(repo_id):
 def cntrb_file_heatmap_graph(repo_id, directory, graph_view):
     start = time.perf_counter()
     logging.warning(f"{VIZ_ID}- START")
+
+    if not repo_id or not directory:
+        logging.warning(f"{VIZ_ID} - NO REPOSITORY OR DIRECTORY SELECTED")
+        return nodata_graph
 
     # Convert to int since Mantine dropdown returns strings
     repo_id = int(repo_id)

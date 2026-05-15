@@ -56,7 +56,7 @@ def cache_query_results(
         server_pagination (int, optional): _description_. Defaults to 2000.
         client_pagination (int, optional): _description_. Defaults to 2000.
     """
-    logging.warning(f"{target_table} -- CQR CACHE_QUERY_RESULTS BEGIN")
+    logging.info(f"{target_table} -- CQR CACHE_QUERY_RESULTS BEGIN")
     with pg.connect(
         db_connection_string,
         options=f"-c search_path={env_augur_schema}",
@@ -65,15 +65,15 @@ def cache_query_results(
             # set number of rows we want from primary db at a time
             augur_cur.itersize = server_pagination
 
-            logging.warning(f"{target_table} -- CQR EXECUTING QUERY")
+            logging.info(f"{target_table} -- CQR EXECUTING QUERY")
 
             # execute query
             augur_cur.execute(query, vars)
 
-            logging.warning(f"{target_table} -- CQR STARTING TRANSACTION")
+            logging.info(f"{target_table} -- CQR STARTING TRANSACTION")
             # connect to cache
             with pg.connect(cache_cx_string) as cache_conn:
-                logging.warning(f"{target_table} -- CQR COMPOSING SQL")
+                logging.info(f"{target_table} -- CQR COMPOSING SQL")
                 # compose SQL w/ table name
                 # ref: https://www.psycopg.org/docs/sql.html
                 composed_query = pg_sql.SQL(
@@ -81,7 +81,7 @@ def cache_query_results(
                 ).as_string(cache_conn)
 
                 # iterate through pages of rows from server.
-                logging.warning(f"{target_table} -- CQR FETCHING AND STORING ROWS")
+                logging.info(f"{target_table} -- CQR FETCHING AND STORING ROWS")
                 while rows := augur_cur.fetchmany(client_pagination):
                     if not rows:
                         # we're out of rows
@@ -98,7 +98,7 @@ def cache_query_results(
 
                 # after all data has successfully been written to cache from the primary db,
                 # insert record of existence for each (cache_func, repo_id) pair.
-                logging.warning(f"{target_table} -- CQR UPDATING BOOKKEEPING")
+                logging.info(f"{target_table} -- CQR UPDATING BOOKKEEPING")
                 with cache_conn.cursor() as cache_cur:
                     execute_values(
                         cur=cache_cur,
@@ -110,11 +110,11 @@ def cache_query_results(
                         argslist=bookkeeping_data,
                     )
 
-                logging.warning(f"{target_table} -- CQR COMMITTING TRANSACTION")
+                logging.info(f"{target_table} -- CQR COMMITTING TRANSACTION")
                 cache_conn.commit()
 
         # don't need to commit on primary db
-        logging.warning(f"{target_table} -- CQR SUCCESS")
+        logging.info(f"{target_table} -- CQR SUCCESS")
 
 
 def get_uncached(func_name: str, repolist: list[int]) -> list[int]:  # or None
@@ -175,17 +175,17 @@ def caching_wrapper(func_name: str, query: str, repolist: list[int], n_repolist_
         #           some might already be in cache.
         uncached_repos: list[int] | None = get_uncached(func_name=func_name, repolist=repolist)
         if not uncached_repos:
-            logging.warning(f"{func_name} COLLECTION - ALL REQUESTED REPOS IN CACHE")
+            logging.info(f"{func_name} COLLECTION - ALL REQUESTED REPOS IN CACHE")
             return 0
         else:
-            logging.warning(f"{func_name} COLLECTION - CACHING {len(uncached_repos)} NEW REPOS")
+            logging.info(f"{func_name} COLLECTION - CACHING {len(uncached_repos)} NEW REPOS")
 
             # inject the repolist multiple times because the SQL uses it more
             # than once and the wildcard %s are ordered.
             uncached_repos: tuple[tuple] = tuple([tuple(uncached_repos) for _ in range(n_repolist_uses)])
 
         # STEP 2: Query for those repos
-        logging.warning(f"{func_name} COLLECTION - EXECUTING CACHING QUERY")
+        logging.info(f"{func_name} COLLECTION - EXECUTING CACHING QUERY")
         cache_query_results(
             db_connection_string=db_cx_string,
             query=query,
@@ -227,11 +227,11 @@ def retrieve_from_cache(
                 (tuple(repolist),),
             )
 
-            logging.warning(f"{tablename} - LOADING DATA FROM CACHE")
+            logging.info(f"{tablename} - LOADING DATA FROM CACHE")
             df = pd.DataFrame(
                 cache_cur.fetchall(),
                 # get df column names from the database columns
                 columns=[desc[0] for desc in cache_cur.description],
             )
-            logging.warning(f"{tablename} - DATA LOADED - {df.shape} rows,cols")
+            logging.info(f"{tablename} - DATA LOADED - {df.shape} rows,cols")
             return df

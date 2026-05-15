@@ -80,6 +80,12 @@ if not ready:
 This code-block is our solution to the challenge of abstracting-away all of the
 background-worker and caching logic necessary to make this app run.
 
+For visualizations that still need to wait on cached rows directly, prefer
+`pages.utils.cache_wait.wait_for_cache(...)` instead of a fixed
+`time.sleep(0.5)` loop. The helper backs off between cache checks so a page full
+of callbacks does not hammer the Postgres cache while worker queries are still
+running.
+
 ## Conclusion
 
 We hope this guide helps you along the way to implementing your own visualizations. We would love

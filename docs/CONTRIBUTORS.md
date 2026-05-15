@@ -4,7 +4,7 @@ If you are interested in making a code contribution and would like to learn more
 
 1. Find an issue that you are interested in addressing or a feature that you would like to add.
 2. Fork the repository associated with the issue to your local GitHub organization. This means that you will have a copy of the repository under your-GitHub-username/repository-name.
-3. Clone the repository to your local machine using git clone [https://github.com/oss-aspen/8Knot.git](https://github.com/oss-aspen/8Knot.git).
+3. Clone your fork to your local machine using `git clone https://github.com/<your-username>/8Knot.git`. You can also use the green **Code** button on your fork to copy the clone URL.
 4. Create a new branch for your fix using git checkout -b branch-name-here.
 5. Make the appropriate changes for the issue you are trying to address or the feature that you want to add.
 6. Use git add insert-paths-of-changed-files-here to add the file contents of the changed files to the "snapshot" git uses to manage the state of the project, also known as the index.
@@ -17,6 +17,8 @@ If you are interested in making a code contribution and would like to learn more
 13. Wait for the pull request to be reviewed by a maintainer.
 14. Make changes to the pull request if the reviewing maintainer recommends them.
 15. Celebrate your success after your pull request is merged!
+
+If you need to update your branch after review, prefer adding new commits. Only force push after a rebase when a maintainer asks for it or when you are sure nobody else is working from your branch.
 
 ## Steps to create a new visualization
 

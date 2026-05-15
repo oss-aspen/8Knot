@@ -266,10 +266,10 @@ def process_data(
     # replace all nan to 0
     df_consolidated.fillna(value=0, inplace=True)
 
-    # log of pr_open and contribs if values are not 0
-    df_consolidated["log_num_pr_open"] = df_consolidated["PR Opened"].apply(lambda x: math.log(x) if x != 0 else 0)
+    # log10 of pr_open and contribs if values are not 0
+    df_consolidated["log_num_pr_open"] = df_consolidated["PR Opened"].apply(lambda x: math.log10(x) if x != 0 else 0)
     df_consolidated["log_num_contrib"] = df_consolidated["num_unique_contributors"].apply(
-        lambda x: math.log(x) if x != 0 else 0
+        lambda x: math.log10(x) if x != 0 else 0
     )
 
     # column to hold the weighted values of pr and issues actions summed together
@@ -285,7 +285,9 @@ def process_data(
     df_consolidated["prs_issues_actions_weighted"].replace(0, np.nan, inplace=True)
 
     # column for log value of pr and issue actions
-    df_consolidated["log_prs_issues_actions_weighted"] = df_consolidated["prs_issues_actions_weighted"].apply(math.log)
+    df_consolidated["log_prs_issues_actions_weighted"] = df_consolidated[
+        "prs_issues_actions_weighted"
+    ].apply(math.log10)
 
     return df_consolidated
 
@@ -295,7 +297,7 @@ def create_figure(df: pd.DataFrame, log):
     y_title = "Weighted PR/Issue Actions"
     if log:
         y_axis = "log_prs_issues_actions_weighted"
-        y_title = "Log of Weighted PR/Issue Actions"
+        y_title = "Log10 of Weighted PR/Issue Actions"
 
     # graph generation
     fig = px.scatter(
@@ -320,7 +322,7 @@ def create_figure(df: pd.DataFrame, log):
 
     # layout styling
     fig.update_layout(
-        xaxis_title="Logarithmic PRs Opened",
+        xaxis_title="Log10 PRs Opened",
         yaxis_title=y_title,
         margin_b=40,
         font=dict(size=14),

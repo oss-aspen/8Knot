@@ -47,6 +47,23 @@ login_enabled = os.getenv("AUGUR_LOGIN_ENABLED", "False") == "True"
 # because when login is disabled, the UI elements (refresh-button, logout-button, etc.)
 # don't exist in the layout, which would cause "nonexistent object" callback errors.
 
+_users_cache = None
+
+
+def get_users_cache(decode_responses=False):
+    global _users_cache
+    cache_key = "decoded" if decode_responses else "bytes"
+    if _users_cache is None:
+        _users_cache = {}
+    if cache_key not in _users_cache:
+        _users_cache[cache_key] = redis.StrictRedis(
+            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
+            port=6379,
+            password=os.getenv("REDIS_PASSWORD", ""),
+            decode_responses=decode_responses,
+        )
+    return _users_cache[cache_key]
+
 
 def _start_group_collection_login_enabled(url, n_clicks):
     """Schedules a Celery task to collect user groups.
@@ -64,11 +81,7 @@ def _start_group_collection_login_enabled(url, n_clicks):
     """
     if current_user.is_authenticated:
         user_id = current_user.get_id()
-        users_cache = redis.StrictRedis(
-            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
-            port=6379,
-            password=os.getenv("REDIS_PASSWORD", ""),
-        )
+        users_cache = get_users_cache()
         try:
             users_cache.ping()
         except redis.exceptions.ConnectionError:
@@ -129,11 +142,7 @@ def _login_username_button_enabled(url):
         if current_user.is_authenticated:
             logging.warning(f"LOGINBUTTON: USER LOGGED IN {current_user}")
             # TODO: implement more permanent interface
-            users_cache = redis.StrictRedis(
-                host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
-                port=6379,
-                password=os.getenv("REDIS_PASSWORD", ""),
-            )
+            users_cache = get_users_cache()
             try:
                 users_cache.ping()
             except redis.exceptions.ConnectionError:
@@ -210,12 +219,7 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
             logging.info(f"Fetched {len(options)} options from server")
             if current_user.is_authenticated:
                 try:
-                    users_cache = redis.StrictRedis(
-                        host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
-                        port=6379,
-                        password=os.getenv("REDIS_PASSWORD", ""),
-                        decode_responses=True,
-                    )
+                    users_cache = get_users_cache(decode_responses=True)
                     users_cache.ping()
                     if users_cache.exists(f"{current_user.get_id()}_group_options"):
                         user_options = json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
@@ -261,12 +265,7 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
                 server_options = augur.get_multiselect_options().copy()
                 if current_user.is_authenticated:
                     try:
-                        users_cache = redis.StrictRedis(
-                            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
-                            port=6379,
-                            password=os.getenv("REDIS_PASSWORD", ""),
-                            decode_responses=True,
-                        )
+                        users_cache = get_users_cache(decode_responses=True)
                         users_cache.ping()
                         if users_cache.exists(f"{current_user.get_id()}_group_options"):
                             user_options = json.loads(users_cache.get(f"{current_user.get_id()}_group_options"))
@@ -437,7 +436,7 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
     [Output("results-output-container", "children"), Output("repo-choices", "data")],
     [
         Input("search-button", "n_clicks"),
-        State("projects", "value"),
+        Input("projects", "value"),
     ],
 )
 def multiselect_values_to_repo_ids(search_button_clicks, user_vals):
@@ -461,12 +460,7 @@ def multiselect_values_to_repo_ids(search_button_clicks, user_vals):
     if current_user.is_authenticated:
         logging.warning(f"LOGINBUTTON: USER LOGGED IN {current_user}")
         # TODO: implement more permanent interface
-        users_cache = redis.StrictRedis(
-            host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
-            port=6379,
-            password=os.getenv("REDIS_PASSWORD", ""),
-            decode_responses=True,
-        )
+        users_cache = get_users_cache(decode_responses=True)
         try:
             users_cache.ping()
         except redis.exceptions.ConnectionError:
@@ -557,6 +551,10 @@ def show_repolist_alert(n_clicks, openness, repo_ids):
 def wait_queries(job_ids):
     # TODO add docstring to function
 
+    if not job_ids:
+        logging.warning("wait_queries: No jobs dispatched; selected data already cached")
+        return "Data Cached", "#0F5880"
+
     jobs = [AsyncResult(j_id) for j_id in job_ids]
 
     # Add timeout protection to prevent infinite waiting
@@ -602,7 +600,7 @@ def wait_queries(job_ids):
                 time.sleep(4.0)
 
             jobs = [j.forget() for j in jobs]
-            return "Data Incomplete- Retry", "danger"
+            return "Data Incomplete - Retry", "danger"
 
         # pause to let something change
         time.sleep(2.0)
@@ -620,6 +618,11 @@ def run_queries(repos):
     Args:
         repos ([int]): repositories we collect data for.
     """
+    repos = sorted(set(repos or []))
+
+    if not repos:
+        logging.warning("run_queries: No repositories selected")
+        return []
 
     # cache manager object
     cache = cm()
@@ -664,12 +667,7 @@ def initialize_cache(_):
 
         if current_user.is_authenticated:
             try:
-                users_cache = redis.StrictRedis(
-                    host=os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users"),
-                    port=6379,
-                    password=os.getenv("REDIS_PASSWORD", ""),
-                    decode_responses=True,
-                )
+                users_cache = get_users_cache(decode_responses=True)
                 users_cache.ping()
 
                 if users_cache.exists(f"{current_user.get_id()}_group_options"):
@@ -890,12 +888,13 @@ def update_pill_color_on_search(search_button_clicks, selected_repos_orgs):
     triggered_id = dash.ctx.triggered_id
 
     if triggered_id == "search-button":
-        # Search button clicked - add 'searching' class to turn pills blue
-        logging.info(f"PILL COLOR: Search clicked - turning pills BLUE")
+        logging.info("PILL COLOR: Search clicked - turning pills BLUE")
         return "searchbar-dropdown searching"
     if triggered_id == "projects":
-        # Values changed (user selecting) - remove 'searching' class to keep pills red
-        logging.info(f"PILL COLOR: Values changed - turning pills RED. Selected: {selected_repos_orgs}")
+        if selected_repos_orgs:
+            logging.info("PILL COLOR: Selection committed - turning pills BLUE")
+            return "searchbar-dropdown searching"
+        logging.info("PILL COLOR: Selection cleared - turning pills RED")
         return "searchbar-dropdown"
 
     return dash.no_update

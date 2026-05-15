@@ -16,6 +16,17 @@ dash.register_page(__name__, path="/contributors/contribution_types")
 layout = dbc.Container(
     [
         dbc.Row(
+            dbc.Col(
+                dbc.Alert(
+                    "Contribution type visualizations compare how contributors participate across actions, time windows, and concentration metrics.",
+                    color="secondary",
+                    className="mb-3",
+                ),
+                xl=10,
+            ),
+            className="visualization-row",
+        ),
+        dbc.Row(
             dbc.Col(gc_contribs_by_action, xl=10),
             className="visualization-row",
         ),

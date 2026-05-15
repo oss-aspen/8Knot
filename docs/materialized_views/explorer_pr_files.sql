@@ -1,4 +1,4 @@
-/* This is the SQL query that populates the explorer_pr_files materialized view*/
+/* SQL for the pull-request-files cache materialized view. */
 SELECT
     prf.pr_file_path as file_path,
     pr.pull_request_id AS pull_request_id,

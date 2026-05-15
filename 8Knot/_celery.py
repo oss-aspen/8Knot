@@ -20,7 +20,12 @@ celery_app.conf.update(
     task_acks_late=True,
     task_track_started=True,
     result_extended=True,
+    broker_connection_retry_on_startup=True,
+    worker_cancel_long_running_tasks_on_connection_loss=True,
     worker_prefetch_multiplier=1,
 )
+
+if os.getenv("CELERY_PURGE_STALE_TASKS_ON_STARTUP", "False") == "True":
+    celery_app.control.purge()
 
 celery_manager = CeleryManager(celery_app=celery_app)

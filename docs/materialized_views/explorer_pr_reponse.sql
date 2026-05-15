@@ -24,7 +24,9 @@ LEFT OUTER JOIN
         WHERE
             prrmr.pr_review_id = prr.pr_review_id AND
             prrmr.msg_id = m.msg_id AND
-            prr.pull_request_id = pr.pull_request_id
+            prr.pull_request_id = pr.pull_request_id AND
+            pr.pr_created_at >= NOW() - INTERVAL '5 years' AND
+            pr.pr_created_at < NOW()
         UNION ALL
         SELECT
             prmr.pull_request_id AS pull_request_id,
@@ -36,7 +38,12 @@ LEFT OUTER JOIN
             message m
         WHERE
             prmr.pull_request_id = pr.pull_request_id AND
-            prmr.msg_id = m.msg_id
+            prmr.msg_id = m.msg_id AND
+            pr.pr_created_at >= NOW() - INTERVAL '5 years' AND
+            pr.pr_created_at < NOW()
     ) M
 ON
     M.pull_request_id = pr.pull_request_id
+WHERE
+    pr.pr_created_at >= NOW() - INTERVAL '5 years' AND
+    pr.pr_created_at < NOW()

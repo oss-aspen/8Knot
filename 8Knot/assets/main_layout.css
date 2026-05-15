@@ -7,7 +7,7 @@
     - Navigation styles
     - Layout containers
 
-    Uses global CSS variables from color.css
+    Uses global CSS variables from color_tokens.css
 */
 
 
@@ -28,7 +28,7 @@
     --border-radius-xl: 20px;
     /* Transitions */
     --transition: all 0.3s ease;
-    /* Placeholder sizing tokens (colors are in color.css) */
+    /* Placeholder sizing tokens (colors are in color_tokens.css) */
     --placeholder-font-size: 16px;
     --placeholder-line-height: 20px;
     --placeholder-top-offset: 1px;
@@ -44,6 +44,10 @@
 .main-layout-container {
     display: flex;
     height: calc(100vh - 60px - 56px - 4px);
+}
+
+.repo-general-info-table {
+    margin-top: 20px;
 }
 
 
@@ -550,7 +554,7 @@ button.icon-button.btn:active,
    GLOBAL COMPONENT STYLES
 
    The following styles apply to components used throughout the
-   application. These were previously in color.css but have been
+   application. These were previously in color_tokens.css but have been
    moved here for better organization.
 
    Sections:
