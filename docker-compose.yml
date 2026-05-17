@@ -36,7 +36,7 @@ services:
         ":8080",
         "app:server",
         "--workers",
-        "1",
+        "4",
         "--threads",
         "2",
         "--timeout",
@@ -67,7 +67,7 @@ services:
     build:
       context: .
       dockerfile: ./docker/Dockerfile
-    command: ["celery", "-A", "app:celery_app", "worker", "--loglevel=INFO", "--concurrency=1", "--time-limit=700", "--soft-time-limit=630"]
+    command: ["celery", "-A", "app:celery_app", "worker", "--loglevel=INFO", "--concurrency=8", "--time-limit=700", "--soft-time-limit=630"]
     depends_on:
       - redis-cache
       - redis-users
