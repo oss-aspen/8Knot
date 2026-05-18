@@ -139,8 +139,8 @@ def avg_closed_issue_age(repolist):
         select
             avg(now() - i.created_at) as difference
         from
-            augur_data.issues i,
-            augur_data.repo r
+            issues i,
+            repo r
         where
             r.repo_id in ({str(repolist)[1:-1]})
             and i.repo_id = r.repo_id
