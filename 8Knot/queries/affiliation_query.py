@@ -42,9 +42,12 @@ def affiliation_query(self, repos):
                         SELECT
                             con.cntrb_id,
                             con.cntrb_company,
-                            array_to_string(
-                                array_agg(DISTINCT e) FILTER (WHERE e IS NOT NULL AND e != ''),
-                                ' , '
+                            COALESCE(
+                                array_to_string(
+                                    array_agg(DISTINCT e) FILTER (WHERE e IS NOT NULL AND e != ''),
+                                    ' , '
+                                ),
+                                ''
                             ) AS email_list
                         FROM contributors con
                         LEFT JOIN contributors_aliases ca ON con.cntrb_id = ca.cntrb_id,
