@@ -133,6 +133,42 @@ def _create_application_database() -> None:
     conn.close()
 
 
+_CACHE_TABLES_WITH_REPO_ID = (
+    "commits_query",
+    "issues_query",
+    "prs_query",
+    "affiliation_query",
+    "contributors_query",
+    "issue_assignee_query",
+    "pr_assignee_query",
+    "cntrb_per_file_query",
+    "pr_file_query",
+    "repo_files_query",
+    "repo_languages_query",
+    "package_version_query",
+    "repo_releases_query",
+    "ossf_score_query",
+    "repo_info_query",
+    "pr_response_query",
+)
+
+
+def _create_cache_indexes(cur) -> None:
+    """
+    Indexes for cache reads (retrieve_from_cache) and bookkeeping lookups
+    (get_uncached). UNLOGGED tables do not get indexes automatically.
+    """
+    for table in _CACHE_TABLES_WITH_REPO_ID:
+        cur.execute(f"CREATE INDEX IF NOT EXISTS {table}_repo_id_idx ON {table} (repo_id)")
+    cur.execute(
+        """
+        CREATE INDEX IF NOT EXISTS cache_bookkeeping_cache_func_repo_id_idx
+        ON cache_bookkeeping (cache_func, repo_id)
+        """
+    )
+    logging.warning("CREATED CACHE INDEXES")
+
+
 def _create_application_tables() -> None:
     """
     Creates tables for cached data in 'augur_cache' database.
@@ -387,6 +423,8 @@ def _create_application_tables() -> None:
             """
         )
         logging.warning("CREATED cache_bookkeeping TABLE")
+
+        _create_cache_indexes(cur)
 
         # commit changes, all-or-nothing.
         conn.commit()
