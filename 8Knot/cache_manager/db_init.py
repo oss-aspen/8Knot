@@ -149,6 +149,21 @@ def _create_application_tables() -> None:
     with conn.cursor() as cur:
         # create tables if they don't already exist.
         # TODO: id->repo_id, commits->commit_id
+        cur.execute("SELECT to_regclass('commits_query') IS NOT NULL")
+        commits_query_exists = cur.fetchone()[0]
+        cur.execute(
+            """
+            SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_name = 'commits_query'
+                    AND column_name = 'commit_message'
+            )
+            """
+        )
+        commits_query_has_commit_message = cur.fetchone()[0]
+        refresh_commits_query_cache = commits_query_exists and not commits_query_has_commit_message
+
         cur.execute(
             """
             CREATE UNLOGGED TABLE IF NOT EXISTS commits_query(
@@ -157,7 +172,14 @@ def _create_application_tables() -> None:
                 author_email text,
                 author_date text,
                 author_timestamp text,
-                committer_timestamp text)
+                committer_timestamp text,
+                commit_message text)
+            """
+        )
+        cur.execute(
+            """
+            ALTER TABLE commits_query
+            ADD COLUMN IF NOT EXISTS commit_message text
             """
         )
         logging.warning("CREATED commits TABLE")
@@ -387,6 +409,11 @@ def _create_application_tables() -> None:
             """
         )
         logging.warning("CREATED cache_bookkeeping TABLE")
+
+        if refresh_commits_query_cache:
+            cur.execute("DELETE FROM commits_query")
+            cur.execute("DELETE FROM cache_bookkeeping WHERE cache_func = 'commits_query'")
+            logging.warning("INVALIDATED commits_query CACHE TO BACKFILL commit_message")
 
         # commit changes, all-or-nothing.
         conn.commit()

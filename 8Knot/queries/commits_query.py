@@ -40,12 +40,16 @@ def commits_query(self, repos):
                         c.cmt_author_date AS author_date,
                         -- all timestamptz's are coerced to utc from their origin timezones.
                         timezone('utc', c.cmt_author_timestamp) AS author_timestamp,
-                        timezone('utc', c.cmt_committer_timestamp) AS committer_timestamp
+                        timezone('utc', c.cmt_committer_timestamp) AS committer_timestamp,
+                        cm.cmt_msg AS commit_message
 
                     FROM
                         repo r
                     JOIN commits c
                         ON r.repo_id = c.repo_id
+                    LEFT JOIN commit_messages cm
+                        ON r.repo_id = cm.repo_id
+                        AND c.cmt_commit_hash = cm.cmt_hash
                     WHERE
                         c.repo_id in %s
                         and timezone('utc', c.cmt_author_timestamp) < now()

@@ -5,6 +5,7 @@ import warnings
 
 # import the visualization cards
 from .visualizations.commits_over_time import gc_commits_over_time
+from .visualizations.conventional_commits import gc_conventional_commits
 from .visualizations.issues_over_time import gc_issues_over_time
 from .visualizations.issue_staleness import gc_issue_staleness
 from .visualizations.pr_staleness import gc_pr_staleness
@@ -25,6 +26,10 @@ layout = dbc.Container(
     [
         dbc.Row(
             dbc.Col(gc_commits_over_time, xl=10),
+            className="visualization-row",
+        ),
+        dbc.Row(
+            dbc.Col(gc_conventional_commits, xl=10),
             className="visualization-row",
         ),
         dbc.Row(
