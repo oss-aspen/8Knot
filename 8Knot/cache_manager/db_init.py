@@ -407,11 +407,11 @@ def _flush_redis_broker() -> None:
     broker state every time the cache is (re)initialized.
     """
     broker_host = os.getenv("REDIS_SERVICE_HOST", "redis-broker")
-    broker_port = int(os.getenv("REDIS_SERVICE_PORT", "6379"))
+    broker_port = int(os.getenv("REDIS_SERVICE_PORT") or "6379")
     broker_password = os.getenv("REDIS_PASSWORD", "")
 
     users_host = os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users")
-    users_port = int(os.getenv("REDIS_SERVICE_USERS_PORT", "6379"))
+    users_port = int(os.getenv("REDIS_SERVICE_USERS_PORT") or "6379")
 
     for name, host, port in [
         ("redis-broker", broker_host, broker_port),
