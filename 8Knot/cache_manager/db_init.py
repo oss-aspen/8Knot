@@ -66,6 +66,17 @@ import psycopg2 as pg
 import redis
 import time
 
+
+def _env_int(var: str, default: int) -> int:
+    """Return an env var as int, falling back to *default* on missing, empty, or non-numeric values."""
+    raw = os.getenv(var, "")
+    try:
+        return int(raw) if raw else default
+    except ValueError:
+        logging.warning(f"db_init: ignoring non-numeric {var}={raw!r}, using {default}")
+        return default
+
+
 # doesn't use relative import syntax "import .cx_common" because
 # cx_common is a neighbor of script, thus is available in PYTHON_PATH
 from cx_common import init_cx_string, cache_cx_string
@@ -407,11 +418,11 @@ def _flush_redis_broker() -> None:
     broker state every time the cache is (re)initialized.
     """
     broker_host = os.getenv("REDIS_SERVICE_HOST", "redis-broker")
-    broker_port = int(os.getenv("REDIS_SERVICE_PORT") or "6379")
+    broker_port = _env_int("REDIS_SERVICE_PORT", 6379)
     broker_password = os.getenv("REDIS_PASSWORD", "")
 
     users_host = os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users")
-    users_port = int(os.getenv("REDIS_SERVICE_USERS_PORT") or "6379")
+    users_port = _env_int("REDIS_SERVICE_USERS_PORT", 6379)
 
     for name, host, port in [
         ("redis-broker", broker_host, broker_port),
