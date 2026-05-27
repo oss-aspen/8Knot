@@ -61,8 +61,41 @@ Generally, 'int' is good for integers,
 
 import logging
 import sys
+import os
 import psycopg2 as pg
+import redis
 import time
+
+
+def _env_int(var: str, default: int) -> int:
+    """Parse an environment variable as an integer with safe fallback.
+
+    Wraps int() conversion in a try/except so that misconfigured
+    environment variables never crash the application on startup.
+
+    Behavior:
+        - Env var is unset or empty  -> returns *default*.
+        - Env var is a valid integer -> returns int(value).
+        - Env var is non-numeric (e.g. "ABCD") -> the string is truthy
+          so int() is attempted, raises ValueError, which is caught;
+          logs a warning so the misconfiguration is visible and falls
+          back to *default*.
+
+    Args:
+        var:     Name of the environment variable.
+        default: Value returned when the variable is absent, empty,
+                 or cannot be parsed as an integer.
+
+    Returns:
+        The parsed integer, or *default* on any failure.
+    """
+    raw = os.getenv(var, "")
+    try:
+        return int(raw) if raw else default
+    except ValueError:
+        logging.warning(f"db_init: ignoring non-numeric {var}={raw!r}, using {default}")
+        return default
+
 
 # doesn't use relative import syntax "import .cx_common" because
 # cx_common is a neighbor of script, thus is available in PYTHON_PATH
@@ -394,6 +427,35 @@ def _create_application_tables() -> None:
     logging.warning("ALL TABLES COMMITTED SUCCESSFULLY")
 
 
+def _flush_redis_broker() -> None:
+    """
+    Flush the Redis broker so it stays in sync with postgres-cache.
+
+    postgres-cache uses UNLOGGED tables, so all cached data is lost on
+    restart. If Redis still holds stale Celery task messages or results
+    from a previous run, workers pick them up and poll for data that no
+    longer exists, causing deadlocks. Flushing here guarantees a clean
+    broker state every time the cache is (re)initialized.
+    """
+    broker_host = os.getenv("REDIS_SERVICE_HOST", "redis-broker")
+    broker_port = _env_int("REDIS_SERVICE_PORT", 6379)
+    broker_password = os.getenv("REDIS_PASSWORD", "")
+
+    users_host = os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users")
+    users_port = _env_int("REDIS_SERVICE_USERS_PORT", 6379)
+
+    for name, host, port in [
+        ("redis-broker", broker_host, broker_port),
+        ("redis-users", users_host, users_port),
+    ]:
+        try:
+            r = redis.StrictRedis(host=host, port=port, password=broker_password)
+            r.flushall()
+            logging.warning(f"db_init: FLUSHED {name} ({host}:{port})")
+        except Exception as e:
+            logging.warning(f"db_init: could not flush {name}: {e}")
+
+
 def db_init() -> int:
     try:
         # don't need to check return values- errors propogate as exceptions,
@@ -404,6 +466,9 @@ def db_init() -> int:
 
         # add tables to augur_cache db if they don't already exist.
         _create_application_tables()
+
+        # flush redis so broker state matches the fresh postgres-cache.
+        _flush_redis_broker()
 
         logging.warning("db_init: POSTGRES CACHE SUCCESSFULLY INITIALIZED")
 
