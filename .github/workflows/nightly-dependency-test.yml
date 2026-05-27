@@ -112,7 +112,7 @@ jobs:
 
           # Wait for redis services
           echo "Waiting for Redis services..."
-          timeout 60 bash -c 'until docker compose exec -T redis-cache redis-cli -a 1234 ping; do sleep 2; done'
+          timeout 60 bash -c 'until docker compose exec -T redis-broker redis-cli -a 1234 ping; do sleep 2; done'
           timeout 60 bash -c 'until docker compose exec -T redis-users redis-cli -a 1234 ping; do sleep 2; done'
 
           # Wait for app server to be ready

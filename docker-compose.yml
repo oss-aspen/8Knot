@@ -51,7 +51,7 @@ services:
     depends_on:
       - worker-callback
       - worker-query
-      - redis-cache
+      - redis-broker
       - redis-users
       - postgres-cache
       - db-init
@@ -69,7 +69,7 @@ services:
       dockerfile: ./docker/Dockerfile
     command: ["celery", "-A", "app:celery_app", "worker", "--loglevel=INFO", "--concurrency=8", "--time-limit=700", "--soft-time-limit=630"]
     depends_on:
-      - redis-cache
+      - redis-broker
       - redis-users
       - postgres-cache
     env_file:
@@ -94,14 +94,14 @@ services:
         "--soft-time-limit=540"
       ]
     depends_on:
-      - redis-cache
+      - redis-broker
       - postgres-cache
     env_file:
       - .env
     restart: always
 
-  # for data blob caching
-  redis-cache:
+  # Celery task broker and result backend (not used for data caching)
+  redis-broker:
     image: docker.io/library/redis:6
     command:
       - /bin/sh
@@ -161,7 +161,7 @@ volumes:
   #   depends_on:
   #     - worker-callback
   #     - worker-query
-  #     - redis-cache
+  #     - redis-broker
   #     - app-server
   #   env_file:
   #     - .env
