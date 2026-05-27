@@ -68,7 +68,27 @@ import time
 
 
 def _env_int(var: str, default: int) -> int:
-    """Return an env var as int, falling back to *default* on missing, empty, or non-numeric values."""
+    """Parse an environment variable as an integer with safe fallback.
+
+    Wraps int() conversion in a try/except so that misconfigured
+    environment variables never crash the application on startup.
+
+    Behavior:
+        - Env var is unset or empty  -> returns *default*.
+        - Env var is a valid integer -> returns int(value).
+        - Env var is non-numeric (e.g. "ABCD") -> the string is truthy
+          so int() is attempted, raises ValueError, which is caught;
+          logs a warning so the misconfiguration is visible and falls
+          back to *default*.
+
+    Args:
+        var:     Name of the environment variable.
+        default: Value returned when the variable is absent, empty,
+                 or cannot be parsed as an integer.
+
+    Returns:
+        The parsed integer, or *default* on any failure.
+    """
     raw = os.getenv(var, "")
     try:
         return int(raw) if raw else default
