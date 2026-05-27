@@ -37,8 +37,6 @@ def affiliation_query(self, repos):
                     WITH contributor_emails AS (
                         -- pre-aggregate one email list per contributor so the main query
                         -- avoids the alias JOIN explosion (O(N*A) -> O(N)).
-                        -- LEFT JOIN preserves contributors who have no alias entries,
-                        -- which the previous INNER JOIN silently dropped.
                         SELECT
                             con.cntrb_id,
                             con.cntrb_company,
@@ -50,11 +48,11 @@ def affiliation_query(self, repos):
                                 ''
                             ) AS email_list
                         FROM contributors con
-                        LEFT JOIN contributors_aliases ca ON con.cntrb_id = ca.cntrb_id,
+                        JOIN contributors_aliases ca ON con.cntrb_id = ca.cntrb_id,
                         LATERAL unnest(ARRAY[ca.alias_email, con.cntrb_email, con.cntrb_canonical]) AS e
                         GROUP BY con.cntrb_id, con.cntrb_company
                     )
-                    SELECT
+                    SELECT DISTINCT
                         left(c.cntrb_id::text, 15) AS cntrb_id,
                         timezone('utc', c.created_at) AS created_at,
                         c.repo_id,
@@ -67,7 +65,7 @@ def affiliation_query(self, repos):
                     WHERE
                         c.repo_id IN %s
                         AND timezone('utc', c.created_at) < now()
-                    ORDER BY c.created_at
+                    ORDER BY created_at
                     """
 
     # used for caching
