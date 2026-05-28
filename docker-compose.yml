@@ -42,7 +42,7 @@ services:
         "--workers",
         "1",
         "--threads",
-        "2",
+        "4",
         "--timeout",
         "300",
         "--keep-alive",
