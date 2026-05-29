@@ -1,20 +1,23 @@
-# CollectOSS Project Governance
+# 8Knot Project Governance
 
-CollectOSS is dedicated to building and improving a data collection, transformation, and serving backend for open source contributor activity. CollectOSS will operate as a project within the CHAOSS Organization, which is a member of the Linux Foundation. This governance explains how the project is run.
+8Knot is dedicated to building and improving a data collection, transformation, and serving backend for open source contributor activity. 8Knot will operate as a project within the CHAOSS Organization, which is a member of the Linux Foundation. This governance explains how the project is run.
 
-- [Values](#values)
-- [Maintainers](#maintainers)
-- [Becoming a Maintainer](#becoming-a-maintainer)
-- [Meetings](#meetings)
-- [CHAOSS Resources](#CHAOSS-resources)
-- [Code of Conduct Enforcement](#code-of-conduct)
-- [Security Response Team](#security-response-team)
-- [Voting](#voting)
-- [Modifications](#modifying-this-charter)
+- [8Knot Project Governance](#8knot-project-governance)
+  - [Values](#values)
+  - [Maintainers](#maintainers)
+    - [Becoming a Maintainer](#becoming-a-maintainer)
+    - [Removing a Maintainer](#removing-a-maintainer)
+  - [Meetings](#meetings)
+  - [CHAOSS Resources](#chaoss-resources)
+  - [Code of Conduct Committee](#code-of-conduct-committee)
+  - [Security Response Team](#security-response-team)
+  - [Voting](#voting)
+  - [Transitional Period](#transitional-period)
+  - [Modifying this Charter](#modifying-this-charter)
 
 ## Values
 
-The CollectOSS and its leadership embrace the following values:
+The 8Knot and its leadership embrace the following values:
 
 * Openness: Communication and decision-making happens in the open and is discoverable for future
   reference. As much as possible, all discussions and work take place in public
@@ -34,10 +37,10 @@ The CollectOSS and its leadership embrace the following values:
 
 The current maintainers can be found in [MAINTAINERS.md](./MAINTAINERS.md).  Maintainers collectively manage the project's resources and contributors.
 
-CollectOSS Maintainers have merge approval rights to the [project GitHub repository](https://github.com/chaoss/collectoss) and all other CollectOSS project repositories.
+8Knot Maintainers have merge approval rights to the [project GitHub repository](https://github.com/chaoss/8Knot) and all other 8Knot project repositories.
 
 This privilege is granted with some expectation of responsibility: maintainers
-are people who care about the CollectOSS project and want to help it grow and
+are people who care about the 8Knot project and want to help it grow and
 improve. A maintainer is not just someone who can make changes, but someone who
 has demonstrated their ability to collaborate with the team, get the most
 knowledgeable people to review code and docs, contribute high-quality code, and
@@ -62,7 +65,7 @@ To become a Maintainer you need to demonstrate the following:
   * ability to collaborate with the team,
   * understanding of how the team works (policies, processes for testing and code review, etc),
   * understanding of the project's code base and coding and documentation style,
-  * dedication to maintaining CollectOSS as a shared project for the CHAOSS community.
+  * dedication to maintaining 8Knot as a shared project for the CHAOSS community.
 
 A new Maintainer must be proposed by an existing Maintainer by posting an issue in the project repository. A simple majority vote of existing Maintainers approves the application.  Maintainers nominations will be evaluated without prejudice to employer or demographics.
 
@@ -100,7 +103,7 @@ Any Maintainer may suggest a request for CHAOSS resources, either in an issue, o
 
 ## Code of Conduct Committee
 
-The CollectOSS project adheres to the [CHAOSS Code of Conduct](https://chaoss.community/code-of-conduct/)(CoC).  As such, community members needing to report a violation of the CoC should report it directly to the CHAOSS Code Of Conduct Committee (CoCC).
+The 8Knot project adheres to the [CHAOSS Code of Conduct](https://chaoss.community/code-of-conduct/)(CoC).  As such, community members needing to report a violation of the CoC should report it directly to the CHAOSS Code Of Conduct Committee (CoCC).
 
 The Maintainers will work with the CoCC on any reports which require action by the project. 
 
@@ -117,9 +120,9 @@ holes and breaches according to the [security policy](./SECURITY.md).
 
 ## Voting
 
-While most business in CollectOSS is conducted by "[lazy consensus](https://community.apache.org/committers/lazyConsensus.html)", 
+While most business in 8Knot is conducted by "[lazy consensus](https://community.apache.org/committers/lazyConsensus.html)", 
 periodically the Maintainers may need to vote on specific actions or changes.
-A vote can be taken on the project's public Slack channel (#wg-collectoss-8knot in the [CHAOSS Slack](https://chaoss.community/kb-getting-started/)) or 
+A vote can be taken on the project's public Slack channel (#wg-8Knot-8knot in the [CHAOSS Slack](https://chaoss.community/kb-getting-started/)) or 
 the private Maintainer Slack channel for security or conduct matters.  
 Votes may also be taken at the biweely developer meeting.  Any Maintainer may
 demand a vote be taken.
@@ -130,7 +133,7 @@ existing maintainers.
 
 ## Transitional Period
 
-There will be a Transitional Period for six to eight months after the CollectOSS project is launched.  During that transitional period, the project governance will be modified in the following ways in order to build a new Maintainer Council.
+There will be a Transitional Period for six to eight months after the 8Knot project is launched.  During that transitional period, the project governance will be modified in the following ways in order to build a new Maintainer Council.
 
 The project will be governed by the [Transitional Maintainers](./MAINTAINERS.md), who may or may not meet the standard qualifications for a Maintainer. 
 * The Transitional Maintainers will be seeking to appoint new Maintainers based on an optimitistic and flexible evaluation of their contributions during the first months of the project.  This will generally include "crediting" contributors for contributions made to the Augur project.  
