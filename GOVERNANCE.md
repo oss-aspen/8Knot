@@ -12,12 +12,11 @@
   - [Code of Conduct Committee](#code-of-conduct-committee)
   - [Security Response Team](#security-response-team)
   - [Voting](#voting)
-  - [Transitional Period](#transitional-period)
   - [Modifying this Charter](#modifying-this-charter)
 
 ## Values
 
-The 8Knot and its leadership embrace the following values:
+The 8Knot project and its leadership embrace the following values:
 
 * Openness: Communication and decision-making happens in the open and is discoverable for future
   reference. As much as possible, all discussions and work take place in public
@@ -35,7 +34,7 @@ The 8Knot and its leadership embrace the following values:
 
 ## Maintainers
 
-The current maintainers can be found in [MAINTAINERS.md](./MAINTAINERS.md).  Maintainers collectively manage the project's resources and contributors.
+The current maintainers can be found in [docs/AUTHORS.md](./docs/AUTHORS.md).  Maintainers collectively manage the project's resources and contributors.
 
 8Knot Maintainers have merge approval rights to the [project GitHub repository](https://github.com/chaoss/8Knot) and all other 8Knot project repositories.
 
@@ -92,7 +91,7 @@ and can be rapidly returned to Maintainer status if their availability changes.
 ## Meetings
 
 Time zones permitting, Maintainers are expected to participate in the public
-developer meeting, which occurs every two weeks according to the CHAOSS calendar.  
+developer meeting, which is scheduled and managed on the CHAOSS calendar.  
 
 Maintainers will also have closed meetings in order to discuss security reports
 or reports from the CHAOSS Code of Conduct Committee.  Such meetings should be scheduled by any Maintainer on receipt of a security issue or CoCC message.  All current Maintainers must be invited to such closed meetings, except for any Maintainer who is accused of a CoC violation.
@@ -122,29 +121,14 @@ holes and breaches according to the [security policy](./SECURITY.md).
 
 While most business in 8Knot is conducted by "[lazy consensus](https://community.apache.org/committers/lazyConsensus.html)", 
 periodically the Maintainers may need to vote on specific actions or changes.
-A vote can be taken on the project's public Slack channel (#wg-8Knot-8knot in the [CHAOSS Slack](https://chaoss.community/kb-getting-started/)) or 
-the private Maintainer Slack channel for security or conduct matters.  
+A vote can be taken on the project's public Slack channel (#wg-collectoss-8knot in the [CHAOSS Slack](https://chaoss.community/kb-getting-started/)) or 
+a private Maintainer Slack channel for security or conduct matters.  
 Votes may also be taken at the biweely developer meeting.  Any Maintainer may
 demand a vote be taken.
 
 Most votes require a simple majority of all Maintainers to succeed, except where
 otherwise noted.  Two-thirds majority votes mean at least two-thirds of all 
 existing maintainers.
-
-## Transitional Period
-
-There will be a Transitional Period for six to eight months after the 8Knot project is launched.  During that transitional period, the project governance will be modified in the following ways in order to build a new Maintainer Council.
-
-The project will be governed by the [Transitional Maintainers](./MAINTAINERS.md), who may or may not meet the standard qualifications for a Maintainer. 
-* The Transitional Maintainers will be seeking to appoint new Maintainers based on an optimitistic and flexible evaluation of their contributions during the first months of the project.  This will generally include "crediting" contributors for contributions made to the Augur project.  
-* Newly appointed Maintainers do not need to meet the full qualifications for Maintainer above (particularly the 6 month requirement), and will be approved by a fast-track process.
-
-The following will happen at the end of the Transitional Period:
-
-1. The Maintainers to date will vote to end the Transition.  
-2. The Maintainers will update the Maintainer requirements based on the early project experience.
-3. Any Transitional Maintainers who do not qualify as, or do not wish to be, long-term Maintainers will step down, and the remaining ones will be converted to long-term Maintainers.  
-4. This section will then be removed from the Governance.
 
 ## Modifying this Charter
 
