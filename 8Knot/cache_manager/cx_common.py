@@ -13,10 +13,11 @@ try:
     env_augur_host = os.environ["AUGUR_HOST"]
     env_augur_port = os.environ["AUGUR_PORT"]
     env_augur_database = os.environ["AUGUR_DATABASE"]
-    env_augur_schema = os.environ["AUGUR_SCHEMA"]
 except KeyError as ke:
     logging.critical(f"AUGUR: Database credentials incomplete: {ke}")
     raise KeyError(ke)
+
+env_augur_schema = os.getenv("AUGUR_SCHEMA", "collection_data,augur_data")
 
 # credentials to access application cache from environment
 env_dbname = os.getenv("CACHE_DB_NAME", "augur_cache")
@@ -26,7 +27,7 @@ env_host = os.getenv("CACHE_HOST", "postgres-cache")
 env_user = os.getenv("CACHE_USER", "postgres")
 env_password = os.getenv("POSTGRES_PASSWORD", "password")
 env_port = os.getenv("CACHE_PORT", "5432")
-env_schema = os.getenv("CACHE_SCHEMA", "augur_data")
+env_schema = os.getenv("CACHE_SCHEMA", "collection_data,augur_data")
 
 
 # purely initial startup string

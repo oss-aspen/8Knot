@@ -191,8 +191,8 @@ def pr_count(repolist):
         select
             count(distinct pr.pull_request_id) as num_open_prs
         from
-            augur_data.pull_requests pr,
-            augur_data.repo r
+            pull_requests pr,
+            repo r
         where
             r.repo_id in ({str(repolist)[1:-1]})
             and pr.repo_id = r.repo_id
@@ -228,8 +228,8 @@ def merged_pr_count(repolist):
         select
             count(distinct pr.pull_request_id) as num_open_prs
         from
-            augur_data.pull_requests pr,
-            augur_data.repo r
+            pull_requests pr,
+            repo r
         where
             r.repo_id in ({str(repolist)[1:-1]})
             and pr.repo_id = r.repo_id
@@ -265,8 +265,8 @@ def rejected_pr_count(repolist):
         select
             count(distinct pr.pull_request_id) as num_open_prs
         from
-            augur_data.pull_requests pr,
-            augur_data.repo r
+            pull_requests pr,
+            repo r
         where
             r.repo_id in ({str(repolist)[1:-1]})
             and pr.repo_id = r.repo_id
@@ -303,8 +303,8 @@ def avg_open_pr_age(repolist):
         select
             avg(now() - pr.pr_created_at) as difference
         from
-            augur_data.pull_requests pr,
-            augur_data.repo r
+            pull_requests pr,
+            repo r
         where
             r.repo_id in ({str(repolist)[1:-1]})
             and pr.repo_id = r.repo_id
@@ -352,8 +352,8 @@ def avg_merged_pr_age(repolist):
         select
             avg(pr.pr_merged_at - pr.pr_created_at) as difference
         from
-            augur_data.pull_requests pr,
-            augur_data.repo r
+            pull_requests pr,
+            repo r
         where
             r.repo_id in ({str(repolist)[1:-1]})
             and pr.repo_id = r.repo_id
@@ -408,9 +408,9 @@ def rejected_pr_count(repolist):
             (select
                 count(distinct prmr.msg_id) message_count
             from
-                augur_data.pull_requests pr,
-                augur_data.pull_request_message_ref prmr,
-                augur_data.repo r
+                pull_requests pr,
+                pull_request_message_ref prmr,
+                repo r
             where
                 r.repo_id in ({str(repolist)[1:-1]})
                 and pr.repo_id = r.repo_id

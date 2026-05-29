@@ -139,8 +139,8 @@ def avg_closed_issue_age(repolist):
         select
             avg(now() - i.created_at) as difference
         from
-            augur_data.issues i,
-            augur_data.repo r
+            issues i,
+            repo r
         where
             r.repo_id in ({str(repolist)[1:-1]})
             and i.repo_id = r.repo_id
@@ -188,8 +188,8 @@ def avg_open_issue_age(repolist):
         select
             avg(now() - i.created_at) as difference
         from
-            augur_data.issues i,
-            augur_data.repo r
+            issues i,
+            repo r
         where
             r.repo_id in ({str(repolist)[1:-1]})
             and i.repo_id = r.repo_id
@@ -237,8 +237,8 @@ def closed_issue_count(repolist):
         select
             count(distinct i.issue_id) as num_open_issues
         from
-            augur_data.issues i,
-            augur_data.repo r
+            issues i,
+            repo r
         where
             r.repo_id in ({str(repolist)[1:-1]})
             and i.repo_id = r.repo_id
@@ -274,8 +274,8 @@ def open_issue_count(repolist):
         select
             count(distinct i.issue_id) as num_open_issues
         from
-            augur_data.issues i,
-            augur_data.repo r
+            issues i,
+            repo r
         where
             r.repo_id in ({str(repolist)[1:-1]})
             and i.repo_id = r.repo_id
