@@ -2,9 +2,12 @@
 Connection Common file - accessing environment variables
 """
 
+from __future__ import annotations
+
 import os
 import logging
 import time
+from contextlib import contextmanager
 
 # credentials to access database from environment
 try:
@@ -48,3 +51,20 @@ db_cx_string = "dbname={} user={} password={} host={} port={}".format(
     env_augur_host,
     env_augur_port,
 )
+
+
+@contextmanager
+def cache_connection():
+    """Yield a psycopg2 connection to the cache DB, always closed on exit.
+
+    Used by the shareable-URL system so callbacks never leak connections
+    on the error paths. psycopg2 is imported lazily to keep this module
+    import-light for code paths that only need the connection strings.
+    """
+    import psycopg2 as pg
+
+    conn = pg.connect(cache_cx_string)
+    try:
+        yield conn
+    finally:
+        conn.close()

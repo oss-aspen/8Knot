@@ -30,6 +30,11 @@ from .login_utils import (
     is_login_enabled,
 )
 
+# Share-link modal — kept in its own module so it cannot accidentally end up
+# in `create_app_stores()` (where Toasts/Clipboards broke the Mantine
+# provider's child reconciliation in earlier attempts).
+from .share_components import create_share_modal
+
 # Note: Welcome sections are now imported in pages/landing/landing.py
 
 # Top bar with logos and navigation links
@@ -131,6 +136,7 @@ layout = html.Div(
                 justify="start",
             ),
             navbar_bottom,
+            create_share_modal(),
         ],
         fluid=True,
         className="dbc app-main-container",

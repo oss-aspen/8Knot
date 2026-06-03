@@ -421,6 +421,25 @@ def _create_application_tables() -> None:
         )
         logging.warning("CREATED cache_bookkeeping TABLE")
 
+        # Logged table (NOT UNLOGGED, unlike the cache tables above) — share
+        # links must survive a Postgres restart, otherwise every shared URL
+        # would break whenever the cache container recycles. The shortener is
+        # a pure key->blob store: it has no knowledge of the payload format.
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS share_links(
+                short_id      VARCHAR(12)  PRIMARY KEY,
+                full_state    TEXT         NOT NULL,
+                created_at    TIMESTAMP    NOT NULL DEFAULT NOW(),
+                last_accessed TIMESTAMP,
+                access_count  INTEGER      NOT NULL DEFAULT 0,
+                expires_at    TIMESTAMP    NOT NULL DEFAULT (NOW() + INTERVAL '90 days')
+            )
+            """
+        )
+        cur.execute("CREATE INDEX IF NOT EXISTS share_links_expires_idx ON share_links (expires_at)")
+        logging.warning("CREATED share_links TABLE")
+
         # commit changes, all-or-nothing.
         conn.commit()
 
