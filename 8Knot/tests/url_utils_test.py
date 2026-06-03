@@ -5,11 +5,30 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pages.utils.url_utils import (
     extract_url_params,
+    extract_base_url,
     compose_short_url,
     compose_long_url,
     validate_target,
     VALID_GRAPH_REGISTRY,
 )
+
+
+def test_extract_base_url_basic():
+    assert extract_base_url("https://8knot.example.com/contributions?s=abc#g") == "https://8knot.example.com"
+
+
+def test_extract_base_url_path_collision():
+    # hostname contains a path-like substring — slicing on pathname would break
+    assert extract_base_url("https://contributions.8knot.io/contributions?x=1") == "https://contributions.8knot.io"
+
+
+def test_extract_base_url_with_port():
+    assert extract_base_url("http://localhost:8050/repo_overview") == "http://localhost:8050"
+
+
+def test_extract_base_url_empty():
+    assert extract_base_url("") == "://"
+    assert extract_base_url(None) == "://"
 
 
 def test_extract_short_id():
@@ -80,6 +99,10 @@ def test_validate_target_deprecated():
 
 
 if __name__ == "__main__":
+    test_extract_base_url_basic()
+    test_extract_base_url_path_collision()
+    test_extract_base_url_with_port()
+    test_extract_base_url_empty()
     test_extract_short_id()
     test_extract_state()
     test_extract_empty()
