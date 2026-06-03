@@ -36,6 +36,7 @@ import cache_manager.url_state as url_state
 import cache_manager.share_manager as share_manager
 from cache_manager.cx_common import cache_connection
 from pages.utils import url_utils
+from models import SearchItem
 
 
 # -----------------------------------------------------------------------------
@@ -43,17 +44,36 @@ from pages.utils import url_utils
 # -----------------------------------------------------------------------------
 
 
-def _build_share_url(repo_ids, pathname, href, graph_id):
-    """Encode share state and return ``(url, warning_message)``.
+def _split_selection(selection):
+    """Split a raw searchbar selection into ``(repo_ids, org_names)``.
+
+    The searchbar stores orgs/groups as non-numeric values and repos as
+    numeric values (see ``SearchItem.from_id``). We persist them separately so
+    a shared link keeps an org *as an org* — restoring the single org pill
+    instead of its dozens of expanded repos, and re-resolving the org on load
+    (which also picks up repos added to it since the link was made).
+    """
+    repo_ids, org_names = [], []
+    for v in selection or []:
+        if SearchItem.from_id(v) == SearchItem.REPO:
+            repo_ids.append(int(v))
+        else:
+            org_names.append(v)
+    return repo_ids, org_names
+
+
+def _build_share_url(selection, pathname, href, graph_id):
+    """Encode the searchbar selection and return ``(url, warning_message)``.
 
     Prefers a short ``?s=`` link; on any DB failure falls back to a
     self-contained ``?state=`` long link (Layer 1) so sharing still works
     even when the shortener is unavailable.
     """
+    repo_ids, org_names = _split_selection(selection)
     base_url = url_utils.extract_base_url(href)
     encoded = url_state.encode_state(
         repo_ids=repo_ids,
-        org_names=[],  # reconstructed from repo_ids on load; orgs are instance-specific
+        org_names=org_names,
         pathname=pathname,
         graph_id=graph_id,
     )
@@ -67,24 +87,34 @@ def _build_share_url(repo_ids, pathname, href, graph_id):
         return long_url, "Short-link service unavailable — using a full link."
 
 
-def _resolve_repos(repo_ids):
-    """Split share ``repo_ids`` into dmc options (present) and missing ids.
+def _resolve_selection(repo_ids, org_names):
+    """Rebuild searchbar options/values from a decoded payload.
 
-    Returns ``(options, missing)``. ``repo_id_to_git`` is an in-memory dict
-    lookup that returns ``None`` for repos this instance doesn't know about —
-    which is how we detect "missing" repos and honor the "load remaining +
-    warn" behavior. dmc.MultiSelect only keeps ``value``s that also appear in
-    ``data``, so each present repo must yield a matching ``{value, label}``.
+    Returns ``(options, values, missing)``. Each present repo/org must yield a
+    matching ``{value, label}`` option because dmc.MultiSelect only keeps
+    values that also appear in its ``data``. ``repo_id_to_git`` / ``is_org``
+    are in-memory lookups that report whether the item still exists on THIS
+    instance — which is how we honor the "load remaining + warn" behavior.
     """
-    options, missing = [], []
+    options, values, missing = [], [], []
+
     for rid in repo_ids:
         git_url = augur.repo_id_to_git(rid)
         if git_url:
             label = git_url[8:] if git_url.startswith("https://") else git_url
             options.append({"value": str(rid), "label": label})
+            values.append(str(rid))
         else:
             missing.append(rid)
-    return options, missing
+
+    for org in org_names:
+        if augur.is_org(org):
+            options.append({"value": org, "label": org})
+            values.append(org)
+        else:
+            missing.append(org)
+
+    return options, values, missing
 
 
 # -----------------------------------------------------------------------------
@@ -99,17 +129,21 @@ def _resolve_repos(repo_ids):
     Output("share-status-message", "children"),
     Input({"type": "share-btn", "graph": ALL, "page": ALL}, "n_clicks"),
     Input("share-modal-close", "n_clicks"),
-    State("repo-choices", "data"),
+    State("projects", "value"),
     State("url", "pathname"),
     State("url", "href"),
     prevent_initial_call=True,
 )
-def manage_share_modal(share_clicks, close_clicks, repo_ids, pathname, href):
+def manage_share_modal(share_clicks, close_clicks, selection, pathname, href):
     """Open the share modal with a generated link, or close it.
 
     One callback owns ``share-modal.is_open``, so no ``allow_duplicate`` is
     needed. The share buttons are pattern-matched inputs; the triggering
     graph is recovered from ``ctx.triggered_id``.
+
+    We share the searchbar *selection* (``projects.value``) rather than the
+    resolved ``repo-choices`` so an org is preserved as an org (not exploded
+    into its member repos).
     """
     triggered = ctx.triggered_id
 
@@ -121,10 +155,10 @@ def manage_share_modal(share_clicks, close_clicks, repo_ids, pathname, href):
     if not isinstance(triggered, dict) or not any(c for c in (share_clicks or []) if c):
         raise dash.exceptions.PreventUpdate
 
-    if not repo_ids:
+    if not selection:
         return True, "", "Run a search (select repositories) before sharing.", ""
 
-    url, warning = _build_share_url(repo_ids, pathname, href, triggered.get("graph"))
+    url, warning = _build_share_url(selection, pathname, href, triggered.get("graph"))
     return True, url, warning, ""
 
 
@@ -196,17 +230,18 @@ def handle_share_url(search):
         return None, True, "The graph referenced by this link no longer exists."
 
     repo_ids = state.get("repo_ids", [])
-    options, missing = _resolve_repos(repo_ids)
+    org_names = state.get("org_names", [])
+    options, values, missing = _resolve_selection(repo_ids, org_names)
 
-    if not options:
-        return None, True, "None of the repositories in this link are available on this instance."
+    if not values:
+        return None, True, "None of the repositories/organizations in this link are available on this instance."
 
-    payload = {"options": options, "values": [o["value"] for o in options]}
+    payload = {"options": options, "values": values}
 
     if missing:
+        total = len(repo_ids) + len(org_names)
         msg = (
-            f"Loaded {len(options)} of {len(repo_ids)} repositories. "
-            f"{len(missing)} are no longer available on this instance."
+            f"Loaded {len(values)} of {total} selections. " f"{len(missing)} are no longer available on this instance."
         )
         return payload, True, msg
 
