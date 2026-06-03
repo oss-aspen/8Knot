@@ -87,6 +87,22 @@ def test_validate_target_invalid():
     assert redirect is None
 
 
+def test_validate_target_known_graph_id():
+    # a real (pathname, viz_id) pair on a known page is valid
+    pathname, graph_id = next(iter(VALID_GRAPH_REGISTRY.items()))
+    is_valid, redirect = validate_target(pathname, graph_id[0])
+    assert is_valid is True
+    assert redirect is None
+
+
+def test_validate_target_unknown_graph_on_known_page():
+    # valid page but a graph it does not render -> not valid (graph removed)
+    pathname = next(iter(VALID_GRAPH_REGISTRY))
+    is_valid, redirect = validate_target(pathname, "definitely-not-a-real-graph")
+    assert is_valid is False
+    assert redirect is None
+
+
 def test_validate_target_deprecated():
     from pages.utils.url_utils import DEPRECATED_GRAPH_REGISTRY
 
@@ -113,5 +129,7 @@ if __name__ == "__main__":
     test_compose_long_url()
     test_validate_target_valid()
     test_validate_target_invalid()
+    test_validate_target_known_graph_id()
+    test_validate_target_unknown_graph_on_known_page()
     test_validate_target_deprecated()
     print("All url_utils tests passed")

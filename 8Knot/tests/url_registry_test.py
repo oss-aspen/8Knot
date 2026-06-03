@@ -1,48 +1,70 @@
 """
 Drift guard for VALID_GRAPH_REGISTRY.
 
-The sidebar navigation in `pages/index/index_components.py` and the
-`VALID_GRAPH_REGISTRY` in `pages/utils/url_utils.py` both enumerate the
-valid (pathname, graph_id) pairs. That is a second source of truth, so this
-test asserts the registry recognizes every graph the sidebar links to —
-catching drift in CI before a stale registry silently rejects a real
-shared link.
+The registry in ``pages/utils/url_utils.py`` enumerates the valid
+(pathname, graph_id) pairs used to validate shared links. The graph IDs it
+lists must match the real ``VIZ_ID`` of every visualization actually rendered
+on each page — those are the IDs share buttons emit.
 
-It reads the sidebar module as plain text (no dash import needed), so it
-runs fast and without the app's runtime dependencies.
+This test re-derives that mapping straight from the source (each page layout's
+``register_page`` path + the viz modules it imports + each module's VIZ_ID) and
+asserts it equals the registry. If a graph is added, removed, or renamed and
+the registry isn't updated, this fails in CI — so the second source of truth
+can't silently drift.
+
+It parses source as plain text (no dash import), so it runs fast and without
+the app's runtime dependencies.
 """
 
 import os
 import re
+import glob
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pages.utils.url_utils import VALID_GRAPH_REGISTRY
 
-_SIDEBAR_SRC = os.path.join(os.path.dirname(__file__), "..", "pages", "index", "index_components.py")
-
-# Matches sidebar hrefs like "/contributions#commits-over-time".
-_HREF_RE = re.compile(r'"(/[\w/]+)#([\w-]+)"')
+_ROOT = os.path.join(os.path.dirname(__file__), "..")
 
 
-def _sidebar_targets():
-    with open(_SIDEBAR_SRC, encoding="utf-8") as fh:
-        source = fh.read()
-    return _HREF_RE.findall(source)
+def _viz_id_by_module():
+    """module basename -> VIZ_ID for every visualization module."""
+    out = {}
+    for f in glob.glob(os.path.join(_ROOT, "pages", "**", "visualizations", "*.py"), recursive=True):
+        src = open(f, encoding="utf-8").read()
+        m = re.search(r'^VIZ_ID\s*=\s*["\']([^"\']+)', src, re.M)
+        if m:
+            out[os.path.splitext(os.path.basename(f))[0]] = m.group(1)
+    return out
 
 
-def test_sidebar_targets_exist_in_registry():
-    targets = _sidebar_targets()
-    assert targets, "no sidebar hrefs found — regex or source path is wrong"
+def _derive_registry():
+    """Rebuild pathname -> sorted[viz_id] from the live page layouts."""
+    viz_by_module = _viz_id_by_module()
+    derived = {}
+    for f in glob.glob(os.path.join(_ROOT, "pages", "**", "*.py"), recursive=True):
+        src = open(f, encoding="utf-8").read()
+        page = re.search(r'register_page\([^)]*path\s*=\s*["\']([^"\']+)', src)
+        if not page:
+            continue
+        mods = re.findall(r"from\s+\.visualizations\.(\w+)\s+import", src)
+        vids = sorted({viz_by_module[m] for m in mods if m in viz_by_module})
+        if vids:
+            derived[page.group(1)] = vids
+    return derived
 
-    drift = []
-    for pathname, graph_id in targets:
-        graphs = VALID_GRAPH_REGISTRY.get(pathname)
-        if graphs is None or graph_id not in graphs:
-            drift.append((pathname, graph_id))
 
-    assert not drift, "VALID_GRAPH_REGISTRY is out of sync with the sidebar navigation. " f"Missing entries: {drift}"
+def test_registry_matches_live_pages():
+    derived = _derive_registry()
+    assert derived, "no viz pages discovered — derivation logic or paths are wrong"
+
+    registry = {path: sorted(graphs) for path, graphs in VALID_GRAPH_REGISTRY.items()}
+    assert registry == derived, (
+        "VALID_GRAPH_REGISTRY is out of sync with the live visualization pages.\n"
+        f"Derived from pages: {derived}\n"
+        f"Registry:           {registry}"
+    )
 
 
 def test_registry_pathnames_are_absolute():
@@ -51,6 +73,6 @@ def test_registry_pathnames_are_absolute():
 
 
 if __name__ == "__main__":
-    test_sidebar_targets_exist_in_registry()
+    test_registry_matches_live_pages()
     test_registry_pathnames_are_absolute()
     print("All url_registry tests passed")

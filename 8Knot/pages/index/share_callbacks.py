@@ -136,9 +136,15 @@ clientside_callback(
     """
     function(n_clicks, url) {
         if (!n_clicks || !url) { return window.dash_clientside.no_update; }
-        try { navigator.clipboard.writeText(url); }
-        catch (e) { return "Press Ctrl/Cmd+C to copy the selected link."; }
-        return "Link copied to clipboard!";
+        var fallback = "Copy failed — press Ctrl/Cmd+C to copy the selected link.";
+        // navigator.clipboard is undefined on insecure (HTTP) contexts, and
+        // writeText returns a promise that can reject (permission denied).
+        // Returning the promise lets Dash report the TRUE outcome rather than
+        // optimistically claiming success.
+        if (!navigator.clipboard) { return fallback; }
+        return navigator.clipboard.writeText(url)
+            .then(function () { return "Link copied to clipboard!"; })
+            .catch(function () { return fallback; });
     }
     """,
     Output("share-status-message", "children", allow_duplicate=True),

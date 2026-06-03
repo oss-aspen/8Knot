@@ -430,10 +430,10 @@ def _create_application_tables() -> None:
             CREATE TABLE IF NOT EXISTS share_links(
                 short_id      VARCHAR(12)  PRIMARY KEY,
                 full_state    TEXT         NOT NULL,
-                created_at    TIMESTAMP    NOT NULL DEFAULT NOW(),
-                last_accessed TIMESTAMP,
+                created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+                last_accessed TIMESTAMPTZ,
                 access_count  INTEGER      NOT NULL DEFAULT 0,
-                expires_at    TIMESTAMP    NOT NULL DEFAULT (NOW() + INTERVAL '90 days')
+                expires_at    TIMESTAMPTZ  NOT NULL DEFAULT (NOW() + INTERVAL '90 days')
             )
             """
         )

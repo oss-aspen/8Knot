@@ -62,6 +62,26 @@ def test_encode_is_url_safe():
     assert "=" not in encoded
 
 
+def test_decode_rejects_decompression_bomb():
+    import gzip, base64
+    from cache_manager.url_state import MAX_DECODED_BYTES
+
+    # A small base64 string that expands well past the cap must be rejected,
+    # not materialized — this is the zip-bomb DoS guard.
+    bomb = gzip.compress(b"A" * (MAX_DECODED_BYTES + 1024))
+    encoded = base64.urlsafe_b64encode(bomb).decode().rstrip("=")
+    assert len(encoded) < 1000  # tiny on the wire...
+    assert decode_state(encoded) is None  # ...but refused on decode
+
+
+def test_decode_rejects_non_dict_payload():
+    import json, gzip, base64
+
+    raw = json.dumps([1, 2, 3]).encode()  # valid JSON, but a list not a dict
+    encoded = base64.urlsafe_b64encode(gzip.compress(raw)).decode().rstrip("=")
+    assert decode_state(encoded) is None
+
+
 if __name__ == "__main__":
     test_round_trip_basic()
     test_round_trip_with_filters()
@@ -70,4 +90,6 @@ if __name__ == "__main__":
     test_decode_invalid_input()
     test_decode_wrong_version()
     test_encode_is_url_safe()
+    test_decode_rejects_decompression_bomb()
+    test_decode_rejects_non_dict_payload()
     print("All url_state tests passed")
