@@ -76,10 +76,10 @@ and invited to the private maintainer slack channel.
 Maintainers may resign at any time if they feel that they will not be able to
 continue fulfilling their project duties.
 
-Maintainers may also be removed after being inactive, failure to fulfill their 
+Maintainers may also be removed after being inactive, failure to fulfill their
 Maintainer responsibilities, violating the Code of Conduct, or other reasons.
-Inactivity is defined as a period of very low or no activity in the project 
-for a year or more, with no definite schedule to return to full Maintainer 
+Inactivity is defined as a period of very low or no activity in the project
+for a year or more, with no definite schedule to return to full Maintainer
 activity.
 
 A Maintainer may be removed at any time by a 2/3 vote of the remaining maintainers.
@@ -91,7 +91,7 @@ and can be rapidly returned to Maintainer status if their availability changes.
 ## Meetings
 
 Time zones permitting, Maintainers are expected to participate in the public
-developer meeting, which is scheduled and managed on the CHAOSS calendar.  
+developer meeting, which is scheduled and managed on the CHAOSS calendar.
 
 Maintainers will also have closed meetings in order to discuss security reports
 or reports from the CHAOSS Code of Conduct Committee.  Such meetings should be scheduled by any Maintainer on receipt of a security issue or CoCC message.  All current Maintainers must be invited to such closed meetings, except for any Maintainer who is accused of a CoC violation.
@@ -104,13 +104,13 @@ Any Maintainer may suggest a request for CHAOSS resources, either in an issue, o
 
 The 8Knot project adheres to the [CHAOSS Code of Conduct](https://chaoss.community/code-of-conduct/)(CoC).  As such, community members needing to report a violation of the CoC should report it directly to the CHAOSS Code Of Conduct Committee (CoCC).
 
-The Maintainers will work with the CoCC on any reports which require action by the project. 
+The Maintainers will work with the CoCC on any reports which require action by the project.
 
 ## Security Response Team
 
 The Maintainers will appoint a Security Response Team to handle security reports.
 This committee may simply consist of the Maintainer Council themselves.  If this
-responsibility is delegated, the Maintainers will appoint a team of at least two 
+responsibility is delegated, the Maintainers will appoint a team of at least two
 contributors to handle it.  The Maintainers will review who is assigned to this
 at least once a year.
 
@@ -119,20 +119,20 @@ holes and breaches according to the [security policy](./SECURITY.md).
 
 ## Voting
 
-While most business in 8Knot is conducted by "[lazy consensus](https://community.apache.org/committers/lazyConsensus.html)", 
+While most business in 8Knot is conducted by "[lazy consensus](https://community.apache.org/committers/lazyConsensus.html)",
 periodically the Maintainers may need to vote on specific actions or changes.
-A vote can be taken on the project's public Slack channel (#wg-collectoss-8knot in the [CHAOSS Slack](https://chaoss.community/kb-getting-started/)) or 
-a private Maintainer Slack channel for security or conduct matters.  
+A vote can be taken on the project's public Slack channel (#wg-collectoss-8knot in the [CHAOSS Slack](https://chaoss.community/kb-getting-started/)) or
+a private Maintainer Slack channel for security or conduct matters.
 Votes may also be taken at the biweekly developer meeting.  Any Maintainer may
 demand a vote be taken.
 
 Most votes require a simple majority of all Maintainers to succeed, except where
-otherwise noted.  Two-thirds majority votes mean at least two-thirds of all 
+otherwise noted.  Two-thirds majority votes mean at least two-thirds of all
 existing maintainers.
 
 ## Modifying this Charter
 
-Changes to this Governance and its supporting documents may be approved by 
+Changes to this Governance and its supporting documents may be approved by
 a 2/3 vote of the Maintainers.
 
 This governance document was created based on the template available at https://github.com/cncf/project-template/blob/main/GOVERNANCE-maintainer.md
