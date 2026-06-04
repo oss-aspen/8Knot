@@ -295,7 +295,10 @@ clientside_callback(
     """
     function(hash_, _loaded) {
         if (!hash_) { return window.dash_clientside.no_update; }
-        var id = decodeURIComponent(hash_.replace(/^#/, ''));
+        var id;
+        try { id = decodeURIComponent(hash_.replace(/^#/, '')); }
+        catch (e) { return window.dash_clientside.no_update; }
+        if (!id) { return window.dash_clientside.no_update; }
         var cancelled = false;
         function onUserScroll() { cancelled = true; }
         function scrollToTarget() {

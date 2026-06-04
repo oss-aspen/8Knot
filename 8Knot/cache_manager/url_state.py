@@ -14,6 +14,16 @@ CURRENT_VERSION = 1
 # decompressed) while making the DoS vector harmless.
 MAX_DECODED_BYTES = 64 * 1024
 
+# Upper bound on the ENCODED (?state=) string itself, checked before any work.
+# A legitimate 200-repo link is < 1 KiB; 16 KiB is generous headroom. This makes
+# decode self-contained instead of relying on the web server's request-line cap.
+MAX_ENCODED_LEN = 16 * 1024
+
+# Hard caps on collection sizes inside a decoded payload. Bounds the work done
+# resolving a crafted link even though the 64 KiB output cap already limits it.
+_MAX_REPO_IDS = 10_000
+_MAX_ORG_NAMES = 1_000
+
 
 # Migration registry: maps an OLD payload version -> a function that upgrades a
 # decoded payload by exactly one version (v -> v+1, bumping the "v" field).
@@ -64,8 +74,41 @@ def encode_state(
     return base64.urlsafe_b64encode(compressed).decode().rstrip("=")
 
 
+def _is_valid_shape(p: dict) -> bool:
+    """Validate the decoded payload's field types.
+
+    The ``?state=`` blob is fully attacker-controlled, so a structurally valid
+    JSON object can still carry hostile shapes (e.g. ``pathname`` as a list, or
+    ``repo_ids`` holding unhashable values) that would raise unhandled
+    TypeErrors in downstream lookups. Rejecting bad shapes here means every
+    consumer can trust the payload. ``bool`` is excluded from ints because
+    ``isinstance(True, int)`` is True in Python.
+    """
+    if not isinstance(p.get("pathname"), str):
+        return False
+    gid = p.get("graph_id")
+    if gid is not None and not isinstance(gid, str):
+        return False
+    repo_ids = p.get("repo_ids", [])
+    if not isinstance(repo_ids, list) or len(repo_ids) > _MAX_REPO_IDS:
+        return False
+    if not all(isinstance(r, int) and not isinstance(r, bool) for r in repo_ids):
+        return False
+    org_names = p.get("org_names", [])
+    if not isinstance(org_names, list) or len(org_names) > _MAX_ORG_NAMES:
+        return False
+    if not all(isinstance(o, str) for o in org_names):
+        return False
+    if not isinstance(p.get("filters", {}), dict):
+        return False
+    return True
+
+
 def decode_state(encoded: str) -> dict | None:
     try:
+        if not encoded or len(encoded) > MAX_ENCODED_LEN:
+            return None
+
         padded = encoded + "=" * (-len(encoded) % 4)
         compressed = base64.urlsafe_b64decode(padded)
 
@@ -81,7 +124,12 @@ def decode_state(encoded: str) -> dict | None:
             return None
         if payload.get("v") != CURRENT_VERSION:
             # Old-format link: try to upgrade it in memory rather than reject.
-            return _migrate(payload)
+            payload = _migrate(payload)
+            if payload is None:
+                return None
+        # Type-validate the (possibly migrated) payload so consumers can trust it.
+        if not _is_valid_shape(payload):
+            return None
         return payload
     except Exception:
         return None

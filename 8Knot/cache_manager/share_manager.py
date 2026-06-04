@@ -5,16 +5,32 @@ import string
 import logging
 import random
 
+# base62 ids from a cryptographic RNG -> unguessable, URL-safe.
 ALPHABET = string.ascii_letters + string.digits
+_ALPHABET_SET = set(ALPHABET)
 MAX_SHORT_ID_LEN = 12
+
+# Hard cap on a stored blob. encode_state output is already bounded by the
+# searchbar selection, but this stops a crafted/oversized write from bloating
+# the shared table. 64 KiB matches the decode-side decompression cap.
+MAX_STATE_LEN = 64 * 1024
+
 _CLEANUP_PROBABILITY = 0.02
 
 
-def _gen_id(length=8) -> str:
+def _gen_id(length: int = 8) -> str:
     return "".join(secrets.choice(ALPHABET) for _ in range(length))
 
 
 def shorten(conn, full_state: str, max_attempts: int = 3) -> str:
+    """Store a state blob and return an unguessable short id.
+
+    Raises ValueError on an empty/oversized blob and RuntimeError if a unique
+    id can't be generated (astronomically unlikely with a 62^8 keyspace).
+    """
+    if not full_state or len(full_state) > MAX_STATE_LEN:
+        raise ValueError("share state blob is empty or exceeds the maximum size")
+
     for _ in range(max_attempts):
         short_id = _gen_id()
         with conn.cursor() as cur:
@@ -29,13 +45,19 @@ def shorten(conn, full_state: str, max_attempts: int = 3) -> str:
                 if random.random() < _CLEANUP_PROBABILITY:
                     _try_cleanup(conn)
                 return short_id
-    # Every attempt collided (astronomically unlikely with 62^8 IDs). Nothing
-    # was written, so there is nothing to commit — just surface the failure.
+    # Every attempt collided. Nothing was written, so there is nothing to
+    # commit — just surface the failure.
     raise RuntimeError("Failed to generate unique short_id after retries")
 
 
 def expand(conn, short_id: str) -> str | None:
-    if not short_id or len(short_id) > MAX_SHORT_ID_LEN:
+    """Return the stored blob for a valid, non-expired id, else None.
+
+    Validates the id shape (length + base62 charset) before touching the DB so
+    a malformed/oversized value never reaches a query. SQL is parameterized, so
+    even an odd value can't inject — this is defense in depth and load-shedding.
+    """
+    if not short_id or len(short_id) > MAX_SHORT_ID_LEN or not _ALPHABET_SET.issuperset(short_id):
         return None
     with conn.cursor() as cur:
         cur.execute(
