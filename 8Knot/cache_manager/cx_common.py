@@ -52,6 +52,29 @@ db_cx_string = "dbname={} user={} password={} host={} port={}".format(
     env_augur_port,
 )
 
+# --- Durable application datastore (share links, future user state) ----------
+# DELIBERATELY SEPARATE from the cache above. The cache DB is disposable: it is
+# rebuilt from Augur and is reset on a schedule (UNLOGGED tables, see db_init
+# and issue #1070). Share links must OUTLIVE those resets, so they live on their
+# own Postgres instance ("postgres-app") with its own persistent volume that the
+# cache-reset process never touches. Defaults reuse the cache credentials so a
+# local stack works with no extra config; only the host/db differ.
+env_app_dbname = os.getenv("APP_DB_NAME", "eightknot_app")
+env_app_host = os.getenv("APP_DB_HOST", "postgres-app")
+env_app_user = os.getenv("APP_DB_USER", env_user)
+env_app_password = os.getenv("APP_DB_PASSWORD", env_password)
+env_app_port = os.getenv("APP_DB_PORT", "5432")
+
+# connect to the server's default db to create the app db on first boot
+share_init_cx_string = "dbname={} user={} password={} host={} port={}".format(
+    "postgres", env_app_user, env_app_password, env_app_host, env_app_port
+)
+
+# connect to the durable app db itself
+share_cx_string = "dbname={} user={} password={} host={} port={}".format(
+    env_app_dbname, env_app_user, env_app_password, env_app_host, env_app_port
+)
+
 
 @contextmanager
 def cache_connection():
@@ -64,6 +87,22 @@ def cache_connection():
     import psycopg2 as pg
 
     conn = pg.connect(cache_cx_string)
+    try:
+        yield conn
+    finally:
+        conn.close()
+
+
+@contextmanager
+def share_connection():
+    """Yield a psycopg2 connection to the DURABLE app DB (share links).
+
+    Separate from cache_connection() on purpose: share links must survive cache
+    resets, so they live in their own database/instance (see share_cx_string).
+    """
+    import psycopg2 as pg
+
+    conn = pg.connect(share_cx_string)
     try:
         yield conn
     finally:

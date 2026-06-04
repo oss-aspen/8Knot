@@ -34,7 +34,7 @@ from dash.dependencies import Input, Output, State, ALL
 from app import augur
 import cache_manager.url_state as url_state
 import cache_manager.share_manager as share_manager
-from cache_manager.cx_common import cache_connection
+from cache_manager.cx_common import share_connection
 from pages.utils import url_utils
 from pages.utils import graph_registry
 from models import SearchItem
@@ -85,7 +85,7 @@ def _build_share_url(selection, pathname, href, page, graph_id):
     )
     anchor = f"{page}-{graph_id}" if (page and graph_id) else None
     try:
-        with cache_connection() as conn:
+        with share_connection() as conn:
             short_id = share_manager.shorten(conn, encoded)
         return url_utils.compose_short_url(base_url, short_id, pathname, anchor), ""
     except Exception as e:
@@ -216,7 +216,7 @@ def handle_share_url(search):
 
     if short_id:
         try:
-            with cache_connection() as conn:
+            with share_connection() as conn:
                 raw_state = share_manager.expand(conn, short_id)
         except Exception as e:
             logging.error(f"SHARE: expand failed: {e}")

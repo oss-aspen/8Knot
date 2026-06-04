@@ -7,6 +7,8 @@ services:
     depends_on:
       postgres-cache:
         condition: service_healthy  # to ensure that postgres is indeed initialized before this starts
+      postgres-app:
+        condition: service_healthy  # durable share-link store must be up too
       redis-broker:
         condition: service_started
       redis-users:
@@ -153,8 +155,25 @@ services:
       timeout: 5s
       retries: 5
 
+  # Durable application datastore — share links live here, NOT in postgres-cache.
+  # Unlike the cache, this has a PERSISTENT volume and is never reset, so shared
+  # URLs survive cache wipes / rebuilds (see cache_manager/cx_common.py + #1070).
+  postgres-app:
+    image: docker.io/library/postgres:16
+    volumes:
+      - postgres-app-data:/var/lib/postgresql/data
+    env_file:
+      - .env
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 volumes:
   postgres-cache:
+  postgres-app-data:
 
   # flower:
   #   build:
