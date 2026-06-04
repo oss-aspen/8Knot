@@ -39,6 +39,8 @@ def create_share_modal() -> html.Div:
             # multiselect/search flow — never written to `repo-choices`
             # directly.
             dcc.Store(id="share-loaded-state", data=None),
+            # No-op output target for the clientside scroll-to-anchor callback.
+            dcc.Store(id="share-scroll-dummy", data=None),
             # Inline feedback shown when a shared link fails to load
             # (expired, corrupted, or pointing at a removed graph).
             # Owned by exactly one callback (`handle_share_url`).

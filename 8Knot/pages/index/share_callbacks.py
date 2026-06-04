@@ -62,12 +62,17 @@ def _split_selection(selection):
     return repo_ids, org_names
 
 
-def _build_share_url(selection, pathname, href, graph_id):
+def _build_share_url(selection, pathname, href, page, graph_id):
     """Encode the searchbar selection and return ``(url, warning_message)``.
 
     Prefers a short ``?s=`` link; on any DB failure falls back to a
     self-contained ``?state=`` long link (Layer 1) so sharing still works
     even when the shortener is unavailable.
+
+    The payload stores ``graph_id`` as the bare VIZ_ID (what the registry
+    validates against), but the URL *fragment* must be the card's real DOM id
+    — ``f"{page}-{viz_id}"`` (see ``VisualizationAIO``) — or the browser has
+    nothing to scroll to.
     """
     repo_ids, org_names = _split_selection(selection)
     base_url = url_utils.extract_base_url(href)
@@ -77,13 +82,14 @@ def _build_share_url(selection, pathname, href, graph_id):
         pathname=pathname,
         graph_id=graph_id,
     )
+    anchor = f"{page}-{graph_id}" if (page and graph_id) else None
     try:
         with cache_connection() as conn:
             short_id = share_manager.shorten(conn, encoded)
-        return url_utils.compose_short_url(base_url, short_id, pathname, graph_id), ""
+        return url_utils.compose_short_url(base_url, short_id, pathname, anchor), ""
     except Exception as e:
         logging.error(f"SHARE: shorten failed, falling back to long URL: {e}")
-        long_url = url_utils.compose_long_url(base_url, encoded, pathname, graph_id)
+        long_url = url_utils.compose_long_url(base_url, encoded, pathname, anchor)
         return long_url, "Short-link service unavailable — using a full link."
 
 
@@ -158,7 +164,7 @@ def manage_share_modal(share_clicks, close_clicks, selection, pathname, href):
     if not selection:
         return True, "", "Run a search (select repositories) before sharing.", ""
 
-    url, warning = _build_share_url(selection, pathname, href, triggered.get("graph"))
+    url, warning = _build_share_url(selection, pathname, href, triggered.get("page"), triggered.get("graph"))
     return True, url, warning, ""
 
 
@@ -273,3 +279,29 @@ def apply_share_state(loaded, current_clicks):
         raise dash.exceptions.PreventUpdate
 
     return loaded["options"], loaded["values"], (current_clicks or 0) + 1
+
+
+# Scroll the shared graph into view. A Dash multi-page app renders page content
+# client-side, so the browser's native hash scroll fires before the target card
+# exists — we retry until it appears (or give up after ~5s). Re-runs when a
+# shared payload is applied, since loading repos reflows the page. Keyed on
+# url.hash, so this also makes the sidebar "#graph" anchors scroll correctly.
+clientside_callback(
+    """
+    function(hash_, _loaded) {
+        if (!hash_) { return window.dash_clientside.no_update; }
+        var id = decodeURIComponent(hash_.replace(/^#/, ''));
+        var tries = 0;
+        (function tryScroll() {
+            var el = document.getElementById(id);
+            if (el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); return; }
+            if (tries++ < 20) { setTimeout(tryScroll, 250); }
+        })();
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output("share-scroll-dummy", "data"),
+    Input("url", "hash"),
+    Input("share-loaded-state", "data"),
+    prevent_initial_call=False,
+)
