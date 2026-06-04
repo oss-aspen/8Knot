@@ -283,19 +283,37 @@ def apply_share_state(loaded, current_clicks):
 
 # Scroll the shared graph into view. A Dash multi-page app renders page content
 # client-side, so the browser's native hash scroll fires before the target card
-# exists — we retry until it appears (or give up after ~5s). Re-runs when a
-# shared payload is applied, since loading repos reflows the page. Keyed on
-# url.hash, so this also makes the sidebar "#graph" anchors scroll correctly.
+# exists; worse, graphs ABOVE the target finish loading their data afterwards
+# and reflow the page, pushing the target out of view. So we:
+#   1. retry until the target card exists (it appears before its graph data),
+#   2. re-scroll at a few growing delays to correct for that async reflow,
+#   3. stop the moment the user scrolls themselves, so we never fight them.
+# block:'center' keeps the graph visible despite the fixed topbar and minor
+# reflow. Keyed on url.hash, so the sidebar "#graph" anchors benefit too.
 clientside_callback(
     """
     function(hash_, _loaded) {
         if (!hash_) { return window.dash_clientside.no_update; }
         var id = decodeURIComponent(hash_.replace(/^#/, ''));
-        var tries = 0;
-        (function tryScroll() {
+        var cancelled = false;
+        function onUserScroll() { cancelled = true; }
+        function scrollToTarget() {
+            if (cancelled) { return true; }
             var el = document.getElementById(id);
-            if (el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); return; }
-            if (tries++ < 20) { setTimeout(tryScroll, 250); }
+            if (!el) { return false; }
+            el.scrollIntoView({behavior: 'smooth', block: 'center'});
+            return true;
+        }
+        var tries = 0;
+        (function findThenScroll() {
+            if (cancelled) { return; }
+            if (scrollToTarget()) {
+                window.addEventListener('wheel', onUserScroll, {passive: true, once: true});
+                window.addEventListener('touchmove', onUserScroll, {passive: true, once: true});
+                [400, 1000, 2000, 3500, 5500].forEach(function(d) { setTimeout(scrollToTarget, d); });
+                return;
+            }
+            if (tries++ < 20) { setTimeout(findThenScroll, 250); }
         })();
         return window.dash_clientside.no_update;
     }
