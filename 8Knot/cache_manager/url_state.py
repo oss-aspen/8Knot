@@ -15,6 +15,39 @@ CURRENT_VERSION = 1
 MAX_DECODED_BYTES = 64 * 1024
 
 
+# Migration registry: maps an OLD payload version -> a function that upgrades a
+# decoded payload by exactly one version (v -> v+1, bumping the "v" field).
+# `decode_state` walks this chain so links encoded by an older app version keep
+# resolving after a CURRENT_VERSION bump, instead of every short link breaking
+# at once. This is the single place to add upgrade logic when the schema
+# changes — e.g. when bumping to v2:
+#
+#     def _v1_to_v2(p):
+#         p["filters"].setdefault("bot_filter", True)
+#         p["v"] = 2
+#         return p
+#     MIGRATIONS = {1: _v1_to_v2}
+#
+# The upgrade happens in memory on read, so stored DB rows never need a
+# migration of their own.
+MIGRATIONS: dict = {}
+
+
+def _migrate(payload: dict) -> dict | None:
+    """Upgrade a decoded payload to CURRENT_VERSION, or None if no path exists."""
+    v = payload.get("v")
+    while v != CURRENT_VERSION:
+        migrate = MIGRATIONS.get(v)
+        if migrate is None:
+            return None  # no registered upgrade from this version
+        payload = migrate(payload)
+        new_v = payload.get("v")
+        if new_v == v:  # guard: a migration that fails to advance would loop forever
+            return None
+        v = new_v
+    return payload
+
+
 def encode_state(
     repo_ids: list[int], org_names: list[str], pathname: str, graph_id: str | None, filters: dict | None = None
 ) -> str:
@@ -47,7 +80,8 @@ def decode_state(encoded: str) -> dict | None:
         if not isinstance(payload, dict):
             return None
         if payload.get("v") != CURRENT_VERSION:
-            return None
+            # Old-format link: try to upgrade it in memory rather than reject.
+            return _migrate(payload)
         return payload
     except Exception:
         return None

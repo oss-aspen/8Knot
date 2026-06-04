@@ -29,7 +29,8 @@ def shorten(conn, full_state: str, max_attempts: int = 3) -> str:
                 if random.random() < _CLEANUP_PROBABILITY:
                     _try_cleanup(conn)
                 return short_id
-    conn.commit()
+    # Every attempt collided (astronomically unlikely with 62^8 IDs). Nothing
+    # was written, so there is nothing to commit — just surface the failure.
     raise RuntimeError("Failed to generate unique short_id after retries")
 
 

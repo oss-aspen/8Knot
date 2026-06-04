@@ -36,6 +36,7 @@ import cache_manager.url_state as url_state
 import cache_manager.share_manager as share_manager
 from cache_manager.cx_common import cache_connection
 from pages.utils import url_utils
+from pages.utils import graph_registry
 from models import SearchItem
 
 
@@ -231,7 +232,7 @@ def handle_share_url(search):
     if state is None:
         return None, True, "This shared link is in an outdated or invalid format."
 
-    is_valid, _ = url_utils.validate_target(state.get("pathname"), state.get("graph_id"))
+    is_valid, _ = graph_registry.validate_target(state.get("pathname"), state.get("graph_id"))
     if not is_valid:
         return None, True, "The graph referenced by this link no longer exists."
 
@@ -310,9 +311,14 @@ clientside_callback(
             if (scrollToTarget()) {
                 window.addEventListener('wheel', onUserScroll, {passive: true, once: true});
                 window.addEventListener('touchmove', onUserScroll, {passive: true, once: true});
+                // Re-scroll at growing delays (ms) to track the reflow as graphs
+                // above the target stream in; spans ~5.5s, the typical worst-case
+                // graph-load window.
                 [400, 1000, 2000, 3500, 5500].forEach(function(d) { setTimeout(scrollToTarget, d); });
                 return;
             }
+            // Poll for the card up to ~5s (20 x 250ms) before giving up: it
+            // renders shortly after client-side page routing populates the page.
             if (tries++ < 20) { setTimeout(findThenScroll, 250); }
         })();
         return window.dash_clientside.no_update;
