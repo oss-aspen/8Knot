@@ -6,7 +6,7 @@ The current Maintainers for the 8Knot Project consists of:
 | ---- | -------- | ---------------- |
 | [Adrian Edwards](https://github.com/MoralCode) | Red Hat | Maintainer |
 | [Cali Dolfi](https://github.com/cdolfi) | Red Hat | Maintainer |
-| [Caio Fonseca](https://github.com/caiosfonseca) | Red Hat | Maintainer |
+| [Caio Fonseca](https://github.com/EngCaioFonseca) | Red Hat | Maintainer |
 
 See [the project Governance](GOVERNANCE.md) for how maintainers are selected and replaced.
 
