@@ -1,18 +1,11 @@
 """
 Registry of valid (pathname, graph_id) share targets, plus validation.
 
-This is domain knowledge — *which* visualizations exist on *which* pages — so
-it lives apart from the pure string helpers in ``url_utils.py``. A utility
-module should not need editing every time a visualization page changes; this
-one does.
-
-The graph IDs here are the real ``VIZ_ID`` values emitted by the share buttons
-(``id={"type": "share-btn", "graph": viz_id, ...}``) — NOT the sidebar anchor
-fragments, which live in a different identifier space.
-
-This is the single source of truth for share-link target validation. It is
-meant to be kept in sync with the live viz pages by a drift test that
-re-derives the mapping from the page layouts (see the follow-up test PR).
+Domain knowledge (which graphs exist on which pages), kept apart from the pure
+string helpers in ``url_utils.py``. Graph IDs are the real ``VIZ_ID`` values
+the share buttons emit — NOT the sidebar anchor fragments, a different
+identifier space. Single source of truth for share-link validation; a drift
+test re-deriving it from the page layouts arrives in the follow-up test PR.
 """
 
 from __future__ import annotations

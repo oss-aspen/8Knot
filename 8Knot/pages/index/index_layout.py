@@ -30,9 +30,8 @@ from .login_utils import (
     is_login_enabled,
 )
 
-# Share-link modal — kept in its own module so it cannot accidentally end up
-# in `create_app_stores()` (where Toasts/Clipboards broke the Mantine
-# provider's child reconciliation in earlier attempts).
+# Share-link modal — own module; must stay out of `create_app_stores()`
+# (mixing share UI into the stores list broke page rendering).
 from .share_components import create_share_modal
 
 # Note: Welcome sections are now imported in pages/landing/landing.py

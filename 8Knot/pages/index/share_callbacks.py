@@ -1,32 +1,23 @@
 """
 Callbacks for the shareable URL system.
 
-Kept in its own module (rather than in the already-large
-`index_callbacks.py`) so the share feature is self-contained: layout lives
-in `share_components.py`, the pure encode/decode logic lives in
-`cache_manager/url_state.py`, and this file is only the Dash wiring plus a
-couple of thin orchestration helpers.
+The whole share is carried in the URL: the searchbar selection + target graph
+are serialized into a versioned gzip+base64url payload under ``?state=``. No
+database — the link is self-contained and survives any cache reset. (A
+DB-backed short-URL layer, ``?s=<id>``, is a planned follow-up PR.)
 
-Design
-------
-The whole share is carried in the URL itself: the selection + target graph
-are serialized into a versioned, gzip+base64url payload under ``?state=``.
-No database is involved — the link is self-contained, works as a bookmark,
-and survives any cache reset. (A DB-backed short-URL layer, ``?s=<id>``,
-is planned as a follow-up PR on top of this same payload.)
-
-Integration rules (learned the hard way — see share_components.py)
-------------------------------------------------------------------
+Integration rules (each one prevents a class of Dash breakage):
   * Share UI lives in `share_components.create_share_modal()`, NOT in the
     app stores list.
-  * The load path NEVER writes `repo-choices` directly. It populates
+  * The load path never writes `repo-choices` directly — it populates
     `projects` and bumps `search-button.n_clicks`, reusing the existing
-    `multiselect_values_to_repo_ids` pipeline. This avoids `allow_duplicate`
-    races on `repo-choices`.
+    search pipeline (no `allow_duplicate` races).
   * Only ONE callback reads `url.search`.
-  * Share-button pattern-matching IDs are used as callback INPUTS only;
-    every OUTPUT targets a simple string-id modal component.
+  * Pattern-matching share-button IDs are callback INPUTS only; every
+    OUTPUT targets a simple string-id modal component.
 """
+
+from __future__ import annotations
 
 import dash
 from dash import callback, ctx, clientside_callback
@@ -40,18 +31,16 @@ from models import SearchItem
 
 
 # -----------------------------------------------------------------------------
-# Helpers (pure orchestration — no Dash coupling, easy to read and test)
+# Helpers (pure orchestration — no Dash coupling)
 # -----------------------------------------------------------------------------
 
 
-def _split_selection(selection):
-    """Split a raw searchbar selection into ``(repo_ids, org_names)``.
+def _split_selection(selection: list[str] | None) -> tuple[list[int], list[str]]:
+    """Split a searchbar selection into ``(repo_ids, org_names)``.
 
-    The searchbar stores orgs/groups as non-numeric values and repos as
-    numeric values (see ``SearchItem.from_id``). We persist them separately so
-    a shared link keeps an org *as an org* — restoring the single org pill
-    instead of its dozens of expanded repos, and re-resolving the org on load
-    (which also picks up repos added to it since the link was made).
+    Repos are numeric values, orgs are not (see ``SearchItem.from_id``).
+    Keeping orgs separate lets a shared link restore the single org pill —
+    not its expanded repos — and re-resolve the org's membership on load.
     """
     repo_ids, org_names = [], []
     for v in selection or []:
@@ -62,13 +51,11 @@ def _split_selection(selection):
     return repo_ids, org_names
 
 
-def _build_share_url(selection, pathname, href, page, graph_id):
-    """Encode the searchbar selection into a self-contained share URL.
+def _build_share_url(selection: list[str], pathname: str, href: str, page: str | None, graph_id: str | None) -> str:
+    """Encode the selection into a self-contained share URL.
 
-    The payload stores ``graph_id`` as the bare VIZ_ID (what the registry
-    validates against), but the URL *fragment* must be the card's real DOM id
-    — ``f"{page}-{viz_id}"`` (see ``VisualizationAIO``) — or the browser has
-    nothing to scroll to.
+    The URL fragment must be the card's real DOM id, ``f"{page}-{viz_id}"``
+    (see ``VisualizationAIO``) — the bare viz_id matches no element.
     """
     repo_ids, org_names = _split_selection(selection)
     base_url = url_utils.extract_base_url(href)
@@ -82,14 +69,12 @@ def _build_share_url(selection, pathname, href, page, graph_id):
     return url_utils.compose_share_url(base_url, encoded, pathname, anchor)
 
 
-def _resolve_selection(repo_ids, org_names):
-    """Rebuild searchbar options/values from a decoded payload.
+def _resolve_selection(repo_ids: list[int], org_names: list[str]) -> tuple[list[dict], list[str], list[int | str]]:
+    """Rebuild searchbar ``(options, values, missing)`` from a decoded payload.
 
-    Returns ``(options, values, missing)``. Each present repo/org must yield a
-    matching ``{value, label}`` option because dmc.MultiSelect only keeps
-    values that also appear in its ``data``. ``repo_id_to_git`` / ``is_org``
-    are in-memory lookups that report whether the item still exists on THIS
-    instance — which is how we honor the "load remaining + warn" behavior.
+    Each present item needs a matching ``{value, label}`` option because
+    dmc.MultiSelect drops values absent from its ``data``. Items unknown to
+    this instance go to ``missing`` ("load remaining + warn" behavior).
     """
     options, values, missing = [], [], []
 
@@ -132,17 +117,11 @@ def _resolve_selection(repo_ids, org_names):
 def manage_share_modal(share_clicks, close_clicks, selection, pathname, href):
     """Open the share modal with a generated link, or close it.
 
-    One callback owns ``share-modal.is_open``, so no ``allow_duplicate`` is
-    needed. The share buttons are pattern-matched inputs; the triggering
-    graph is recovered from ``ctx.triggered_id``.
-
-    We share the searchbar *selection* (``projects.value``) rather than the
-    resolved ``repo-choices`` so an org is preserved as an org (not exploded
-    into its member repos).
+    Shares the searchbar *selection* (not the resolved ``repo-choices``) so an
+    org stays an org. The clicked graph comes from ``ctx.triggered_id``.
     """
     triggered = ctx.triggered_id
 
-    # Close button.
     if triggered == "share-modal-close":
         return False, "", "", ""
 
@@ -157,19 +136,14 @@ def manage_share_modal(share_clicks, close_clicks, selection, pathname, href):
     return True, url, "", ""
 
 
-# Clipboard copy is done client-side to avoid the `dcc.Clipboard` render
-# quirks that contributed to earlier breakage. `clientside_callback` is
-# imported from dash so it registers on the global app without needing the
-# app object (which isn't defined yet when this module is imported).
+# Clipboard copy runs client-side (dcc.Clipboard has render quirks). Returning
+# the writeText promise reports the true outcome instead of assuming success;
+# navigator.clipboard is undefined on insecure (HTTP) contexts.
 clientside_callback(
     """
     function(n_clicks, url) {
         if (!n_clicks || !url) { return window.dash_clientside.no_update; }
         var fallback = "Copy failed — press Ctrl/Cmd+C to copy the selected link.";
-        // navigator.clipboard is undefined on insecure (HTTP) contexts, and
-        // writeText returns a promise that can reject (permission denied).
-        // Returning the promise lets Dash report the TRUE outcome rather than
-        // optimistically claiming success.
         if (!navigator.clipboard) { return fallback; }
         return navigator.clipboard.writeText(url)
             .then(function () { return "Link copied to clipboard!"; })
@@ -193,17 +167,12 @@ clientside_callback(
 def handle_share_url(search):
     """Resolve a ``?state=`` URL into a payload for the load pipeline.
 
-    This is the ONLY callback that reads ``url.search``. It writes to a
-    dedicated store (``share-loaded-state``) and an isolated alert — never to
-    components owned by other callbacks — so it is safe to run on initial
-    page load alongside Dash's built-in page routing.
+    The only callback reading ``url.search``; it writes only to its own store
+    and alert, so it is safe to run alongside Dash's page routing on load.
     """
-    params = url_utils.extract_url_params(search)
-    raw_state = params.get("state")
-
+    raw_state = url_utils.extract_url_params(search).get("state")
     if not raw_state:
-        # Normal navigation with no share params — do nothing.
-        raise dash.exceptions.PreventUpdate
+        raise dash.exceptions.PreventUpdate  # normal navigation, no share params
 
     state = url_state.decode_state(raw_state)
     if state is None:
@@ -224,9 +193,7 @@ def handle_share_url(search):
 
     if missing:
         total = len(repo_ids) + len(org_names)
-        msg = (
-            f"Loaded {len(values)} of {total} selections. " f"{len(missing)} are no longer available on this instance."
-        )
+        msg = f"Loaded {len(values)} of {total} selections. {len(missing)} are no longer available on this instance."
         return payload, True, msg
 
     return payload, False, ""
@@ -241,17 +208,12 @@ def handle_share_url(search):
     prevent_initial_call=True,
 )
 def apply_share_state(loaded, current_clicks):
-    """Drive the existing search pipeline from a loaded share payload.
+    """Feed a loaded share payload into the existing search pipeline.
 
-    Populates the searchbar's ``data`` (so dmc.MultiSelect keeps the values),
-    sets the selection, and programmatically bumps ``search-button.n_clicks``.
-    The existing ``multiselect_values_to_repo_ids`` callback then populates
-    ``repo-choices`` exactly as a manual search would — so graphs render
-    through the normal path with no duplicated ``repo-choices`` writes.
-
-    ``projects.data`` uses ``allow_duplicate=True``: its base writer
-    (``dynamic_multiselect_options``) fires on ``projects.searchValue``, a
-    completely separate trigger, so the two never race.
+    Sets the searchbar selection and bumps ``search-button.n_clicks`` so
+    ``multiselect_values_to_repo_ids`` populates ``repo-choices`` exactly as a
+    manual search would. ``projects.data`` needs ``allow_duplicate=True``; its
+    base writer fires on a disjoint trigger (``searchValue``), so no race.
     """
     if not loaded or not loaded.get("values"):
         raise dash.exceptions.PreventUpdate
@@ -259,15 +221,11 @@ def apply_share_state(loaded, current_clicks):
     return loaded["options"], loaded["values"], (current_clicks or 0) + 1
 
 
-# Scroll the shared graph into view. A Dash multi-page app renders page content
-# client-side, so the browser's native hash scroll fires before the target card
-# exists; worse, graphs ABOVE the target finish loading their data afterwards
-# and reflow the page, pushing the target out of view. So we:
-#   1. retry until the target card exists (it appears before its graph data),
-#   2. re-scroll at a few growing delays to correct for that async reflow,
-#   3. stop the moment the user scrolls themselves, so we never fight them.
-# block:'center' keeps the graph visible despite the fixed topbar and minor
-# reflow. Keyed on url.hash, so the sidebar "#graph" anchors benefit too.
+# Scroll the shared graph into view. The page is client-side rendered, so the
+# native hash scroll fires before the target exists; then graphs above it load
+# and reflow the page. So: poll until the card exists, re-scroll at growing
+# delays through the reflow, and stop as soon as the user scrolls themselves.
+# Keyed on url.hash, so sidebar "#graph" anchors get working scroll too.
 clientside_callback(
     """
     function(hash_, _loaded) {
@@ -291,14 +249,11 @@ clientside_callback(
             if (scrollToTarget()) {
                 window.addEventListener('wheel', onUserScroll, {passive: true, once: true});
                 window.addEventListener('touchmove', onUserScroll, {passive: true, once: true});
-                // Re-scroll at growing delays (ms) to track the reflow as graphs
-                // above the target stream in; spans ~5.5s, the typical worst-case
-                // graph-load window.
+                // re-scroll through ~5.5s of async graph-load reflow
                 [400, 1000, 2000, 3500, 5500].forEach(function(d) { setTimeout(scrollToTarget, d); });
                 return;
             }
-            // Poll for the card up to ~5s (20 x 250ms) before giving up: it
-            // renders shortly after client-side page routing populates the page.
+            // poll up to ~5s for the client-side-rendered card to appear
             if (tries++ < 20) { setTimeout(findThenScroll, 250); }
         })();
         return window.dash_clientside.no_update;

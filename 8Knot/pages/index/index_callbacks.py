@@ -885,10 +885,8 @@ def update_pill_color_on_search(search_button_clicks, selected_repos_orgs):
     if not dash.ctx.triggered:
         return dash.no_update
 
-    # A single update can change both inputs at once (e.g. when a shared link
-    # sets `projects.value` AND bumps `search-button.n_clicks` together). In
-    # that case the search button wins, so the pills read as a completed
-    # search (blue) rather than an in-progress selection (red).
+    # Both inputs can change in one update (a shared link sets the selection
+    # AND triggers the search); the search button wins -> pills show blue.
     triggered_ids = {t["prop_id"].split(".")[0] for t in dash.ctx.triggered}
 
     if "search-button" in triggered_ids:
