@@ -3,14 +3,17 @@ Callbacks for the shareable URL system.
 
 Kept in its own module (rather than in the already-large
 `index_callbacks.py`) so the share feature is self-contained: layout lives
-in `share_components.py`, pure encode/decode + shortener logic live in
-`cache_manager/`, and this file is only the Dash wiring plus a couple of
-thin orchestration helpers.
+in `share_components.py`, the pure encode/decode logic lives in
+`cache_manager/url_state.py`, and this file is only the Dash wiring plus a
+couple of thin orchestration helpers.
 
-Two-layer design
-----------------
-  Layer 1 (state): ?state=<gzip+base64url payload>  — self-contained, no DB.
-  Layer 2 (short): ?s=<short_id>                     — DB lookup -> payload.
+Design
+------
+The whole share is carried in the URL itself: the selection + target graph
+are serialized into a versioned, gzip+base64url payload under ``?state=``.
+No database is involved — the link is self-contained, works as a bookmark,
+and survives any cache reset. (A DB-backed short-URL layer, ``?s=<id>``,
+is planned as a follow-up PR on top of this same payload.)
 
 Integration rules (learned the hard way — see share_components.py)
 ------------------------------------------------------------------
@@ -25,16 +28,12 @@ Integration rules (learned the hard way — see share_components.py)
     every OUTPUT targets a simple string-id modal component.
 """
 
-import logging
-
 import dash
 from dash import callback, ctx, clientside_callback
 from dash.dependencies import Input, Output, State, ALL
 
 from app import augur
 import cache_manager.url_state as url_state
-import cache_manager.share_manager as share_manager
-from cache_manager.cx_common import share_connection
 from pages.utils import url_utils
 from pages.utils import graph_registry
 from models import SearchItem
@@ -64,11 +63,7 @@ def _split_selection(selection):
 
 
 def _build_share_url(selection, pathname, href, page, graph_id):
-    """Encode the searchbar selection and return ``(url, warning_message)``.
-
-    Prefers a short ``?s=`` link; on any DB failure falls back to a
-    self-contained ``?state=`` long link (Layer 1) so sharing still works
-    even when the shortener is unavailable.
+    """Encode the searchbar selection into a self-contained share URL.
 
     The payload stores ``graph_id`` as the bare VIZ_ID (what the registry
     validates against), but the URL *fragment* must be the card's real DOM id
@@ -84,14 +79,7 @@ def _build_share_url(selection, pathname, href, page, graph_id):
         graph_id=graph_id,
     )
     anchor = f"{page}-{graph_id}" if (page and graph_id) else None
-    try:
-        with share_connection() as conn:
-            short_id = share_manager.shorten(conn, encoded)
-        return url_utils.compose_short_url(base_url, short_id, pathname, anchor), ""
-    except Exception as e:
-        logging.error(f"SHARE: shorten failed, falling back to long URL: {e}")
-        long_url = url_utils.compose_long_url(base_url, encoded, pathname, anchor)
-        return long_url, "Short-link service unavailable — using a full link."
+    return url_utils.compose_share_url(base_url, encoded, pathname, anchor)
 
 
 def _resolve_selection(repo_ids, org_names):
@@ -165,8 +153,8 @@ def manage_share_modal(share_clicks, close_clicks, selection, pathname, href):
     if not selection:
         return True, "", "Run a search (select repositories) before sharing.", ""
 
-    url, warning = _build_share_url(selection, pathname, href, triggered.get("page"), triggered.get("graph"))
-    return True, url, warning, ""
+    url = _build_share_url(selection, pathname, href, triggered.get("page"), triggered.get("graph"))
+    return True, url, "", ""
 
 
 # Clipboard copy is done client-side to avoid the `dcc.Clipboard` render
@@ -203,7 +191,7 @@ clientside_callback(
     prevent_initial_call=False,
 )
 def handle_share_url(search):
-    """Resolve a ``?s=`` or ``?state=`` URL into a payload for the load pipeline.
+    """Resolve a ``?state=`` URL into a payload for the load pipeline.
 
     This is the ONLY callback that reads ``url.search``. It writes to a
     dedicated store (``share-loaded-state``) and an isolated alert — never to
@@ -211,18 +199,7 @@ def handle_share_url(search):
     page load alongside Dash's built-in page routing.
     """
     params = url_utils.extract_url_params(search)
-    short_id = params.get("short_id")
     raw_state = params.get("state")
-
-    if short_id:
-        try:
-            with share_connection() as conn:
-                raw_state = share_manager.expand(conn, short_id)
-        except Exception as e:
-            logging.error(f"SHARE: expand failed: {e}")
-            return None, True, "Could not load shared link (lookup failed)."
-        if raw_state is None:
-            return None, True, "This shared link has expired or was not found."
 
     if not raw_state:
         # Normal navigation with no share params — do nothing.

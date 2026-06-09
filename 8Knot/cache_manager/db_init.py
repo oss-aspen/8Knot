@@ -99,7 +99,7 @@ def _env_int(var: str, default: int) -> int:
 
 # doesn't use relative import syntax "import .cx_common" because
 # cx_common is a neighbor of script, thus is available in PYTHON_PATH
-from cx_common import init_cx_string, cache_cx_string, share_init_cx_string, share_cx_string, env_app_dbname
+from cx_common import init_cx_string, cache_cx_string
 
 
 def _connect_with_retry(connection_string, max_retries=5, retry_delay=3):
@@ -421,66 +421,10 @@ def _create_application_tables() -> None:
         )
         logging.warning("CREATED cache_bookkeeping TABLE")
 
-        # NOTE: share_links is intentionally NOT created here. It is durable,
-        # user-facing state and must not live in this disposable cache database
-        # (which is reset on a schedule — see issue #1070). It is created in the
-        # separate app database by _create_share_tables() below.
-
         # commit changes, all-or-nothing.
         conn.commit()
 
     logging.warning("ALL TABLES COMMITTED SUCCESSFULLY")
-
-
-def _create_share_database() -> None:
-    """Create the DURABLE application database (default 'eightknot_app').
-
-    This database is deliberately separate from 'augur_cache'. The cache is
-    disposable and reset on a schedule (issue #1070); this one holds data that
-    must persist across those resets — currently the share_links shortener.
-    Lives on its own Postgres instance ('postgres-app') with a retained volume.
-    """
-    from psycopg2 import sql
-
-    conn = _connect_with_retry(share_init_cx_string)
-    conn.autocommit = True  # required to CREATE DATABASE
-
-    cur = conn.cursor()
-    cur.execute("SELECT 1 FROM pg_catalog.pg_database WHERE datname = %s", (env_app_dbname,))
-    if not cur.fetchone():
-        logging.warning(f"CREATING {env_app_dbname} DATABASE (durable app store)")
-        cur.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(env_app_dbname)))
-
-    cur.close()
-    conn.close()
-
-
-def _create_share_tables() -> None:
-    """Create share_links in the durable app database.
-
-    Logged table (durability matters here, unlike the UNLOGGED cache tables),
-    keyed by short_id -> opaque state blob. The shortener has no knowledge of
-    the payload format, so the schema never changes when the URL state format
-    does.
-    """
-    conn = _connect_with_retry(share_cx_string)
-
-    with conn.cursor() as cur:
-        cur.execute(
-            """
-            CREATE TABLE IF NOT EXISTS share_links(
-                short_id      VARCHAR(12)  PRIMARY KEY,
-                full_state    TEXT         NOT NULL,
-                created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-                last_accessed TIMESTAMPTZ,
-                access_count  INTEGER      NOT NULL DEFAULT 0,
-                expires_at    TIMESTAMPTZ  NOT NULL DEFAULT (NOW() + INTERVAL '90 days')
-            )
-            """
-        )
-        cur.execute("CREATE INDEX IF NOT EXISTS share_links_expires_idx ON share_links (expires_at)")
-        logging.warning("CREATED share_links TABLE (durable app DB)")
-        conn.commit()
 
 
 def _flush_redis_broker() -> None:
@@ -522,10 +466,6 @@ def db_init() -> int:
 
         # add tables to augur_cache db if they don't already exist.
         _create_application_tables()
-
-        # create the SEPARATE durable app db + share_links (survives cache resets).
-        _create_share_database()
-        _create_share_tables()
 
         # flush redis so broker state matches the fresh postgres-cache.
         _flush_redis_broker()

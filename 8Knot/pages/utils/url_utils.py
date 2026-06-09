@@ -10,22 +10,14 @@ from __future__ import annotations
 from urllib.parse import parse_qs, urlsplit
 
 
-def _compose_url(base: str, pathname: str, query: str, graph_id: str | None) -> str:
-    """Assemble ``<base><pathname>?<query>[#graph_id]``.
+def compose_share_url(base: str, encoded_state: str, pathname: str, anchor: str | None) -> str:
+    """Assemble ``<base><pathname>?state=<blob>[#anchor]``.
 
-    Single source of truth for share-URL formatting so the short/long
-    variants can never drift apart.
+    ``anchor`` is the target graph card's DOM id (``f"{page}-{viz_id}"``) so the
+    browser-side scroll handler can land on the exact graph.
     """
-    frag = f"#{graph_id}" if graph_id else ""
-    return f"{base.rstrip('/')}{pathname}?{query}{frag}"
-
-
-def compose_short_url(base: str, short_id: str, pathname: str, graph_id: str | None) -> str:
-    return _compose_url(base, pathname, f"s={short_id}", graph_id)
-
-
-def compose_long_url(base: str, encoded_state: str, pathname: str, graph_id: str | None) -> str:
-    return _compose_url(base, pathname, f"state={encoded_state}", graph_id)
+    frag = f"#{anchor}" if anchor else ""
+    return f"{base.rstrip('/')}{pathname}?state={encoded_state}{frag}"
 
 
 def extract_base_url(href: str) -> str:
@@ -43,6 +35,5 @@ def extract_url_params(search: str) -> dict:
         return {}
     params = parse_qs(search.lstrip("?"))
     return {
-        "short_id": (params.get("s") or [None])[0],
         "state": (params.get("state") or [None])[0],
     }
