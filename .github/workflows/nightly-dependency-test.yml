@@ -12,7 +12,7 @@ env:
   AUGUR_HOST: chaoss.tv
   AUGUR_PASSWORD: cableTV99!
   AUGUR_PORT: 5432
-  AUGUR_SCHEMA: collection_data,data
+  AUGUR_SCHEMA: data,augur_data
   AUGUR_USERNAME: coup
   8KNOT_DEBUG: "True"
   NIGHTLY_TEST: "True"
@@ -90,7 +90,7 @@ jobs:
           AUGUR_HOST=chaoss.tv
           AUGUR_PASSWORD=cableTV99!
           AUGUR_PORT=5432
-          AUGUR_SCHEMA=collection_data,data
+          AUGUR_SCHEMA=data,augur_data
           AUGUR_USERNAME=coup
           8KNOT_DEBUG=True
           NIGHTLY_TEST=True
