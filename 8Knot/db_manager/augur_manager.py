@@ -71,7 +71,7 @@ class AugurManager:
             logging.critical(f"AUGUR: Database credentials incomplete: {ke}")
             raise KeyError(ke)
 
-        self.schema = os.getenv("AUGUR_SCHEMA", "collection_data,augur_data")
+        self.schema = os.getenv("AUGUR_SCHEMA", "collection_data,data")
 
         # oauth endpoints have to be intact to proceed
         if handles_oauth:
