@@ -1,0 +1,10 @@
+# Set default behavior, in case people don't have core.autocrlf set.
+* text=auto
+
+# Enforce LF for Python files and shell scripts
+*.py text eol=lf
+*.sh text eol=lf
+
+# Force CRLF for Windows-specific files if any exist
+*.bat text eol=crlf
+*.cmd text eol=crlf
