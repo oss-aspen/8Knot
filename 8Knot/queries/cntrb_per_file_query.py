@@ -35,7 +35,7 @@ def cntrb_per_file_query(self, repos):
                     cntrb_ids,
                     reviewer_ids
                 FROM
-                    augur_data.explorer_cntrb_per_file
+                    explorer_cntrb_per_file
                 WHERE
                     repo_id in %s
                 """

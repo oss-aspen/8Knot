@@ -138,8 +138,8 @@ def commit_count(repolist):
             /*commit_hash'es are unique per commit*/
             count(distinct c.cmt_commit_hash) as num_commits
         from
-            augur_data.commits c,
-            augur_data.repo r
+            commits c,
+            repo r
         where
             r.repo_id in ({str(repolist)[1:-1]})
             and c.repo_id = r.repo_id
@@ -181,8 +181,8 @@ def commit_lines_delta(repolist):
                 (select
                     sum(c.cmt_added) as lines_added, sum(c.cmt_removed) as lines_removed
                 from
-                    augur_data.commits c,
-                    augur_data.repo r
+                    commits c,
+                    repo r
                 where
                     r.repo_id in ({str(repolist)[1:-1]})
                     and c.repo_id = r.repo_id
@@ -222,8 +222,8 @@ def files_per_commit(repolist):
                 /*commit_hash'es are unique per commit*/
                 count(*) as num_files
             from
-                augur_data.commits c,
-                augur_data.repo r
+                commits c,
+                repo r
             where
                 r.repo_id in ({str(repolist)[1:-1]})
                 and c.repo_id = r.repo_id

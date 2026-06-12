@@ -67,10 +67,11 @@ class AugurManager:
             self.host = os.environ["AUGUR_HOST"]
             self.port = os.environ["AUGUR_PORT"]
             self.database = os.environ["AUGUR_DATABASE"]
-            self.schema = os.environ["AUGUR_SCHEMA"]
         except KeyError as ke:
             logging.critical(f"AUGUR: Database credentials incomplete: {ke}")
             raise KeyError(ke)
+
+        self.schema = os.getenv("AUGUR_SCHEMA", "data,augur_data")
 
         # oauth endpoints have to be intact to proceed
         if handles_oauth:
