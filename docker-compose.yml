@@ -1,32 +1,31 @@
 services:
 
-  # ── min_db: local Augur database with pre-loaded data ────────────────────────
-  # To use the local min_db container instead of a remote Augur instance:
-  #   1. Obtain the data dump (dump.sql) and copy it to:
-  #      docker/augur-db/init/03_data.sql  (gitignored, never commit this file)
-  #   2. Uncomment the augur-db service below.
-  #   3. In .env, set:  AUGUR_HOST=augur-db  AUGUR_PORT=5432
-  #                     AUGUR_DATABASE=augur  AUGUR_USERNAME=augur  AUGUR_PASSWORD=augur
-  #                     AUGUR_SCHEMA=collection_data
+  # ── min_db: local Augur database, pre-populated, pulled from a registry ──────
+  # Ready-to-use local Augur DB for notebooks / running 8Knot without a remote
+  # Augur instance. The image already contains the data; just bring it up.
   #
-  # The dump loads into the legacy `augur_data` schema; on startup it is renamed
-  # to `collection_data` (the collectOSS schema) by 04_rename_to_collection_data.sql.
+  # To use it, set in .env:
+  #   AUGUR_HOST=augur-db  AUGUR_PORT=5432
+  #   AUGUR_DATABASE=augur  AUGUR_USERNAME=augur  AUGUR_PASSWORD=augur
+  #   AUGUR_SCHEMA=collection_data
+  # then:  docker compose up
   #
-  # augur-db:
-  #   build:
-  #     context: .
-  #     dockerfile: ./docker/augur-db/Dockerfile
-  #   ports:
-  #     - "5433:5432"
-  #   environment:
-  #     POSTGRES_DB: augur
-  #     POSTGRES_USER: augur
-  #     POSTGRES_PASSWORD: augur
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U augur -d augur"]
-  #     interval: 5s
-  #     timeout: 5s
-  #     retries: 10
+  # The image loads its data into the legacy `augur_data` schema on first boot,
+  # then renames it to `collection_data` (the collectOSS schema). See
+  # docker/augur-db/README.md for how maintainers rebuild and publish the image.
+  augur-db:
+    image: ghcr.io/oss-aspen/8knot-min-db:latest
+    ports:
+      - "5433:5432"  # exposed on 5433 to avoid clashing with a local postgres
+    environment:
+      POSTGRES_DB: augur
+      POSTGRES_USER: augur
+      POSTGRES_PASSWORD: augur
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U augur -d augur"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
   # ─────────────────────────────────────────────────────────────────────────────
 
   db-init:
