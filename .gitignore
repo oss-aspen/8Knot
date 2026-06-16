@@ -1,5 +1,5 @@
-# min_db generated data (user-supplied, never committed)
-docker/augur-db/init/03_data.sql
+# Local DB dump used to build the sample_collected_data image (never committed)
+docker/**/03_data.sql
 
 # Other stuff
 dictionary.dic
