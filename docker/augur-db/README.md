@@ -15,7 +15,7 @@ Published image: `ghcr.io/oss-aspen/8knot-min-db:latest` (public).
    AUGUR_DATABASE=augur
    AUGUR_USERNAME=augur
    AUGUR_PASSWORD=augur
-   AUGUR_SCHEMA=collection_data
+   AUGUR_SCHEMA=data,augur_data
    ```
 2. Start it:
    ```
@@ -27,7 +27,7 @@ Published image: `ghcr.io/oss-aspen/8knot-min-db:latest` (public).
    psql -h localhost -p 5433 -U augur -d augur   # password: augur
    ```
 
-The data lives in the `collection_data` schema (the collectOSS schema name).
+The data lives in the `data` schema (the collectOSS schema name).
 
 ## For maintainers — rebuild & publish
 
@@ -51,5 +51,5 @@ The data dump is **never committed** (76MB, gitignored at
 PostgreSQL runs files in `init/` alphabetically on first boot:
 
 - `03_data.sql` — the dump; loads schema, data, and materialized views into `augur_data`.
-- `04_rename_to_collection_data.sql` — renames the schema to `collection_data`
+- `04_rename_to_data.sql` — renames the schema to `data`
   (OID-safe; data is untouched).

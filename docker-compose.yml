@@ -7,11 +7,11 @@ services:
   # To use it, set in .env:
   #   AUGUR_HOST=augur-db  AUGUR_PORT=5432
   #   AUGUR_DATABASE=augur  AUGUR_USERNAME=augur  AUGUR_PASSWORD=augur
-  #   AUGUR_SCHEMA=collection_data
+  #   AUGUR_SCHEMA=data,augur_data
   # then:  docker compose up
   #
   # The image loads its data into the legacy `augur_data` schema on first boot,
-  # then renames it to `collection_data` (the collectOSS schema). See
+  # then renames it to `data` (the collectOSS schema). See
   # docker/augur-db/README.md for how maintainers rebuild and publish the image.
   augur-db:
     image: ghcr.io/oss-aspen/8knot-min-db:latest
