@@ -7,6 +7,10 @@ services:
     depends_on:
       postgres-cache:
         condition: service_healthy  # to ensure that postgres is indeed initialized before this starts
+      redis-broker:
+        condition: service_started
+      redis-users:
+        condition: service_started
     env_file:
       - .env
     # sometimes, postgres-cache isn't spun up before this starts.
@@ -38,7 +42,7 @@ services:
         "--workers",
         "1",
         "--threads",
-        "2",
+        "4",
         "--timeout",
         "300",
         "--keep-alive",
@@ -51,7 +55,7 @@ services:
     depends_on:
       - worker-callback
       - worker-query
-      - redis-cache
+      - redis-broker
       - redis-users
       - postgres-cache
       - db-init
@@ -67,9 +71,9 @@ services:
     build:
       context: .
       dockerfile: ./docker/Dockerfile
-    command: ["celery", "-A", "app:celery_app", "worker", "--loglevel=INFO", "--concurrency=1", "--time-limit=700", "--soft-time-limit=630"]
+    command: ["celery", "-A", "app:celery_app", "worker", "--loglevel=INFO", "--concurrency=8", "--time-limit=700", "--soft-time-limit=630"]
     depends_on:
-      - redis-cache
+      - redis-broker
       - redis-users
       - postgres-cache
     env_file:
@@ -89,19 +93,19 @@ services:
         "--loglevel=INFO",
         "-Q",
         "data",
-        "--concurrency=1",
+        "--concurrency=8",
         "--time-limit=600",
         "--soft-time-limit=540"
       ]
     depends_on:
-      - redis-cache
+      - redis-broker
       - postgres-cache
     env_file:
       - .env
     restart: always
 
-  # for data blob caching
-  redis-cache:
+  # Celery task broker and result backend (not used for data caching)
+  redis-broker:
     image: docker.io/library/redis:6
     command:
       - /bin/sh
@@ -161,7 +165,7 @@ volumes:
   #   depends_on:
   #     - worker-callback
   #     - worker-query
-  #     - redis-cache
+  #     - redis-broker
   #     - app-server
   #   env_file:
   #     - .env

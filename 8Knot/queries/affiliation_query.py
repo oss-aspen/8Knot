@@ -34,37 +34,38 @@ def affiliation_query(self, repos):
         return None
 
     query_string = f"""
-                    SELECT
-                        left(c.cntrb_id::text, 15), -- first 15 characters of the uuid
+                    WITH contributor_emails AS (
+                        -- pre-aggregate one email list per contributor so the main query
+                        -- avoids the alias JOIN explosion (O(N*A) -> O(N)).
+                        SELECT
+                            con.cntrb_id,
+                            con.cntrb_company,
+                            COALESCE(
+                                array_to_string(
+                                    array_agg(DISTINCT e) FILTER (WHERE e IS NOT NULL AND e != ''),
+                                    ' , '
+                                ),
+                                ''
+                            ) AS email_list
+                        FROM contributors con
+                        JOIN contributors_aliases ca ON con.cntrb_id = ca.cntrb_id,
+                        LATERAL unnest(ARRAY[ca.alias_email, con.cntrb_email, con.cntrb_canonical]) AS e
+                        GROUP BY con.cntrb_id, con.cntrb_company
+                    )
+                    SELECT DISTINCT
+                        left(c.cntrb_id::text, 15) AS cntrb_id,
                         timezone('utc', c.created_at) AS created_at,
                         c.repo_id,
                         c.login,
                         c.action,
-                        c.rank,
-                        con.cntrb_company,
-                        array_to_string(
-                            ARRAY(
-                                SELECT DISTINCT e
-                                FROM unnest(
-                                    array_agg(ca.alias_email) ||
-                                    ARRAY[con.cntrb_email, con.cntrb_canonical]
-                                ) AS e
-                                WHERE e IS NOT NULL AND e != ''
-                            ), ' , '
-                        ) AS email_list
-                    FROM
-                        explorer_contributor_actions c
-                    JOIN contributors_aliases ca
-                        ON c.cntrb_id = ca.cntrb_id
-                    JOIN contributors con
-                        ON c.cntrb_id = con.cntrb_id
+                        ce.cntrb_company,
+                        ce.email_list
+                    FROM explorer_contributor_actions c
+                    JOIN contributor_emails ce ON c.cntrb_id = ce.cntrb_id
                     WHERE
-                        c.repo_id in %s
-                        and timezone('utc', c.created_at) < now() -- created_at is a timestamptz value
-                        -- don't need to check non-null for created_at because it's non-null by definition.
-                    GROUP BY c.cntrb_id, c.created_at, c.repo_id, c.login, c.action, c.rank, con.cntrb_company, con.cntrb_email, con.cntrb_canonical
-                    ORDER BY
-                        c.created_at
+                        c.repo_id IN %s
+                        AND timezone('utc', c.created_at) < now()
+                    ORDER BY created_at
                     """
 
     # used for caching

@@ -44,8 +44,7 @@ def contributors_query(self, repos):
                         left(ca.cntrb_id::text, 15) as cntrb_id, -- first 15 characters of the uuid
                         timezone('utc', ca.created_at) AS created_at,
                         ca.login,
-                        ca.action,
-                        ca.rank
+                        ca.action
                     FROM
                         explorer_contributor_actions ca
                     WHERE

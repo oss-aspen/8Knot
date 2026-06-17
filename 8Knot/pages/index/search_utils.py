@@ -496,26 +496,21 @@ def create_search_input_section(initial_option):
             html.Div(
                 [
                     create_search_multiselect(initial_option),
-                    create_button(
-                        button_id="search",
-                        content=html.I(className="fas fa-search"),
-                        title="Search",
-                        custom_style={
-                            "backgroundColor": "transparent",
-                            "border": "none",
-                            "fontSize": "16px",
-                            "width": "16px",
-                            "height": "16px",
-                            "position": "absolute",
-                            "left": "10px",
-                            "top": "50%",
-                            "transform": "translateY(-100%)",
-                            "fontWeight": "bold",
-                            "zIndex": 2,
-                        },
-                    ),
                 ],
                 className="search-input-wrapper",
+            ),
+            html.Div(
+                [
+                    dbc.Button(
+                        "Search",
+                        id="search-button",
+                        color="outline-secondary",
+                        size="sm",
+                        className="about-graph-button",
+                    ),
+                    create_search_controls(),
+                ],
+                className="search-button-wrapper",
             ),
             create_alert(
                 alert_id="help-alert",
@@ -523,7 +518,7 @@ def create_search_input_section(initial_option):
                     If your selection definitely isn\'t present, please request that \
                     it be loaded using the help button "REPO/ORG Request" \
                     in the bottom right corner of the screen.  \
-                    The search is only confirmed when you click the search icon and the pill turns blue.',
+                    The search is only confirmed when you click the Search button and the pill turns blue.',
                 color="info",
             ),
             create_alert(
@@ -605,7 +600,6 @@ def create_search_bar(initial_option):
                 className="search-bar-component",
             ),
             create_search_input_section(initial_option),
-            create_search_controls(),
         ],
         className="search-bar-wrapper",
     )

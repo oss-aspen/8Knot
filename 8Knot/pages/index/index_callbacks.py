@@ -11,7 +11,6 @@ from dash import callback, html
 from dash.dependencies import Input, Output, State, MATCH
 from app import augur
 from flask_login import current_user
-from cache_manager.cache_manager import CacheManager as cm
 import cache_manager.cache_facade as cf
 from queries.issues_query import issues_query as iq
 from queries.commits_query import commits_query as cq
@@ -37,7 +36,9 @@ from .search_utils import fuzzy_search
 from .search_utils import clean_repo_name
 
 # list of queries to be run (includes codebase page queries for heatmaps)
-QUERIES = [iq, cq, cnq, prq, aq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq]
+# affiliation_query is last because its 3-way JOIN + GROUP BY is the slowest query;
+# keeping it at the end lets the faster queries finish without being blocked.
+QUERIES = [iq, cq, cnq, prq, iaq, praq, prr, cpfq, rfq, prfq, rlq, pvq, rrq, osq, riq, aq]
 
 
 # check if login has been enabled in config
@@ -436,11 +437,11 @@ def dynamic_multiselect_options(user_in: str, selections, cached_options):
 @callback(
     [Output("results-output-container", "children"), Output("repo-choices", "data")],
     [
-        Input("search", "n_clicks"),
+        Input("search-button", "n_clicks"),
         State("projects", "value"),
     ],
 )
-def multiselect_values_to_repo_ids(n_clicks, user_vals):
+def multiselect_values_to_repo_ids(search_button_clicks, user_vals):
     if not user_vals:
         logging.warning("NOTHING SELECTED IN SEARCH BAR")
         raise dash.exceptions.PreventUpdate
@@ -620,9 +621,6 @@ def run_queries(repos):
     Args:
         repos ([int]): repositories we collect data for.
     """
-
-    # cache manager object
-    cache = cm()
 
     # list of queries to process
     funcs = QUERIES
@@ -875,10 +873,10 @@ def hide_loading_on_landing(pathname):
 # ============================================================================
 @callback(
     Output("projects", "className"),
-    [Input("search", "n_clicks"), Input("projects", "value")],
+    [Input("search-button", "n_clicks"), Input("projects", "value")],
     prevent_initial_call=True,
 )
-def update_pill_color_on_search(_, selected_repos_orgs):
+def update_pill_color_on_search(search_button_clicks, selected_repos_orgs):
     """Update pill color based on search action.
 
     When search icon is clicked, add 'searching' class to turn pills blue.
@@ -889,7 +887,7 @@ def update_pill_color_on_search(_, selected_repos_orgs):
 
     triggered_id = dash.ctx.triggered_id
 
-    if triggered_id == "search":
+    if triggered_id == "search-button":
         # Search button clicked - add 'searching' class to turn pills blue
         logging.info(f"PILL COLOR: Search clicked - turning pills BLUE")
         return "searchbar-dropdown searching"

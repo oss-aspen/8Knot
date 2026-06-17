@@ -34,7 +34,7 @@ def pr_file_query(self, repos):
                         pull_request_id AS pull_request,
                         repo_id
                     FROM
-                        augur_data.explorer_pr_files
+                        explorer_pr_files
                     WHERE
                         repo_id IN %s
                 """

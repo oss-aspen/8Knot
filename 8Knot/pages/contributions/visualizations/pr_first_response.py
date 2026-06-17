@@ -9,7 +9,6 @@ import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from queries.pr_response_query import pr_response_query as prr
 import io
-from cache_manager.cache_manager import CacheManager as cm
 import cache_manager.cache_facade as cf
 from pages.utils.job_utils import nodata_graph
 import time

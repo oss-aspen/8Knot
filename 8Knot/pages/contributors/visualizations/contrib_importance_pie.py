@@ -44,7 +44,6 @@ gc_contrib_importance_pie = VisualizationAIO(
                     dcc.Dropdown(
                         id=f"action-type-{PAGE}-{VIZ_ID}",
                         options=[
-                            {"label": "Commit", "value": "Commit"},
                             {
                                 "label": "Issue Opened",
                                 "value": "Issue Opened",
@@ -70,7 +69,7 @@ gc_contrib_importance_pie = VisualizationAIO(
                                 "value": "PR Comment",
                             },
                         ],
-                        value="Commit",
+                        value="PR Review",
                         clearable=False,
                         className="dark-dropdown",
                     ),

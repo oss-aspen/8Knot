@@ -87,19 +87,17 @@ def check_required_services():
     except Exception as e:
         checks.append(f"Database connection failed: {str(e)}")
 
-    # Check Redis connectivity
+    # Check Postgres cache connectivity
     try:
-        import redis
+        import psycopg2 as pg
+        from cache_manager.cx_common import cache_cx_string
 
-        redis_cache = redis.StrictRedis(
-            host=os.getenv("REDIS_SERVICE_CACHE_HOST", "redis-cache"),
-            port=6379,
-            password=os.getenv("REDIS_PASSWORD", ""),
-        )
-        redis_cache.ping()
-        checks.append("Redis cache connection: OK")
+        with pg.connect(cache_cx_string) as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT 1")
+        checks.append("Postgres cache connection: OK")
     except Exception as e:
-        checks.append(f"Redis cache connection failed: {str(e)}")
+        checks.append(f"Postgres cache connection failed: {str(e)}")
 
     return checks
 
