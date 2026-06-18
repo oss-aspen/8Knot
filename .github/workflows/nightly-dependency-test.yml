@@ -24,6 +24,7 @@ env:
 
 jobs:
   nightly-test:
+    if: github.repository == 'oss-aspen/8Knot'
     runs-on: ubuntu-latest
     timeout-minutes: 30
 

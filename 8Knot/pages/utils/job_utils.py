@@ -12,6 +12,8 @@ nodata_graph.update_traces(
     opacity=0.6,
 )
 nodata_graph.update_layout(
+    paper_bgcolor="#292929",
+    plot_bgcolor="#292929",
     title={
         "text": "No Available Data",
         "y": 0.9,
@@ -19,7 +21,9 @@ nodata_graph.update_layout(
         "xanchor": "center",
         "yanchor": "top",
     },
-    font=dict(size=18, color="red"),
+    font=dict(size=18, color="#f6f6f6"),
+    xaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+    yaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
 )
 
 # graph displayed if a worker fails
@@ -31,6 +35,8 @@ timeout_graph.update_traces(
     opacity=0.6,
 )
 timeout_graph.update_layout(
+    paper_bgcolor="#292929",
+    plot_bgcolor="#292929",
     title={
         "text": "No Available Data",
         "y": 0.9,
@@ -39,6 +45,8 @@ timeout_graph.update_layout(
         "yanchor": "top",
     },
     font=dict(size=18, color="orange"),
+    xaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+    yaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
 )
 
 

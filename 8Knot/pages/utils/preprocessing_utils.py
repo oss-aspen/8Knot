@@ -8,6 +8,7 @@ def contributors_df_action_naming(df):
         pd.DataFrame: processed dataframe
     """
     df = df.copy()
+    df = df[df["action"] != "pull_request_review_PENDING"].copy()
     # update column values
     df.loc[df["action"] == "pull_request_open", "action"] = "PR Opened"
     df.loc[df["action"] == "pull_request_comment", "action"] = "PR Comment"

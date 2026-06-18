@@ -1,4 +1,4 @@
-/* This is the SQL query that populates the explorer_cntrb_per_file materialized view*/
+/* SQL for the contributors-per-file cache materialized view. */
 SELECT
     pr.repo_id as repo_id,
     prf.pr_file_path as file_path,

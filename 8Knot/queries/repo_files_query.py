@@ -33,7 +33,7 @@ def repo_files_query(self, repos):
     # Use pre-computed materialized view for faster performance
     query_string = """
                     SELECT
-                        id AS repo_id,
+                        repo_id,
                         repo_name,
                         repo_path,
                         rl_analysis_date,
@@ -42,7 +42,7 @@ def repo_files_query(self, repos):
                     FROM
                         explorer_repo_files
                     WHERE
-                        id IN %s
+                        repo_id IN %s
                         AND repo_name IS NOT NULL
                         AND repo_path IS NOT NULL
                 """

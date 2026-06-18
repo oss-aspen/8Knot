@@ -56,7 +56,7 @@ def package_version_query(self, repos):
                             repo_id IN %s
                         ORDER BY repo_id, data_collection_date DESC
                     ) AND
-                    rdl.libyear >= 0
+                    (rdl.libyear >= 0 OR rdl.libyear IS NULL)
                 """
 
     func_name = package_version_query.__name__

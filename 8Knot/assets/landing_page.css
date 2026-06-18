@@ -8,7 +8,7 @@
     - Animations and transitions
 
     Uses global CSS variables from:
-    - color.css (colors)
+    - color_tokens.css (colors)
     - main_layout.css (global spacing, border-radius, transitions)
 
     Landing-specific design tokens are defined below

@@ -9,6 +9,7 @@ from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, baby_blue
 from queries.issues_query import issues_query as iq
+from queries.repo_info_query import repo_info_query as riq
 from pages.utils.job_utils import nodata_graph
 import time
 import cache_manager.cache_facade as cf
@@ -25,7 +26,10 @@ gc_issue_staleness = VisualizationAIO(
     graph_info="""
     Visualizes growth of Issue backlog. Differentiates sub-populations\n
     of issues by their 'Staleness.'\n
-    Please see the definition of 'Staleness' on the Info page.
+    Please see the definition of 'Staleness' on the Info page.\n
+    Parameters: Days Until Staling controls when open issues move from New to
+    Staling. Days Until Stale controls when open issues move from Staling to
+    Stale. Date Interval controls whether the timeline is daily, monthly, or yearly.
     """,
     controls=[
         dbc.Row(
@@ -130,6 +134,18 @@ def new_staling_issues_graph(repolist, interval, staling_interval, stale_interva
 
     if staling_interval is None or stale_interval is None:
         return dash.no_update, dash.no_update
+
+    while not_cached := cf.get_uncached(func_name=riq.__name__, repolist=repolist):
+        logging.warning(f"ISSUES STALENESS - WAITING ON REPO INFO")
+        time.sleep(0.5)
+
+    df_repo_info = cf.retrieve_from_cache(
+        tablename=riq.__name__,
+        repolist=repolist,
+    )
+    if not df_repo_info.empty and not df_repo_info["issues_enabled"].astype(str).str.lower().eq("true").any():
+        logging.warning("ISSUE STALENESS - SELECTED REPOSITORIES DO NOT USE ISSUES")
+        return nodata_graph, False
 
     # wait for data to asynchronously download and become available.
 

@@ -141,8 +141,10 @@ confidence=HIGH,
            UNDEFINED
 
 # Only enable specific messages
+# Keep this allow-list narrow and intentional. Style-only refactor hints that
+# produce noisy rewrites should be reviewed before being added here.
 disable=all
-enable=unused-import,redefined-outer-name,E1206,E1205,E0704,E0107,E4702,E1101,E0211,E0213,E0103,E1133,E1120,E3102,E0602,E1123,E0001,W0702,W1404,W0706,W0101,W0120,W0718,R1737,R1705,R1720,R1724,R1723,R0401,R1701,C1802,C0200,C0201,E1102
+enable=unused-import,redefined-outer-name,E1206,E1205,E0704,E0107,E4702,E1101,E0211,E0213,E0103,E1133,E1120,E3102,E0602,E1123,E0001,W0702,W1404,W0706,W0101,W0120,W0718,R1737,R1705,R1720,R1724,R0401,R1701,C1802,C0200,C0201,E1102
 
 
 [LOGGING]

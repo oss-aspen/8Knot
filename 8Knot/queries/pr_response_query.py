@@ -43,6 +43,8 @@ def pr_response_query(self, repos):
                         explorer_pr_response epr
                     WHERE
                         epr.ID in %s
+                        and epr.pr_created_at >= now() - interval '5 years'
+                        and epr.pr_created_at < now()
                 """
 
     func_name = pr_response_query.__name__

@@ -17,6 +17,23 @@ from components.visualization import VisualizationAIO
 PAGE = "affiliation"
 VIZ_ID = "org-core-contributors"
 
+PERSONAL_EMAIL_DOMAINS = {
+    "aol.com",
+    "gmail.com",
+    "googlemail.com",
+    "hotmail.com",
+    "icloud.com",
+    "live.com",
+    "me.com",
+    "msn.com",
+    "outlook.com",
+    "pm.me",
+    "proton.me",
+    "protonmail.com",
+    "yahoo.com",
+    "ymail.com",
+}
+
 gc_org_core_contributors = VisualizationAIO(
     PAGE,
     VIZ_ID,
@@ -86,7 +103,7 @@ gc_org_core_contributors = VisualizationAIO(
                         className="dark-date-picker",
                     ),
                     # style={"marginTop": "1.7rem"},
-                    width=7,
+                    width="auto",
                 ),
                 dbc.Col(
                     dbc.Checklist(
@@ -105,11 +122,11 @@ gc_org_core_contributors = VisualizationAIO(
                         inline=True,
                         switch=True,
                     ),
-                    width=6,
+                    width="auto",
                 ),
             ],
             align="center",
-            justify="between",
+            className="g-2 flex-wrap",
         ),
     ],
     class_name="dark-card",
@@ -142,11 +159,11 @@ def compay_associated_activity_graph(
 ):
     # wait for data to asynchronously download and become available.
     while not_cached := cf.get_uncached(func_name=aq.__name__, repolist=repolist):
-        logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
+        logging.info(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 
     start = time.perf_counter()
-    logging.warning(f"{VIZ_ID}- START")
+    logging.info(f"{VIZ_ID}- START")
 
     # GET ALL DATA FROM POSTGRES CACHE
     df = cf.retrieve_from_cache(
@@ -156,7 +173,7 @@ def compay_associated_activity_graph(
 
     # test if there is data
     if df.empty:
-        logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
+        logging.info(f"{VIZ_ID} - NO DATA AVAILABLE")
         return nodata_graph
 
     # remove bot data
@@ -168,7 +185,7 @@ def compay_associated_activity_graph(
 
     fig = create_figure(df)
 
-    logging.warning(f"{VIZ_ID} - END - {time.perf_counter() - start}")
+    logging.info(f"{VIZ_ID} - END - {time.perf_counter() - start}")
     return fig
 
 
@@ -200,6 +217,7 @@ def process_data(df: pd.DataFrame, contributions, contributors, start_date, end_
 
     # creates list of email domains from the emails list
     email_domains = [x[x.rindex("@") + 1 :] for x in emails]
+    email_domains = ["Personal Email" if x in PERSONAL_EMAIL_DOMAINS else x for x in email_domains]
 
     # creates df of domains and counts
     df = pd.DataFrame(email_domains, columns=["domains"]).value_counts().to_frame().reset_index()
