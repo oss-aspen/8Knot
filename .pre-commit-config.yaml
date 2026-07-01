@@ -44,6 +44,15 @@ repos:
       - id: black
         args: ['--line-length=120']
 
+  - repo: local
+    hooks:
+      - id: sync-version
+        name: sync _version.py from pyproject.toml
+        entry: python3 scripts/ci/sync_version.py
+        language: system
+        files: ^(pyproject\.toml|8Knot/_version\.py)$
+        pass_filenames: false
+
 #  # Enable this for more robust style checking
 #  - repo: https://github.com/pycqa/flake8
 #    rev: '5.0.4'  # pick a git hash / tag to point to
