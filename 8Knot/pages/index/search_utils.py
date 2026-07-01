@@ -26,6 +26,8 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 
+from _version import __version__
+
 
 def search_short_query(query: str, options: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
@@ -643,8 +645,8 @@ def create_bottom_navbar():
 
     return dbc.NavbarSimple(
         children=children,
-        brand="",
-        brand_href="#",
+        brand=html.Span(f"v{__version__}", className="version-display"),
+        brand_href=None,
         fluid=True,
         fixed="bottom",
         color="var(--bg-primary)",
