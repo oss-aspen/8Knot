@@ -26,7 +26,7 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 
-from _version import __version__
+from metadata import __version__
 
 
 def search_short_query(query: str, options: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
