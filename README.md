@@ -324,6 +324,10 @@ guaranteeing that there are (2 \* #CPUs = 12) available processing celery thread
 docker compose up --build --scale worker-query=2 --scale worker-callback=2
 ```
 
+> **Out of Memory (OOM) issues:** If your local instance is running out of memory, try reducing the number of concurrent workers
+> by lowering the `--concurrency` value in `docker-compose.yml` for the `worker-callback` and `worker-query` services.
+> The default concurrency is 8; reducing it to 2 or 4 can significantly reduce memory usage at the cost of slower data loading.
+
 To stop the application:
 
 ```bash
