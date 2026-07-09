@@ -34,6 +34,7 @@ import redis
 import flask
 from .search_utils import fuzzy_search
 from .search_utils import clean_repo_name
+from pages.utils.url_state import build_url_params, parse_url_params, resolve_url_state, PARAM_BOTS
 
 # list of queries to be run (includes codebase page queries for heatmaps)
 # affiliation_query is last because its 3-way JOIN + GROUP BY is the slowest query;
@@ -897,3 +898,114 @@ def update_pill_color_on_search(search_button_clicks, selected_repos_orgs):
         return "searchbar-dropdown"
 
     return dash.no_update
+
+
+# =============================================================================
+# Serialize current repo selection into the URL query string.
+#
+# Fires on Search click and on page navigation (nav-links clear the query
+# string, so we re-write it to keep ?repos=... alive across page switches).
+#
+# This is a one-way write — nothing in the app listens to url.search, so
+# there is no feedback loop and no impact on search, pills, or data loading.
+# =============================================================================
+@callback(
+    Output("url", "search"),
+    Input("search-button", "n_clicks"),
+    Input("url", "pathname"),
+    State("projects", "value"),
+    State("bot-switch", "value"),
+    State("repo-choices", "data"),
+    prevent_initial_call=True,
+)
+def serialize_to_url(n_clicks, pathname, projects_val, bots_on, repo_choices):
+    """Write current selection into the URL query string.
+
+    Guards: no-ops when nothing has been searched yet (repo_choices empty).
+    Only encodes non-default values — bots=on is the default and is omitted.
+    Private user groups are skipped; they are not resolvable by other users.
+    """
+    if not repo_choices or not projects_val:
+        return dash.no_update
+
+    repo_ids = [int(v) for v in projects_val if SearchItem.from_id(v) == SearchItem.REPO]
+    org_names = [v for v in projects_val if SearchItem.from_id(v) == SearchItem.ORG and augur.is_org(v)]
+
+    search = build_url_params(repo_ids, org_names, bool(bots_on), augur)
+    return search if search else dash.no_update
+
+
+# =============================================================================
+# Restore repo selection from URL query string on initial page load.
+#
+# When a user visits a shareable link like ?repos=oss-aspen/8Knot&bots=off,
+# this callback parses the URL, resolves the slugs to repo IDs, and populates
+# the projects dropdown and bot-switch to match the shared state.
+#
+# Runs only once on initial page load when URL contains query parameters.
+# Does NOT trigger on subsequent URL changes to avoid overwriting user edits.
+# =============================================================================
+@callback(
+    Output("projects", "value"),
+    Output("bot-switch", "value"),
+    Output("restore-feedback", "children"),  # For user feedback on unknown slugs
+    Input("url", "search"),
+    State("repo-choices", "data"),
+    prevent_initial_call=False,  # Must run on initial load
+)
+def restore_from_url(search, repo_choices):
+    """Restore application state from URL query string on page load.
+
+    Parses URL params like ?repos=owner/repo&orgs=org_name&bots=off
+    and sets the projects dropdown and bot-switch accordingly.
+
+    NOTE: This only restores the selection state. The user must still click
+    the search button to actually load data and populate visualizations.
+
+    Returns dash.no_update when:
+    - No query string present (normal page load)
+    - User has already performed a search (repo_choices is populated)
+
+    Args:
+        search: The URL query string (e.g., "?repos=oss-aspen/8Knot&bots=off")
+        repo_choices: Current repo-choices store data (empty on initial load)
+
+    Returns:
+        tuple: (projects_value, bots_on, feedback_message)
+    """
+    # No query string - nothing to restore
+    if not search:
+        return dash.no_update, dash.no_update, dash.no_update
+
+    # If user has already searched, don't override their selections
+    # repo_choices gets populated after the first search button click
+    if repo_choices:
+        return dash.no_update, dash.no_update, dash.no_update
+
+    parsed = parse_url_params(search)
+    if not parsed:
+        # Empty or malformed query string
+        return dash.no_update, dash.no_update, dash.no_update
+
+    # Resolve slugs and org names to multiselect values
+    values, unknown_slugs = resolve_url_state(parsed, augur)
+
+    # Get bot filter value (default is True/on if not specified)
+    bots_on = parsed.get(PARAM_BOTS, True)
+
+    # Build feedback message for unknown slugs
+    feedback = None
+    if unknown_slugs:
+        unknown_list = ", ".join(unknown_slugs)
+        feedback = html.Div(
+            f"Note: Could not find the following repos/orgs in this instance: {unknown_list}",
+            className="alert alert-warning",
+        )
+        logging.warning(f"URL_RESTORE: Unknown slugs: {unknown_slugs}")
+
+    if not values:
+        # All slugs were unknown - show feedback but don't change state
+        return dash.no_update, dash.no_update, feedback
+
+    logging.info(f"URL_RESTORE: Restored {len(values)} items from URL: {values}")
+    return values, bots_on, feedback

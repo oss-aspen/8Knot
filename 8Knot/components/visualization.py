@@ -1,3 +1,4 @@
+import dash
 from dash import html, dcc, Input, State, Output, callback, MATCH
 import dash_bootstrap_components as dbc
 from typing import Optional
@@ -34,6 +35,11 @@ class VisualizationAIO(dbc.Card):
         if controls is None:
             controls = []
 
+        # The card anchor is what the sidebar nav links point to.
+        # We reuse it as the pattern-matching index for the copy-link button
+        # so the JS can construct the correct #anchor URL fragment.
+        anchor = id if id is not None else f"{page}-{viz_id}"
+
         # Define the component's layout
         super().__init__(
             [
@@ -42,13 +48,40 @@ class VisualizationAIO(dbc.Card):
                         dbc.Row(
                             [
                                 dbc.Col(html.H3(title, id=f"graph-title-{page}-{viz_id}", className="card-title")),
+                                # Right-side button group: copy-link + About Graph
                                 dbc.Col(
-                                    dbc.Button(
-                                        "About Graph",
-                                        id={"type": "popover-target", "index": f"{page}-{viz_id}"},
-                                        color="outline-secondary",
-                                        size="sm",
-                                        className="about-graph-button",
+                                    html.Div(
+                                        [
+                                            # Copy-link button — copies a URL with #anchor appended
+                                            dbc.Button(
+                                                html.I(className="fas fa-link"),
+                                                id={"type": "copy-link-btn", "index": anchor},
+                                                color="link",
+                                                size="sm",
+                                                title="Copy link to this graph",
+                                                className="about-graph-button",
+                                                n_clicks=0,
+                                            ),
+                                            dbc.Tooltip(
+                                                "Link copied!",
+                                                target={"type": "copy-link-btn", "index": anchor},
+                                                trigger="click",
+                                                placement="top",
+                                            ),
+                                            # Hidden output sink for the clientside clipboard callback
+                                            html.Div(
+                                                id={"type": "copy-link-sink", "index": anchor},
+                                                style={"display": "none"},
+                                            ),
+                                            dbc.Button(
+                                                "About Graph",
+                                                id={"type": "popover-target", "index": f"{page}-{viz_id}"},
+                                                color="outline-secondary",
+                                                size="sm",
+                                                className="about-graph-button",
+                                            ),
+                                        ],
+                                        className="d-flex align-items-center gap-1",
                                     ),
                                     width="auto",
                                 ),
@@ -103,3 +136,30 @@ class VisualizationAIO(dbc.Card):
         if n:
             return not is_open
         return is_open
+
+
+# =============================================================================
+# Per-graph copy-link — clientside clipboard write
+#
+# Registered once at module level using MATCH so it covers every
+# VisualizationAIO card without repeating callback code.
+#
+# The button's pattern-matching index IS the card's anchor id (e.g.
+# "commits-over-time"). The JS implementation is in assets/copy_link.js
+# for better maintainability, linting, and separation of concerns.
+#
+# The JS function builds: origin + pathname + search + "#" + anchor
+# so the copied URL points directly to this graph with the current
+# repo selection already encoded in the query string.
+# =============================================================================
+
+dash.clientside_callback(
+    dash.ClientsideFunction(
+        namespace="clientside",
+        function_name="copy_link_to_clipboard",
+    ),
+    Output({"type": "copy-link-sink", "index": MATCH}, "children"),
+    Input({"type": "copy-link-btn", "index": MATCH}, "n_clicks"),
+    State({"type": "copy-link-btn", "index": MATCH}, "id"),
+    prevent_initial_call=True,
+)
