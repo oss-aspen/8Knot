@@ -7,8 +7,8 @@ import json
 from celery.result import AsyncResult
 import dash_bootstrap_components as dbc
 import dash
-from dash import callback, html
-from dash.dependencies import clientside_callback, Input, Output, State, MATCH
+from dash import callback, html, clientside_callback
+from dash.dependencies import Input, Output, State, MATCH
 from app import augur
 from flask_login import current_user
 import cache_manager.cache_facade as cf
