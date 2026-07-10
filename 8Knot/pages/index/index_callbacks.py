@@ -8,7 +8,7 @@ from celery.result import AsyncResult
 import dash_bootstrap_components as dbc
 import dash
 from dash import callback, html
-from dash.dependencies import Input, Output, State, MATCH
+from dash.dependencies import clientside_callback, Input, Output, State, MATCH
 from app import augur
 from flask_login import current_user
 import cache_manager.cache_facade as cf
@@ -897,3 +897,18 @@ def update_pill_color_on_search(search_button_clicks, selected_repos_orgs):
         return "searchbar-dropdown"
 
     return dash.no_update
+
+# A simple clientside callback to scroll to the anchor when the hash changes.
+clientside_callback(
+    """
+    function(hash) {
+        if (hash) {
+            var el = document.getElementById(hash.replace('#', ''));
+            if (el) { el.scrollIntoView({behavior: 'smooth'}); }
+        }
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output("url", "hash"),   # dummy output
+    Input("url", "hash"),
+)
