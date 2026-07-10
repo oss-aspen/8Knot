@@ -21,12 +21,9 @@ class NavItemAIO(dbc.NavLink):
             link_ref: The path of the page to navigate to.
             image_path : The path to an icon for the navigation entry (default: None)
             image_alt (str): The alt text to set on the icon (defaults to the title)
-            external_link (boolean): whether or not to treat this link as external (i.e. trigger a full browser refresh). This will be true if link target is an identifier on this page (default: False)
+            external_link (boolean): whether or not to treat this link as external (i.e. trigger a full browser refresh, default: False)
             active (str): when to consider each link "active" for the purpose of styling. Accepts the same values as dbc.NavLink's active argument. (Default: "partial")
         """
-
-        if "#" in link_ref:
-            external_link = True
 
         children = None
 
