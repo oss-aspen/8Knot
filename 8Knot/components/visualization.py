@@ -69,7 +69,7 @@ class VisualizationAIO(dbc.Card):
                         ),
                         dcc.Loading(
                             dcc.Graph(id=f"{page}-{viz_id}"),
-                            style={"marginBottom": "1rem"},
+                            style={"marginBottom": "1rem", "minHeight": "450px"},
                         ),
                         html.Hr(className="card-split") if controls else None,  # Divider between graph and controls
                         (
