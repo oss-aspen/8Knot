@@ -903,8 +903,15 @@ clientside_callback(
     """
     function(hash) {
         if (hash) {
-            var el = document.getElementById(hash.replace('#', ''));
-            if (el) { el.scrollIntoView({behavior: 'smooth'}); }
+            var tries = 0;
+            (function findThenScroll() {
+                var el = document.getElementById(hash.replace(/^#/, ''));
+                if (el) {
+                    el.scrollIntoView({behavior: 'smooth', block: 'center'});
+                    return;
+                }
+                if (tries++ < 20) { setTimeout(findThenScroll, 250); }
+            })();
         }
         return window.dash_clientside.no_update;
     }
