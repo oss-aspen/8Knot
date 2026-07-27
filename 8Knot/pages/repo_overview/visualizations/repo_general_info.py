@@ -10,7 +10,7 @@ import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, color_seq
 from queries.repo_info_query import repo_info_query as riq
 
-# from queries.repo_files_query import repo_files_query as rfq #TODO: run back on when the query hang is fixed
+from queries.repo_files_query import repo_files_query as rfq  # TODO: run back on when the query hang is fixed
 from queries.repo_releases_query import repo_releases_query as rrq
 import io
 import cache_manager.cache_facade as cf
