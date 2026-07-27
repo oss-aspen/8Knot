@@ -271,6 +271,8 @@ def create_app_stores():
         dcc.Store(id="repo-choices", storage_type="session", data=[]),
         dcc.Store(id="job-ids", storage_type="session", data=[]),
         dcc.Store(id="user-group-loading-signal", data="", storage_type="memory"),
+        # no-op output sink for the clientside scroll-to-anchor callback
+        dcc.Store(id="anchor-scroll-dummy", data=None),
         dcc.Location(id="url"),
     ]
 
