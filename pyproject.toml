@@ -29,7 +29,7 @@ dependencies = [
 ]
 
 # The release version lives in 8Knot/metadata.py so the running app can import it
-# (pyproject.toml is not shipped into the container). Same pattern as CollectOSS.
+# (pyproject.toml is not shipped into the container).
 [tool.setuptools]
 package-dir = { "" = "8Knot" }
 packages = []
