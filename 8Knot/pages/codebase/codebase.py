@@ -14,20 +14,20 @@ dash.register_page(__name__, path="/codebase")
 
 layout = dbc.Container(
     [
+        # Anchor ids now live on the heatmap cards themselves (VisualizationAIO
+        # id=...), consistent with every other graph — so they are not repeated
+        # here (duplicate ids would be invalid).
         dbc.Row(
             dbc.Col(gc_contribution_file_heatmap, xl=10),
             className="visualization-row",
-            id="contribution-file-heatmap",
         ),
         dbc.Row(
             dbc.Col(gc_cntrb_file_heatmap, xl=10),
             className="visualization-row",
-            id="cntrb-file-heatmap",
         ),
         dbc.Row(
             dbc.Col(gc_reviewer_file_heatmap, xl=10),
             className="visualization-row",
-            id="reviewer-file-heatmap",
         ),
     ],
     fluid=True,

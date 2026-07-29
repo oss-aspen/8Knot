@@ -75,6 +75,7 @@ gc_cntrb_file_heatmap = VisualizationAIO(
         ),
     ],
     class_name="dark-card",
+    id="cntrb-file-heatmap",
 )
 
 

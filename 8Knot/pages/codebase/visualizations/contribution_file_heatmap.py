@@ -90,6 +90,7 @@ gc_contribution_file_heatmap = VisualizationAIO(
         ),
     ],
     class_name="dark-card",
+    id="contribution-file-heatmap",
 )
 
 
