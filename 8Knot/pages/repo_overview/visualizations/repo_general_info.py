@@ -207,9 +207,9 @@ def multi_query_helper(repos: list[int]):
     """
 
     # wait for data to asynchronously download and become available.
-    """while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=repos):
+    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=repos):
         logging.warning(f"REPO GENERAL INFO - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)"""  # comment out until query is fixed
+        time.sleep(0.5)
 
     # wait for data to asynchronously download and become available.
     while not_cached := cf.get_uncached(func_name=riq.__name__, repolist=repos):
@@ -222,11 +222,11 @@ def multi_query_helper(repos: list[int]):
         time.sleep(0.5)
 
     # GET ALL DATA FROM POSTGRES CACHE
-    """df_file = cf.retrieve_from_cache(
+    df_file = cf.retrieve_from_cache(
         tablename=rfq.__name__,
         repolist=repos,
-    )"""
-    df_file = pd.DataFrame(columns=["file_path", "file_name", "id"])  # comment out until query is fixed
+    )
+    df_file = pd.DataFrame(columns=["file_path", "file_name", "id"])
     df_repo_info = cf.retrieve_from_cache(
         tablename=riq.__name__,
         repolist=repos,
