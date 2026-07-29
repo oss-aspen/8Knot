@@ -1,6 +1,10 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "8Knot"
-version = "1.3.0"
+dynamic = ["version"]
 description = "Dash app built by Red Hat's Open Source Program Office to analyze community and contribution data for git repositories"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -23,3 +27,12 @@ dependencies = [
     "redis~=6.4",
     "sqlalchemy~=2.0",
 ]
+
+# The release version lives in 8Knot/metadata.py so the running app can import it
+# (pyproject.toml is not shipped into the container).
+[tool.setuptools]
+package-dir = { "" = "8Knot" }
+packages = []
+
+[tool.setuptools.dynamic]
+version = { attr = "metadata.__version__" }
