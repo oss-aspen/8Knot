@@ -7,7 +7,7 @@ import json
 from celery.result import AsyncResult
 import dash_bootstrap_components as dbc
 import dash
-from dash import callback, html
+from dash import callback, html, clientside_callback, ClientsideFunction
 from dash.dependencies import Input, Output, State, MATCH
 from app import augur
 from flask_login import current_user
@@ -897,3 +897,13 @@ def update_pill_color_on_search(search_button_clicks, selected_repos_orgs):
         return "searchbar-dropdown"
 
     return dash.no_update
+
+
+# Scroll the URL's #fragment graph card into view on every hash change.
+# Implementation (and the reasoning for it) lives in assets/scroll_to_anchor.js.
+clientside_callback(
+    ClientsideFunction(namespace="eightknot", function_name="scroll_to_anchor"),
+    Output("anchor-scroll-dummy", "data"),
+    Input("url", "hash"),
+    prevent_initial_call=False,
+)
