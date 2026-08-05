@@ -226,7 +226,7 @@ def multi_query_helper(repos: list[int]):
         tablename=rfq.__name__,
         repolist=repos,
     )
-    df_file = pd.DataFrame(columns=["file_path", "file_name", "id"])
+
     df_repo_info = cf.retrieve_from_cache(
         tablename=riq.__name__,
         repolist=repos,
