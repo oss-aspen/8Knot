@@ -153,7 +153,10 @@ def process_data(df: pd.DataFrame, interval, start_date, end_date, label_filter)
 
     # filter to bug-tagged issues only if requested
     if label_filter == "bug":
-        df = df[df["labels"].str.contains("bug", case=False, na=False)]
+        if "labels" not in df.columns:
+            logging.warning("ISSUES OVER TIME - 'labels' column not found in cache, skipping label filter")
+        else:
+            df = df[df["labels"].str.contains("bug", case=False, na=False)]
 
     # order values chronologically by creation date
     df = df.sort_values(by="created_at", axis=0, ascending=True)
