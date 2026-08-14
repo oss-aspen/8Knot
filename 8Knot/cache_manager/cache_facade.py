@@ -42,7 +42,7 @@ from .cx_common import (
 
 
 def _abort_query_when_client_disconnects(augur_conn) -> None:
-    """Asks the augur server to stop a running query as soon as we disappear.
+    """Asks the server to stop a running query as soon as we disappear.
 
     Postgres only polls the client socket during a query if this is set, so without
     it a query keeps running after the worker is gone. It's postgres 14+, and a
