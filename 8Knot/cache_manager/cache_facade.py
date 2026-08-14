@@ -22,6 +22,7 @@ happy to be proven wrong about the apparent performance tradeoff.
 """
 
 import logging
+from contextlib import closing
 from uuid import uuid4
 import psycopg2 as pg
 from psycopg2.extras import execute_values
@@ -32,7 +33,30 @@ import pandas as pd
 # other files importing cache_facade need to know how to resolve
 # .cx_common- interpreter is invoked at a higher level, so relative
 # import required.
-from .cx_common import db_cx_string, env_augur_schema, cache_cx_string
+from .cx_common import (
+    db_cx_string,
+    cache_cx_string,
+    augur_cx_options,
+    env_augur_statement_timeout_ms,
+)
+
+
+def _abort_query_when_client_disconnects(augur_conn) -> None:
+    """Asks the augur server to stop a running query as soon as we disappear.
+
+    Postgres only polls the client socket during a query if this is set, so without
+    it a query keeps running after the worker is gone. It's postgres 14+, and a
+    server that rejects it is still bounded by statement_timeout, so a failure here
+    is worth logging but not worth failing the query over.
+    """
+    try:
+        with augur_conn.cursor() as cur:
+            cur.execute("SET client_connection_check_interval = '10s'")
+        # SET is transactional- without a commit it's undone by the next rollback.
+        augur_conn.commit()
+    except pg.Error as e:
+        logging.warning(f"AUGUR: client disconnect checks unavailable: {e}")
+        augur_conn.rollback()
 
 
 def cache_query_results(
@@ -57,10 +81,16 @@ def cache_query_results(
         client_pagination (int, optional): _description_. Defaults to 2000.
     """
     logging.warning(f"{target_table} -- CQR CACHE_QUERY_RESULTS BEGIN")
-    with pg.connect(
-        db_connection_string,
-        options=f"-c search_path={env_augur_schema}",
+    # 'closing' rather than a bare 'with': psycopg2's context manager ends the
+    # transaction but leaves the connection- and its server-side cursor- open.
+    with closing(
+        pg.connect(
+            db_connection_string,
+            options=augur_cx_options(env_augur_statement_timeout_ms),
+        )
     ) as augur_conn:
+        _abort_query_when_client_disconnects(augur_conn)
+
         with augur_conn.cursor(name=f"{target_table}-{uuid4()}") as augur_cur:
             # set number of rows we want from primary db at a time
             augur_cur.itersize = server_pagination
