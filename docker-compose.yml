@@ -59,6 +59,7 @@ services:
       - redis-users
       - postgres-cache
       - db-init
+      - mock-db
     env_file:
       - .env
     environment:
@@ -149,6 +150,20 @@ services:
     restart: always
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Mock Augur database for CI testing (image overridden by CI workflow)
+  mock-db:
+    image: docker.io/library/postgres:16
+    environment:
+      - POSTGRES_USER=augur
+      - POSTGRES_PASSWORD=augur
+      - POSTGRES_DB=augur
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U augur"]
       interval: 5s
       timeout: 5s
       retries: 5
