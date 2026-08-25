@@ -11,9 +11,9 @@ create a table in the cache. Most people who would be working on a
 project like this will know enough SQL to read the existing table
 definitions and create a new table as needed from those examples.
 
-Our data model is fairly simple, so for now the overhead of proper
-db migration tooling is mostly bloaty. We can return to this decision
-in the future if necessary.
+Our data model is fairly simple, so we do not use alembic. Schema
+changes to existing tables are numbered SQL functions in MIGRATIONS
+below, applied on startup. We can return to alembic later if needed.
 """
 
 """
@@ -42,11 +42,29 @@ does not already exist. This initialization script ALWAYS runs
 on app startup to make sure that the schema of the databse is
 intact between application restarts.
 
+CREATE IF NOT EXISTS cannot change a table that already exists.
+Changes to existing tables fall into two categories:
+
+(1) Safely re-appliable with an IF NOT EXISTS / IF EXISTS guard (e.g. a
+    new index, like _ensure_repo_id_indexes() below). These don't need
+    versioning - just add your own function and call it unconditionally
+    on every boot, same as _create_application_tables().
+
+(2) Not safely re-appliable (e.g. dropping/renaming a column, changing a
+    type). These go in a numbered migration in MIGRATIONS below. On
+    startup we compare cache_schema_version to the latest migration and
+    apply anything missing. Existing caches with no version table are
+    treated as version 0.
+
 To add a new table to the cache, simply copy an existing table
 creation block from those below. Given that you're creating a table
 for a query in the 'queries/' folder, name the table the same name
 as the query function. Name the columns of the table, and give their
 types, and everything should work!
+
+To make a non-re-appliable change to an existing table, add a function
+to MIGRATIONS with the next integer version. Do not edit old
+migration functions.
 
 Here's a list of types that postgres defines:
 https://www.postgresql.org/docs/current/datatype.html
@@ -428,6 +446,90 @@ def _create_application_tables() -> None:
     logging.warning("ALL TABLES COMMITTED SUCCESSFULLY")
 
 
+def _ensure_repo_id_indexes() -> None:
+    """Ensure every cache table with a repo_id column has an index on it.
+
+    retrieve_from_cache() and get_uncached() both filter on repo_id, and
+    UNLOGGED tables don't auto-index, so a missing index means a full
+    sequential scan (issue #1198 / PR #1158). Rather than hardcode the
+    table list, we ask Postgres which tables currently have a repo_id
+    column, so any table added later (via a new CREATE IF NOT EXISTS block
+    above) gets indexed the next time this runs - nothing to remember to
+    update here.
+
+    CREATE INDEX IF NOT EXISTS is always safely re-appliable, so unlike a
+    real schema migration (see MIGRATIONS below), this doesn't need to be
+    gated by cache_schema_version - it just runs unconditionally on every
+    boot, the same way _create_application_tables() does.
+
+    cache_bookkeeping also has a repo_id column but is queried by
+    (cache_func, repo_id) instead, so it's excluded here and given its own
+    composite index.
+    """
+    conn = _connect_with_retry(cache_cx_string)
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT table_name FROM information_schema.columns
+                WHERE table_schema = 'public' AND column_name = 'repo_id' AND table_name != 'cache_bookkeeping'
+                """
+            )
+            tables = [row[0] for row in cur.fetchall()]
+            for table in tables:
+                cur.execute(f"CREATE INDEX IF NOT EXISTS {table}_repo_id_idx ON {table} (repo_id)")
+            cur.execute(
+                "CREATE INDEX IF NOT EXISTS cache_bookkeeping_func_repo_idx ON cache_bookkeeping (cache_func, repo_id)"
+            )
+        conn.commit()
+    finally:
+        conn.close()
+    logging.warning(f"db_init: ensured repo_id indexes ({len(tables)} tables)")
+
+
+# Integer versions, applied in order. Never edit a past entry; add a new one.
+# Reserved for changes that can't be made safely re-appliable, like dropping
+# or renaming a column. Changes that are safe as CREATE/INDEX IF NOT EXISTS
+# forever (like _ensure_repo_id_indexes above) don't belong here - they
+# should just run unconditionally on every boot instead.
+MIGRATIONS = {}
+
+
+def _apply_schema_migrations() -> None:
+    """Bring an existing cache schema up to the latest version.
+
+    Caches with no cache_schema_version table (today's production DBs)
+    are version 0. Each pending migration runs, then we stamp that
+    version in the same transaction. Failure rolls back and db_init
+    exits non-zero so the init container retries.
+    """
+    conn = _connect_with_retry(cache_cx_string)
+    latest = max(MIGRATIONS, default=0)
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS cache_schema_version (
+                    version int PRIMARY KEY,
+                    applied_at timestamptz NOT NULL DEFAULT now()
+                )
+                """
+            )
+            cur.execute("SELECT COALESCE(MAX(version), 0) FROM cache_schema_version")
+            current = cur.fetchone()[0]
+            logging.warning(f"db_init: cache schema version {current}, latest {latest}")
+
+            for version in range(current + 1, latest + 1):
+                logging.warning(f"db_init: applying cache schema migration {version}")
+                MIGRATIONS[version](cur)
+                cur.execute("INSERT INTO cache_schema_version (version) VALUES (%s)", (version,))
+
+            conn.commit()
+    finally:
+        conn.close()
+    logging.warning(f"db_init: cache schema at version {latest}")
+
+
 def _flush_redis_broker() -> None:
     """
     Flush the Redis broker so it stays in sync with postgres-cache.
@@ -458,6 +560,12 @@ def _flush_redis_broker() -> None:
 
 
 def db_init() -> int:
+    # Redis must be flushed every boot regardless of whether the Postgres
+    # steps below succeed: leftover Celery broker tasks from a previous run
+    # get picked up by new workers and hang trying to fetch cache rows/repos
+    # that no longer exist. So its success/failure is tracked separately
+    # from the Postgres steps rather than short-circuited by them.
+    postgres_ok = True
     try:
         # don't need to check return values- errors propogate as exceptions,
         # which will halt init altogether.
@@ -468,16 +576,24 @@ def db_init() -> int:
         # add tables to augur_cache db if they don't already exist.
         _create_application_tables()
 
-        # flush redis so broker state matches the fresh postgres-cache.
-        _flush_redis_broker()
+        # index any table with a repo_id column - always, so new tables
+        # stay covered automatically without any manual bookkeeping.
+        _ensure_repo_id_indexes()
+
+        # apply any versioned schema changes that aren't safely re-appliable.
+        _apply_schema_migrations()
 
         logging.warning("db_init: POSTGRES CACHE SUCCESSFULLY INITIALIZED")
 
-        return 0
-
     except Exception as e:
         logging.critical(f"POSTGRES ERROR: {e}")
-        return 1
+        postgres_ok = False
+
+    # flush redis so broker state matches the postgres-cache, even if the
+    # postgres steps above failed.
+    _flush_redis_broker()
+
+    return 0 if postgres_ok else 1
 
 
 if __name__ == "__main__":
