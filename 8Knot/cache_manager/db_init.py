@@ -12,7 +12,7 @@ project like this will know enough SQL to read the existing table
 definitions and create a new table as needed from those examples.
 
 We don't use alembic here because this database is a disposable,
-UNLOGGED cache: every table is rebuildable from Augur and is already
+UNLOGGED cache: every table is rebuildable from CollectOSS and is already
 lost on any unclean restart, the schema is a small fixed set of tables,
 and there's no ORM - contributors work in raw SQL. Standing up alembic
 would mean modeling all of that just to bootstrap an alembic_version
