@@ -11,9 +11,16 @@ create a table in the cache. Most people who would be working on a
 project like this will know enough SQL to read the existing table
 definitions and create a new table as needed from those examples.
 
-Our data model is fairly simple, so we do not use alembic. Schema
-changes to existing tables are numbered SQL functions in MIGRATIONS
-below, applied on startup. We can return to alembic later if needed.
+We don't use alembic here because this database is a disposable,
+UNLOGGED cache: every table is rebuildable from Augur and is already
+lost on any unclean restart, the schema is a small fixed set of tables,
+and there's no ORM - contributors work in raw SQL. Standing up alembic
+would mean modeling all of that just to bootstrap an alembic_version
+table, which isn't worth it for a throwaway cache. Instead, schema
+changes to existing tables are handled on startup: idempotent ones run
+unconditionally (see _ensure_repo_id_indexes below) and the rest are
+numbered entries in MIGRATIONS, applied in order. We can adopt alembic
+later if the schema outgrows this.
 """
 
 """
@@ -487,6 +494,27 @@ def _ensure_repo_id_indexes() -> None:
     logging.warning(f"db_init: ensured repo_id indexes ({len(tables)} tables)")
 
 
+def _backfill_issues_query_columns() -> None:
+    """Add columns introduced after issues_query was first created.
+
+    PR #1189 added a `labels` column to the issues_query CREATE block, but
+    CREATE TABLE IF NOT EXISTS never alters a table that already exists, so
+    caches created before #1189 are missing it - which is why the issues
+    visualizations currently guard with `if "labels" not in df.columns`.
+    ADD COLUMN IF NOT EXISTS is idempotent, so like _ensure_repo_id_indexes
+    this is a category-1 change that runs unconditionally rather than a
+    numbered migration.
+    """
+    conn = _connect_with_retry(cache_cx_string)
+    try:
+        with conn.cursor() as cur:
+            cur.execute("ALTER TABLE issues_query ADD COLUMN IF NOT EXISTS labels text")
+        conn.commit()
+    finally:
+        conn.close()
+    logging.warning("db_init: ensured issues_query.labels column")
+
+
 # Integer versions, applied in order. Never edit a past entry; add a new one.
 # Reserved for changes that can't be made safely re-appliable, like dropping
 # or renaming a column. Changes that are safe as CREATE/INDEX IF NOT EXISTS
@@ -579,6 +607,9 @@ def db_init() -> int:
         # index any table with a repo_id column - always, so new tables
         # stay covered automatically without any manual bookkeeping.
         _ensure_repo_id_indexes()
+
+        # backfill columns added to existing tables after they were created.
+        _backfill_issues_query_columns()
 
         # apply any versioned schema changes that aren't safely re-appliable.
         _apply_schema_migrations()
