@@ -206,7 +206,8 @@ def _create_application_tables() -> None:
                 reporter_id text,
                 issue_closer text,
                 created_at text,
-                closed_at text
+                closed_at text,
+                labels text
             )
             """
         )
