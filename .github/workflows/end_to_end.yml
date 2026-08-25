@@ -52,6 +52,7 @@ jobs:
           yq eval -i '.services.app-server.image = "8knot-app:test"' docker-compose.yml
           yq eval -i '.services.app-server.pull_policy = "never"' docker-compose.yml
           yq eval -i '.services.app-server.restart = "no"' docker-compose.yml
+          yq eval -i 'del(.services.app-server.volumes)' docker-compose.yml
           yq eval -i '.services.app-server.healthcheck.test = "curl -f http://localhost:8080/ || exit 1"' docker-compose.yml
           yq eval -i '.services.app-server.healthcheck.interval = "15s"' docker-compose.yml
           yq eval -i '.services.app-server.healthcheck.timeout = "2m"' docker-compose.yml
@@ -138,6 +139,7 @@ jobs:
           yq eval -i '.services.app-server.image = "8knot-app:test"' docker-compose.yml
           yq eval -i '.services.app-server.pull_policy = "never"' docker-compose.yml
           yq eval -i '.services.app-server.restart = "no"' docker-compose.yml
+          yq eval -i 'del(.services.app-server.volumes)' docker-compose.yml
           yq eval -i '.services.app-server.healthcheck.test = "curl -f http://localhost:8080/ || exit 1"' docker-compose.yml
           yq eval -i '.services.app-server.healthcheck.interval = "15s"' docker-compose.yml
           yq eval -i '.services.app-server.healthcheck.timeout = "2m"' docker-compose.yml
