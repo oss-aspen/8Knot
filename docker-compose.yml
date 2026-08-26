@@ -1,4 +1,33 @@
 services:
+
+  # ── sample_collected_data: ready-to-use local DB, pulled from a registry ─────
+  # Pre-populated PostgreSQL image so you can run 8Knot or notebooks locally
+  # without a remote collectOSS/Augur instance. The image already contains the
+  # data; users never build it.
+  #
+  # To use it, set in .env:
+  #   AUGUR_HOST=sample-collected-data  AUGUR_PORT=5432
+  #   AUGUR_DATABASE=sample_collected_data
+  #   AUGUR_USERNAME=sample_user  AUGUR_PASSWORD=sample_password
+  #   AUGUR_SCHEMA=data,augur_data
+  # then:  docker compose up
+  #
+  # See docker/sample_collected_data/README.md for details.
+  sample-collected-data:
+    image: ghcr.io/oss-aspen/sample-collected-data:latest
+    ports:
+      - "5433:5432"  # exposed on 5433 to avoid clashing with a local postgres
+    environment:
+      POSTGRES_DB: sample_collected_data
+      POSTGRES_USER: sample_user
+      POSTGRES_PASSWORD: sample_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sample_user -d sample_collected_data"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  # ─────────────────────────────────────────────────────────────────────────────
+
   db-init:
     build:
       context: .
