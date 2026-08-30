@@ -5,22 +5,21 @@ This file uses raw SQL to create tables in Postgres.
 It's typically easiest and best-practice to use a db migration
 tool instead of doing error-prone manual administration like this.
 
-However, using sqlalchemy and alembic (Python db migration stack)
-would be a bit of a steep learning curve for people who just want to
-create a table in the cache. Most people who would be working on a
-project like this will know enough SQL to read the existing table
-definitions and create a new table as needed from those examples.
+Base tables are still created here with raw CREATE UNLOGGED TABLE IF NOT
+EXISTS blocks (see below), so adding a brand-new table stays as simple as
+copying an existing block - no ORM or SQLAlchemy models to learn. Anyone
+who can read SQL can add a table.
 
-We don't use alembic here because this database is a disposable,
-UNLOGGED cache: every table is rebuildable from CollectOSS and is already
-lost on any unclean restart, the schema is a small fixed set of tables,
-and there's no ORM - contributors work in raw SQL. Standing up alembic
-would mean modeling all of that just to bootstrap an alembic_version
-table, which isn't worth it for a throwaway cache. Instead, schema
-changes to existing tables are handled on startup: idempotent ones run
-unconditionally (see _ensure_repo_id_indexes below) and the rest are
-numbered entries in MIGRATIONS, applied in order. We can adopt alembic
-later if the schema outgrows this.
+What raw CREATE blocks can't do is change a table that already exists:
+CREATE TABLE IF NOT EXISTS is a no-op once the table is there, so a column
+added to a block below never reaches a cache that predates it. Those
+changes to existing tables are versioned with alembic (migrations/ next to
+this file), which db_init applies on startup. We keep the raw CREATE blocks
+as the definition of a fresh cache and layer alembic on top for schema
+evolution, so the cache can check its own version and upgrade itself
+automatically - the groundwork for making the cache persistent rather than
+rebuilt-on-boot. Migrations are hand-written raw SQL (no autogenerate),
+matching the raw-SQL style of the table definitions here.
 """
 
 """
@@ -49,29 +48,28 @@ does not already exist. This initialization script ALWAYS runs
 on app startup to make sure that the schema of the databse is
 intact between application restarts.
 
-CREATE IF NOT EXISTS cannot change a table that already exists.
-Changes to existing tables fall into two categories:
-
-(1) Safely re-appliable with an IF NOT EXISTS / IF EXISTS guard (e.g. a
-    new index, like _ensure_repo_id_indexes() below). These don't need
-    versioning - just add your own function and call it unconditionally
-    on every boot, same as _create_application_tables().
-
-(2) Not safely re-appliable (e.g. dropping/renaming a column, changing a
-    type). These go in a numbered migration in MIGRATIONS below. On
-    startup we compare cache_schema_version to the latest migration and
-    apply anything missing. Existing caches with no version table are
-    treated as version 0.
-
 To add a new table to the cache, simply copy an existing table
 creation block from those below. Given that you're creating a table
 for a query in the 'queries/' folder, name the table the same name
 as the query function. Name the columns of the table, and give their
 types, and everything should work!
 
-To make a non-re-appliable change to an existing table, add a function
-to MIGRATIONS with the next integer version. Do not edit old
-migration functions.
+To change a table that already exists (add/drop/rename a column, change a
+type), add an alembic migration:
+
+    cd 8Knot/cache_manager
+    alembic revision -m "describe change"   # writes migrations/versions/<id>.py
+
+Fill in upgrade()/downgrade() with raw SQL via op.execute(...). If the new
+column should also exist on a fresh cache, add it to the CREATE block below
+as well - the block defines a fresh cache, the migration patches existing
+ones. db_init runs "alembic upgrade head" on every boot (see
+_run_cache_migrations), so the change is applied automatically. Never edit
+a migration that has already shipped; add a new one.
+
+Note _ensure_repo_id_indexes() below is intentionally NOT a migration: it
+discovers tables at runtime and CREATE INDEX IF NOT EXISTS is always safe to
+re-run, so it just runs unconditionally on every boot.
 
 Here's a list of types that postgres defines:
 https://www.postgresql.org/docs/current/datatype.html
@@ -85,11 +83,16 @@ Generally, 'int' is good for integers,
 """
 
 import logging
-import sys
 import os
+import sys
+import time
+from contextlib import contextmanager
+
 import psycopg2 as pg
 import redis
-import time
+from alembic import command
+from alembic.config import Config
+from psycopg2 import sql as pg_sql
 
 
 def _env_int(var: str, default: int) -> int:
@@ -124,7 +127,7 @@ def _env_int(var: str, default: int) -> int:
 
 # doesn't use relative import syntax "import .cx_common" because
 # cx_common is a neighbor of script, thus is available in PYTHON_PATH
-from cx_common import init_cx_string, cache_cx_string
+from cx_common import cache_cx_string, env_dbname, init_cx_string
 
 
 def _connect_with_retry(connection_string, max_retries=5, retry_delay=3):
@@ -164,6 +167,10 @@ def _create_application_database() -> None:
 
     This function creates the 'augur_cache' database, which will
     contain all of the tables where we'll cache data for visualization.
+
+    Concurrent initializers serialize the existence check and creation on
+    the root database. The configured CACHE_DB_NAME is used consistently
+    for creation and all subsequent cache connections.
     """
 
     # Connect to the dbms at top-level
@@ -176,19 +183,16 @@ def _create_application_database() -> None:
     # required so that we can create a database
     conn.autocommit = True
 
-    # check if application db already exists
-    cur = conn.cursor()
-    cur.execute("SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'augur_cache'")
-    exists = cur.fetchone()
-
-    # create application db if it doesn't already exist
-    if not exists:
-        logging.warning("CREATING augur_cache DATABASE")
-        cur.execute("CREATE DATABASE augur_cache")
-
-    conn.commit()
-    cur.close()
-    conn.close()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT pg_advisory_lock(hashtext(%s))", ("8knot-cache-database-init",))
+            cur.execute("SELECT 1 FROM pg_catalog.pg_database WHERE datname = %s", (env_dbname,))
+            if not cur.fetchone():
+                logging.warning(f"CREATING {env_dbname} DATABASE")
+                cur.execute(pg_sql.SQL("CREATE DATABASE {}").format(pg_sql.Identifier(env_dbname)))
+    finally:
+        # Session-level advisory locks are released when the connection closes.
+        conn.close()
 
 
 def _create_application_tables() -> None:
@@ -465,166 +469,209 @@ def _ensure_repo_id_indexes() -> None:
     update here.
 
     CREATE INDEX IF NOT EXISTS is always safely re-appliable, so unlike a
-    real schema migration (see MIGRATIONS below), this doesn't need to be
-    gated by cache_schema_version - it just runs unconditionally on every
-    boot, the same way _create_application_tables() does.
+    real schema change (which goes through an alembic migration, see
+    _run_cache_migrations below), this doesn't need to be versioned - it
+    just runs unconditionally on every boot, the same way
+    _create_application_tables() does.
 
     cache_bookkeeping also has a repo_id column but is queried by
     (cache_func, repo_id) instead, so it's excluded here and given its own
     composite index.
     """
     conn = _connect_with_retry(cache_cx_string)
+    conn.autocommit = True
     try:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT table_name FROM information_schema.columns
-                WHERE table_schema = 'public' AND column_name = 'repo_id' AND table_name != 'cache_bookkeeping'
+                SELECT DISTINCT columns.table_name
+                FROM information_schema.columns AS columns
+                JOIN information_schema.tables AS tables
+                  ON tables.table_catalog = columns.table_catalog
+                 AND tables.table_schema = columns.table_schema
+                 AND tables.table_name = columns.table_name
+                WHERE columns.table_schema = 'public'
+                  AND columns.column_name = 'repo_id'
+                  AND columns.table_name != 'cache_bookkeeping'
+                  AND tables.table_type = 'BASE TABLE'
                 """
             )
             tables = [row[0] for row in cur.fetchall()]
-            for table in tables:
-                cur.execute(f"CREATE INDEX IF NOT EXISTS {table}_repo_id_idx ON {table} (repo_id)")
+
+            indexes = [(f"{table}_repo_id_idx", table, ("repo_id",)) for table in tables] + [
+                ("cache_bookkeeping_func_repo_idx", "cache_bookkeeping", ("cache_func", "repo_id"))
+            ]
             cur.execute(
-                "CREATE INDEX IF NOT EXISTS cache_bookkeeping_func_repo_idx ON cache_bookkeeping (cache_func, repo_id)"
+                """
+                SELECT index_class.relname
+                FROM pg_catalog.pg_index AS index_info
+                JOIN pg_catalog.pg_class AS index_class ON index_class.oid = index_info.indexrelid
+                JOIN pg_catalog.pg_namespace AS namespace ON namespace.oid = index_class.relnamespace
+                WHERE namespace.nspname = 'public' AND NOT index_info.indisvalid
+                """
             )
-        conn.commit()
+            invalid_indexes = {row[0] for row in cur.fetchall()}
+
+            for index_name, table, columns in indexes:
+                if index_name in invalid_indexes:
+                    cur.execute(
+                        pg_sql.SQL("DROP INDEX CONCURRENTLY IF EXISTS {}.{}").format(
+                            pg_sql.Identifier("public"), pg_sql.Identifier(index_name)
+                        )
+                    )
+                cur.execute(
+                    pg_sql.SQL("CREATE INDEX CONCURRENTLY IF NOT EXISTS {} ON {}.{} ({})").format(
+                        pg_sql.Identifier(index_name),
+                        pg_sql.Identifier("public"),
+                        pg_sql.Identifier(table),
+                        pg_sql.SQL(", ").join(map(pg_sql.Identifier, columns)),
+                    )
+                )
     finally:
         conn.close()
     logging.warning(f"db_init: ensured repo_id indexes ({len(tables)} tables)")
 
 
-def _backfill_issues_query_columns() -> None:
-    """Add columns introduced after issues_query was first created.
-
-    PR #1189 added a `labels` column to the issues_query CREATE block, but
-    CREATE TABLE IF NOT EXISTS never alters a table that already exists, so
-    caches created before #1189 are missing it - which is why the issues
-    visualizations currently guard with `if "labels" not in df.columns`.
-    ADD COLUMN IF NOT EXISTS is idempotent, so like _ensure_repo_id_indexes
-    this is a category-1 change that runs unconditionally rather than a
-    numbered migration.
-    """
+@contextmanager
+def _cache_schema_lock():
+    """Serialize schema initialization across app pods."""
     conn = _connect_with_retry(cache_cx_string)
+    conn.autocommit = True
     try:
         with conn.cursor() as cur:
-            cur.execute("ALTER TABLE issues_query ADD COLUMN IF NOT EXISTS labels text")
-        conn.commit()
+            cur.execute("SELECT pg_advisory_lock(hashtext(%s))", ("8knot-cache-schema-init",))
+        yield
     finally:
+        # Session-level advisory locks are released when the connection closes.
         conn.close()
-    logging.warning("db_init: ensured issues_query.labels column")
 
 
-# Integer versions, applied in order. Never edit a past entry; add a new one.
-# Reserved for changes that can't be made safely re-appliable, like dropping
-# or renaming a column. Changes that are safe as CREATE/INDEX IF NOT EXISTS
-# forever (like _ensure_repo_id_indexes above) don't belong here - they
-# should just run unconditionally on every boot instead.
-MIGRATIONS = {}
-
-
-def _apply_schema_migrations() -> None:
-    """Bring an existing cache schema up to the latest version.
-
-    Caches with no cache_schema_version table (today's production DBs)
-    are version 0. Each pending migration runs, then we stamp that
-    version in the same transaction. Failure rolls back and db_init
-    exits non-zero so the init container retries.
-    """
+def _cache_schema_exists() -> bool:
+    """Return whether this database already contains an 8Knot cache schema."""
     conn = _connect_with_retry(cache_cx_string)
-    latest = max(MIGRATIONS, default=0)
     try:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                CREATE TABLE IF NOT EXISTS cache_schema_version (
-                    version int PRIMARY KEY,
-                    applied_at timestamptz NOT NULL DEFAULT now()
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM information_schema.tables
+                    WHERE table_schema = 'public'
+                      AND table_type = 'BASE TABLE'
+                      AND table_name != 'alembic_version'
                 )
                 """
             )
-            cur.execute("SELECT COALESCE(MAX(version), 0) FROM cache_schema_version")
-            current = cur.fetchone()[0]
-            logging.warning(f"db_init: cache schema version {current}, latest {latest}")
-
-            for version in range(current + 1, latest + 1):
-                logging.warning(f"db_init: applying cache schema migration {version}")
-                MIGRATIONS[version](cur)
-                cur.execute("INSERT INTO cache_schema_version (version) VALUES (%s)", (version,))
-
-            conn.commit()
+            return cur.fetchone()[0]
     finally:
         conn.close()
-    logging.warning(f"db_init: cache schema at version {latest}")
 
 
-def _flush_redis_broker() -> None:
+def _alembic_config() -> Config:
+    """Build an alembic Config pointing at migrations/ next to this file.
+
+    Paths are resolved from __file__ so it works no matter what directory
+    db_init is launched from. The database URL isn't set here - env.py
+    builds it from the same CACHE_* env vars cx_common uses.
     """
-    Flush the Redis broker so it stays in sync with postgres-cache.
+    here = os.path.dirname(os.path.abspath(__file__))
+    cfg = Config(os.path.join(here, "alembic.ini"))
+    cfg.set_main_option("script_location", os.path.join(here, "migrations"))
+    return cfg
+
+
+def _stamp_cache_schema() -> None:
+    """Mark a new, empty cache as current before creating its tables."""
+    command.stamp(_alembic_config(), "head")
+    logging.warning("db_init: stamped fresh cache at alembic head")
+
+
+def _run_cache_migrations() -> None:
+    """Upgrade a pre-existing cache to the latest alembic revision."""
+    command.upgrade(_alembic_config(), "head")
+    logging.warning("db_init: cache schema upgraded to alembic head")
+
+
+def _cache_generation_id() -> str:
+    """Identify the current database instance, server start, and schema revision."""
+    conn = _connect_with_retry(cache_cx_string)
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT oid::text, pg_postmaster_start_time()::text
+                FROM pg_catalog.pg_database
+                WHERE datname = current_database()
+                """
+            )
+            database_oid, postgres_start = cur.fetchone()
+            cur.execute("SELECT version_num FROM alembic_version ORDER BY version_num")
+            revisions = ",".join(row[0] for row in cur.fetchall())
+            return f"{database_oid}:{postgres_start}:{revisions}"
+    finally:
+        conn.close()
+
+
+def _synchronize_redis_broker(cache_generation_id: str) -> None:
+    """Reset stale broker state once per cache startup or schema change.
 
     postgres-cache uses UNLOGGED tables, so all cached data is lost on
-    restart. If Redis still holds stale Celery task messages or results
-    from a previous run, workers pick them up and poll for data that no
-    longer exists, causing deadlocks. Flushing here guarantees a clean
-    broker state every time the cache is (re)initialized.
+    crash recovery. The durable generation marker also changes after schema
+    migration or database recreation, and prevents concurrent app initializers
+    from erasing work queued after the first one completes.
     """
     broker_host = os.getenv("REDIS_SERVICE_HOST", "redis-broker")
     broker_port = _env_int("REDIS_SERVICE_PORT", 6379)
     broker_password = os.getenv("REDIS_PASSWORD", "")
+    marker_key = f"8knot:cache:{env_dbname}:generation"
 
-    users_host = os.getenv("REDIS_SERVICE_USERS_HOST", "redis-users")
-    users_port = _env_int("REDIS_SERVICE_USERS_PORT", 6379)
-
-    for name, host, port in [
-        ("redis-broker", broker_host, broker_port),
-        ("redis-users", users_host, users_port),
-    ]:
-        try:
-            r = redis.StrictRedis(host=host, port=port, password=broker_password)
-            r.flushall()
-            logging.warning(f"db_init: FLUSHED {name} ({host}:{port})")
-        except Exception as e:
-            logging.warning(f"db_init: could not flush {name}: {e}")
+    r = redis.StrictRedis(host=broker_host, port=broker_port, password=broker_password)
+    if r.get(marker_key) == cache_generation_id.encode():
+        logging.warning("db_init: redis-broker already synchronized")
+        return
+    with r.pipeline(transaction=True) as pipeline:
+        pipeline.flushall()
+        pipeline.set(marker_key, cache_generation_id)
+        pipeline.execute()
+    logging.warning(f"db_init: FLUSHED redis-broker ({broker_host}:{broker_port})")
 
 
 def db_init() -> int:
-    # Redis must be flushed every boot regardless of whether the Postgres
-    # steps below succeed: leftover Celery broker tasks from a previous run
-    # get picked up by new workers and hang trying to fetch cache rows/repos
-    # that no longer exist. So its success/failure is tracked separately
-    # from the Postgres steps rather than short-circuited by them.
-    postgres_ok = True
     try:
         # don't need to check return values- errors propogate as exceptions,
         # which will halt init altogether.
 
-        # create augur_cache db if it doesn't already exist.
+        # create the configured cache database if it doesn't already exist.
         _create_application_database()
 
-        # add tables to augur_cache db if they don't already exist.
-        _create_application_tables()
+        with _cache_schema_lock():
+            schema_exists = _cache_schema_exists()
 
-        # index any table with a repo_id column - always, so new tables
-        # stay covered automatically without any manual bookkeeping.
-        _ensure_repo_id_indexes()
+            # Stamp before table creation so an interrupted fresh bootstrap
+            # can safely retry without replaying historical migrations over
+            # the current CREATE definitions.
+            if not schema_exists:
+                _stamp_cache_schema()
 
-        # backfill columns added to existing tables after they were created.
-        _backfill_issues_query_columns()
+            _create_application_tables()
 
-        # apply any versioned schema changes that aren't safely re-appliable.
-        _apply_schema_migrations()
+            if schema_exists:
+                _run_cache_migrations()
+
+            # Reconcile indexes after migrations so they reflect the final schema.
+            _ensure_repo_id_indexes()
+
+            # Only the first initializer for a PostgreSQL start or schema
+            # change resets stale Celery state. User sessions are separate.
+            _synchronize_redis_broker(_cache_generation_id())
 
         logging.warning("db_init: POSTGRES CACHE SUCCESSFULLY INITIALIZED")
 
+        return 0
+
     except Exception as e:
-        logging.critical(f"POSTGRES ERROR: {e}")
-        postgres_ok = False
-
-    # flush redis so broker state matches the postgres-cache, even if the
-    # postgres steps above failed.
-    _flush_redis_broker()
-
-    return 0 if postgres_ok else 1
+        logging.critical(f"INITIALIZATION ERROR: {e}")
+        return 1
 
 
 if __name__ == "__main__":
