@@ -37,26 +37,9 @@ from .cx_common import (
     db_cx_string,
     cache_cx_string,
     augur_cx_options,
+    enable_client_connection_checks,
     env_augur_statement_timeout_ms,
 )
-
-
-def _abort_query_when_client_disconnects(augur_conn) -> None:
-    """Asks the server to stop a running query as soon as we disappear.
-
-    Postgres only polls the client socket during a query if this is set, so without
-    it a query keeps running after the worker is gone. It's postgres 14+, and a
-    server that rejects it is still bounded by statement_timeout, so a failure here
-    is worth logging but not worth failing the query over.
-    """
-    try:
-        with augur_conn.cursor() as cur:
-            cur.execute("SET client_connection_check_interval = '10s'")
-        # SET is transactional- without a commit it's undone by the next rollback.
-        augur_conn.commit()
-    except pg.Error as e:
-        logging.warning(f"AUGUR: client disconnect checks unavailable: {e}")
-        augur_conn.rollback()
 
 
 def cache_query_results(
@@ -82,14 +65,14 @@ def cache_query_results(
     """
     logging.warning(f"{target_table} -- CQR CACHE_QUERY_RESULTS BEGIN")
     # 'closing' rather than a bare 'with': psycopg2's context manager ends the
-    # transaction but leaves the connection- and its server-side cursor- open.
+    # transaction but leaves the connection open.
     with closing(
         pg.connect(
             db_connection_string,
             options=augur_cx_options(env_augur_statement_timeout_ms),
         )
     ) as augur_conn:
-        _abort_query_when_client_disconnects(augur_conn)
+        enable_client_connection_checks(augur_conn)
 
         with augur_conn.cursor(name=f"{target_table}-{uuid4()}") as augur_cur:
             # set number of rows we want from primary db at a time
@@ -223,11 +206,11 @@ def caching_wrapper(func_name: str, query: str, repolist: list[int], n_repolist_
             target_table=func_name,
             bookkeeping_data=tuple({"cache_func": func_name, "repo_id": r} for r in repolist),
         )
-    except Exception as e:
-        logging.critical(f"{func_name}_POSTGRES ERROR: {e}")
+    except Exception:
+        logging.exception(f"{func_name}_POSTGRES ERROR")
 
         # raise exception so caching function knows to restart
-        raise Exception(e)
+        raise
 
 
 def retrieve_from_cache(

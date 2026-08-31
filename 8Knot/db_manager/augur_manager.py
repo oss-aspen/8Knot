@@ -11,7 +11,11 @@ import sys
 import requests
 from sqlalchemy.exc import SQLAlchemyError
 from models import SearchItem
-from cache_manager.cx_common import augur_cx_options, env_augur_engine_statement_timeout_ms
+from cache_manager.cx_common import (
+    augur_cx_options,
+    enable_client_connection_checks,
+    env_augur_engine_statement_timeout_ms,
+)
 
 
 class AugurManager:
@@ -116,6 +120,7 @@ class AugurManager:
             connect_args={"options": augur_cx_options(env_augur_engine_statement_timeout_ms)},
             pool_pre_ping=True,
         )
+        salc.event.listen(engine, "connect", enable_client_connection_checks)
 
         # verify that engine works
         try:

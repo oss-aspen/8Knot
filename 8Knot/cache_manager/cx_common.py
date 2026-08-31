@@ -5,6 +5,7 @@ Connection Common file - accessing environment variables
 import os
 import logging
 import time
+import psycopg2 as pg
 
 # credentials to access database from environment
 try:
@@ -50,9 +51,9 @@ db_cx_string = "dbname={} user={} password={} host={} port={}".format(
     env_augur_port,
 )
 
-# how long a single statement may run against augur before the server aborts it.
-# worker queries have to finish inside celery's soft time limit (540s), otherwise
-# celery kills the worker and the query is orphaned on the augur server.
+# How long each worker statement may run before the server aborts it. Named-cursor
+# fetches are separate statements, so disconnect checks still enforce cleanup if
+# the Celery process reaches its own time limit first.
 env_augur_statement_timeout_ms = os.getenv("AUGUR_STATEMENT_TIMEOUT_MS", "500000")
 
 # the app-server's searchbar query legitimately takes much longer than a worker
@@ -86,3 +87,18 @@ def augur_cx_options(statement_timeout_ms: str) -> str:
             "-c tcp_keepalives_count=3",
         ]
     )
+
+
+def enable_client_connection_checks(connection, _connection_record=None) -> None:
+    """Enable disconnect polling when PostgreSQL and its host support it."""
+    if connection.server_version < 140000:
+        return
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SET client_connection_check_interval = '10s'")
+        # SET is transactional; finish it before application queries begin.
+        connection.commit()
+    except pg.Error as error:
+        logging.warning(f"AUGUR: client disconnect checks unavailable: {error}")
+        connection.rollback()
