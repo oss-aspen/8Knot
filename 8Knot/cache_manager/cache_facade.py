@@ -124,6 +124,14 @@ def get_uncached(func_name: str, repolist: list[int]) -> list[int]:  # or None
 
     Returns a list of repos that AREN'T resident in cache.
     """
+    if not repolist:
+        # nothing requested means nothing missing. guarded here rather than at
+        # each call site because psycopg2 renders an empty sequence as "in ()",
+        # which postgres rejects outright -- and every visualization callback
+        # polls this function on initial page load, when the repo-choices
+        # store still holds its default [].
+        return []
+
     with pg.connect(cache_cx_string) as cache_conn:
         with cache_conn.cursor() as cache_cur:
             composed_query = pg_sql.SQL(
@@ -224,7 +232,12 @@ def retrieve_from_cache(
                 """.format(
                     tablename=tablename
                 ),
-                (tuple(repolist),),
+                # psycopg2 renders an empty sequence as "()", which postgres
+                # rejects. NULL matches nothing, so an empty repolist returns
+                # zero rows while cursor.description still yields the table's
+                # columns -- callers preprocess on those columns before they
+                # test df.empty, so a 0x0 frame is not a safe substitute.
+                (tuple(repolist) or (None,),),
             )
 
             logging.warning(f"{tablename} - LOADING DATA FROM CACHE")
