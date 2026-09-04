@@ -189,17 +189,21 @@ def caching_wrapper(func_name: str, query: str, repolist: list[int], n_repolist_
             logging.warning(f"{func_name} COLLECTION - CACHING {len(uncached_repos)} NEW REPOS")
 
             # inject the repolist multiple times because the SQL uses it more
-            # than once and the wildcard %s are ordered.
-            uncached_repos: tuple[tuple] = tuple([tuple(uncached_repos) for _ in range(n_repolist_uses)])
+            # than once and the wildcard %s are ordered. kept under its own name
+            # so uncached_repos stays the list of repos this call is filling.
+            query_vars: tuple[tuple] = tuple([tuple(uncached_repos) for _ in range(n_repolist_uses)])
 
         # STEP 2: Query for those repos
         logging.warning(f"{func_name} COLLECTION - EXECUTING CACHING QUERY")
         cache_query_results(
             db_connection_string=db_cx_string,
             query=query,
-            vars=uncached_repos,
+            vars=query_vars,
             target_table=func_name,
-            bookkeeping_data=tuple({"cache_func": func_name, "repo_id": r} for r in repolist),
+            # only the repos actually cached here. recording the full repolist
+            # re-inserted a row for every repo that was already resident, and
+            # cache_bookkeeping has no unique constraint to absorb the repeats.
+            bookkeeping_data=tuple({"cache_func": func_name, "repo_id": r} for r in uncached_repos),
         )
     except Exception as e:
         logging.critical(f"{func_name}_POSTGRES ERROR: {e}")

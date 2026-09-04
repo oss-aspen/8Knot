@@ -153,8 +153,12 @@ class AugurManager:
         try:
             with self.engine.connect() as conn:
                 result_df = pd.read_sql(query, con=conn)
-        except:
-            raise Exception("DB Read Failure")
+        except Exception as e:
+            # a bare 'except' here also caught KeyboardInterrupt and SystemExit,
+            # and dropped the cause -- so a statement timeout, a bad column name
+            # and a dropped connection were indistinguishable in the logs.
+            logging.exception("AUGUR: DB read failed")
+            raise Exception("DB Read Failure") from e
 
         result_df = result_df.reset_index()
         result_df.drop("index", axis=1, inplace=True)
