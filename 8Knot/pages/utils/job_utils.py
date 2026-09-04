@@ -51,7 +51,7 @@ def get_default_repo_with_data(repo_ids, cache_tablename):
         cache_tablename: Name of the cache table to query
 
     Returns:
-        str: The first repo_id (as string) that has cached data, or repo_ids[0] as fallback
+        str | None: The first repo_id with cached data, repo_ids[0] as fallback, or None when no repos are selected
     """
 
     if not repo_ids:

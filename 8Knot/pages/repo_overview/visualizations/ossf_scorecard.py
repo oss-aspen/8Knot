@@ -99,8 +99,10 @@ def toggle_popover(n, is_open):
 )
 def ossf_scorecard(repo: str):
 
-    if repo is not None:
-        repo = int(repo)
+    if repo is None:
+        return dbc.Table.from_dataframe(pd.DataFrame(), striped=True, bordered=True, hover=True), dbc.Label("No data")
+
+    repo = int(repo)
 
     # wait for data to asynchronously download and become available.
     while not_cached := cf.get_uncached(func_name=osq.__name__, repolist=[repo]):

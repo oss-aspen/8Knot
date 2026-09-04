@@ -80,8 +80,10 @@ def toggle_popover(n, is_open):
 )
 def repo_general_info(repo):
 
-    if repo is not None:
-        repo = int(repo)
+    if repo is None:
+        return dbc.Table.from_dataframe(pd.DataFrame(), striped=True, bordered=True, hover=True), dbc.Label("No data")
+
+    repo = int(repo)
 
     logging.warning(f"{VIZ_ID} - START")
     start = time.perf_counter()
