@@ -51,8 +51,14 @@ def get_default_repo_with_data(repo_ids, cache_tablename):
         cache_tablename: Name of the cache table to query
 
     Returns:
-        str: The first repo_id (as string) that has cached data, or repo_ids[0] as fallback
+        str | None: The first repo_id with cached data, repo_ids[0] as fallback, or None when no repos are selected
     """
+
+    if not repo_ids:
+        # no selection to default to. this runs in the web process on initial
+        # page load, when the repo-choices store still holds its default [],
+        # and every return below indexes repo_ids[0].
+        return None
 
     df = cf.retrieve_from_cache(tablename=cache_tablename, repolist=repo_ids)
 
