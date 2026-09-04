@@ -125,6 +125,9 @@ def repo_dropdown(repo_ids):
     background=True,
 )
 def directory_dropdown(repo_id):
+    if repo_id is None:
+        return [], None
+
     # Convert to int since Mantine dropdown returns strings
     repo_id = int(repo_id)
 
@@ -199,6 +202,9 @@ def directory_dropdown(repo_id):
 def cntrb_file_heatmap_graph(repo_id, directory, graph_view):
     start = time.perf_counter()
     logging.warning(f"{VIZ_ID}- START")
+
+    if repo_id is None:
+        return nodata_graph
 
     # Convert to int since Mantine dropdown returns strings
     repo_id = int(repo_id)
