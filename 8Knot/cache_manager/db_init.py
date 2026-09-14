@@ -86,6 +86,7 @@ import logging
 import os
 import sys
 import time
+import uuid
 from contextlib import contextmanager
 
 import psycopg2 as pg
@@ -593,10 +594,18 @@ def _run_cache_migrations() -> None:
 
 
 def _cache_generation_id() -> str:
-    """Identify the current database instance, server start, and schema revision."""
+    """Identify the cache data and schema, under the init lock after table creation."""
     conn = _connect_with_retry(cache_cx_string)
     try:
         with conn.cursor() as cur:
+            # Backend crash recovery truncates UNLOGGED data without changing
+            # pg_postmaster_start_time(). This token is lost with the cache rows.
+            cur.execute("CREATE UNLOGGED TABLE IF NOT EXISTS cache_generation (token uuid NOT NULL)")
+            cur.execute("SELECT token::text FROM cache_generation")
+            row = cur.fetchone()
+            token = row[0] if row else str(uuid.uuid4())
+            if not row:
+                cur.execute("INSERT INTO cache_generation (token) VALUES (%s)", (token,))
             cur.execute(
                 """
                 SELECT oid::text, pg_postmaster_start_time()::text
@@ -607,7 +616,8 @@ def _cache_generation_id() -> str:
             database_oid, postgres_start = cur.fetchone()
             cur.execute("SELECT version_num FROM alembic_version ORDER BY version_num")
             revisions = ",".join(row[0] for row in cur.fetchall())
-            return f"{database_oid}:{postgres_start}:{revisions}"
+            conn.commit()
+            return f"{database_oid}:{postgres_start}:{revisions}:{token}"
     finally:
         conn.close()
 
@@ -661,7 +671,7 @@ def db_init() -> int:
             # Reconcile indexes after migrations so they reflect the final schema.
             _ensure_repo_id_indexes()
 
-            # Only the first initializer for a PostgreSQL start or schema
+            # Only the first initializer for a cache generation or schema
             # change resets stale Celery state. User sessions are separate.
             _synchronize_redis_broker(_cache_generation_id())
 
