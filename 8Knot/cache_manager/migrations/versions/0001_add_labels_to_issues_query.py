@@ -1,6 +1,6 @@
 """add labels column to issues_query
 
-Adds the labels column from #1189 to caches created before it (CREATE TABLE
+Adds the labels column to caches created before it (CREATE TABLE
 IF NOT EXISTS never alters existing tables). Fresh caches get it from the
 CREATE block and are stamped at head, so this only runs on existing caches.
 

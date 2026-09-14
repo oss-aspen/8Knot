@@ -447,8 +447,8 @@ def _create_application_tables() -> None:
 def _ensure_repo_id_indexes() -> None:
     """Index repo_id on every cache table that has the column.
 
-    Cache reads filter on repo_id, so a missing index means a sequential scan
-    (#1198). Tables are discovered at runtime, so new tables are covered
+    Cache reads filter on repo_id, so a missing index means a sequential scan.
+    Tables are discovered at runtime, so new tables are covered
     automatically, and invalid indexes from interrupted builds are recreated.
     cache_bookkeeping gets a (cache_func, repo_id) index instead.
     """
