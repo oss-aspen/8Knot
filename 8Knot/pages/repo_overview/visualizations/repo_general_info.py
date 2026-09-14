@@ -92,7 +92,7 @@ def repo_general_info(repo):
     # get dataframes of data from cache
     df_repo_files, df_repo_info, df_releases = multi_query_helper([repo])
 
-    # Repository metadata is required for the summary and its update date.
+    # Metadata is required; files and releases may be missing.
     if df_repo_info.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return dbc.Table.from_dataframe(pd.DataFrame(), striped=True, bordered=True, hover=True), dbc.Label("No data")
@@ -159,7 +159,7 @@ def process_data(df_repo_files, df_repo_info, df_releases):
         policy_paths = set()
         policy_files = df_repo_files[df_repo_files["file_name"].isin(["CONTRIBUTING.md", "SECURITY.md"])]
         for row in policy_files.dropna(subset=["file_path"]).itertuples():
-            # repo_labor paths include Augur's clone directory, unlike repository-relative paths.
+            # Strip the CollectOSS clone directory to get the repo-relative path.
             repo_prefix = f"{row.repo_id}-{row.repo_path}/{row.repo_name}/"
             path = row.file_path
             if path.startswith("/"):
@@ -216,7 +216,7 @@ def process_data(df_repo_files, df_repo_info, df_releases):
 
 def multi_query_helper(repos: list[int]):
     """
-    Retrieve summary data; None for files means collection is unavailable, not empty.
+    Load cached repo data; df_file is None when file data is unavailable.
     """
 
     # wait for data to asynchronously download and become available.
@@ -242,7 +242,7 @@ def multi_query_helper(repos: list[int]):
     if df_repo_info.empty:
         return None, df_repo_info, df_releases
 
-    # Optional file collection gets at most 60 extra seconds after metadata is ready.
+    # File data is optional: wait at most 60s after metadata, then render without it.
     deadline = time.monotonic() + 60
     while cf.get_uncached(func_name=rfq.__name__, repolist=repos):
         remaining = deadline - time.monotonic()
