@@ -5,21 +5,13 @@ This file uses raw SQL to create tables in Postgres.
 It's typically easiest and best-practice to use a db migration
 tool instead of doing error-prone manual administration like this.
 
-Base tables are still created here with raw CREATE UNLOGGED TABLE IF NOT
-EXISTS blocks (see below), so adding a brand-new table stays as simple as
-copying an existing block - no ORM or SQLAlchemy models to learn. Anyone
-who can read SQL can add a table.
+Tables are still defined as raw CREATE UNLOGGED TABLE IF NOT EXISTS blocks
+below, so adding a table only takes SQL.
 
-What raw CREATE blocks can't do is change a table that already exists:
-CREATE TABLE IF NOT EXISTS is a no-op once the table is there, so a column
-added to a block below never reaches a cache that predates it. Those
-changes to existing tables are versioned with alembic (migrations/ next to
-this file), which db_init applies on startup. We keep the raw CREATE blocks
-as the definition of a fresh cache and layer alembic on top for schema
-evolution, so the cache can check its own version and upgrade itself
-automatically - the groundwork for making the cache persistent rather than
-rebuilt-on-boot. Migrations are hand-written raw SQL (no autogenerate),
-matching the raw-SQL style of the table definitions here.
+Those blocks can't change a table that already exists, so changes to
+existing tables are alembic migrations (migrations/), applied on boot. The
+CREATE blocks define a fresh cache and migrations upgrade existing ones,
+the groundwork for a persistent cache. Migrations are hand-written raw SQL.
 """
 
 """
@@ -54,22 +46,18 @@ for a query in the 'queries/' folder, name the table the same name
 as the query function. Name the columns of the table, and give their
 types, and everything should work!
 
-To change a table that already exists (add/drop/rename a column, change a
-type), add an alembic migration:
+To change an existing table (add/drop/rename a column, change a type), add
+an alembic migration:
 
     cd 8Knot/cache_manager
     alembic revision -m "describe change"   # writes migrations/versions/<id>.py
 
-Fill in upgrade()/downgrade() with raw SQL via op.execute(...). If the new
-column should also exist on a fresh cache, add it to the CREATE block below
-as well - the block defines a fresh cache, the migration patches existing
-ones. db_init runs "alembic upgrade head" on every boot (see
-_run_cache_migrations), so the change is applied automatically. Never edit
-a migration that has already shipped; add a new one.
+Write upgrade()/downgrade() as raw SQL with op.execute(...), and update the
+CREATE block too so fresh caches match. Migrations run on every boot. Never
+edit a shipped migration; add a new one.
 
-Note _ensure_repo_id_indexes() below is intentionally NOT a migration: it
-discovers tables at runtime and CREATE INDEX IF NOT EXISTS is always safe to
-re-run, so it just runs unconditionally on every boot.
+_ensure_repo_id_indexes() is not a migration: CREATE INDEX IF NOT EXISTS is
+safe to re-run, so it runs on every boot.
 
 Here's a list of types that postgres defines:
 https://www.postgresql.org/docs/current/datatype.html
@@ -169,9 +157,7 @@ def _create_application_database() -> None:
     This function creates the 'augur_cache' database, which will
     contain all of the tables where we'll cache data for visualization.
 
-    Concurrent initializers serialize the existence check and creation on
-    the root database. The configured CACHE_DB_NAME is used consistently
-    for creation and all subsequent cache connections.
+    Uses CACHE_DB_NAME; an advisory lock keeps concurrent initializers from racing to create it.
     """
 
     # Connect to the dbms at top-level
@@ -459,25 +445,12 @@ def _create_application_tables() -> None:
 
 
 def _ensure_repo_id_indexes() -> None:
-    """Ensure every cache table with a repo_id column has an index on it.
+    """Index repo_id on every cache table that has the column.
 
-    retrieve_from_cache() and get_uncached() both filter on repo_id, and
-    UNLOGGED tables don't auto-index, so a missing index means a full
-    sequential scan (issue #1198 / PR #1158). Rather than hardcode the
-    table list, we ask Postgres which tables currently have a repo_id
-    column, so any table added later (via a new CREATE IF NOT EXISTS block
-    above) gets indexed the next time this runs - nothing to remember to
-    update here.
-
-    CREATE INDEX IF NOT EXISTS is always safely re-appliable, so unlike a
-    real schema change (which goes through an alembic migration, see
-    _run_cache_migrations below), this doesn't need to be versioned - it
-    just runs unconditionally on every boot, the same way
-    _create_application_tables() does.
-
-    cache_bookkeeping also has a repo_id column but is queried by
-    (cache_func, repo_id) instead, so it's excluded here and given its own
-    composite index.
+    Cache reads filter on repo_id, so a missing index means a sequential scan
+    (#1198). Tables are discovered at runtime, so new tables are covered
+    automatically, and invalid indexes from interrupted builds are recreated.
+    cache_bookkeeping gets a (cache_func, repo_id) index instead.
     """
     conn = _connect_with_retry(cache_cx_string)
     conn.autocommit = True
@@ -569,12 +542,7 @@ def _cache_schema_exists() -> bool:
 
 
 def _alembic_config() -> Config:
-    """Build an alembic Config pointing at migrations/ next to this file.
-
-    Paths are resolved from __file__ so it works no matter what directory
-    db_init is launched from. The database URL isn't set here - env.py
-    builds it from the same CACHE_* env vars cx_common uses.
-    """
+    """Alembic config for migrations/ next to this file; env.py supplies the database URL."""
     here = os.path.dirname(os.path.abspath(__file__))
     cfg = Config(os.path.join(here, "alembic.ini"))
     cfg.set_main_option("script_location", os.path.join(here, "migrations"))
@@ -594,12 +562,15 @@ def _run_cache_migrations() -> None:
 
 
 def _cache_generation_id() -> str:
-    """Identify the cache data and schema, under the init lock after table creation."""
+    """Return an ID that changes when the cache is recreated, restarted, crash-recovered or migrated.
+
+    Call under the schema lock, after tables exist.
+    """
     conn = _connect_with_retry(cache_cx_string)
     try:
         with conn.cursor() as cur:
-            # Backend crash recovery truncates UNLOGGED data without changing
-            # pg_postmaster_start_time(). This token is lost with the cache rows.
+            # Crash recovery empties UNLOGGED tables but keeps the postmaster
+            # start time, so a token stored in one detects it.
             cur.execute("CREATE UNLOGGED TABLE IF NOT EXISTS cache_generation (token uuid NOT NULL)")
             cur.execute("SELECT token::text FROM cache_generation")
             row = cur.fetchone()
@@ -623,12 +594,11 @@ def _cache_generation_id() -> str:
 
 
 def _synchronize_redis_broker(cache_generation_id: str) -> None:
-    """Reset stale broker state once per cache startup or schema change.
+    """Flush the Redis broker once per cache generation.
 
-    postgres-cache uses UNLOGGED tables, so all cached data is lost on
-    crash recovery. The durable generation marker also changes after schema
-    migration or database recreation, and prevents concurrent app initializers
-    from erasing work queued after the first one completes.
+    Queued Celery tasks go stale when cached data is lost or the schema
+    changes. The stored marker makes later initializers skip the flush, so
+    they don't erase newly queued work.
     """
     broker_host = os.getenv("REDIS_SERVICE_HOST", "redis-broker")
     broker_port = _env_int("REDIS_SERVICE_PORT", 6379)
@@ -657,9 +627,8 @@ def db_init() -> int:
         with _cache_schema_lock():
             schema_exists = _cache_schema_exists()
 
-            # Stamp before table creation so an interrupted fresh bootstrap
-            # can safely retry without replaying historical migrations over
-            # the current CREATE definitions.
+            # Stamp before creating tables, so a retry after an interrupted
+            # bootstrap doesn't replay old migrations over the new tables.
             if not schema_exists:
                 _stamp_cache_schema()
 
@@ -671,8 +640,8 @@ def db_init() -> int:
             # Reconcile indexes after migrations so they reflect the final schema.
             _ensure_repo_id_indexes()
 
-            # Only the first initializer for a cache generation or schema
-            # change resets stale Celery state. User sessions are separate.
+            # Flush stale Celery tasks once per cache generation; user sessions
+            # live in a separate Redis.
             _synchronize_redis_broker(_cache_generation_id())
 
         logging.warning("db_init: POSTGRES CACHE SUCCESSFULLY INITIALIZED")

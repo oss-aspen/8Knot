@@ -1,16 +1,11 @@
 """add labels column to issues_query
 
-Backfills the `labels` column that PR #1189 added to the issues_query
-CREATE block. CREATE TABLE IF NOT EXISTS never alters a table that
-already exists, so caches created before #1189 are missing the column
-(which is why the issues visualizations guard with
-`if "labels" not in df.columns`). This migration adds it to those caches.
+Adds the labels column from #1189 to caches created before it (CREATE TABLE
+IF NOT EXISTS never alters existing tables). Fresh caches get it from the
+CREATE block and are stamped at head, so this only runs on existing caches.
 
-Fresh caches already get the column from db_init's CREATE block and are
-stamped straight to head, so this migration only runs against a
-pre-existing cache. Existing issue rows must be invalidated because their
-new labels value is NULL, while cache_bookkeeping would otherwise prevent
-those repositories from being collected again.
+Clears cached issues and their bookkeeping so they are re-collected with
+labels instead of keeping NULLs.
 
 Revision ID: 0001_add_labels
 Revises:

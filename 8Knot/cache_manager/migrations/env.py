@@ -1,10 +1,7 @@
-"""Alembic environment for the Postgres cache schema.
+"""Alembic environment for the cache schema.
 
-The connection URL is built from the same CACHE_* environment variables
-that cx_common uses, so Alembic and the running app always target the
-same cache database. We deliberately do NOT use autogenerate / ORM
-metadata: the cache schema is defined with raw SQL (see db_init.py), so
-migrations are hand-written raw SQL too, and target_metadata stays None.
+Connects with cx_common's CACHE_* settings, so migrations target the app's
+cache database. No ORM metadata: migrations are hand-written raw SQL.
 """
 
 import os
@@ -13,13 +10,11 @@ import sys
 from alembic import context
 from sqlalchemy import URL, create_engine, pool
 
-# cx_common lives one directory up (8Knot/cache_manager); make it importable
-# whether Alembic is invoked via the CLI from migrations/ or programmatically.
+# Make cx_common (one directory up) importable from the CLI and from db_init.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from cx_common import env_dbname, env_host, env_password, env_port, env_user
 
-# Keep credentials as a URL object. Rendering into Alembic's Config would
-# make percent-encoded passwords subject to ConfigParser interpolation.
+# Pass the URL object directly; setting it in Alembic's config breaks on '%' in passwords.
 database_url = URL.create(
     "postgresql+psycopg2",
     username=env_user,
