@@ -17,15 +17,10 @@ def get_bots_list():
         dbm = AugurManager()
         dbm.get_engine()
     except KeyError:
-        # defensive- currently unreachable, since app.py:38-44 constructs an
-        # AugurManager over the same credentials and sys.exit(1)s first.
-        # falling through from here left dbm unbound, so the caller would have
-        # seen a NameError rather than this.
         logging.error("BOT_DATA_QUERY - INCOMPLETE ENVIRONMENT")
         raise
     except SQLAlchemyError:
-        # runs at import in the web process, so there's no Celery retry to
-        # fall back on- fail the boot rather than serve unfiltered bot data.
+        # Bot data is required at startup; there is no Celery retry here.
         logging.error("BOT_DATA_QUERY - COULDN'T CONNECT TO DB")
         raise
 

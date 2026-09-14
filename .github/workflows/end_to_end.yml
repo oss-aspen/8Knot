@@ -125,6 +125,15 @@ jobs:
           cache-to: type=gha,scope=container-database,mode=min
           load: true
 
+      - name: Focused cache regression tests
+        run: |
+          docker run --rm --network none \
+            --entrypoint /opt/app-root/bin/python \
+            -e PYTHONPATH=/opt/app-root/src \
+            -v "$PWD/tests:/tests:ro" \
+            8knot-app:test \
+            -B -m unittest discover -s /tests -p '*_test.py' -v
+
       - name: Prepare env file
         run: |
           cp .env.sample .env

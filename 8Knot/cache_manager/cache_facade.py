@@ -125,11 +125,7 @@ def get_uncached(func_name: str, repolist: list[int]) -> list[int]:  # or None
     Returns a list of repos that AREN'T resident in cache.
     """
     if not repolist:
-        # nothing requested means nothing missing. guarded here rather than at
-        # each call site because psycopg2 renders an empty sequence as "in ()",
-        # which postgres rejects outright -- and every visualization callback
-        # polls this function on initial page load, when the repo-choices
-        # store still holds its default [].
+        # Avoid PostgreSQL's invalid IN () for an empty selection.
         return []
 
     with pg.connect(cache_cx_string) as cache_conn:
@@ -188,9 +184,7 @@ def caching_wrapper(func_name: str, query: str, repolist: list[int], n_repolist_
         else:
             logging.warning(f"{func_name} COLLECTION - CACHING {len(uncached_repos)} NEW REPOS")
 
-            # inject the repolist multiple times because the SQL uses it more
-            # than once and the wildcard %s are ordered. kept under its own name
-            # so uncached_repos stays the list of repos this call is filling.
+            # Repeat SQL parameters without changing the IDs used for bookkeeping.
             query_vars: tuple[tuple] = tuple([tuple(uncached_repos) for _ in range(n_repolist_uses)])
 
         # STEP 2: Query for those repos
@@ -200,9 +194,7 @@ def caching_wrapper(func_name: str, query: str, repolist: list[int], n_repolist_
             query=query,
             vars=query_vars,
             target_table=func_name,
-            # only the repos actually cached here. recording the full repolist
-            # re-inserted a row for every repo that was already resident, and
-            # cache_bookkeeping has no unique constraint to absorb the repeats.
+            # Record only repositories fetched by this operation.
             bookkeeping_data=tuple({"cache_func": func_name, "repo_id": r} for r in uncached_repos),
         )
     except Exception as e:
@@ -236,11 +228,8 @@ def retrieve_from_cache(
                 """.format(
                     tablename=tablename
                 ),
-                # psycopg2 renders an empty sequence as "()", which postgres
-                # rejects. NULL matches nothing, so an empty repolist returns
-                # zero rows while cursor.description still yields the table's
-                # columns -- callers preprocess on those columns before they
-                # test df.empty, so a 0x0 frame is not a safe substitute.
+                # IN (NULL) returns no rows but preserves columns for callers
+                # that preprocess the DataFrame before checking df.empty.
                 (tuple(repolist) or (None,),),
             )
 

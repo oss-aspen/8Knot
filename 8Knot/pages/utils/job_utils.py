@@ -55,9 +55,6 @@ def get_default_repo_with_data(repo_ids, cache_tablename):
     """
 
     if not repo_ids:
-        # no selection to default to. this runs in the web process on initial
-        # page load, when the repo-choices store still holds its default [],
-        # and every return below indexes repo_ids[0].
         return None
 
     df = cf.retrieve_from_cache(tablename=cache_tablename, repolist=repo_ids)
