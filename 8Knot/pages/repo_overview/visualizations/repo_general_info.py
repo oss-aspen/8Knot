@@ -5,6 +5,7 @@ from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
 import logging
+import posixpath
 from dateutil.relativedelta import *  # type: ignore
 import plotly.express as px
 from pages.utils.graph_utils import get_graph_time_values, color_seq
@@ -80,8 +81,10 @@ def toggle_popover(n, is_open):
 )
 def repo_general_info(repo):
 
-    if repo is not None:
-        repo = int(repo)
+    if repo is None:
+        return dbc.Table.from_dataframe(pd.DataFrame(), striped=True, bordered=True, hover=True), dbc.Label("No data")
+
+    repo = int(repo)
 
     logging.warning(f"{VIZ_ID} - START")
     start = time.perf_counter()
@@ -89,8 +92,8 @@ def repo_general_info(repo):
     # get dataframes of data from cache
     df_repo_files, df_repo_info, df_releases = multi_query_helper([repo])
 
-    # test if there is data
-    if df_repo_files.empty and df_repo_info.empty and df_releases.empty:
+    # Repository metadata is required for the summary and its update date.
+    if df_repo_info.empty:
         logging.warning(f"{VIZ_ID} - NO DATA AVAILABLE")
         return dbc.Table.from_dataframe(pd.DataFrame(), striped=True, bordered=True, hover=True), dbc.Label("No data")
 
@@ -151,19 +154,30 @@ def process_data(df_repo_files, df_repo_info, df_releases):
     else:
         coc = "File found"
 
-    # check files for CONTRIBUTING.md
-    contrib_guide = (df_repo_files["file_name"].eq("CONTRIBUTING.md")).any()
-    if contrib_guide:
-        contrib_guide = "File found"
-    else:
-        contrib_guide = "File not found"
+    contrib_guide = security_policy = "Data unavailable"
+    if df_repo_files is not None:
+        policy_paths = set()
+        policy_files = df_repo_files[df_repo_files["file_name"].isin(["CONTRIBUTING.md", "SECURITY.md"])]
+        for row in policy_files.dropna(subset=["file_path"]).itertuples():
+            # repo_labor paths include Augur's clone directory, unlike repository-relative paths.
+            repo_prefix = f"{row.repo_id}-{row.repo_path}/{row.repo_name}/"
+            path = row.file_path
+            if path.startswith("/"):
+                path = path.split(f"/{repo_prefix}", 1)[-1]
+            elif path.startswith(repo_prefix):
+                path = path[len(repo_prefix) :]
+            policy_paths.add(posixpath.normpath(path))
 
-    # keep an eye out if github changes this to be located like coc
-    security_policy = (df_repo_files["file_name"].eq("SECURITY.md")).any()
-    if security_policy:
-        security_policy = "File found"
-    else:
-        security_policy = "File not found"
+        contrib_guide = (
+            "File found"
+            if policy_paths.intersection({"CONTRIBUTING.md", ".github/CONTRIBUTING.md", "docs/CONTRIBUTING.md"})
+            else "File not found"
+        )
+        security_policy = (
+            "File found"
+            if policy_paths.intersection({"SECURITY.md", ".github/SECURITY.md", "docs/SECURITY.md"})
+            else "File not found"
+        )
 
     # create df to hold table information
     df = pd.DataFrame(
@@ -202,14 +216,8 @@ def process_data(df_repo_files, df_repo_info, df_releases):
 
 def multi_query_helper(repos: list[int]):
     """
-    hack to put all of the cache-retrieval
-    in the same place temporarily
+    Retrieve summary data; None for files means collection is unavailable, not empty.
     """
-
-    # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=repos):
-        logging.warning(f"REPO GENERAL INFO - WAITING ON DATA TO BECOME AVAILABLE")
-        time.sleep(0.5)
 
     # wait for data to asynchronously download and become available.
     while not_cached := cf.get_uncached(func_name=riq.__name__, repolist=repos):
@@ -222,17 +230,29 @@ def multi_query_helper(repos: list[int]):
         time.sleep(0.5)
 
     # GET ALL DATA FROM POSTGRES CACHE
-    df_file = cf.retrieve_from_cache(
-        tablename=rfq.__name__,
-        repolist=repos,
-    )
-
     df_repo_info = cf.retrieve_from_cache(
         tablename=riq.__name__,
         repolist=repos,
     )
     df_releases = cf.retrieve_from_cache(
         tablename=rrq.__name__,
+        repolist=repos,
+    )
+
+    if df_repo_info.empty:
+        return None, df_repo_info, df_releases
+
+    # Optional file collection gets at most 60 extra seconds after metadata is ready.
+    deadline = time.monotonic() + 60
+    while cf.get_uncached(func_name=rfq.__name__, repolist=repos):
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            logging.warning("REPO GENERAL INFO - FILE DATA UNAVAILABLE")
+            return None, df_repo_info, df_releases
+        time.sleep(min(0.5, remaining))
+
+    df_file = cf.retrieve_from_cache(
+        tablename=rfq.__name__,
         repolist=repos,
     )
 
