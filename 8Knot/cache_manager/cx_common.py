@@ -6,6 +6,8 @@ import os
 import logging
 import time
 
+from psycopg2.extensions import make_dsn
+
 # credentials to access database from environment
 try:
     env_augur_user = os.environ["AUGUR_USERNAME"]
@@ -32,20 +34,28 @@ env_schema = os.getenv("CACHE_SCHEMA", "data,augur_data")
 
 # purely initial startup string
 # psycopg2 connection string for cache pg instance, initialization only
-init_cx_string = "dbname={} user={} password={} host={} port={}".format(
-    "postgres", env_user, env_password, env_host, env_port
+init_cx_string = make_dsn(
+    dbname="postgres",
+    user=env_user,
+    password=env_password,
+    host=env_host,
+    port=env_port,
 )
 
 # psycopg2 connection string for cache pg instance
-cache_cx_string = "dbname={} user={} password={} host={} port={}".format(
-    env_dbname, env_user, env_password, env_host, env_port
+cache_cx_string = make_dsn(
+    dbname=env_dbname,
+    user=env_user,
+    password=env_password,
+    host=env_host,
+    port=env_port,
 )
 
 # psycopg2 connection string for augur db
-db_cx_string = "dbname={} user={} password={} host={} port={}".format(
-    env_augur_database,
-    env_augur_user,
-    env_augur_password,
-    env_augur_host,
-    env_augur_port,
+db_cx_string = make_dsn(
+    dbname=env_augur_database,
+    user=env_augur_user,
+    password=env_augur_password,
+    host=env_augur_host,
+    port=env_augur_port,
 )
