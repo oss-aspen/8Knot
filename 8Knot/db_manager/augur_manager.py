@@ -153,8 +153,9 @@ class AugurManager:
         try:
             with self.engine.connect() as conn:
                 result_df = pd.read_sql(query, con=conn)
-        except:
-            raise Exception("DB Read Failure")
+        except Exception as e:
+            logging.exception("AUGUR: DB read failed")
+            raise Exception("DB Read Failure") from e
 
         result_df = result_df.reset_index()
         result_df.drop("index", axis=1, inplace=True)

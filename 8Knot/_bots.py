@@ -15,14 +15,14 @@ def get_bots_list():
 
     try:
         dbm = AugurManager()
-        engine = dbm.get_engine()
+        dbm.get_engine()
     except KeyError:
-        # noack, data wasn't successfully set.
         logging.error("BOT_DATA_QUERY - INCOMPLETE ENVIRONMENT")
+        raise
     except SQLAlchemyError:
+        # Bot data is required at startup; there is no Celery retry here.
         logging.error("BOT_DATA_QUERY - COULDN'T CONNECT TO DB")
-        # allow retry via Celery rules.
-        raise SQLAlchemyError("DBConnect failed")
+        raise
 
     df = dbm.run_query(query_string)
     # reformat cntrb_id

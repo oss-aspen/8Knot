@@ -124,6 +124,10 @@ def get_uncached(func_name: str, repolist: list[int]) -> list[int]:  # or None
 
     Returns a list of repos that AREN'T resident in cache.
     """
+    if not repolist:
+        # Avoid PostgreSQL's invalid IN () for an empty selection.
+        return []
+
     with pg.connect(cache_cx_string) as cache_conn:
         with cache_conn.cursor() as cache_cur:
             composed_query = pg_sql.SQL(
@@ -180,18 +184,18 @@ def caching_wrapper(func_name: str, query: str, repolist: list[int], n_repolist_
         else:
             logging.warning(f"{func_name} COLLECTION - CACHING {len(uncached_repos)} NEW REPOS")
 
-            # inject the repolist multiple times because the SQL uses it more
-            # than once and the wildcard %s are ordered.
-            uncached_repos: tuple[tuple] = tuple([tuple(uncached_repos) for _ in range(n_repolist_uses)])
+            # Repeat SQL parameters without changing the IDs used for bookkeeping.
+            query_vars: tuple[tuple] = tuple([tuple(uncached_repos) for _ in range(n_repolist_uses)])
 
         # STEP 2: Query for those repos
         logging.warning(f"{func_name} COLLECTION - EXECUTING CACHING QUERY")
         cache_query_results(
             db_connection_string=db_cx_string,
             query=query,
-            vars=uncached_repos,
+            vars=query_vars,
             target_table=func_name,
-            bookkeeping_data=tuple({"cache_func": func_name, "repo_id": r} for r in repolist),
+            # Record only repositories fetched by this operation.
+            bookkeeping_data=tuple({"cache_func": func_name, "repo_id": r} for r in uncached_repos),
         )
     except Exception as e:
         logging.critical(f"{func_name}_POSTGRES ERROR: {e}")
@@ -224,7 +228,9 @@ def retrieve_from_cache(
                 """.format(
                     tablename=tablename
                 ),
-                (tuple(repolist),),
+                # IN (NULL) returns no rows but preserves columns for callers
+                # that preprocess the DataFrame before checking df.empty.
+                (tuple(repolist) or (None,),),
             )
 
             logging.warning(f"{tablename} - LOADING DATA FROM CACHE")
