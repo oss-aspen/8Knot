@@ -38,7 +38,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "alembic", specifier = "~=1.13" },
+    { name = "alembic", specifier = "~=1.16" },
     { name = "celery", specifier = "~=5.5" },
     { name = "dash", specifier = "~=3.2.0" },
     { name = "dash-bootstrap-components", specifier = "~=2.0" },

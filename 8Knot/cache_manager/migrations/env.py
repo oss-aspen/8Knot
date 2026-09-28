@@ -1,18 +1,15 @@
 """Alembic environment for the cache schema.
 
 Connects with cx_common's CACHE_* settings, so migrations target the app's
-cache database. No ORM metadata: migrations are hand-written raw SQL.
+cache database. Migrations are hand-written until SQLAlchemy Core metadata
+is introduced for autogeneration (issue #1208).
 """
 
-import os
-import sys
-
 from alembic import context
+from alembic.script import ScriptDirectory
 from sqlalchemy import URL, create_engine, pool
 
-# Make cx_common (one directory up) importable from the CLI and from db_init.
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from cx_common import env_dbname, env_host, env_password, env_port, env_user
+from cache_manager.cx_common import env_dbname, env_host, env_password, env_port, env_user
 
 # Pass the URL object directly; setting it in Alembic's config breaks on '%' in passwords.
 database_url = URL.create(
@@ -24,8 +21,18 @@ database_url = URL.create(
     database=env_dbname,
 )
 
-# No ORM models in this project, so no autogenerate support.
+# Autogenerate needs Table/MetaData definitions; it does not require ORM models.
 target_metadata = None
+
+
+def process_revision_directives(migration_context, revision, directives):
+    """Assign sequential numeric revision IDs unless the CLI supplies --rev-id."""
+    config = migration_context.config
+    if not directives or getattr(config.cmd_opts, "rev_id", None):
+        return
+    scripts = ScriptDirectory.from_config(config)
+    revisions = (int(script.revision) for script in scripts.walk_revisions() if script.revision.isdigit())
+    directives[0].rev_id = str(max(revisions, default=0) + 1)
 
 
 def run_migrations_offline() -> None:
@@ -34,6 +41,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        process_revision_directives=process_revision_directives,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -42,7 +50,11 @@ def run_migrations_offline() -> None:
 def run_migrations_online() -> None:
     connectable = create_engine(database_url, poolclass=pool.NullPool)
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            process_revision_directives=process_revision_directives,
+        )
         with context.begin_transaction():
             context.run_migrations()
 

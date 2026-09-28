@@ -12,6 +12,9 @@ Those blocks can't change a table that already exists, so changes to
 existing tables are alembic migrations (migrations/), applied on boot. The
 CREATE blocks define a fresh cache and migrations upgrade existing ones,
 the groundwork for a persistent cache. Migrations are hand-written raw SQL.
+
+Revision 1 records the current schema, including issues_query.labels, without
+changing cached data. Only changes after that baseline have upgrade migrations.
 """
 
 """
@@ -50,7 +53,7 @@ To change an existing table (add/drop/rename a column, change a type), add
 an alembic migration:
 
     cd 8Knot/cache_manager
-    alembic revision -m "describe change"   # writes migrations/versions/<id>.py
+    alembic revision -m "describe change"   # assigns the next numeric revision
 
 Write upgrade()/downgrade() as raw SQL with op.execute(...), and update the
 CREATE block too so fresh caches match. Migrations run on every boot. Never
@@ -508,12 +511,23 @@ def _ensure_repo_id_indexes() -> None:
 
 @contextmanager
 def _cache_schema_lock():
-    """Serialize schema initialization across app pods."""
+    """Serialize migrations, index creation and broker synchronization across app pods.
+
+    Rolling deployments can run multiple initializers. Use a session lock
+    because initialization spans separate connections and transactions.
+    """
     conn = _connect_with_retry(cache_cx_string)
     conn.autocommit = True
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT pg_advisory_lock(hashtext(%s))", ("8knot-cache-schema-init",))
+            # A blocking lock query retains a snapshot that can stall the
+            # lock holder's CREATE INDEX CONCURRENTLY. Autocommit releases
+            # each unsuccessful try's snapshot before we sleep and retry.
+            while True:
+                cur.execute("SELECT pg_try_advisory_lock(hashtext(%s))", ("8knot-cache-schema-init",))
+                if cur.fetchone()[0]:
+                    break
+                time.sleep(1)
         yield
     finally:
         # Session-level advisory locks are released when the connection closes.
@@ -544,9 +558,7 @@ def _cache_schema_exists() -> bool:
 def _alembic_config() -> Config:
     """Alembic config for migrations/ next to this file; env.py supplies the database URL."""
     here = os.path.dirname(os.path.abspath(__file__))
-    cfg = Config(os.path.join(here, "alembic.ini"))
-    cfg.set_main_option("script_location", os.path.join(here, "migrations"))
-    return cfg
+    return Config(os.path.join(here, "alembic.ini"))
 
 
 def _stamp_cache_schema() -> None:
@@ -556,7 +568,11 @@ def _stamp_cache_schema() -> None:
 
 
 def _run_cache_migrations() -> None:
-    """Upgrade a pre-existing cache to the latest alembic revision."""
+    """Adopt baseline 1 for an unversioned cache, then apply later revisions.
+
+    Upgrade through the baseline rather than stamping head, which would skip
+    future migrations on caches that have not yet adopted versioning.
+    """
     command.upgrade(_alembic_config(), "head")
     logging.warning("db_init: cache schema upgraded to alembic head")
 
