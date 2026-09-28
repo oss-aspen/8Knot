@@ -9,13 +9,9 @@ import os
 import logging
 import sys
 import requests
+import psycopg2 as pg
 from sqlalchemy.exc import SQLAlchemyError
 from models import SearchItem
-from cache_manager.cx_common import (
-    augur_cx_options,
-    enable_client_connection_checks,
-    env_augur_engine_statement_timeout_ms,
-)
 
 
 class AugurManager:
@@ -59,9 +55,10 @@ class AugurManager:
             Pandas dataframe.
     """
 
-    def __init__(self, handles_oauth=False):
+    def __init__(self, handles_oauth=False, *, worker_query=False):
         # sqlalchemy engine object
         self.engine = None
+        self._engine_pid = None
         self.initial_search_option = None
 
         # db connection credentials
@@ -77,6 +74,12 @@ class AugurManager:
             raise KeyError(ke)
 
         self.schema = os.getenv("AUGUR_SCHEMA", "data,augur_data")
+        # Worker statements must finish before Celery's soft time limit. The
+        # app-server's search query has a separate, longer timeout.
+        self.statement_timeout_ms = os.getenv("COLLECTOSS_ENGINE_STATEMENT_TIMEOUT_MS", "1800000")
+        if worker_query:
+            self.statement_timeout_ms = os.getenv("COLLECTOSS_STATEMENT_TIMEOUT_MS", "500000")
+        self.idle_tx_timeout_ms = os.getenv("COLLECTOSS_IDLE_TX_TIMEOUT_MS", "120000")
 
         # oauth endpoints have to be intact to proceed
         if handles_oauth:
@@ -107,20 +110,40 @@ class AugurManager:
             _engine.Engine: SQLAlchemy engine object.
         """
 
-        # return engine immediately if it already exists
+        pid = os.getpid()
         if self.engine:
+            # Celery preforks: a child must not reuse the parent's DB sockets.
+            if self._engine_pid != pid:
+                self.engine.dispose(close=False)
+                self._engine_pid = pid
             return self.engine
 
-        database_connection_string = "postgresql+psycopg2://{}:{}@{}:{}/{}".format(
-            self.user, self.password, self.host, self.port, self.database
+        database_connection_string = salc.URL.create(
+            "postgresql+psycopg2",
+            username=self.user,
+            password=self.password,
+            host=self.host,
+            port=int(self.port),
+            database=self.database,
         )
 
         engine = salc.create_engine(
             database_connection_string,
-            connect_args={"options": augur_cx_options(env_augur_engine_statement_timeout_ms)},
+            connect_args={
+                "options": " ".join(
+                    [
+                        f"-c search_path={self.schema}",
+                        f"-c statement_timeout={self.statement_timeout_ms}",
+                        f"-c idle_in_transaction_session_timeout={self.idle_tx_timeout_ms}",
+                        "-c tcp_keepalives_idle=60",
+                        "-c tcp_keepalives_interval=10",
+                        "-c tcp_keepalives_count=3",
+                    ]
+                )
+            },
             pool_pre_ping=True,
         )
-        salc.event.listen(engine, "connect", enable_client_connection_checks)
+        salc.event.listen(engine, "connect", self._enable_client_connection_checks)
 
         # verify that engine works
         try:
@@ -129,12 +152,28 @@ class AugurManager:
                 logging.warning("AUGUR: Connection to DB succeeded")
 
             self.engine = engine
+            self._engine_pid = pid
 
         except SQLAlchemyError as err:
             logging.error(f"AUGUR: DB couldn't connect: {err.__cause__}")
-            raise SQLAlchemyError(err)
+            raise
 
         return engine
+
+    @staticmethod
+    def _enable_client_connection_checks(connection, _connection_record=None) -> None:
+        """Enable disconnect polling when PostgreSQL and its host support it."""
+        if connection.server_version < 140000:
+            return
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SET client_connection_check_interval = '10s'")
+            # SET is transactional; finish it before application queries begin.
+            connection.commit()
+        except pg.Error as error:
+            logging.warning(f"CollectOSS: client disconnect checks unavailable: {error}")
+            connection.rollback()
 
     def run_query(self, query_string: str) -> pd.DataFrame:
         """

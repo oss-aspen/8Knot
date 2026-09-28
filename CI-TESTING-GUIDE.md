@@ -10,6 +10,20 @@
 
 ## 🔍 What gets tested?
 
+### Source connection regression checks
+
+With the application dependencies installed, run the focused checks against a
+disposable PostgreSQL 14+ database on Linux (for disconnect polling support):
+
+```bash
+QUERY_TEST_DSN="host=localhost port=5432 dbname=postgres user=postgres password=test" \
+  python scripts/ci/query_cancellation_test.py -v
+```
+
+The script creates and removes isolated schemas. It checks server-side streaming,
+timeout rollback without Celery retries, connection settings and reuse, prefork
+pool isolation, and cleanup of a running query after its client is killed.
+
 ### Pages tested on every PR:
 - `/` - Welcome page
 - `/contributions` - Contribution metrics
