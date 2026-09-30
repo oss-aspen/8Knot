@@ -2,7 +2,7 @@
 
 Connects with cx_common's CACHE_* settings, so migrations target the app's
 cache database. Migrations are hand-written until SQLAlchemy Core metadata
-is introduced for autogeneration (issue #1208).
+is introduced for autogeneration.
 """
 
 from alembic import context

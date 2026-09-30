@@ -13,8 +13,8 @@ existing tables are alembic migrations (migrations/), applied on boot. The
 CREATE blocks define a fresh cache and migrations upgrade existing ones,
 the groundwork for a persistent cache. Migrations are hand-written raw SQL.
 
-Revision 1 records the current schema, including issues_query.labels, without
-changing cached data. Only changes after that baseline have upgrade migrations.
+Existing caches start from the current schema, including issues_query.labels.
+Migration history starts empty; the first schema change gets revision 1.
 """
 
 """
@@ -77,8 +77,6 @@ import logging
 import os
 import sys
 import time
-import uuid
-from contextlib import contextmanager
 
 import psycopg2 as pg
 import redis
@@ -160,7 +158,7 @@ def _create_application_database() -> None:
     This function creates the 'augur_cache' database, which will
     contain all of the tables where we'll cache data for visualization.
 
-    Uses CACHE_DB_NAME; an advisory lock keeps concurrent initializers from racing to create it.
+    Uses CACHE_DB_NAME.
     """
 
     # Connect to the dbms at top-level
@@ -175,13 +173,11 @@ def _create_application_database() -> None:
 
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT pg_advisory_lock(hashtext(%s))", ("8knot-cache-database-init",))
             cur.execute("SELECT 1 FROM pg_catalog.pg_database WHERE datname = %s", (env_dbname,))
             if not cur.fetchone():
                 logging.warning(f"CREATING {env_dbname} DATABASE")
                 cur.execute(pg_sql.SQL("CREATE DATABASE {}").format(pg_sql.Identifier(env_dbname)))
     finally:
-        # Session-level advisory locks are released when the connection closes.
         conn.close()
 
 
@@ -509,31 +505,6 @@ def _ensure_repo_id_indexes() -> None:
     logging.warning(f"db_init: ensured repo_id indexes ({len(tables)} tables)")
 
 
-@contextmanager
-def _cache_schema_lock():
-    """Serialize migrations, index creation and broker synchronization across app pods.
-
-    Rolling deployments can run multiple initializers. Use a session lock
-    because initialization spans separate connections and transactions.
-    """
-    conn = _connect_with_retry(cache_cx_string)
-    conn.autocommit = True
-    try:
-        with conn.cursor() as cur:
-            # A blocking lock query retains a snapshot that can stall the
-            # lock holder's CREATE INDEX CONCURRENTLY. Autocommit releases
-            # each unsuccessful try's snapshot before we sleep and retry.
-            while True:
-                cur.execute("SELECT pg_try_advisory_lock(hashtext(%s))", ("8knot-cache-schema-init",))
-                if cur.fetchone()[0]:
-                    break
-                time.sleep(1)
-        yield
-    finally:
-        # Session-level advisory locks are released when the connection closes.
-        conn.close()
-
-
 def _cache_schema_exists() -> bool:
     """Return whether this database already contains an 8Knot cache schema."""
     conn = _connect_with_retry(cache_cx_string)
@@ -568,67 +539,26 @@ def _stamp_cache_schema() -> None:
 
 
 def _run_cache_migrations() -> None:
-    """Adopt baseline 1 for an unversioned cache, then apply later revisions.
+    """Apply pending revisions to an existing cache.
 
-    Upgrade through the baseline rather than stamping head, which would skip
-    future migrations on caches that have not yet adopted versioning.
+    Upgrade rather than stamp head, which would skip migrations on caches
+    that have not yet adopted versioning.
     """
     command.upgrade(_alembic_config(), "head")
     logging.warning("db_init: cache schema upgraded to alembic head")
 
 
-def _cache_generation_id() -> str:
-    """Return an ID that changes when the cache is recreated, restarted, crash-recovered or migrated.
+def _flush_redis_broker() -> None:
+    """Clear stale Celery messages and results when the cache is initialized.
 
-    Call under the schema lock, after tables exist.
-    """
-    conn = _connect_with_retry(cache_cx_string)
-    try:
-        with conn.cursor() as cur:
-            # Crash recovery empties UNLOGGED tables but keeps the postmaster
-            # start time, so a token stored in one detects it.
-            cur.execute("CREATE UNLOGGED TABLE IF NOT EXISTS cache_generation (token uuid NOT NULL)")
-            cur.execute("SELECT token::text FROM cache_generation")
-            row = cur.fetchone()
-            token = row[0] if row else str(uuid.uuid4())
-            if not row:
-                cur.execute("INSERT INTO cache_generation (token) VALUES (%s)", (token,))
-            cur.execute(
-                """
-                SELECT oid::text, pg_postmaster_start_time()::text
-                FROM pg_catalog.pg_database
-                WHERE datname = current_database()
-                """
-            )
-            database_oid, postgres_start = cur.fetchone()
-            cur.execute("SELECT version_num FROM alembic_version ORDER BY version_num")
-            revisions = ",".join(row[0] for row in cur.fetchall())
-            conn.commit()
-            return f"{database_oid}:{postgres_start}:{revisions}:{token}"
-    finally:
-        conn.close()
-
-
-def _synchronize_redis_broker(cache_generation_id: str) -> None:
-    """Flush the Redis broker once per cache generation.
-
-    Queued Celery tasks go stale when cached data is lost or the schema
-    changes. The stored marker makes later initializers skip the flush, so
-    they don't erase newly queued work.
+    The broker is separate from the Redis instance used for user sessions.
     """
     broker_host = os.getenv("REDIS_SERVICE_HOST", "redis-broker")
     broker_port = _env_int("REDIS_SERVICE_PORT", 6379)
     broker_password = os.getenv("REDIS_PASSWORD", "")
-    marker_key = f"8knot:cache:{env_dbname}:generation"
 
     r = redis.StrictRedis(host=broker_host, port=broker_port, password=broker_password)
-    if r.get(marker_key) == cache_generation_id.encode():
-        logging.warning("db_init: redis-broker already synchronized")
-        return
-    with r.pipeline(transaction=True) as pipeline:
-        pipeline.flushall()
-        pipeline.set(marker_key, cache_generation_id)
-        pipeline.execute()
+    r.flushall()
     logging.warning(f"db_init: FLUSHED redis-broker ({broker_host}:{broker_port})")
 
 
@@ -640,25 +570,22 @@ def db_init() -> int:
         # create the configured cache database if it doesn't already exist.
         _create_application_database()
 
-        with _cache_schema_lock():
-            schema_exists = _cache_schema_exists()
+        schema_exists = _cache_schema_exists()
 
-            # Stamp before creating tables, so a retry after an interrupted
-            # bootstrap doesn't replay old migrations over the new tables.
-            if not schema_exists:
-                _stamp_cache_schema()
+        # Stamp before creating tables, so a retry after an interrupted
+        # bootstrap doesn't replay old migrations over the new tables.
+        if not schema_exists:
+            _stamp_cache_schema()
 
-            _create_application_tables()
+        _create_application_tables()
 
-            if schema_exists:
-                _run_cache_migrations()
+        if schema_exists:
+            _run_cache_migrations()
 
-            # Reconcile indexes after migrations so they reflect the final schema.
-            _ensure_repo_id_indexes()
+        # Reconcile indexes after migrations so they reflect the final schema.
+        _ensure_repo_id_indexes()
 
-            # Flush stale Celery tasks once per cache generation; user sessions
-            # live in a separate Redis.
-            _synchronize_redis_broker(_cache_generation_id())
+        _flush_redis_broker()
 
         logging.warning("db_init: POSTGRES CACHE SUCCESSFULLY INITIALIZED")
 
