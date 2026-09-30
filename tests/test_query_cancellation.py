@@ -15,13 +15,15 @@ import psycopg2 as pg
 from psycopg2 import sql
 import sqlalchemy as salc
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "8Knot"))
+APP_PATH = str(Path(__file__).resolve().parents[1] / "8Knot")
 
 
 class QueryCancellationTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.dsn = os.environ["QUERY_TEST_DSN"]
+        cls.dsn = os.getenv("QUERY_TEST_DSN")
+        if not cls.dsn:
+            raise unittest.SkipTest("Set QUERY_TEST_DSN to run database-backed tests")
         credentials = pg.extensions.parse_dsn(cls.dsn)
         cls.environment = patch.dict(
             os.environ,
@@ -39,7 +41,7 @@ class QueryCancellationTest(unittest.TestCase):
         cls.environment.start()
         cls.addClassCleanup(cls.environment.stop)
         cls.cf = importlib.import_module("cache_manager.cache_facade")
-        cls.manager_class = importlib.import_module("db_manager.augur_manager").AugurManager
+        cls.manager_class = importlib.import_module("db_manager.collectoss_manager").CollectOSSManager
         cls.celery_app = importlib.import_module("_celery").celery_app
         cls.observer = pg.connect(cls.dsn)
         cls.observer.autocommit = True
@@ -158,8 +160,8 @@ class QueryCancellationTest(unittest.TestCase):
 
     def test_killed_client_query_is_reclaimed(self):
         code = """
-from db_manager.augur_manager import AugurManager
-with AugurManager(worker_query=True).get_engine().connect() as connection:
+from db_manager.collectoss_manager import CollectOSSManager
+with CollectOSSManager(worker_query=True).get_engine().connect() as connection:
     print(connection.exec_driver_sql('SELECT pg_backend_pid()').scalar_one(), flush=True)
     connection.exec_driver_sql('SELECT pg_sleep(60)')
 """
@@ -169,7 +171,7 @@ with AugurManager(worker_query=True).get_engine().connect() as connection:
             text=True,
             env={
                 **os.environ,
-                "PYTHONPATH": sys.path[0],
+                "PYTHONPATH": APP_PATH,
                 "COLLECTOSS_STATEMENT_TIMEOUT_MS": "30000",
             },
         )
@@ -198,7 +200,3 @@ with AugurManager(worker_query=True).get_engine().connect() as connection:
                 process.kill()
                 process.wait(timeout=5)
             process.stdout.close()
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -2,7 +2,7 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 from dash import callback
 from dash.dependencies import Input, Output, State
-from db_manager.augur_manager import AugurManager
+from db_manager.collectoss_manager import CollectOSSManager
 
 # card for commit total for selected repos
 commit_total = dbc.Card(
@@ -126,7 +126,7 @@ def commit_count(repolist):
     """
 
     # create augurmanager, should get creds from environment
-    db = AugurManager()
+    db = CollectOSSManager()
 
     # create engine object from creds
     db.get_engine()
@@ -164,7 +164,7 @@ def commit_lines_delta(repolist):
     """
 
     # create augurmanager, should get creds from environment
-    db = AugurManager()
+    db = CollectOSSManager()
 
     # create engine object from creds
     db.get_engine()
@@ -207,7 +207,7 @@ def files_per_commit(repolist):
     """
 
     # create augurmanager, should get creds from environment
-    db = AugurManager()
+    db = CollectOSSManager()
 
     # create engine object from creds
     db.get_engine()

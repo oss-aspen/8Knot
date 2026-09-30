@@ -2,7 +2,7 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 from dash import callback
 from dash.dependencies import Input, Output, State
-from db_manager.augur_manager import AugurManager
+from db_manager.collectoss_manager import CollectOSSManager
 import numpy as np
 import pandas as pd
 
@@ -128,7 +128,7 @@ def avg_closed_issue_age(repolist):
     """
 
     # create augurmanager, should get creds from environment
-    db = AugurManager()
+    db = CollectOSSManager()
 
     # create engine object from creds
     db.get_engine()
@@ -177,7 +177,7 @@ def avg_open_issue_age(repolist):
     """
 
     # create augurmanager, should get creds from environment
-    db = AugurManager()
+    db = CollectOSSManager()
 
     # create engine object from creds
     db.get_engine()
@@ -226,7 +226,7 @@ def closed_issue_count(repolist):
     """
 
     # create augurmanager, should get creds from environment
-    db = AugurManager()
+    db = CollectOSSManager()
 
     # create engine object from creds
     db.get_engine()
@@ -263,7 +263,7 @@ def open_issue_count(repolist):
     """
 
     # create augurmanager, should get creds from environment
-    db = AugurManager()
+    db = CollectOSSManager()
 
     # create engine object from creds
     db.get_engine()

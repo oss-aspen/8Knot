@@ -14,44 +14,44 @@ from sqlalchemy.exc import SQLAlchemyError
 from models import SearchItem
 
 
-class AugurManager:
+class CollectOSSManager:
     """
-    Handles connection and queries to Augur database.
+    Handles connection and queries to CollectOSS database.
 
     Attributes:
     -----------
         engine : _engine.Engine instance
-            SQLAlchemy engine with credentials to connect to Augur database.
+            SQLAlchemy engine with credentials to connect to CollectOSS database.
 
         user : str
-            User credential to Augur database.
+            User credential to CollectOSS database.
 
         password: str
-            Password credential to Augur database.
+            Password credential to CollectOSS database.
 
         host : str
-            Host credential to Augur database.
+            Host credential to CollectOSS database.
 
         port : str
-            Port credential to Augur database.
+            Port credential to CollectOSS database.
             Which port on the server machine we'll target.
 
         database : str
-            Database credential to Augur database.
+            Database credential to CollectOSS database.
             Which of the available databases on the server machine we'll target.
 
         schema : str
-            Schema credential to Augur database.
+            Schema credential to CollectOSS database.
             The target schema of the database we want to access.
 
     Methods:
     --------
         get_engine():
-            Connects to Augur databse with supplied credentials and
+            Connects to CollectOSS database with supplied credentials and
             returns engine object.
 
         run_query(query_string):
-            Runs a SQL-query against Augur database and returns resulting
+            Runs a SQL-query against CollectOSS database and returns resulting
             Pandas dataframe.
     """
 
@@ -70,7 +70,7 @@ class AugurManager:
             self.port = os.environ["AUGUR_PORT"]
             self.database = os.environ["AUGUR_DATABASE"]
         except KeyError as ke:
-            logging.critical(f"AUGUR: Database credentials incomplete: {ke}")
+            logging.critical(f"CollectOSS: Database credentials incomplete: {ke}")
             raise KeyError(ke)
 
         self.schema = os.getenv("AUGUR_SCHEMA", "data,augur_data")
@@ -99,11 +99,15 @@ class AugurManager:
                 self.admin_group_names_endpoint = os.environ["AUGUR_ADMIN_GROUP_NAMES_ENDPOINT"]
                 self.admin_groups_endpoint = os.environ["AUGUR_ADMIN_GROUPS_ENDPOINT"]
             except KeyError as ke:
-                logging.critical(f"AUGUR: Oauth endpoints incomplete: {ke}")
+                logging.critical(f"CollectOSS: Oauth endpoints incomplete: {ke}")
 
     def get_engine(self):
         """
-        Creates _engine.Engine object connected to our Augur database.
+        Creates _engine.Engine object connected to our CollectOSS database.
+
+        SQLAlchemy manages a connection pool by default. A forked child must
+        replace its inherited pool before checking out a connection:
+        https://docs.sqlalchemy.org/en/20/core/pooling.html#using-connection-pools-with-multiprocessing-or-os-fork
 
         Returns:
         --------
@@ -112,7 +116,8 @@ class AugurManager:
 
         pid = os.getpid()
         if self.engine:
-            # Celery preforks: a child must not reuse the parent's DB sockets.
+            # A fork copies the parent's pooled sockets. Replace only this
+            # child's pool; close=False leaves the parent's connections intact.
             if self._engine_pid != pid:
                 self.engine.dispose(close=False)
                 self._engine_pid = pid
@@ -147,15 +152,15 @@ class AugurManager:
 
         # verify that engine works
         try:
-            # context managed connect, closes automatically
+            # Return the test connection to SQLAlchemy's pool automatically.
             with engine.connect() as conn:
-                logging.warning("AUGUR: Connection to DB succeeded")
+                logging.warning("CollectOSS: Connection to DB succeeded")
 
             self.engine = engine
             self._engine_pid = pid
 
         except SQLAlchemyError as err:
-            logging.error(f"AUGUR: DB couldn't connect: {err.__cause__}")
+            logging.error(f"CollectOSS: DB couldn't connect: {err.__cause__}")
             raise
 
         return engine
@@ -177,7 +182,7 @@ class AugurManager:
 
     def run_query(self, query_string: str) -> pd.DataFrame:
         """
-        Runs SQL query against our Augur database.
+        Runs SQL query against our CollectOSS database.
 
         Args:
         -----

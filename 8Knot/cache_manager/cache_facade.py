@@ -9,7 +9,7 @@ from psycopg2.extras import execute_values
 from psycopg2 import sql as pg_sql
 import pandas as pd
 from sqlalchemy.exc import DBAPIError
-from db_manager.augur_manager import AugurManager
+from db_manager.collectoss_manager import CollectOSSManager
 
 # requires relative import syntax "import .cx_common" because
 # other files importing cache_facade need to know how to resolve
@@ -18,7 +18,7 @@ from db_manager.augur_manager import AugurManager
 from .cx_common import cache_cx_string
 
 # The engine is opened lazily in the worker process and reused between tasks.
-collectoss = AugurManager(worker_query=True)
+collectoss = CollectOSSManager(worker_query=True)
 
 
 def cache_query_results(
