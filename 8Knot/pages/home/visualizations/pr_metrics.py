@@ -179,7 +179,7 @@ def pr_count(repolist):
         repolist ([int]): list of the repos queried
     """
 
-    # create augurmanager, should get creds from environment
+    # create CollectOSSManager using credentials from the environment
     db = CollectOSSManager()
 
     # create engine object from creds
@@ -216,7 +216,7 @@ def merged_pr_count(repolist):
         repolist ([int]): list of the repos queried
     """
 
-    # create augurmanager, should get creds from environment
+    # create CollectOSSManager using credentials from the environment
     db = CollectOSSManager()
 
     # create engine object from creds
@@ -253,7 +253,7 @@ def rejected_pr_count(repolist):
         repolist ([int]): list of the repos queried
     """
 
-    # create augurmanager, should get creds from environment
+    # create CollectOSSManager using credentials from the environment
     db = CollectOSSManager()
 
     # create engine object from creds
@@ -291,7 +291,7 @@ def avg_open_pr_age(repolist):
         repolist ([int]): list of the repos queried
     """
 
-    # create augurmanager, should get creds from environment
+    # create CollectOSSManager using credentials from the environment
     db = CollectOSSManager()
 
     # create engine object from creds
@@ -340,7 +340,7 @@ def avg_merged_pr_age(repolist):
         repolist ([int]): list of the repos queried
     """
 
-    # create augurmanager, should get creds from environment
+    # create CollectOSSManager using credentials from the environment
     db = CollectOSSManager()
 
     # create engine object from creds
@@ -390,7 +390,7 @@ def rejected_pr_count(repolist):
         repolist ([int]): list of the repos queried
     """
 
-    # create augurmanager, should get creds from environment
+    # create CollectOSSManager using credentials from the environment
     db = CollectOSSManager()
 
     # create engine object from creds

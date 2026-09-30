@@ -127,7 +127,7 @@ def avg_closed_issue_age(repolist):
         repolist ([int]): list of the repos queried
     """
 
-    # create augurmanager, should get creds from environment
+    # create CollectOSSManager using credentials from the environment
     db = CollectOSSManager()
 
     # create engine object from creds
@@ -176,7 +176,7 @@ def avg_open_issue_age(repolist):
         repolist ([int]): list of the repos queried
     """
 
-    # create augurmanager, should get creds from environment
+    # create CollectOSSManager using credentials from the environment
     db = CollectOSSManager()
 
     # create engine object from creds
@@ -225,7 +225,7 @@ def closed_issue_count(repolist):
         repolist ([int]): list of the repos queried
     """
 
-    # create augurmanager, should get creds from environment
+    # create CollectOSSManager using credentials from the environment
     db = CollectOSSManager()
 
     # create engine object from creds
@@ -262,7 +262,7 @@ def open_issue_count(repolist):
         repolist ([int]): list of the repos queried
     """
 
-    # create augurmanager, should get creds from environment
+    # create CollectOSSManager using credentials from the environment
     db = CollectOSSManager()
 
     # create engine object from creds

@@ -125,7 +125,7 @@ def commit_count(repolist):
         repolist ([int]): list of the repos queried
     """
 
-    # create augurmanager, should get creds from environment
+    # create CollectOSSManager using credentials from the environment
     db = CollectOSSManager()
 
     # create engine object from creds
@@ -163,7 +163,7 @@ def commit_lines_delta(repolist):
         repolist ([int]): list of the repos queried
     """
 
-    # create augurmanager, should get creds from environment
+    # create CollectOSSManager using credentials from the environment
     db = CollectOSSManager()
 
     # create engine object from creds
@@ -206,7 +206,7 @@ def files_per_commit(repolist):
         repolist ([int]): list of the repos queried
     """
 
-    # create augurmanager, should get creds from environment
+    # create CollectOSSManager using credentials from the environment
     db = CollectOSSManager()
 
     # create engine object from creds
