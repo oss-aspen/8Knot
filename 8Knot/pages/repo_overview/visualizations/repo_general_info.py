@@ -1,23 +1,15 @@
 from dash import html, dcc, callback
-import dash
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
-import plotly.graph_objects as go
 import pandas as pd
 import logging
 import posixpath
-from dateutil.relativedelta import *  # type: ignore
-import plotly.express as px
-from pages.utils.graph_utils import get_graph_time_values, color_seq
 from queries.repo_info_query import repo_info_query as riq
 
 from queries.repo_files_query import repo_files_query as rfq
 from queries.repo_releases_query import repo_releases_query as rrq
-import io
 import cache_manager.cache_facade as cf
-from pages.utils.job_utils import nodata_graph
 import time
-from datetime import datetime
 
 PAGE = "repo_info"
 VIZ_ID = "repo-general-info"
@@ -220,12 +212,12 @@ def multi_query_helper(repos: list[int]):
     """
 
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=riq.__name__, repolist=repos):
+    while cf.get_uncached(func_name=riq.__name__, repolist=repos):
         logging.warning(f"REPO GENERAL INFO - WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=rrq.__name__, repolist=repos):
+    while cf.get_uncached(func_name=rrq.__name__, repolist=repos):
         logging.warning(f"REPO GENERAL INFO - WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 

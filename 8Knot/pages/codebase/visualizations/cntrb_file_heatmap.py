@@ -4,7 +4,6 @@ import dash_mantine_components as dmc
 from dash.dependencies import Input, Output
 import pandas as pd
 import logging
-from dateutil.relativedelta import *  # type: ignore
 from pages.utils.graph_utils import create_heatmap_figure
 from queries.contributors_query import contributors_query as cnq
 from queries.cntrb_per_file_query import cntrb_per_file_query as cpfq
@@ -115,7 +114,7 @@ def directory_dropdown(repo_id):
 
     # wait for data to asynchronously download and become available.
     logging.warning(f"DIRECTORY DROPDOWN - WAITING FOR DATA TO LOAD")
-    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=[repo_id]):
+    while cf.get_uncached(func_name=rfq.__name__, repolist=[repo_id]):
         logging.warning(f"DIRECTORY DROPDOWN - WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 
@@ -222,17 +221,17 @@ def multi_query_helper(searchbar_repos, repo):
     """
 
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=repo):
+    while cf.get_uncached(func_name=rfq.__name__, repolist=repo):
         logging.warning(f"CONTRIBUTOR FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=cnq.__name__, repolist=searchbar_repos):
+    while cf.get_uncached(func_name=cnq.__name__, repolist=searchbar_repos):
         logging.warning(f"CONTRIBUTOR FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=cpfq.__name__, repolist=repo):
+    while cf.get_uncached(func_name=cpfq.__name__, repolist=repo):
         logging.warning(f"CONTRIBUTOR FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 

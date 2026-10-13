@@ -15,7 +15,7 @@ def get_bots_list():
 
     try:
         dbm = AugurManager()
-        engine = dbm.get_engine()
+        dbm.get_engine()
     except KeyError:
         # noack, data wasn't successfully set.
         logging.error("BOT_DATA_QUERY - INCOMPLETE ENVIRONMENT")

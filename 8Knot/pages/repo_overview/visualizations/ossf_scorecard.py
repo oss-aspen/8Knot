@@ -1,16 +1,11 @@
 from dash import html, dcc, callback
-import dash
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 import pandas as pd
 import logging
-from dateutil.relativedelta import *  # type: ignore
 from queries.ossf_score_query import ossf_score_query as osq
-import io
 import cache_manager.cache_facade as cf
-from pages.utils.job_utils import nodata_graph
 import time
-from datetime import datetime
 
 PAGE = "repo_info"
 VIZ_ID = "ossf-scorecard"
@@ -103,7 +98,7 @@ def ossf_scorecard(repo: str):
         repo = int(repo)
 
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=osq.__name__, repolist=[repo]):
+    while cf.get_uncached(func_name=osq.__name__, repolist=[repo]):
         logging.warning(f"{VIZ_ID}- WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 
