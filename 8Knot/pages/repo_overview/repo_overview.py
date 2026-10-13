@@ -1,5 +1,5 @@
-from dash import html, dcc, callback
-from dash.dependencies import Input, Output, State
+from dash import html, callback
+from dash.dependencies import Input, Output
 import dash
 import dash_bootstrap_components as dbc
 import warnings

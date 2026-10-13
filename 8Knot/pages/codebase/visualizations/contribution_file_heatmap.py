@@ -4,7 +4,6 @@ import dash_mantine_components as dmc
 from dash.dependencies import Input, Output
 import pandas as pd
 import logging
-from dateutil.relativedelta import *  # type: ignore
 from pages.utils.graph_utils import create_heatmap_figure
 from queries.prs_query import prs_query as prq
 from queries.pr_files_query import pr_file_query as prfq
@@ -130,7 +129,7 @@ def directory_dropdown(repo_id):
 
     # wait for data to asynchronously download and become available.
     logging.warning(f"DIRECTORY DROPDOWN - WAITING FOR DATA TO LOAD")
-    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=[repo_id]):
+    while cf.get_uncached(func_name=rfq.__name__, repolist=[repo_id]):
         logging.warning(f"DIRECTORY DROPDOWN - WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 
@@ -164,15 +163,10 @@ def directory_dropdown(repo_id):
         inplace=True,
     )
 
-    # split file path by directory
-    df = df.join(df["file_path"].str.split("/", expand=True))
-
     # take all of the files, split on the last instance of a / to get directories and top level files
     directories = df["file_path"].str.rsplit("/", n=1).str[0].tolist()
     directories = list(set(directories))
 
-    # get all of the file names to filter out of the directory set
-    top_level_files = df["file_name"][df[1].isnull()].tolist()
     # applies another rsplit to make sure directories that only have folders are included
     folder_only_directories = [x.rsplit("/", 1)[0] for x in directories]
     directories = list(set(directories + folder_only_directories))
@@ -232,17 +226,17 @@ def multi_query_helper(repos):
     """
 
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=rfq.__name__, repolist=repos):
+    while cf.get_uncached(func_name=rfq.__name__, repolist=repos):
         logging.warning(f"CONTRIBUTION FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=prfq.__name__, repolist=repos):
+    while cf.get_uncached(func_name=prfq.__name__, repolist=repos):
         logging.warning(f"CONTRIBUTION FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 
     # wait for data to asynchronously download and become available.
-    while not_cached := cf.get_uncached(func_name=prq.__name__, repolist=repos):
+    while cf.get_uncached(func_name=prq.__name__, repolist=repos):
         logging.warning(f"CONTRIBUTION FILE HEATMAP - WAITING ON DATA TO BECOME AVAILABLE")
         time.sleep(0.5)
 

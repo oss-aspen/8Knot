@@ -3,11 +3,9 @@ Imports
 """
 
 import pandas as pd
-import numpy as np
 import sqlalchemy as salc
 import os
 import logging
-import sys
 import requests
 from sqlalchemy.exc import SQLAlchemyError
 from models import SearchItem
@@ -119,7 +117,7 @@ class AugurManager:
         # verify that engine works
         try:
             # context managed connect, closes automatically
-            with engine.connect() as conn:
+            with engine.connect():
                 logging.warning("AUGUR: Connection to DB succeeded")
 
             self.engine = engine
@@ -145,8 +143,6 @@ class AugurManager:
         if self.engine is None:
             logging.critical("No engine- please use 'get_engine' method to create engine.")
             return None
-
-        result_df = pd.DataFrame()
 
         query = salc.sql.text(query_string)
 
@@ -210,7 +206,6 @@ class AugurManager:
         df_repo_git_id = df_search_bar.copy()
         df_repo_git_id = df_repo_git_id[["repo_git", "repo_id"]]
         self.repo_git_to_repo_id = pd.Series(df_repo_git_id.repo_id.values, index=df_repo_git_id["repo_git"]).to_dict()
-        # self.repo_id_to_repo_git = {value: key for (key, value) in self.repo_git_to_repo_id.items()}
         self.repo_id_to_repo_git = pd.Series(df_repo_git_id.repo_git.values, index=df_repo_git_id["repo_id"]).to_dict()
 
         logging.warning(f"MULTISELECT_FINISHED")
@@ -280,7 +275,6 @@ class AugurManager:
                     default_label = os.getenv("DEFAULT_SEARCHBAR_LABEL")
 
                     # search through available options for the specified overwriting default.
-                    found_option = False
                     for opt in self.multiselect_options:
                         if default_label == opt["label"]:
                             # Create a copy of the option with the "repo:" prefix
@@ -290,7 +284,6 @@ class AugurManager:
                             self.initial_search_option["label"] = search_item.prefix(opt["label"])
 
                             logging.warning(f"INITIAL SEARCHBAR OPTION: NEW DEFAULT: {self.initial_search_option}")
-                            found_option = True
                             break
 
             return self.initial_search_option

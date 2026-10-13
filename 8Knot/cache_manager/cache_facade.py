@@ -83,10 +83,6 @@ def cache_query_results(
                 # iterate through pages of rows from server.
                 logging.warning(f"{target_table} -- CQR FETCHING AND STORING ROWS")
                 while rows := augur_cur.fetchmany(client_pagination):
-                    if not rows:
-                        # we're out of rows
-                        break
-
                     # write available rows to cache.
                     with cache_conn.cursor() as cache_cur:
                         execute_values(
@@ -117,7 +113,7 @@ def cache_query_results(
         logging.warning(f"{target_table} -- CQR SUCCESS")
 
 
-def get_uncached(func_name: str, repolist: list[int]) -> list[int]:  # or None
+def get_uncached(func_name: str, repolist: list[int]) -> list[int]:
     """
     Checks bookkeeping data to find, for a given querying function, which
     repos' data are noted as present in cache vs. those that arent.
@@ -173,10 +169,10 @@ def caching_wrapper(func_name: str, query: str, repolist: list[int], n_repolist_
     try:
         # STEP 1: Which repos need to be queried for?
         #           some might already be in cache.
-        uncached_repos: list[int] | None = get_uncached(func_name=func_name, repolist=repolist)
+        uncached_repos: list[int] = get_uncached(func_name=func_name, repolist=repolist)
         if not uncached_repos:
             logging.warning(f"{func_name} COLLECTION - ALL REQUESTED REPOS IN CACHE")
-            return 0
+            return
         else:
             logging.warning(f"{func_name} COLLECTION - CACHING {len(uncached_repos)} NEW REPOS")
 
@@ -213,7 +209,6 @@ def retrieve_from_cache(
     """
 
     # GET ALL DATA FROM POSTGRES CACHE
-    df = None
     with pg.connect(cache_cx_string) as cache_conn:
         with cache_conn.cursor() as cache_cur:
             cache_cur.execute(
